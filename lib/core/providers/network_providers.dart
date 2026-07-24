@@ -1,34 +1,60 @@
+import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/network/interceptors/auth_interceptor.dart';
+import 'package:chatix/core/network/interceptors/retry_interceptor.dart';
+import 'package:chatix/core/network/interceptors/trailing_slash_interceptor.dart';
+import 'package:chatix/core/providers/storage_providers.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../network/interceptors/retry_interceptor.dart';
-import '../constants/app_constants.dart';
 
 part 'network_providers.g.dart';
 
+/// Initialized in [main] — [PersistCookieJar] needs an app documents path.
+final cookieJarProvider = Provider<CookieJar>((ref) {
+  throw UnimplementedError(
+    'cookieJarProvider must be overridden in main() after PersistCookieJar init',
+  );
+});
+
 @riverpod
 Dio dio(Ref ref) {
-  final dio = Dio();
+  final cookieJar = ref.watch(cookieJarProvider);
+  final secureStorage = ref.watch(secureStorageServiceProvider);
 
-  dio.options.baseUrl = AppConstants.apiBaseUrl;
-  dio.options.connectTimeout = const Duration(milliseconds: 30000);
-  dio.options.receiveTimeout = const Duration(milliseconds: 30000);
-  dio.options.headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-
-  // Add interceptors here if needed
-  dio.interceptors.add(
-    LogInterceptor(
-      request: true,
-      requestHeader: true,
-      requestBody: true,
-      responseHeader: true,
-      responseBody: true,
-      error: true,
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: AppConstants.apiBaseUrl,
+      connectTimeout: const Duration(milliseconds: AppConstants.connectTimeout),
+      receiveTimeout: const Duration(milliseconds: AppConstants.receiveTimeout),
+      headers: const {
+        // Default JSON headers. POST /auth/login/ must override to
+        // application/x-www-form-urlencoded in the auth feature (api-docs §3.3).
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     ),
   );
+
+  dio.interceptors.add(CookieManager(cookieJar));
+  dio.interceptors.add(TrailingSlashInterceptor());
+  dio.interceptors.add(AuthInterceptor(dio: dio, secureStorage: secureStorage));
   dio.interceptors.add(RetryInterceptor(dio: dio));
+
+  if (kDebugMode) {
+    dio.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+        error: true,
+      ),
+    );
+  }
 
   return dio;
 }

@@ -1,10 +1,10 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:flutter_riverpod_clean_architecture/features/auth/domain/usecases/login_use_case.dart';
-import 'package:flutter_riverpod_clean_architecture/features/auth/domain/repositories/auth_repository.dart';
-import 'package:flutter_riverpod_clean_architecture/features/auth/domain/entities/user_entity.dart';
-import 'package:flutter_riverpod_clean_architecture/core/error/failures.dart';
+import 'package:chatix/features/auth/domain/usecases/login_use_case.dart';
+import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
+import 'package:chatix/features/auth/domain/entities/user_entity.dart';
+import 'package:chatix/core/error/failures.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 

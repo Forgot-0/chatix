@@ -1,17 +1,31 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConstants {
-  // API constants
-  static const String apiBaseUrl = 'https://api.yourdomain.com';
+  AppConstants._();
+
+  /// Backend origin without trailing slash (from `.env` BASE_URL).
+  static String get serverBaseUrl {
+    final raw = dotenv.env['BASE_URL']?.trim();
+    if (raw == null || raw.isEmpty) {
+      return 'https://api.yourdomain.com';
+    }
+    return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
+  }
+
+  /// API v1 prefix for all versioned endpoints (api-docs §1.1).
+  static String get apiBaseUrl => '$serverBaseUrl/api/v1';
+
+  /// Health check lives outside `/api/v1` (api-docs §1.1).
+  static String get healthCheckUrl => '$serverBaseUrl/health';
 
   // Storage constants
-  static const String tokenKey = 'authToken';
+  static const String accessTokenKey = 'access_token';
   static const String userDataKey = 'userData';
-  static const String refreshTokenKey = 'refreshToken';
 
   // App constants
   static const String appName = 'ChatiX';
   static const String appVersion = '1.0.0';
-  static const String packageName =
-      'com.example.flutter_riverpod_clean_architecture';
+  static const String packageName = 'com.forgot.chatix';
   static const String iOSAppId = '123456789';
   static const String appcastUrl = 'https://your-appcast-url.com/appcast.xml';
 

@@ -22,6 +22,25 @@ class TimeoutException extends AppException {
     : super(prefix: 'Timeout Error: ');
 }
 
+// API error envelope (api-docs §2.1)
+class ApiException extends AppException {
+  final String code;
+  final dynamic detail;
+  final int status;
+
+  ApiException({
+    required this.code,
+    required super.message,
+    required this.detail,
+    required this.status,
+  }) : super(prefix: 'API Error: ');
+}
+
+class RateLimitException extends AppException {
+  RateLimitException({super.message = 'Too Many Requests'})
+    : super(prefix: 'Rate Limit: ');
+}
+
 // Server related exceptions
 class ServerException extends AppException {
   ServerException({super.message = 'Internal server error'})

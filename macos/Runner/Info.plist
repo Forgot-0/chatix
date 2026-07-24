@@ -10,10 +10,12 @@
 	<string></string>
 	<key>CFBundleIdentifier</key>
 	<string>com.forgot.chatix</string>
+	<string>com.forgot.chatix</string>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
+	<string>ChatiX</string>
 	<string>ChatiX</string>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>

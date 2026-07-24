@@ -1,9 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/network/api_client.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:flutter_riverpod_clean_architecture/core/network/api_client.dart';
-import 'package:flutter_riverpod_clean_architecture/core/error/failures.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockDio extends Mock implements Dio {}
 
@@ -19,58 +19,88 @@ void main() {
   });
 
   group('ApiClient', () {
-    const tPath = '/test';
+    const tPath = '/test/';
     final tResponseData = {'success': true};
 
     test('get should perform a GET request and return Right(data)', () async {
-      // Arrange
       final response = MockResponse();
       when(() => response.data).thenReturn(tResponseData);
       when(() => response.statusCode).thenReturn(200);
       when(
         () =>
-            mockDio.get(any(), queryParameters: any(named: 'queryParameters')),
+            mockDio.get<dynamic>(any(), queryParameters: any(named: 'queryParameters')),
       ).thenAnswer((_) async => response);
 
-      // Act
-      final result = await apiClient.get(tPath);
+      final result = await apiClient.get('/test');
 
-      // Assert
-      verify(() => mockDio.get(tPath));
+      verify(() => mockDio.get<dynamic>(tPath));
       expect(result, Right(tResponseData));
     });
 
-    test(
-      'get should return Left(ServerFailure) when DioException occurs',
-      () async {
-        // Arrange
-        when(
-          () => mockDio.get(
-            any(),
-            queryParameters: any(named: 'queryParameters'),
-          ),
-        ).thenThrow(
-          DioException(
+    test('get should return Left(ApiFailure) for application error envelope', () async {
+      when(
+        () => mockDio.get<dynamic>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: tPath),
+          type: DioExceptionType.badResponse,
+          response: Response(
             requestOptions: RequestOptions(path: tPath),
-            type: DioExceptionType.badResponse,
-            response: Response(
-              requestOptions: RequestOptions(path: tPath),
-              statusCode: 500,
-              data: {'message': 'Server Error'},
-            ),
+            statusCode: 404,
+            data: {
+              'error': {
+                'code': 'NOT_FOUND_USER',
+                'message': 'User not found',
+                'detail': {'user_by': '123', 'user_field': 'id'},
+              },
+              'status': 404,
+            },
           ),
-        );
+        ),
+      );
 
-        // Act
-        final result = await apiClient.get(tPath);
+      final result = await apiClient.get('/test');
 
-        // Assert
-        expect(result, isA<Left<Failure, dynamic>>());
-        result.fold(
-          (failure) => expect(failure, isA<ServerFailure>()),
-          (_) => fail('Should have returned Left'),
-        );
-      },
-    );
+      expect(result, isA<Left<Failure, dynamic>>());
+      result.fold(
+        (failure) {
+          expect(failure, isA<ApiFailure>());
+          final apiFailure = failure as ApiFailure;
+          expect(apiFailure.code, 'NOT_FOUND_USER');
+          expect(apiFailure.status, 404);
+        },
+        (_) => fail('Should have returned Left'),
+      );
+    });
+
+    test('get should return Left(RateLimitFailure) for HTTP 429', () async {
+      when(
+        () => mockDio.get<dynamic>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: tPath),
+          type: DioExceptionType.badResponse,
+          response: Response(
+            requestOptions: RequestOptions(path: tPath),
+            statusCode: 429,
+            data: {'detail': 'Too Many Requests'},
+          ),
+        ),
+      );
+
+      final result = await apiClient.get('/test');
+
+      expect(result, isA<Left<Failure, dynamic>>());
+      result.fold(
+        (failure) => expect(failure, isA<RateLimitFailure>()),
+        (_) => fail('Should have returned Left'),
+      );
+    });
   });
 }

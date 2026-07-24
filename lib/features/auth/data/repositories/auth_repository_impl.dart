@@ -43,7 +43,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Save auth token securely
       await _secureStorageService.write(
-        key: AppConstants.tokenKey,
+        key: AppConstants.accessTokenKey,
         value: response.id, // assuming token is stored in id for demo
       );
 
@@ -80,7 +80,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Save auth token securely
       await _secureStorageService.write(
-        key: AppConstants.tokenKey,
+        key: AppConstants.accessTokenKey,
         value: response.id, // assuming token is stored in id for demo
       );
 
@@ -103,7 +103,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _localStorageService.remove(AppConstants.userDataKey);
 
       // Remove auth token from secure storage
-      await _secureStorageService.delete(key: AppConstants.tokenKey);
+      await _secureStorageService.delete(key: AppConstants.accessTokenKey);
 
       return const Right(null);
     } on CacheException catch (e) {
@@ -117,7 +117,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, bool>> isAuthenticated() async {
     try {
       final token = await _secureStorageService.read(
-        key: AppConstants.tokenKey,
+        key: AppConstants.accessTokenKey,
       );
       return Right(token != null && token.isNotEmpty);
     } on CacheException catch (e) {
@@ -145,10 +145,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-
-final secureStorageServiceProvider = Provider<SecureStorageService>((ref) {
-  return SecureStorageService.create();
-});
 
 // Repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

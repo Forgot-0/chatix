@@ -1,112 +1,151 @@
-import 'package:fpdart/fpdart.dart';
 import 'dart:async';
+import 'dart:io';
+
+import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/network/api_path.dart';
 import 'package:dio/dio.dart';
-import '../../core/error/failures.dart';
+import 'package:fpdart/fpdart.dart';
 
 class ApiClient {
   final Dio _dio;
 
   ApiClient(this._dio);
 
-  // GET request
+  /// Absolute health-check URL outside `/api/v1` (api-docs §1.1).
+  String get healthCheckUrl => AppConstants.healthCheckUrl;
+
+  Future<Either<Failure, dynamic>> getHealth() async {
+    try {
+      final response = await _dio.get<dynamic>(
+        healthCheckUrl,
+        options: Options(
+          extra: const {'skipTrailingSlash': true},
+        ),
+      );
+      return Right(response.data);
+    } on DioException catch (e) {
+      return Left(_handleError(e));
+    }
+  }
+
   Future<Either<Failure, dynamic>> get(
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _dio.get(path, queryParameters: queryParameters);
+      final response = await _dio.get<dynamic>(
+        buildPath(path),
+        queryParameters: queryParameters,
+      );
       return Right(response.data);
     } on DioException catch (e) {
       return Left(_handleError(e));
     }
   }
 
-  // POST request
-  Future<Either<Failure, dynamic>> post(String path, {dynamic data}) async {
+  Future<Either<Failure, dynamic>> post(
+    String path, {
+    dynamic data,
+    Options? options,
+  }) async {
     try {
-      final response = await _dio.post(path, data: data);
+      final response = await _dio.post<dynamic>(
+        buildPath(path),
+        data: data,
+        options: options,
+      );
       return Right(response.data);
     } on DioException catch (e) {
       return Left(_handleError(e));
     }
   }
 
-  // PUT request
-  Future<Either<Failure, dynamic>> put(String path, {dynamic data}) async {
+  Future<Either<Failure, dynamic>> put(
+    String path, {
+    dynamic data,
+    Options? options,
+  }) async {
     try {
-      final response = await _dio.put(path, data: data);
+      final response = await _dio.put<dynamic>(
+        buildPath(path),
+        data: data,
+        options: options,
+      );
       return Right(response.data);
     } on DioException catch (e) {
       return Left(_handleError(e));
     }
   }
 
-  // DELETE request
-  Future<Either<Failure, dynamic>> delete(String path) async {
+  Future<Either<Failure, dynamic>> delete(
+    String path, {
+    Options? options,
+  }) async {
     try {
-      final response = await _dio.delete(path);
+      final response = await _dio.delete<dynamic>(
+        buildPath(path),
+        options: options,
+      );
       return Right(response.data);
     } on DioException catch (e) {
       return Left(_handleError(e));
     }
   }
 
-  // Handle Dio errors
   Failure _handleError(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return const ServerFailure(message: 'Connection timeout');
-      case DioExceptionType.badResponse:
-        switch (e.response?.statusCode) {
-          case 400:
-            return ServerFailure(
-              message: e.response?.data['message'] ?? 'Bad Request',
-            );
-          case 401:
-            return UnauthorizedFailure(
-              message: e.response?.data['message'] ?? 'Unauthorized',
-            );
-          case 403:
-            return ServerFailure(
-              message: e.response?.data['message'] ?? 'Forbidden',
-            );
-          case 404:
-            return ServerFailure(
-              message: e.response?.data['message'] ?? 'Not Found',
-            );
-          case 500:
-          case 501:
-          case 502:
-          case 503:
-            return ServerFailure(
-              message: e.response?.data['message'] ?? 'Server Error',
-            );
-          default:
-            return ServerFailure(
-              message: e.response?.data['message'] ?? 'Unknown error occurred',
-            );
-        }
+        return TimeoutFailure(statusCode: e.response?.statusCode);
       case DioExceptionType.cancel:
         return const ServerFailure(message: 'Request cancelled');
       case DioExceptionType.unknown:
-        if (e.error.toString().contains('SocketException')) {
-          return const ServerFailure(message: 'No internet connection');
+        if (e.error is SocketException) {
+          return const NetworkFailure();
         }
-        return const ServerFailure(message: 'Unknown error occurred');
+        return const NetworkFailure(message: 'Unknown network error');
+      case DioExceptionType.connectionError:
+        return const NetworkFailure();
+      case DioExceptionType.badResponse:
+        return _handleBadResponse(e);
       default:
         return const ServerFailure(message: 'Unknown error occurred');
     }
   }
 
-  // Add token to headers
-  void setToken(String token) {
-    _dio.options.headers['Authorization'] = 'Bearer $token';
-  }
+  Failure _handleBadResponse(DioException e) {
+    final response = e.response;
+    if (response == null) {
+      return const NetworkFailure();
+    }
 
-  // Remove token from headers
-  void removeToken() {
-    _dio.options.headers.remove('Authorization');
+    final statusCode = response.statusCode ?? 0;
+    final data = response.data;
+
+    if (statusCode == 429) {
+      final message = data is Map && data['detail'] != null
+          ? data['detail'].toString()
+          : 'Too Many Requests';
+      return RateLimitFailure(message: message);
+    }
+
+    if (data is Map<String, dynamic>) {
+      final error = data['error'];
+      if (error is Map<String, dynamic>) {
+        return ApiFailure(
+          code: error['code'] as String? ?? 'UNKNOWN',
+          message: error['message'] as String? ?? 'Unknown error',
+          detail: error['detail'],
+          status: statusCode,
+        );
+      }
+    }
+
+    return ServerFailure(
+      message: 'Unknown error occurred',
+      statusCode: statusCode,
+    );
   }
 }
