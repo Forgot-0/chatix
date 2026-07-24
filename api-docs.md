@@ -176,7 +176,7 @@ interface ErrorResponse {
 
 | code | HTTP | detail | Когда возникает |
 |---|---|---|---|
-| `NOT_AUTHNTICATED` *(опечатка в самом коде, не исправлена)* | 401 | `{}` | Запрос на `🔒`-эндпоинт без заголовка `Authorization` вообще |
+| `NOT_AUTHENTICATED` | 401 | `{}` | Запрос на `🔒`-эндпоинт без заголовка `Authorization` вообще |
 | `INVALID_TOKEN` | 403 | `{}` | Токен есть, но невалиден (плохая подпись, не тот формат) |
 | `EXPIRED_TOKEN` | 400 | `{}` | Access-токен истёк (обычно каждые 5 минут — самый частый кейс, триггер для refresh) |
 | `ACCESS_DENIED` | 403 | `{ "permissions": string[] }` | Не хватает системных прав (RBAC) либо аккаунт неактивен (`is_active=false`, тогда `permissions: []`) |

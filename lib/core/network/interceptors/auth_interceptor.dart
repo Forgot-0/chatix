@@ -26,9 +26,7 @@ class AuthInterceptor extends QueuedInterceptor {
     RequestInterceptorHandler handler,
   ) async {
     if (!_isPublicPath(options.path)) {
-      final token = await _secureStorage.read(
-        key: AppConstants.accessTokenKey,
-      );
+      final token = await _secureStorage.read(key: AppConstants.accessTokenKey);
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
@@ -92,7 +90,7 @@ class AuthInterceptor extends QueuedInterceptor {
     final code = _readErrorCode(err.response?.data);
 
     if (statusCode == 401) {
-      return code == null || code == 'NOT_AUTHNTICATED';
+      return code == null || code == 'NOT_AUTHENTICATED';
     }
 
     if (statusCode == 400 && code == 'EXPIRED_TOKEN') {
