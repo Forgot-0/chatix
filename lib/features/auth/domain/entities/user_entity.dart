@@ -1,66 +1,33 @@
 import 'package:equatable/equatable.dart';
 
+/// Lightweight user, matching the `UserResponse` shape returned by
+/// `/users/register/` and `/users/me/` (api-docs §3.2, §3.9).
+///
+/// There is no roles/permissions/sessions data here — the backend doesn't
+/// expose a self-service endpoint for that (api-docs §3.9). A richer
+/// `UserDetailEntity` (roles/permissions/sessions, `UserDTO` in api-docs
+/// §3.11) is intentionally NOT modeled yet: it's only returned by the admin
+/// `GET /users/` endpoint, which isn't used anywhere in the app yet. Add it
+/// alongside the future admin/profile screens instead of speculatively now.
 class UserEntity extends Equatable {
-  final String id;
-  final String name;
+  final int id;
+  final String username;
   final String email;
-  final String? profilePicture;
-  final String? phone;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
 
   const UserEntity({
     required this.id,
-    required this.name,
+    required this.username,
     required this.email,
-    this.profilePicture,
-    this.phone,
-    this.createdAt,
-    this.updatedAt,
   });
 
   @override
-  List<Object?> get props => [
-        id,
-        name,
-        email,
-        profilePicture,
-        phone,
-        createdAt,
-        updatedAt,
-      ];
+  List<Object?> get props => [id, username, email];
 
-  // Factory constructor to create an empty user
-  factory UserEntity.empty() {
-    return const UserEntity(
-      id: '',
-      name: '',
-      email: '',
-    );
-  }
-
-  // CopyWith method for creating a new instance with some updated properties
-  UserEntity copyWith({
-    String? id,
-    String? name,
-    String? email,
-    String? profilePicture,
-    String? phone,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
+  UserEntity copyWith({int? id, String? username, String? email}) {
     return UserEntity(
       id: id ?? this.id,
-      name: name ?? this.name,
+      username: username ?? this.username,
       email: email ?? this.email,
-      profilePicture: profilePicture ?? this.profilePicture,
-      phone: phone ?? this.phone,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-
-  // Method to check if user is empty
-  bool get isEmpty => id.isEmpty && name.isEmpty && email.isEmpty;
-  bool get isNotEmpty => !isEmpty;
 }

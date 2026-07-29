@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/features/auth/presentation/widgets/oauth_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -13,52 +17,39 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
   bool _isPasswordVisible = false;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  void _login() {
+    final isValid = _formKey.currentState?.saveAndValidate() ?? false;
+    if (!isValid) return;
 
-  void _login() async {
-    if (_formKey.currentState!.validate()) {
-      // Close keyboard
-      FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
 
-      // Get email and password
-      final email = _emailController.text.trim();
-      final password = _passwordController.text;
-
-      // Call login method from auth provider
-      await ref
-          .read(authProvider.notifier)
-          .login(email: email, password: password);
-
-      // Check if login was successful
-      final authState = ref.read(authProvider);
-      if (authState.errorMessage != null) {
-        // Show error message if login failed
-        if (!mounted) return;
-
-        // ignore: use_build_context_synchronously
-        AppUtils.showSnackBar(
-          context,
-          message: authState.errorMessage!,
-          backgroundColor: Theme.of(context).colorScheme.error,
-        );
-      }
-    }
+    final values = _formKey.currentState!.value;
+    // api-docs §3.3: this one field is either an email or a username —
+    // the backend accepts both under the same `username` form field.
+    ref.read(authProvider.notifier).login(
+      username: values['username'] as String,
+      password: values['password'] as String,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch auth state
     final authState = ref.watch(authProvider);
+
+    ref.listen(authProvider, (previous, next) {
+      if (next.hasError && !next.isLoading) {
+        AppUtils.showSnackBar(
+          context,
+          message: _messageFor(next.error),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        );
+      }
+    });
+
+    final isLoading = authState.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
@@ -66,7 +57,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Center(
           child: SingleChildScrollView(
-            child: Form(
+            child: FormBuilder(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -91,27 +82,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _emailController,
+                  FormBuilderTextField(
+                    name: 'username',
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                      labelText: 'Email or username',
+                      hintText: 'you@example.com or your username',
+                      prefixIcon: Icon(Icons.person_outline),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!AppUtils.isValidEmail(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
+                    validator: AuthFieldValidators.loginIdentifier,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
+                  FormBuilderTextField(
+                    name: 'password',
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -130,31 +113,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      return null;
-                    },
+                    validator: AuthFieldValidators.required,
                   ),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        // Implement forgot password
+                        context.push(AppConstants.resetPasswordRequestRoute);
                       },
                       child: const Text('Forgot Password?'),
                     ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: authState.isLoading ? null : _login,
+                    onPressed: isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
-                    child: authState.isLoading
+                    child: isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -165,6 +143,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           )
                         : const Text('Log In'),
                   ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'or continue with',
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const OAuthButtons(),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -192,5 +190,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       ),
     );
+  }
+
+  String _messageFor(Object? error) {
+    if (error is Failure) return error.message;
+    return 'Something went wrong. Please try again.';
   }
 }

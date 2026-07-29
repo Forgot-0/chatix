@@ -9,19 +9,32 @@ class RegisterUseCase {
   RegisterUseCase(this._repository);
 
   Future<Either<Failure, UserEntity>> execute({
-    required String name,
+    required String username,
     required String email,
     required String password,
+    required String passwordRepeat,
   }) {
-    // Add any validation logic here if needed
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+    if (username.isEmpty || email.isEmpty || password.isEmpty || passwordRepeat.isEmpty) {
       return Future.value(
-        const Left(
-          InputFailure(message: 'Name, email, and password cannot be empty'),
-        ),
+        const Left(InputFailure(message: 'All fields are required')),
       );
     }
 
-    return _repository.register(name: name, email: email, password: password);
+    // Fast local check mirroring the backend's own PASSWORD_MISMATCH rule
+    // (api-docs §3.2) — avoids a wasted round trip. The full password
+    // complexity rule is enforced client-side in the form validators
+    // (flutter_form_builder) so the user gets feedback before submitting.
+    if (password != passwordRepeat) {
+      return Future.value(
+        const Left(InputFailure(message: 'Passwords do not match')),
+      );
+    }
+
+    return _repository.register(
+      username: username,
+      email: email,
+      password: password,
+      passwordRepeat: passwordRepeat,
+    );
   }
 }

@@ -6,6 +6,9 @@ import 'package:chatix/core/router/locale_aware_router.dart';
 import 'package:chatix/examples/localization_assets_demo.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/register_screen.dart';
+import 'package:chatix/features/auth/presentation/screens/reset_password_confirm_screen.dart';
+import 'package:chatix/features/auth/presentation/screens/reset_password_request_screen.dart';
+import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
 import 'package:chatix/features/home/presentation/screens/home_screen.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
@@ -27,6 +30,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     // Add the observer for locale awareness
     observers: [ref.read(localizationRouterObserverProvider)],
     redirect: (context, state) {
+      // While AuthController.build() is still resolving a stored token
+      // (app cold start) or a login/register/logout call is in flight,
+      // don't force a redirect based on a not-yet-settled auth state —
+      // otherwise a returning user with a valid token flashes through the
+      // login screen before bouncing back to home. (The initial '/' route
+      // below still has to make an immediate choice since it has no
+      // builder of its own — that one small flash on cold start is a known
+      // limitation, to be addressed with a proper splash route in the
+      // fuller routing pass.)
+      if (authState.isLoading) {
+        return null;
+      }
+
       // Get the authentication status
       final isLoggedIn = authState.isAuthenticated;
 
@@ -37,12 +53,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isGoingToRegister =
           state.matchedLocation == AppConstants.registerRoute;
 
-      // If not logged in and not going to login or register, redirect to login
-      if (!isLoggedIn && !isGoingToLogin && !isGoingToRegister) {
+      // Email verification / password reset are reachable whether or not
+      // the person is currently logged in (e.g. a logged-in user can still
+      // want to verify their email or reset a forgotten password).
+      final isGoingToPublicAuthFlow = isGoingToLogin ||
+          isGoingToRegister ||
+          state.matchedLocation == AppConstants.verifyEmailRoute ||
+          state.matchedLocation == AppConstants.resetPasswordRequestRoute ||
+          state.matchedLocation == AppConstants.resetPasswordConfirmRoute;
+
+      // If not logged in and not going to a public auth screen, redirect to login
+      if (!isLoggedIn && !isGoingToPublicAuthFlow) {
         return AppConstants.loginRoute;
       }
 
-      // If logged in and going to login, redirect to home
+      // If logged in and going to login/register, redirect to home
       if (isLoggedIn && (isGoingToLogin || isGoingToRegister)) {
         return AppConstants.homeRoute;
       }
@@ -70,6 +95,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.registerRoute,
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+
+      // Verify email route
+      GoRoute(
+        path: AppConstants.verifyEmailRoute,
+        name: 'verify_email',
+        builder: (context, state) => const VerifyEmailScreen(),
+      ),
+
+      // Reset password — request a code
+      GoRoute(
+        path: AppConstants.resetPasswordRequestRoute,
+        name: 'reset_password_request',
+        builder: (context, state) => const ResetPasswordRequestScreen(),
+      ),
+
+      // Reset password — confirm code + new password
+      GoRoute(
+        path: AppConstants.resetPasswordConfirmRoute,
+        name: 'reset_password_confirm',
+        builder: (context, state) => const ResetPasswordConfirmScreen(),
       ),
 
       // Settings route

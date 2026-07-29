@@ -4,66 +4,30 @@ import 'package:equatable/equatable.dart';
 
 part 'user_model.g.dart';
 
-@JsonSerializable(fieldRename: FieldRename.snake)
+/// Wire model for `UserResponse` (api-docs §3.2, §3.9): `{id, username, email}`.
+/// Flat and already matches Dart naming 1:1, so no `fieldRename` is needed.
+@JsonSerializable()
 class UserModel extends Equatable {
-  final String id;
-  final String name;
+  final int id;
+  final String username;
   final String email;
-  final String? profilePicture;
-  final String? phone;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
 
-  const UserModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    this.profilePicture,
-    this.phone,
-    this.createdAt,
-    this.updatedAt,
-  });
-  
+  const UserModel({required this.id, required this.username, required this.email});
+
   @override
-  List<Object?> get props => [
-    id, 
-    name, 
-    email, 
-    profilePicture, 
-    phone, 
-    createdAt, 
-    updatedAt
-  ];
+  List<Object?> get props => [id, username, email];
 
   factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
-  
+
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
-      
-  // Factory constructor to convert UserEntity to UserModel
+
   factory UserModel.fromEntity(UserEntity entity) {
-    return UserModel(
-      id: entity.id,
-      name: entity.name,
-      email: entity.email,
-      profilePicture: entity.profilePicture,
-      phone: entity.phone,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
-    );
+    return UserModel(id: entity.id, username: entity.username, email: entity.email);
   }
 }
 
-// Extension to convert UserModel to UserEntity
 extension UserModelX on UserModel {
   UserEntity toEntity() {
-    return UserEntity(
-      id: id,
-      name: name,
-      email: email,
-      profilePicture: profilePicture,
-      phone: phone,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-    );
+    return UserEntity(id: id, username: username, email: email);
   }
 }

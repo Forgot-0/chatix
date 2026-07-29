@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +13,18 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch auth state to get current user
     final authState = ref.watch(authProvider);
-    final user = authState.user;
+    final user = authState.value;
+
+    ref.listen(authProvider, (previous, next) {
+      if (next.hasError && !next.isLoading) {
+        final error = next.error;
+        AppUtils.showSnackBar(
+          context,
+          message: error is Failure ? error.message : 'Something went wrong.',
+          backgroundColor: Theme.of(context).colorScheme.error,
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -43,16 +55,6 @@ class HomeScreen extends ConsumerWidget {
               // Logout if user confirmed
               if (shouldLogout == true) {
                 await ref.read(authProvider.notifier).logout();
-
-                if (ref.read(authProvider).errorMessage != null) {
-                  if (context.mounted) {
-                    AppUtils.showSnackBar(
-                      context,
-                      message: ref.read(authProvider).errorMessage!,
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    );
-                  }
-                }
               }
             },
           ),
@@ -80,8 +82,8 @@ class HomeScreen extends ConsumerWidget {
                               context,
                             ).colorScheme.primary,
                             child: Text(
-                              user.name.isNotEmpty
-                                  ? user.name.substring(0, 1).toUpperCase()
+                              user.username.isNotEmpty
+                                  ? user.username.substring(0, 1).toUpperCase()
                                   : 'U',
                               style: const TextStyle(
                                 fontSize: 24,
@@ -96,7 +98,7 @@ class HomeScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  user.name,
+                                  user.username,
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,

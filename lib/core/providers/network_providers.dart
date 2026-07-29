@@ -1,4 +1,5 @@
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/network/interceptors/auth_interceptor.dart';
 import 'package:chatix/core/network/interceptors/retry_interceptor.dart';
 import 'package:chatix/core/network/interceptors/trailing_slash_interceptor.dart';
@@ -58,3 +59,11 @@ Dio dio(Ref ref) {
 
   return dio;
 }
+
+/// Thin wrapper around [Dio] that maps responses/errors into
+/// `Either<Failure, dynamic>` per the api-docs §2 error envelope. Feature
+/// datasources should depend on this instead of touching [Dio] directly.
+final apiClientProvider = Provider<ApiClient>((ref) {
+  final dio = ref.watch(dioProvider);
+  return ApiClient(dio);
+});

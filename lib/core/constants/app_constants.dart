@@ -40,6 +40,9 @@ class AppConstants {
   static const String surveyRoute = '/survey';
   static const String loginRoute = '/login';
   static const String registerRoute = '/register';
+  static const String verifyEmailRoute = '/verify-email';
+  static const String resetPasswordRequestRoute = '/reset-password';
+  static const String resetPasswordConfirmRoute = '/reset-password/confirm';
   static const String profileRoute = '/profile';
   static const String settingsRoute = '/settings';
   static const String languageSettingsRoute = '/settings/language';

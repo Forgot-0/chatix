@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -13,58 +16,45 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _formKey = GlobalKey<FormBuilderState>();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
+  // Read live by the "repeat password" validator, not just at submit time,
+  // so it can compare against whatever is currently typed in `password`.
+  String _currentPassword() =>
+      (_formKey.currentState?.fields['password']?.value as String?) ?? '';
 
-  void _register() async {
-    if (_formKey.currentState!.validate()) {
-      // Close keyboard
-      FocusScope.of(context).unfocus();
+  void _register() {
+    final isValid = _formKey.currentState?.saveAndValidate() ?? false;
+    if (!isValid) return;
 
-      // Get form values
-      final name = _nameController.text.trim();
-      final email = _emailController.text.trim();
-      final password = _passwordController.text;
+    FocusScope.of(context).unfocus();
 
-      // Call register method from auth provider
-      await ref
-          .read(authProvider.notifier)
-          .register(name: name, email: email, password: password);
-
-      // Check if registration was successful
-      final authState = ref.read(authProvider);
-      if (authState.errorMessage != null) {
-        // Show error message if registration failed
-        if (!mounted) return;
-
-        // ignore: use_build_context_synchronously
-        AppUtils.showSnackBar(
-          context,
-          message: authState.errorMessage!,
-          backgroundColor: Theme.of(context).colorScheme.error,
-        );
-      }
-    }
+    final values = _formKey.currentState!.value;
+    ref.read(authProvider.notifier).register(
+      username: values['username'] as String,
+      email: values['email'] as String,
+      password: values['password'] as String,
+      passwordRepeat: values['password_repeat'] as String,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch auth state
     final authState = ref.watch(authProvider);
+
+    ref.listen(authProvider, (previous, next) {
+      if (next.hasError && !next.isLoading) {
+        AppUtils.showSnackBar(
+          context,
+          message: _messageFor(next.error),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        );
+      }
+    });
+
+    final isLoading = authState.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Register')),
@@ -72,7 +62,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         padding: const EdgeInsets.all(24.0),
         child: Center(
           child: SingleChildScrollView(
-            child: Form(
+            child: FormBuilder(
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -97,46 +87,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  TextFormField(
-                    controller: _nameController,
+                  FormBuilderTextField(
+                    name: 'username',
                     decoration: const InputDecoration(
-                      labelText: 'Name',
-                      hintText: 'Enter your full name',
+                      labelText: 'Username',
+                      hintText: '4-100 characters',
                       prefixIcon: Icon(Icons.person_outline),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
-                      }
-                      return null;
-                    },
+                    validator: AuthFieldValidators.username,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
+                  FormBuilderTextField(
+                    name: 'email',
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       hintText: 'Enter your email',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!AppUtils.isValidEmail(value)) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
+                    validator: AuthFieldValidators.email,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
+                  FormBuilderTextField(
+                    name: 'password',
                     obscureText: !_isPasswordVisible,
+                    // Re-validate the "repeat" field live as this one
+                    // changes, so a stale "passwords do not match" error
+                    // doesn't linger after the person fixes this field.
+                    onChanged: (_) => _formKey.currentState?.fields['password_repeat']
+                        ?.validate(),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      hintText: 'Enter your password',
+                      hintText: '8+ chars, upper/lower/digit/special',
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -151,19 +133,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters long';
-                      }
-                      return null;
-                    },
+                    validator: AuthFieldValidators.password,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _confirmPasswordController,
+                  FormBuilderTextField(
+                    name: 'password_repeat',
                     obscureText: !_isConfirmPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
@@ -183,25 +157,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
+                    validator: AuthFieldValidators.passwordRepeat(_currentPassword),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: authState.isLoading ? null : _register,
+                    onPressed: isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
-                    child: authState.isLoading
+                    child: isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -239,5 +205,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  String _messageFor(Object? error) {
+    if (error is Failure) return error.message;
+    return 'Something went wrong. Please try again.';
   }
 }

@@ -1,156 +1,148 @@
+import 'package:chatix/features/auth/data/models/user_model.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/exceptions.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
-import 'package:chatix/core/storage/local_storage_service.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
 import 'package:chatix/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:chatix/features/auth/data/models/user_model.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 
+/// Talks to [AuthRemoteDataSource] and turns its `Either<Failure, Model>`
+/// into `Either<Failure, Entity>`, plus the bit of local orchestration
+/// (access-token persistence) the datasource intentionally doesn't do.
+///
+/// No "user data" is cached in [LocalStorageService] the way the old mock
+/// did — the source of truth is always `GET /users/me/` via
+/// [getCurrentUser]. We deliberately also don't add an extra local
+/// "last known user" cache here (api-docs guidance allows one, but it's
+/// optional): [AuthController] already re-validates against the server on
+/// every app start, so the extra cache would only help the very first
+/// frame before that call resolves — not worth the added invalidation
+/// complexity for this pass. Revisit if startup latency becomes an issue.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
-  final LocalStorageService _localStorageService;
   final SecureStorageService _secureStorageService;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
-    required LocalStorageService localStorageService,
     required SecureStorageService secureStorageService,
   }) : _remoteDataSource = remoteDataSource,
-       _localStorageService = localStorageService,
        _secureStorageService = secureStorageService;
 
   @override
-  Future<Either<Failure, UserEntity>> login({
+  Future<Either<Failure, UserEntity>> register({
+    required String username,
     required String email,
     required String password,
+    required String passwordRepeat,
   }) async {
-    try {
-      final response = await _remoteDataSource.login(
-        email: email,
-        password: password,
-      );
-
-      // Save user data locally
-      await _localStorageService.setObject(
-        AppConstants.userDataKey,
-        response.toJson(),
-      );
-
-      // Save auth token securely
-      await _secureStorageService.write(
-        key: AppConstants.accessTokenKey,
-        value: response.id, // assuming token is stored in id for demo
-      );
-
-      return Right(response.toEntity());
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } on NetworkException {
-      return const Left(NetworkFailure());
-    } on UnauthorizedException catch (e) {
-      return Left(AuthFailure(message: e.message));
-    } on Exception {
-      return const Left(ServerFailure());
-    }
+    final result = await _remoteDataSource.register(
+      username: username,
+      email: email,
+      password: password,
+      passwordRepeat: passwordRepeat,
+    );
+    return result.map((model) => model.toEntity());
   }
 
   @override
-  Future<Either<Failure, UserEntity>> register({
-    required String name,
-    required String email,
+  Future<Either<Failure, void>> login({
+    required String username,
     required String password,
   }) async {
-    try {
-      final response = await _remoteDataSource.register(
-        name: name,
-        email: email,
-        password: password,
-      );
+    final result = await _remoteDataSource.login(
+      username: username,
+      password: password,
+    );
 
-      // Save user data locally
-      await _localStorageService.setObject(
-        AppConstants.userDataKey,
-        response.toJson(),
-      );
-
-      // Save auth token securely
+    // Token persistence lives here rather than in the datasource: the
+    // datasource's job is strictly "call the endpoint, parse the body";
+    // deciding what to do with the result (write it to secure storage) is
+    // repository-level orchestration, same place `logout` below clears it.
+    return result.fold((failure) async => Left(failure), (accessToken) async {
       await _secureStorageService.write(
         key: AppConstants.accessTokenKey,
-        value: response.id, // assuming token is stored in id for demo
+        value: accessToken,
       );
-
-      return Right(response.toEntity());
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } on NetworkException {
-      return const Left(NetworkFailure());
-    } on BadRequestException catch (e) {
-      return Left(ValidationFailure(message: e.message));
-    } on Exception {
-      return const Left(ServerFailure());
-    }
+      return const Right(null);
+    });
   }
 
   @override
   Future<Either<Failure, void>> logout() async {
-    try {
-      // Remove user data from local storage
-      await _localStorageService.remove(AppConstants.userDataKey);
+    final result = await _remoteDataSource.logout();
 
-      // Remove auth token from secure storage
-      await _secureStorageService.delete(key: AppConstants.accessTokenKey);
-
-      return const Right(null);
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    } on Exception {
-      return const Left(ServerFailure());
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> isAuthenticated() async {
-    try {
-      final token = await _secureStorageService.read(
-        key: AppConstants.accessTokenKey,
-      );
-      return Right(token != null && token.isNotEmpty);
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    } on Exception {
-      return const Left(ServerFailure());
-    }
+    return result.fold(
+      (failure) async {
+        // api-docs §3.5: logout can fail with 400 INVALID_TOKEN if the
+        // refresh session was already gone server-side — in that case
+        // there's nothing left to invalidate, so clear the local token
+        // too. For network/timeout failures we keep it, so the caller can
+        // retry instead of silently losing a still-valid session.
+        if (failure is ApiFailure) {
+          await _secureStorageService.delete(key: AppConstants.accessTokenKey);
+        }
+        return Left(failure);
+      },
+      (_) async {
+        await _secureStorageService.delete(key: AppConstants.accessTokenKey);
+        return const Right(null);
+      },
+    );
   }
 
   @override
   Future<Either<Failure, UserEntity>> getCurrentUser() async {
-    try {
-      final userData = _localStorageService.getObject(AppConstants.userDataKey);
+    final result = await _remoteDataSource.getCurrentUser();
+    return result.map((model) => model.toEntity());
+  }
 
-      if (userData == null) {
-        return const Left(AuthFailure(message: 'User not found'));
-      }
+  @override
+  Future<Either<Failure, void>> requestEmailVerification({
+    required String email,
+  }) {
+    return _remoteDataSource.requestEmailVerification(email: email);
+  }
 
-      final user = UserModel.fromJson(userData as Map<String, dynamic>);
-      return Right(user.toEntity());
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    } on Exception {
-      return const Left(ServerFailure());
-    }
+  @override
+  Future<Either<Failure, void>> confirmEmailVerification({
+    required String token,
+  }) {
+    return _remoteDataSource.confirmEmailVerification(token: token);
+  }
+
+  @override
+  Future<Either<Failure, void>> requestPasswordReset({required String email}) {
+    return _remoteDataSource.requestPasswordReset(email: email);
+  }
+
+  @override
+  Future<Either<Failure, void>> confirmPasswordReset({
+    required String token,
+    required String password,
+    required String passwordRepeat,
+  }) {
+    return _remoteDataSource.confirmPasswordReset(
+      token: token,
+      password: password,
+      passwordRepeat: passwordRepeat,
+    );
+  }
+
+  @override
+  Future<Either<Failure, String>> getOAuthUrl({
+    required String provider,
+    bool connect = false,
+  }) {
+    return _remoteDataSource.getOAuthUrl(provider: provider, connect: connect);
   }
 }
 
-// Repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     remoteDataSource: ref.watch(authRemoteDataSourceProvider),
-    localStorageService: ref.watch(localStorageServiceProvider),
     secureStorageService: ref.watch(secureStorageServiceProvider),
   );
 });
