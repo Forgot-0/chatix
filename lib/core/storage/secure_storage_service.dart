@@ -1,14 +1,33 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:chatix/core/error/exceptions.dart';
 
-class SecureStorageService {
+/// Secure (encrypted) key-value storage — currently just the access token.
+///
+/// This is an interface (not a concrete class) for the same reason
+/// `AuthRepository`/`AuthRemoteDataSource` are: [SecureStorageServiceImpl]
+/// wraps a real platform plugin (`flutter_secure_storage`), which talks to
+/// a platform channel that simply doesn't exist in a plain `flutter test`
+/// VM run — unlike most plugins it doesn't fail fast there, it hangs
+/// forever. Any widget/golden test whose provider graph reaches this
+/// interface MUST override it with `test/helpers/fakes/fake_secure_storage_service.dart`'s
+/// in-memory fake instead of letting the real plugin run.
+abstract class SecureStorageService {
+  Future<void> write({required String key, required String value});
+  Future<String?> read({required String key});
+  Future<void> delete({required String key});
+  Future<void> deleteAll();
+  Future<bool> containsKey({required String key});
+  Future<Map<String, String>> readAll();
+}
+
+class SecureStorageServiceImpl implements SecureStorageService {
   final FlutterSecureStorage _secureStorage;
 
-  SecureStorageService(this._secureStorage);
+  SecureStorageServiceImpl(this._secureStorage);
 
   // Default constructor
-  factory SecureStorageService.create() {
-    return SecureStorageService(
+  factory SecureStorageServiceImpl.create() {
+    return SecureStorageServiceImpl(
       const FlutterSecureStorage(
         aOptions: AndroidOptions(
           // ignore: deprecated_member_use
@@ -20,6 +39,7 @@ class SecureStorageService {
   }
 
   // Write value
+  @override
   Future<void> write({required String key, required String value}) async {
     try {
       await _secureStorage.write(key: key, value: value);
@@ -29,6 +49,7 @@ class SecureStorageService {
   }
 
   // Read value
+  @override
   Future<String?> read({required String key}) async {
     try {
       return await _secureStorage.read(key: key);
@@ -38,6 +59,7 @@ class SecureStorageService {
   }
 
   // Delete value
+  @override
   Future<void> delete({required String key}) async {
     try {
       await _secureStorage.delete(key: key);
@@ -47,6 +69,7 @@ class SecureStorageService {
   }
 
   // Delete all
+  @override
   Future<void> deleteAll() async {
     try {
       await _secureStorage.deleteAll();
@@ -56,6 +79,7 @@ class SecureStorageService {
   }
 
   // Check if key exists
+  @override
   Future<bool> containsKey({required String key}) async {
     try {
       return await _secureStorage.containsKey(key: key);
@@ -65,6 +89,7 @@ class SecureStorageService {
   }
 
   // Read all values
+  @override
   Future<Map<String, String>> readAll() async {
     try {
       return await _secureStorage.readAll();
