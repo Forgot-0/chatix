@@ -1,4 +1,5 @@
 import 'package:cookie_jar/cookie_jar.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,10 +23,16 @@ void main() async {
   await dotenv.load(fileName: '.env');
 
   final sharedPreferences = await SharedPreferences.getInstance();
-  final appDir = await getApplicationDocumentsDirectory();
-  final cookieJar = PersistCookieJar(
-    storage: FileStorage('${appDir.path}/.cookies/'),
-  );
+  CookieJar cookieJar;
+
+  if (kIsWeb) {
+    cookieJar = CookieJar(); // Только в памяти
+  } else {
+    final appDir = await getApplicationDocumentsDirectory();
+    cookieJar = PersistCookieJar(
+      storage: FileStorage('${appDir.path}/.cookies/'),
+    );
+  }
 
   runApp(
     ProviderScope(
