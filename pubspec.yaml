@@ -67,6 +67,11 @@ dependencies:
   web_socket_channel: ^3.0.3
   flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.2.0
+  image_picker: ^1.1.2
+  # Used directly (not just transitively via dio) for MediaType when
+  # building the presigned avatar upload's multipart request — see
+  # features/profile/data/datasources/avatar_uploader_impl.dart.
+  http_parser: ^4.1.2
 
 dev_dependencies:
   flutter_test:
@@ -94,7 +99,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  generate: true
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -105,7 +110,7 @@ flutter:
     - .env
     # Common assets
     - assets/images/
-
+    
     # Language-specific assets
     - assets/images/en/
     - assets/images/es/
@@ -113,7 +118,7 @@ flutter:
     - assets/images/de/
     - assets/images/ja/
     - assets/images/bn/
-
+    
     # Fonts
     - assets/fonts/
 

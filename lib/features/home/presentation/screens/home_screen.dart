@@ -121,7 +121,7 @@ class HomeScreen extends ConsumerWidget {
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: () {
-                              // Add edit profile logic
+                              context.push(AppConstants.profileRoute);
                             },
                           ),
                         ],
@@ -166,6 +166,15 @@ class HomeScreen extends ConsumerWidget {
                         color: Colors.orange,
                         onTap: () {
                           context.push(AppConstants.surveyRoute);
+                        },
+                      ),
+                      _buildFeatureTile(
+                        context,
+                        icon: Icons.people_outline,
+                        title: 'Profiles',
+                        color: Colors.teal,
+                        onTap: () {
+                          context.push(AppConstants.profilesListRoute);
                         },
                       ),
                       _buildFeatureTile(

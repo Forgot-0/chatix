@@ -67,3 +67,23 @@ final apiClientProvider = Provider<ApiClient>((ref) {
   final dio = ref.watch(dioProvider);
   return ApiClient(dio);
 });
+
+/// A bare [Dio] instance with **no** `baseUrl` and **none** of
+/// [dioProvider]'s interceptors (cookies, auth, retry, trailing-slash).
+///
+/// Exists for requests that must go straight to an absolute, pre-signed
+/// third-party URL — profile avatar upload (api-docs §4.5 step 2) and,
+/// later, chat attachment upload (api-docs §6.5) — where attaching our
+/// `Authorization: Bearer` header or rewriting the path would break the
+/// upload's own signature (api-docs §10.4). Only timeouts are shared with
+/// the main client; nothing else about `{BASE_URL}/api/v1/*` requests
+/// applies here.
+final rawUploadDioProvider = Provider<Dio>((ref) {
+  return Dio(
+    BaseOptions(
+      connectTimeout: const Duration(milliseconds: AppConstants.connectTimeout),
+      receiveTimeout: const Duration(milliseconds: AppConstants.receiveTimeout),
+      sendTimeout: const Duration(milliseconds: AppConstants.receiveTimeout),
+    ),
+  );
+});

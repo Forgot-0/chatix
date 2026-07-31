@@ -44,6 +44,14 @@ class AppConstants {
   static const String resetPasswordRequestRoute = '/reset-password';
   static const String resetPasswordConfirmRoute = '/reset-password/confirm';
   static const String profileRoute = '/profile';
+  static const String profileEditRoute = '/profile/edit';
+  static const String profilesListRoute = '/profiles';
+
+  /// `/profile/{id}` — viewing someone else's profile. Kept as a helper
+  /// rather than another constant since it needs the id interpolated;
+  /// mirrors the [profileRoute] ("my own profile", no id) vs. this ("a
+  /// specific profile") split in `app_router.dart`.
+  static String profileDetailRoute(int profileId) => '/profile/$profileId';
   static const String settingsRoute = '/settings';
   static const String languageSettingsRoute = '/settings/language';
   static const String localizationDemoRoute = '/demo/localization';

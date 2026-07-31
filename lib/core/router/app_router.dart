@@ -11,6 +11,9 @@ import 'package:chatix/features/auth/presentation/screens/reset_password_request
 import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
 import 'package:chatix/features/home/presentation/screens/home_screen.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -151,6 +154,45 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.surveyRoute,
         name: 'survey',
         builder: (context, state) => const SurveyScreen(),
+      ),
+
+      // Profile route — the signed-in person's own profile, with 'edit'
+      // and ':id' nested underneath. Nesting (rather than 3 flat sibling
+      // routes) matters here: go_router matches a static child path
+      // ('edit') before a dynamic one (':id') at the same level
+      // regardless of declaration order, guaranteeing '/profile/edit'
+      // can never be captured as profileId "edit" by the ':id' route —
+      // that guarantee does NOT hold for flat top-level routes, which
+      // are matched in declaration order instead.
+      GoRoute(
+        path: AppConstants.profileRoute,
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+        routes: [
+          // Edit the signed-in person's own profile: '/profile/edit'.
+          GoRoute(
+            path: 'edit',
+            name: 'profile_edit',
+            builder: (context, state) => const ProfileEditScreen(),
+          ),
+
+          // Someone else's profile, by id: '/profile/{id}'.
+          GoRoute(
+            path: ':id',
+            name: 'profile_detail',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              return ProfileScreen(profileId: id);
+            },
+          ),
+        ],
+      ),
+
+      // Browse/search all profiles.
+      GoRoute(
+        path: AppConstants.profilesListRoute,
+        name: 'profiles_list',
+        builder: (context, state) => const ProfilesListScreen(),
       ),
 
       // Initial route - redirects based on auth state
