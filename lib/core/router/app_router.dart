@@ -14,6 +14,13 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
+import 'package:chatix/features/project/presentation/screens/projects_list_screen.dart';
+import 'package:chatix/features/project/presentation/screens/my_projects_screen.dart';
+import 'package:chatix/features/project/presentation/screens/create_project_screen.dart';
+import 'package:chatix/features/project/presentation/screens/my_invites_screen.dart';
+import 'package:chatix/features/project/presentation/screens/project_detail_screen.dart';
+import 'package:chatix/features/project/presentation/screens/position_detail_screen.dart';
+import 'package:chatix/features/project/presentation/screens/my_applications_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -193,6 +200,62 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.profilesListRoute,
         name: 'profiles_list',
         builder: (context, state) => const ProfilesListScreen(),
+      ),
+
+      // Projects (api-docs §5). Nested under '/projects' so the static
+      // children ('my', 'create', 'invites') can never be captured as a
+      // projectId by the dynamic ':id' child — go_router prefers a static
+      // child over a dynamic one at the same level (same reasoning as the
+      // profile routes; that guarantee only holds for nested routes).
+      GoRoute(
+        path: AppConstants.projectsListRoute,
+        name: 'projects_list',
+        builder: (context, state) => const ProjectsListScreen(),
+        routes: [
+          GoRoute(
+            path: 'my',
+            name: 'my_projects',
+            builder: (context, state) => const MyProjectsScreen(),
+          ),
+          GoRoute(
+            path: 'create',
+            name: 'create_project',
+            builder: (context, state) => const CreateProjectScreen(),
+          ),
+          GoRoute(
+            path: 'invites',
+            name: 'my_invites',
+            builder: (context, state) => const MyInvitesScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'project_detail',
+            builder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) {
+                return const Scaffold(
+                  body: Center(child: Text('Invalid project id')),
+                );
+              }
+              return ProjectDetailScreen(projectId: id);
+            },
+          ),
+        ],
+      ),
+
+      // Public position detail by UUID: '/positions/{id}'.
+      GoRoute(
+        path: '/positions/:id',
+        name: 'position_detail',
+        builder: (context, state) =>
+            PositionDetailScreen(positionId: state.pathParameters['id'] ?? ''),
+      ),
+
+      // The current candidate's own applications: '/applications/my'.
+      GoRoute(
+        path: AppConstants.myApplicationsRoute,
+        name: 'my_applications',
+        builder: (context, state) => const MyApplicationsScreen(),
       ),
 
       // Initial route - redirects based on auth state

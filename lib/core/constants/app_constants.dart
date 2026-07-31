@@ -52,6 +52,19 @@ class AppConstants {
   /// mirrors the [profileRoute] ("my own profile", no id) vs. this ("a
   /// specific profile") split in `app_router.dart`.
   static String profileDetailRoute(int profileId) => '/profile/$profileId';
+  // Project feature (api-docs §5).
+  static const String projectsListRoute = '/projects';
+  static const String myProjectsRoute = '/projects/my';
+  static const String createProjectRoute = '/projects/create';
+  static const String myInvitesRoute = '/projects/invites';
+  static const String myApplicationsRoute = '/applications/my';
+
+  /// `/projects/{id}` — a specific project's detail (tabs: info/members/positions).
+  static String projectDetailRoute(int projectId) => '/projects/$projectId';
+
+  /// `/positions/{id}` — a specific position's detail (UUID). Public read.
+  static String positionDetailRoute(String positionId) => '/positions/$positionId';
+
   static const String settingsRoute = '/settings';
   static const String languageSettingsRoute = '/settings/language';
   static const String localizationDemoRoute = '/demo/localization';
