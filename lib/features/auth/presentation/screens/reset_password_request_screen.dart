@@ -43,7 +43,7 @@ class _ResetPasswordRequestScreenState
         context,
         message: failure is RateLimitFailure
             ? 'Too many attempts — please try again later.'
-            : (failure is Failure ? failure.message : 'Something went wrong.'),
+            : (failure.message),
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
       (_) {

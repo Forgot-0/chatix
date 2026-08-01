@@ -63,16 +63,20 @@ class ChatAttachmentState extends Equatable {
 /// valid, so retrying the send must not re-upload 50 MB), and is the only part
 /// of the flow with meaningful progress to report.
 class ChatAttachmentController
-    extends AsyncNotifier<ChatAttachmentState, String> {
+    extends Notifier<ChatAttachmentState> {
+  ChatAttachmentController(this._chatId);
+
+  /// The chat this controller is scoped to. Riverpod 3's manual `family` API
+  /// hands the argument to the constructor (there is no inherited `arg`).
+  final String _chatId;
+
   StreamSubscription<void>? _subscription;
 
   @override
-  ChatAttachmentState build(String arg) {
+  ChatAttachmentState build() {
     ref.onDispose(() => _subscription?.cancel());
     return const ChatAttachmentState();
   }
-
-  String get _chatId => arg;
 
   /// Validates a picked selection immediately (api-docs §6.5) so the user
   /// learns about an oversized file at pick time, not after a long upload.

@@ -140,11 +140,16 @@ class ChatDetailState extends Equatable {
 
 /// Drives `ChatDetailScreen` for one `chatId`.
 class ChatDetailController
-    extends AsyncNotifier<ChatDetailState, String> {
-  String get _chatId => arg;
+    extends AsyncNotifier<ChatDetailState> {
+  ChatDetailController(this._chatId);
+
+  /// The chat this controller is scoped to. Riverpod 3's manual `family` API
+  /// hands the argument to the constructor (there is no inherited `arg`), so
+  /// the provider below forwards it.
+  final String _chatId;
 
   @override
-  Future<ChatDetailState> build(String arg) => _load();
+  Future<ChatDetailState> build() => _load();
 
   Future<void> refresh() async {
     // Keeps the current frame on screen while re-fetching (no spinner flash)

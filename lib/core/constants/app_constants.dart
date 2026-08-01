@@ -52,6 +52,11 @@ class AppConstants {
   /// `/chat/{id}/members` — roles, bans and kicks (api-docs §6.3).
   static String chatMembersRoute(String chatId) => '/chat/$chatId/members';
 
+  /// `/chat/{id}/call` — the LiveKit call room (api-docs §6.6). A route of its
+  /// own rather than a dialog, so the OS back gesture ends the call and the
+  /// room is disposed in exactly one place.
+  static String chatCallRoute(String chatId) => '/chat/$chatId/call';
+
   static const String surveyRoute = '/survey';
   static const String loginRoute = '/login';
   static const String registerRoute = '/register';

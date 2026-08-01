@@ -12,6 +12,12 @@ void main() {
   late CreateChatUseCase useCase;
   late MockChatRepository mockRepository;
 
+  setUpAll(() {
+    // `any(named: 'chatType')` needs a dummy ChatType to hand around
+    // (mocktail can't synthesise one for a non-nullable enum parameter).
+    registerFallbackValue(ChatType.direct);
+  });
+
   setUp(() {
     mockRepository = MockChatRepository();
     useCase = CreateChatUseCase(mockRepository);
@@ -210,18 +216,49 @@ void main() {
       verifyNeverCalled();
     });
 
-    test('rejects a group exceeding its 500-member cap', () async {
-      // `group` caps at 500 while `supergroup` allows a million — collapsing
-      // the two types would let this through (api-docs §6.1).
+    test('applies the per-type cap, not one global limit', () async {
+      // `group` caps at 500 while `supergroup` allows a million (api-docs
+      // §6.1). The initial-member cap (100) is the tighter of the two here,
+      // so a 100-member list is the largest a `group` can be created with and
+      // must be accepted rather than rejected by a mistakenly shared limit.
+      stubCreateChat();
+
       final result = await useCase.execute(
         name: 'Crowd',
         chatType: ChatType.group,
-        memberIds: List.generate(100, (i) => i + 1),
+        memberIds: List.generate(CreateChatUseCase.maxInitialMembers, (i) => i + 1),
       );
 
-      // 100 members is fine for a group; this asserts the cap check uses the
-      // per-type limit rather than a single global one.
-      expect(result.isLeft() || result.isRight(), isTrue);
+      expect(result.isRight(), isTrue);
+      verify(
+        () => mockRepository.createChat(
+          name: 'Crowd',
+          description: null,
+          chatType: ChatType.group,
+          memberIds: any(named: 'memberIds'),
+          isPublic: false,
+          adminOnly: false,
+          slowModeSeconds: 0,
+          permissions: null,
+        ),
+      ).called(1);
+    });
+
+    test('rejects a direct chat that would exceed its 2-member cap', () async {
+      // The per-type cap is what makes `direct` different from every other
+      // type: 2 members total, i.e. the caller plus exactly one other.
+      expect(ChatType.direct.maxMembers, 2);
+      expect(ChatType.group.maxMembers, 500);
+      expect(ChatType.supergroup.maxMembers, 1000000);
+      expect(ChatType.channel.maxMembers, 10000000);
+
+      final result = await useCase.execute(
+        chatType: ChatType.direct,
+        memberIds: const [1, 2, 3],
+      );
+
+      expect(result.getLeft().toNullable(), isA<InputFailure>());
+      verifyNeverCalled();
     });
 
     test('rejects duplicate member ids', () async {

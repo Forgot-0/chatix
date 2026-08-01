@@ -3,7 +3,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
@@ -49,7 +48,7 @@ class _ResetPasswordConfirmScreenState
     result.fold(
       (failure) => AppUtils.showSnackBar(
         context,
-        message: failure is Failure ? failure.message : 'Something went wrong.',
+        message: failure.message,
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
       (_) {

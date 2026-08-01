@@ -1,8 +1,8 @@
+import 'package:chatix/features/chat/data/repositories/chat_attachment_uploader.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:chatix/core/error/failures.dart';
-import 'package:chatix/features/chat/data/datasources/chat_attachment_uploader.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
@@ -10,8 +10,7 @@ import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_
 
 class MockChatRepository extends Mock implements ChatRepository {}
 
-class MockChatAttachmentUploader extends Mock
-    implements ChatAttachmentUploader {}
+class MockChatAttachmentUploader extends Mock implements ChatAttachmentUploader {}
 
 void main() {
   late UploadChatAttachmentUseCase useCase;

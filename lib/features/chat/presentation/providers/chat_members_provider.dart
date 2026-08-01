@@ -77,11 +77,15 @@ class ChatMembersState extends Equatable {
 /// authoritative post-action row to apply — and a role change can alter what
 /// the *caller* is allowed to do next, which only fresh data reflects.
 class ChatMembersController
-    extends AsyncNotifier<ChatMembersState, String> {
-  String get _chatId => arg;
+    extends AsyncNotifier<ChatMembersState> {
+  ChatMembersController(this._chatId);
+
+  /// The chat this controller is scoped to. Riverpod 3's manual `family` API
+  /// hands the argument to the constructor (there is no inherited `arg`).
+  final String _chatId;
 
   @override
-  Future<ChatMembersState> build(String arg) => _load();
+  Future<ChatMembersState> build() => _load();
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
@@ -136,7 +140,7 @@ class ChatMembersController
   Future<void> addMember(int userId, {ChatRole role = ChatRole.member}) async {
     final result = await ref
         .read(addMemberUseCaseProvider)
-        .execute(_chatId, userId, roleId: role.id);
+        .execute(_chatId, userId, role: role);
     result.match((failure) => throw failure, (_) {});
     await refresh();
   }
@@ -144,7 +148,7 @@ class ChatMembersController
   Future<void> changeRole(int userId, ChatRole role) async {
     final result = await ref
         .read(changeMemberRoleUseCaseProvider)
-        .execute(_chatId, userId, role.id);
+        .execute(_chatId, userId, role);
     result.match((failure) => throw failure, (_) {});
     await refresh();
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 
@@ -46,7 +45,7 @@ class OAuthButtons extends ConsumerWidget {
     result.fold(
       (failure) => AppUtils.showSnackBar(
         context,
-        message: failure is Failure ? failure.message : 'Could not start OAuth sign-in',
+        message: failure.message,
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
       (url) async {

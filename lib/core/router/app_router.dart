@@ -24,7 +24,11 @@ import 'package:chatix/features/project/presentation/screens/my_applications_scr
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/features/chat/presentation/screens/chat_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/call_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/survey/presentation/screens/survey_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -149,11 +153,62 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LocalizationAssetsDemo(),
       ),
 
-      // Chat route
+      // Chats (api-docs §6). Nested so the static 'create' child can never be
+      // captured as a chat id by the dynamic ':id' child — go_router prefers a
+      // static child over a dynamic one at the same level (same reasoning as
+      // the profile/project routes; the guarantee only holds when nested).
       GoRoute(
         path: AppConstants.chatRoute,
         name: 'chat',
-        builder: (context, state) => const ChatScreen(),
+        builder: (context, state) => const ChatsListScreen(),
+        routes: [
+          GoRoute(
+            path: 'create',
+            name: 'create_chat',
+            builder: (context, state) => const CreateChatScreen(),
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'chat_detail',
+            builder: (context, state) {
+              // Chat ids are UUID strings (api-docs §1.8), so there is
+              // nothing to parse — but an empty segment would produce a
+              // request to `/chats//` that 404s, so it is caught here.
+              final id = state.pathParameters['id'];
+              if (id == null || id.isEmpty) {
+                return const _InvalidRouteScreen(message: 'Unknown chat');
+              }
+              return ChatDetailScreen(chatId: id);
+            },
+            routes: [
+              GoRoute(
+                path: 'members',
+                name: 'chat_members',
+                builder: (context, state) {
+                  final id = state.pathParameters['id'];
+                  if (id == null || id.isEmpty) {
+                    return const _InvalidRouteScreen(message: 'Unknown chat');
+                  }
+                  return ChatMembersScreen(chatId: id);
+                },
+              ),
+              // The LiveKit call room (api-docs §6.6). A separate route rather
+              // than a dialog so the OS back gesture leaves the call and the
+              // room can be disposed in one place.
+              GoRoute(
+                path: 'call',
+                name: 'chat_call',
+                builder: (context, state) {
+                  final id = state.pathParameters['id'];
+                  if (id == null || id.isEmpty) {
+                    return const _InvalidRouteScreen(message: 'Unknown chat');
+                  }
+                  return CallScreen(chatId: id);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
 
       // Survey route

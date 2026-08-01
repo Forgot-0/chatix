@@ -72,6 +72,12 @@ dependencies:
   # building the presigned avatar upload's multipart request — see
   # features/profile/data/datasources/avatar_uploader_impl.dart.
   http_parser: ^4.1.2
+  # LiveKit voice/video calls (api-docs §6.6). `POST /chats/{id}/calls/join/`
+  # returns a `JoinTokenDTO {token, slug, livekit_url}` which this SDK consumes
+  # via `Room.connect(livekitUrl, token)`. Also pulls in `permission_handler`
+  # transitively for the mic/camera prompts.
+  livekit_client: ^2.9.0
+  permission_handler: ^12.0.0
 
 dev_dependencies:
   flutter_test:

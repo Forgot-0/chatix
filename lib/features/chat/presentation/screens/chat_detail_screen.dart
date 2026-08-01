@@ -12,6 +12,7 @@ import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';

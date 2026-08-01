@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:chatix/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
-import 'package:chatix/features/chat/domain/usecases/observe_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
 
 /// Data layer dependency injection providers
@@ -19,10 +18,6 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 });
 
 // --- Use Cases ---
-final observeMessagesUseCaseProvider = Provider<ObserveMessagesUseCase>((ref) {
-  return ObserveMessagesUseCase(ref.watch(chatRepositoryProvider));
-});
-
 final sendMessageUseCaseProvider = Provider<SendMessageUseCase>((ref) {
   return SendMessageUseCase(ref.watch(chatRepositoryProvider));
 });
