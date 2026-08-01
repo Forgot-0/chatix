@@ -1,9 +1,9 @@
+import 'package:chatix/features/chat/data/repositories/chat_attachment_uploader.dart';
 import 'package:equatable/equatable.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
-import 'package:chatix/features/chat/domain/repositories/chat_attachment_uploader.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
 /// Which step of the upload is running, for a progress indicator

@@ -1,10 +1,10 @@
+import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart.dart';
+import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:chatix/features/chat/data/datasources/chat_attachment_uploader_impl.dart';
 import 'package:chatix/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/ban_member_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/change_member_role_use_case.dart';
-import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/delete_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/delete_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/edit_message_use_case.dart';
@@ -24,7 +24,6 @@ import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mute_call_participant_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_use_case.dart';
-import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart';
 
 /// Dependency wiring for the chat feature's **REST** half (api-docs §6).
 ///
