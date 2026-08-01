@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
@@ -62,74 +60,105 @@ class ChatAttachmentState extends Equatable {
 /// several composer edits, must survive a failed `sendMessage` (the tokens stay
 /// valid, so retrying the send must not re-upload 50 MB), and is the only part
 /// of the flow with meaningful progress to report.
-class ChatAttachmentController
-    extends Notifier<ChatAttachmentState> {
+///
+/// An [AsyncNotifier] like every other controller in this feature, so screens
+/// read one uniform `AsyncValue` shape throughout.
+///
+/// ⚠️ The upload deliberately never parks the provider in `AsyncValue.loading`.
+/// Doing so would drop [ChatAttachmentState.selected] and
+/// [ChatAttachmentState.progress] out of `state.value`, so the attachment bar
+/// would blank out exactly while the progress bar is meant to be moving.
+/// Progress is instead carried inside the data state, and
+/// [ChatAttachmentState.isUploading] is the flag to render against.
+///
+/// A failed upload is also kept as *data* (`state.failure`) rather than
+/// `AsyncValue.error`: the picked files must stay on screen so the user can
+/// retry or drop them, which an error state cannot represent.
+class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
   ChatAttachmentController(this._chatId);
 
   /// The chat this controller is scoped to. Riverpod 3's manual `family` API
   /// hands the argument to the constructor (there is no inherited `arg`).
   final String _chatId;
 
-  StreamSubscription<void>? _subscription;
+  /// Guards against a `clear()` (or a dispose) racing an in-flight upload:
+  /// each run captures the generation it started in and stops writing state
+  /// once it is superseded, so an abandoned batch can't repopulate the bar
+  /// with tokens the user already dismissed.
+  int _generation = 0;
 
   @override
-  ChatAttachmentState build() {
-    ref.onDispose(() => _subscription?.cancel());
+  Future<ChatAttachmentState> build() async {
+    ref.onDispose(() => _generation++);
     return const ChatAttachmentState();
   }
+
+  /// Current data, or an empty selection while the (synchronous) first build
+  /// hasn't landed yet.
+  ChatAttachmentState get _current => state.value ?? const ChatAttachmentState();
 
   /// Validates a picked selection immediately (api-docs §6.5) so the user
   /// learns about an oversized file at pick time, not after a long upload.
   void select(List<AttachmentUploadRequestEntity> uploads) {
+    _generation++;
     final failure = ref
         .read(uploadChatAttachmentUseCaseProvider)
         .validate(uploads);
 
-    state = ChatAttachmentState(
-      selected: failure == null ? uploads : const [],
-      failure: failure,
+    state = AsyncValue.data(
+      ChatAttachmentState(
+        selected: failure == null ? uploads : const [],
+        failure: failure,
+      ),
     );
   }
 
   void clear() {
-    _subscription?.cancel();
-    _subscription = null;
-    state = const ChatAttachmentState();
+    _generation++;
+    state = const AsyncValue.data(ChatAttachmentState());
   }
 
   /// Runs steps 1–3. On success [ChatAttachmentState.uploadTokens] is filled
   /// and the caller may send the message right away — no need to wait for the
   /// WS `attachment_success` event (api-docs §6.5).
   Future<void> upload() async {
-    if (state.selected.isEmpty || state.isUploading) return;
+    final start = _current;
+    if (start.selected.isEmpty || start.isUploading) return;
 
-    state = state.copyWith(clearFailure: true, uploadTokens: const []);
+    final generation = _generation;
+    state = AsyncValue.data(
+      start.copyWith(clearFailure: true, uploadTokens: const []),
+    );
 
     final stream = ref
         .read(uploadChatAttachmentUseCaseProvider)
-        .execute(_chatId, state.selected);
+        .execute(_chatId, start.selected);
 
     await for (final event in stream) {
-      event.match(
-        (failure) {
-          state = state.copyWith(failure: failure, clearProgress: true);
-        },
-        (progress) {
-          state = state.copyWith(
-            progress: progress,
-            uploadTokens: progress.stage == ChatAttachmentUploadStage.done
-                ? progress.uploadTokens
-                : state.uploadTokens,
-          );
-        },
+      // Superseded by clear()/select() or disposed — stop touching state.
+      if (generation != _generation) return;
+
+      final current = _current;
+      final next = event.match(
+        (failure) => current.copyWith(failure: failure, clearProgress: true),
+        (progress) => current.copyWith(
+          progress: progress,
+          uploadTokens: progress.stage == ChatAttachmentUploadStage.done
+              ? progress.uploadTokens
+              : current.uploadTokens,
+        ),
       );
-      if (state.failure != null) return;
+      state = AsyncValue.data(next);
+
+      // The use case emits a single Left and closes, but returning here keeps
+      // that contract from being load-bearing.
+      if (next.failure != null) return;
     }
   }
 }
 
 final chatAttachmentProvider =
-    NotifierProvider.family<
+    AsyncNotifierProvider.family<
       ChatAttachmentController,
       ChatAttachmentState,
       String

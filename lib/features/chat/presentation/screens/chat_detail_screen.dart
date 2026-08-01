@@ -1,3 +1,5 @@
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +18,10 @@ import 'package:chatix/features/chat/presentation/providers/chat_list_provider.d
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
+
+/// Which of api-docs §6.5's two attachment buckets the user is picking from.
+/// They can't be combined in one message — see `_pickAttachments`.
+enum _AttachmentSource { media, document }
 
 /// One conversation: history + composer (api-docs §6.4, §6.5, §6.6).
 ///
@@ -148,11 +154,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _send() async {
     final text = _textController.text.trim();
-    final attachments = ref.read(chatAttachmentProvider(widget.chatId));
+    final attachments =
+        ref.read(chatAttachmentProvider(widget.chatId)).value;
 
     // The server rejects a message with neither text nor attachments
     // (`400 INVALID_MESSAGE`); no point spending a request on it.
-    if (text.isEmpty && !attachments.isReady) return;
+    if (text.isEmpty && !(attachments?.isReady ?? false)) return;
 
     _textController.clear();
 
@@ -162,47 +169,130 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           content: text.isEmpty ? null : text,
           // Tokens confirmed at step 3 can be used immediately — no waiting
           // for the WS `attachment_success` event (api-docs §6.5).
-          uploadTokens: attachments.uploadTokens,
+          uploadTokens: attachments?.uploadTokens ?? const [],
         );
 
     ref.read(chatAttachmentProvider(widget.chatId).notifier).clear();
   }
 
-  /// Picks media through `image_picker`, filtered to the MIME types the
-  /// backend accepts (api-docs §6.5). Size/count limits are enforced by
-  /// `ChatAttachmentController.select` before anything is uploaded.
+  /// Asks which of api-docs §6.5's two attachment buckets to pick from.
+  ///
+  /// The choice is unavoidable, not a UI preference: the buckets have
+  /// different caps (media ≤50 MB ×10, documents ≤100 MB ×1) and a message
+  /// **cannot mix them**, because the document bucket permits exactly one
+  /// attachment in total. Offering one combined picker would let the user
+  /// build a selection that is guaranteed to be rejected.
   Future<void> _pickAttachments() async {
-    final picker = ImagePicker();
-    final files = await picker.pickMultiImage();
-    if (files.isEmpty || !mounted) return;
-
-    final uploads = <AttachmentUploadRequestEntity>[];
-    for (final file in files) {
-      final size = await file.length();
-      final mime = file.mimeType ?? _mimeFromName(file.name);
-      uploads.add(
-        AttachmentUploadRequestEntity(
-          filename: file.name,
-          mimeType: mime,
-          fileSize: size,
-          filePath: file.path,
+    final source = await showModalBottomSheet<_AttachmentSource>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Photos & videos'),
+              subtitle: Text(
+                'Up to ${ChatAttachmentLimits.maxMediaCount}, '
+                '${ChatAttachmentLimits.formatBytes(ChatAttachmentLimits.maxMediaSizeBytes)} each',
+              ),
+              onTap: () =>
+                  Navigator.of(sheetContext).pop(_AttachmentSource.media),
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('Document'),
+              subtitle: Text(
+                'One file, up to '
+                '${ChatAttachmentLimits.formatBytes(ChatAttachmentLimits.maxFileSizeBytes)}',
+              ),
+              onTap: () =>
+                  Navigator.of(sheetContext).pop(_AttachmentSource.document),
+            ),
+          ],
         ),
-      );
-    }
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    final uploads = switch (source) {
+      _AttachmentSource.media => await _pickMedia(),
+      _AttachmentSource.document => await _pickDocument(),
+    };
+
+    if (uploads.isEmpty || !mounted) return;
 
     final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
     notifier.select(uploads);
 
     // `select` rejects an invalid batch; only start the three-request upload
     // once the selection actually passed validation.
-    if (ref.read(chatAttachmentProvider(widget.chatId)).hasSelection) {
+    final selection = ref.read(chatAttachmentProvider(widget.chatId)).value;
+    if (selection?.hasSelection ?? false) {
       await notifier.upload();
     }
+  }
+
+  /// Images/videos through `image_picker` — the media bucket (api-docs §6.5).
+  /// Size/count limits are enforced by `ChatAttachmentController.select`
+  /// before anything is uploaded.
+  Future<List<AttachmentUploadRequestEntity>> _pickMedia() async {
+    final files = await ImagePicker().pickMultiImage();
+
+    final uploads = <AttachmentUploadRequestEntity>[];
+    for (final file in files) {
+      uploads.add(
+        AttachmentUploadRequestEntity(
+          filename: file.name,
+          mimeType: file.mimeType ?? _mimeFromName(file.name),
+          fileSize: await file.length(),
+          filePath: file.path,
+        ),
+      );
+    }
+    return uploads;
+  }
+
+  /// One document through `file_picker`, restricted at the OS level to the
+  /// extensions matching §6.5's allowed MIME list — `allowMultiple: false`
+  /// because that bucket caps a message at a single attachment.
+  Future<List<AttachmentUploadRequestEntity>> _pickDocument() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ChatAttachmentLimits.fileExtensions,
+      // The document bucket caps a message at a single attachment (§6.5).
+      allowMultiple: false,
+      // Streaming from a path beats holding a 100 MB buffer; `withData` is
+      // only needed on web, where no path exists. (file_picker 11 defaults
+      // this to false on every platform, so web must opt in explicitly.)
+      withData: kIsWeb,
+      withReadStream: false,
+    );
+
+    final picked = result?.files.singleOrNull;
+    if (picked == null) return const [];
+
+    return [
+      AttachmentUploadRequestEntity(
+        filename: picked.name,
+        // `file_picker` reports no MIME type, so it is derived from the
+        // extension — which the picker already constrained to the allow-list.
+        mimeType: _mimeFromName(picked.name),
+        fileSize: picked.size,
+        // ⚠️ On web `PlatformFile.path` is a Blob URL, not a filesystem path —
+        // handing it to the uploader would make it try to open a File that
+        // cannot exist. Web therefore passes bytes only.
+        filePath: kIsWeb ? null : picked.path,
+        bytes: picked.bytes,
+      ),
+    ];
   }
 
   static String _mimeFromName(String name) {
     final ext = name.split('.').last.toLowerCase();
     switch (ext) {
+      // Media bucket.
       case 'jpg':
       case 'jpeg':
         return 'image/jpeg';
@@ -216,6 +306,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return 'video/mp4';
       case 'mov':
         return 'video/quicktime';
+      case 'webm':
+        return 'video/webm';
+      // Document bucket (api-docs §6.5).
+      case 'pdf':
+        return 'application/pdf';
+      case 'zip':
+        return 'application/zip';
+      case 'txt':
+        return 'text/plain';
+      case 'doc':
+        return 'application/msword';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument'
+            '.wordprocessingml.document';
+      case 'xlsx':
+        return 'application/vnd.openxmlformats-officedocument'
+            '.spreadsheetml.sheet';
       default:
         // Deliberately not guessed: an unknown type is rejected by
         // `ChatAttachmentLimits.typeOf` with a clear message rather than
@@ -571,8 +678,10 @@ class _AttachmentBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(chatAttachmentProvider(chatId));
+    final state = ref.watch(chatAttachmentProvider(chatId)).value;
     final theme = Theme.of(context);
+
+    if (state == null) return const SizedBox.shrink();
 
     if (state.failure != null) {
       return Container(

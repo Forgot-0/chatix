@@ -313,7 +313,7 @@ class _BanRequest {
   final DateTime? bannedTo;
 }
 
-/// ⚠️ Sends `banned_to` — the backend field is literally spelled `bannet_to`
+/// ⚠️ Sends `banned_to` — the backend field is literally spelled `banned_to`
 /// (typo preserved server-side, api-docs §6.3); the data source does the
 /// renaming so nothing above it has to know.
 class _BanDialog extends StatefulWidget {
@@ -354,7 +354,7 @@ class _BanDialogState extends State<_BanDialog> {
                 child: Text(
                   _bannedTo == null
                       // No date = permanent, which is the backend's behaviour
-                      // when `bannet_to` is omitted.
+                      // when `banned_to` is omitted.
                       ? 'Permanent'
                       : 'Until ${_bannedTo!.toLocal()}',
                 ),

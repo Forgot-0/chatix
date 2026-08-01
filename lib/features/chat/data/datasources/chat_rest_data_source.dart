@@ -356,10 +356,11 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       '/chats/$chatId/members/$userId/ban/',
       data: {
         'reason': ?reason,
-        // ⚠️ `bannet_to`, not `banned_to` — the typo is in the backend schema
-        // (api-docs §6.3) and must be sent verbatim or the expiry is silently
-        // dropped and the ban becomes permanent.
-        if (bannedTo != null) 'bannet_to': bannedTo.toUtc().toIso8601String(),
+        // `BanMemberRequest {reason?, banned_to?}` (api-docs §6.3). Omitted
+        // entirely when null, which the backend reads as a permanent ban —
+        // sending an explicit null would be rejected by the datetime
+        // validator rather than treated as "no expiry".
+        if (bannedTo != null) 'banned_to': bannedTo.toUtc().toIso8601String(),
       },
     );
     return result.map((_) {});

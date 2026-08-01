@@ -78,6 +78,12 @@ dependencies:
   # transitively for the mic/camera prompts.
   livekit_client: ^2.9.0
   permission_handler: ^12.0.0
+  # Document attachments (api-docs §6.5's `file` bucket: pdf/zip/txt/doc/docx/
+  # xlsx, ≤100 MB, max 1 per message). `image_picker` only reaches the
+  # image/video bucket, so without this the documented file types are
+  # unattachable. Configured with `ChatAttachmentLimits.allowedExtensions` so
+  # unsupported files can't be selected in the first place.
+  file_picker: ^11.0.3
 
 dev_dependencies:
   flutter_test:

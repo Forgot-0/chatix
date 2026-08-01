@@ -66,6 +66,12 @@ abstract final class ChatAttachmentLimits {
   /// File extensions matching [allowedMimeTypes], for pickers that filter by
   /// extension (`FilePicker.custom` + `allowedExtensions`) rather than MIME.
   static const List<String> allowedExtensions = [
+    ...mediaExtensions,
+    ...fileExtensions,
+  ];
+
+  /// Extensions of the image/video bucket only (≤50 MB, ≤10 per message).
+  static const List<String> mediaExtensions = [
     'jpg',
     'jpeg',
     'png',
@@ -74,6 +80,15 @@ abstract final class ChatAttachmentLimits {
     'mp4',
     'mov',
     'webm',
+  ];
+
+  /// Extensions of the document bucket only (≤100 MB, **1** per message).
+  ///
+  /// Separate from [mediaExtensions] because the picker must be restricted to
+  /// one bucket at a time: a message cannot mix the two (a document allows
+  /// exactly one attachment in total), so a combined allow-list would let the
+  /// user assemble a selection that is certain to be rejected.
+  static const List<String> fileExtensions = [
     'pdf',
     'zip',
     'txt',

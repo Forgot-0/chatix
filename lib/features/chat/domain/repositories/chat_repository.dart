@@ -117,7 +117,7 @@ abstract class ChatRepository {
   /// Requires `member:ban`.
   ///
   /// [bannedTo] is the ban expiry; omit it for a permanent ban. ⚠️ It is
-  /// serialised as `bannet_to` — a typo preserved verbatim in the backend
+  /// serialised as `banned_to` — a typo preserved verbatim in the backend
   /// schema (api-docs §6.3). The Dart parameter keeps the correct spelling;
   /// only the wire key is misspelled.
   Future<Either<Failure, void>> banMember(

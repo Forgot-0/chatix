@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
@@ -25,6 +26,9 @@ class ChatMembersState extends Equatable {
   /// not "offline".
   final Map<int, bool> presence;
 
+  /// The signed-in user's id, needed to pick [me] out of the roster.
+  final int? myUserId;
+
   const ChatMembersState({
     this.chat,
     this.members = const [],
@@ -32,12 +36,27 @@ class ChatMembersState extends Equatable {
     this.nextUserId,
     this.isLoadingMore = false,
     this.presence = const {},
+    this.myUserId,
   });
 
   bool get canLoadMore => hasNext && nextUserId != null;
 
   /// The caller's own membership — the "me" side of every permission check.
-  ChatMemberEntity? get me => chat?.me;
+  ///
+  /// ⚠️ Resolved from the loaded data, not from `chat.me`: this screen's chat
+  /// comes from `GET /chats/{id}/` (a `ChatDetaiDTO`), which has no `me` field
+  /// at all — the caller's row lives in `members` (api-docs §6.2). The
+  /// paginated [members] list is consulted first because it is the freshest
+  /// copy after a role change, then the chat's own embedded roster, which also
+  /// covers a caller whose row sits on a page not yet scrolled to.
+  ChatMemberEntity? get me {
+    final id = myUserId;
+    if (id == null) return chat?.me;
+    for (final member in members) {
+      if (member.userId == id) return member;
+    }
+    return chat?.membershipOf(id);
+  }
 
   ChatMembersState copyWith({
     ChatEntity? chat,
@@ -46,6 +65,7 @@ class ChatMembersState extends Equatable {
     int? nextUserId,
     bool? isLoadingMore,
     Map<int, bool>? presence,
+    int? myUserId,
   }) {
     return ChatMembersState(
       chat: chat ?? this.chat,
@@ -55,6 +75,7 @@ class ChatMembersState extends Equatable {
       nextUserId: nextUserId,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       presence: presence ?? this.presence,
+      myUserId: myUserId ?? this.myUserId,
     );
   }
 
@@ -66,6 +87,7 @@ class ChatMembersState extends Equatable {
     nextUserId,
     isLoadingMore,
     presence,
+    myUserId,
   ];
 }
 
@@ -176,6 +198,10 @@ class ChatMembersController
   }
 
   Future<ChatMembersState> _load() async {
+    // Identifies "me" among the members for the §9.1 checks; watched so a
+    // sign-in/out re-resolves the caller's row.
+    final myUserId = ref.watch(authProvider).value?.id;
+
     final chatFuture = ref.read(getChatUseCaseProvider).execute(_chatId);
     final membersFuture = ref
         .read(getMembersUseCaseProvider)
@@ -192,6 +218,7 @@ class ChatMembersController
       presence: {
         for (final entry in page.presence) entry.userId: entry.isOnline,
       },
+      myUserId: myUserId,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
@@ -86,6 +87,15 @@ class ChatDetailState extends Equatable {
   /// The message the composer is replying to, if any.
   final MessageEntity? replyTo;
 
+  /// The signed-in user's id, captured when the chat was loaded.
+  ///
+  /// Required to resolve [me]: this screen's chat comes from
+  /// `GET /chats/{id}/`, i.e. a `ChatDetaiDTO`, which carries the full
+  /// `members` list and **no `me` field** (api-docs §6.2). Without an id
+  /// there is nothing to match a row against, so every permission check
+  /// would fail closed and the composer would be permanently disabled.
+  final int? myUserId;
+
   const ChatDetailState({
     this.chat,
     this.messages = const [],
@@ -94,14 +104,28 @@ class ChatDetailState extends Equatable {
     this.isLoadingMore = false,
     this.pending = const [],
     this.replyTo,
+    this.myUserId,
   });
 
   bool get canLoadMore => hasNext && nextCursor != null;
 
   /// The caller's own membership, from whichever field this chat carries it in
-  /// ([ChatEntity.me] or [ChatEntity.members]) — the input to every
-  /// permission check on the screen.
-  ChatMemberEntity? get me => chat?.me;
+  /// — the input to every permission check on the screen.
+  ///
+  /// ⚠️ Resolved through [ChatEntity.membershipOf] rather than reading
+  /// `chat.me` directly: `me` is only populated on a `ChatDTO` (the list,
+  /// create and update responses), while `GET /chats/{id}/` returns a
+  /// `ChatDetaiDTO` whose membership lives in `members` (api-docs §6.2).
+  /// Reading `chat.me` here always yielded `null`, which silently denied
+  /// every permission — including `message:send` to a chat's own owner.
+  ///
+  /// `null` is a legitimate answer for a non-member previewing a public chat,
+  /// and must be treated as "deny" (fail-closed) by callers.
+  ChatMemberEntity? get me {
+    final id = myUserId;
+    if (id == null) return chat?.me;
+    return chat?.membershipOf(id);
+  }
 
   ChatDetailState copyWith({
     ChatEntity? chat,
@@ -112,10 +136,12 @@ class ChatDetailState extends Equatable {
     List<PendingMessage>? pending,
     MessageEntity? replyTo,
     bool clearReplyTo = false,
+    int? myUserId,
   }) {
     return ChatDetailState(
       chat: chat ?? this.chat,
       messages: messages ?? this.messages,
+      myUserId: myUserId ?? this.myUserId,
       // Replaced wholesale, including back to null when history is exhausted:
       // a stale cursor would re-read the same window forever.
       nextCursor: nextCursor,
@@ -135,6 +161,7 @@ class ChatDetailState extends Equatable {
     isLoadingMore,
     pending,
     replyTo,
+    myUserId,
   ];
 }
 
@@ -377,22 +404,25 @@ class ChatDetailController
   }
 
   Future<ChatDetailState> _load() async {
+    // Who "me" is, for the §9.1 permission checks below. Watched (not read)
+    // so signing in/out rebuilds the chat with the right membership instead
+    // of leaving a stale one on screen.
+    final myUserId = ref.watch(authProvider).value?.id;
+
     // `GET /chats/{id}/` and the first page of history are independent
     // requests — issued together so opening a chat costs one round-trip of
     // latency instead of two.
-    final results = await Future.wait([
-      ref.read(getChatUseCaseProvider).execute(_chatId),
-      ref.read(getMessagesUseCaseProvider).execute(_chatId, limit: _pageSize),
-    ]);
+    //
+    // Typed explicitly rather than through `Future.wait`: a `Future.wait` of
+    // two differently-typed `Either`s degrades to `List<Object?>` and forces
+    // `as dynamic` casts that move type errors to runtime.
+    final chatFuture = ref.read(getChatUseCaseProvider).execute(_chatId);
+    final messagesFuture = ref
+        .read(getMessagesUseCaseProvider)
+        .execute(_chatId, limit: _pageSize);
 
-    final chat = (results[0] as dynamic).fold(
-      (Failure f) => throw f,
-      (ChatEntity c) => c,
-    );
-    final page = (results[1] as dynamic).fold(
-      (Failure f) => throw f,
-      (MessagesPage p) => p,
-    );
+    final chat = (await chatFuture).getOrElse((failure) => throw failure);
+    final page = (await messagesFuture).getOrElse((failure) => throw failure);
 
     // Opening a chat with unread messages is itself a read event; the newest
     // loaded `seq` is the high-water mark (api-docs §6.4).
@@ -401,10 +431,11 @@ class ChatDetailController
     }
 
     return ChatDetailState(
-      chat: chat as ChatEntity,
-      messages: (page as MessagesPage).messages,
+      chat: chat,
+      messages: page.messages,
       nextCursor: page.nextCursor,
       hasNext: page.hasNext,
+      myUserId: myUserId,
     );
   }
 }
