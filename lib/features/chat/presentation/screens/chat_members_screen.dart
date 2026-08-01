@@ -57,6 +57,14 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
   Widget build(BuildContext context) {
     final membersState = ref.watch(chatMembersProvider(widget.chatId));
 
+    // Resolved once, from the last data received, and reused by both the empty
+    // state and the FAB — `membersState.value` survives a background refresh
+    // error, so the button doesn't flicker away on a failed reload.
+    final loaded = membersState.value;
+    final canInvite =
+        loaded != null &&
+        hasChatPermission(loaded.chat, loaded.me, ChatPermissions.memberInvite);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Members')),
       body: membersState.when(
@@ -68,11 +76,15 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
         ),
         data: (state) {
           final me = state.me;
-          final canInvite = hasChatPermission(
-            state.chat,
-            me,
-            ChatPermissions.memberInvite,
-          );
+
+          if (state.members.isEmpty) {
+            return _EmptyMembersView(
+              canInvite: canInvite,
+              onInvite: _addMember,
+              onRefresh: () =>
+                  ref.read(chatMembersProvider(widget.chatId).notifier).refresh(),
+            );
+          }
 
           return Column(
             children: [
@@ -111,13 +123,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
           );
         },
       ),
-      floatingActionButton:
-          membersState.value != null &&
-              hasChatPermission(
-                membersState.value!.chat,
-                membersState.value!.me,
-                ChatPermissions.memberInvite,
-              )
+      floatingActionButton: canInvite
           ? FloatingActionButton.extended(
               onPressed: _addMember,
               icon: const Icon(Icons.person_add_alt),
@@ -280,21 +286,22 @@ class _RolePickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SimpleDialog(
-      title: const Text('Change role'),
-      children: [
-        for (final role in ChatRole.values)
-          // `direct` (id=4) is assigned automatically to both participants of
-          // a 1:1 chat and is meaningless to set by hand (api-docs §9.1), so
-          // it isn't offered.
-          if (role != ChatRole.direct)
-            RadioListTile<ChatRole>(
-              value: role,
-              groupValue: current,
-              title: Text(role.name),
-              onChanged: (value) => Navigator.of(context).pop(value),
-            ),
-      ],
+    // `RadioGroup` owns the selected value and the change callback as of
+    // Flutter 3.32; the per-tile `groupValue`/`onChanged` pair is deprecated.
+    return RadioGroup<ChatRole>(
+      groupValue: current,
+      onChanged: (value) => Navigator.of(context).pop(value),
+      child: SimpleDialog(
+        title: const Text('Change role'),
+        children: [
+          for (final role in ChatRole.values)
+            // `direct` (id=4) is assigned automatically to both participants
+            // of a 1:1 chat and is meaningless to set by hand (api-docs §9.1),
+            // so it isn't offered.
+            if (role != ChatRole.direct)
+              RadioListTile<ChatRole>(value: role, title: Text(role.name)),
+        ],
+      ),
     );
   }
 }
@@ -435,6 +442,66 @@ class _AddMemberDialogState extends State<_AddMemberDialog> {
           child: const Text('Add'),
         ),
       ],
+    );
+  }
+}
+
+/// Shown when the members page came back empty. Wrapped in a scrollable so
+/// pull-to-refresh still works — a plain `Center` has no overscroll for
+/// `RefreshIndicator` to react to, which would leave the screen with no way
+/// back other than navigating away.
+class _EmptyMembersView extends StatelessWidget {
+  const _EmptyMembersView({
+    required this.canInvite,
+    required this.onInvite,
+    required this.onRefresh,
+  });
+
+  final bool canInvite;
+  final VoidCallback onInvite;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 64),
+        children: [
+          Icon(
+            Icons.group_outlined,
+            size: 48,
+            color: theme.colorScheme.outline,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No members to show',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            canInvite
+                ? 'Add someone to get this chat started.'
+                : 'Only members with the invite permission can add people here.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (canInvite) ...[
+            const SizedBox(height: 16),
+            Center(
+              child: OutlinedButton.icon(
+                onPressed: onInvite,
+                icon: const Icon(Icons.person_add_alt),
+                label: const Text('Add member'),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

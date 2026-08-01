@@ -213,6 +213,14 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
         // `409 DIRECT_CHAT_EXISTS` carries the existing chat's id in
         // `detail.chat_id` (api-docs §6.2), so the useful response is to open
         // that conversation rather than to report an error the user can't fix.
+        final existingChatId = _existingDirectChatId(failure);
+        if (existingChatId != null) {
+          ref.read(chatListProvider.notifier).refresh();
+          context.pushReplacement(
+            AppConstants.chatDetailRoute(existingChatId),
+          );
+          return;
+        }
         setState(() => _error = failure.message);
       },
       (chat) {
@@ -220,5 +228,25 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
         context.pushReplacement(AppConstants.chatDetailRoute(chat.id));
       },
     );
+  }
+
+  /// `409 DIRECT_CHAT_EXISTS` → the id of the conversation that already exists,
+  /// or `null` for every other failure (api-docs §6.2).
+  ///
+  /// The id is read defensively: `detail` is typed `dynamic` in the envelope
+  /// (api-docs §2.1) and is a free-form object per error code, so a shape that
+  /// doesn't match is treated as "not this case" and falls through to the plain
+  /// error message rather than throwing inside the failure handler.
+  String? _existingDirectChatId(Failure failure) {
+    if (failure is! ApiFailure) return null;
+    if (failure.code != 'DIRECT_CHAT_EXISTS') return null;
+
+    final detail = failure.detail;
+    if (detail is! Map) return null;
+
+    final chatId = detail['chat_id'];
+    if (chatId is! String || chatId.isEmpty) return null;
+
+    return chatId;
   }
 }

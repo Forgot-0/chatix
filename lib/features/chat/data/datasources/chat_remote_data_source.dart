@@ -1,24 +1,23 @@
 import 'dart:async';
-import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:chatix/core/utils/logger.dart';
 
-/// ⚠️ **Placeholder — the real WebSocket layer (api-docs §7) is not built yet.**
+/// ⚠️ **Placeholder — still the template's echo-server demo.**
 ///
-/// This is still the template's demo socket, pointed at a public echo server.
-/// It is wired to nothing: no provider constructs it and no screen reads it.
-/// The REST half of the feature (§6) is complete and lives in
-/// `chat_rest_data_source.dart`; messages there arrive by request/response only.
+/// The real chat WebSocket protocol (api-docs §7: `ws.*` service frames,
+/// heartbeat, `new_message` / `attachment_success` domain events, resume by
+/// `last_seq`) is deliberately **out of scope for the REST prompt** and will
+/// replace this file wholesale.
 ///
-/// It now emits **raw frames as `String`** rather than parsed models. The demo
-/// used a flat `MessageModel{text}` built by a `fromText` factory; that model
-/// has since been rewritten to match the real `MessageDTO` (§6.4), which has no
-/// meaningful mapping from an echoed text frame. Rather than invent one, the
-/// parsing boundary is left undefined here — the §7 implementation will decode
-/// `{type, payload}` envelopes into the proper models and give this interface
-/// its real shape (`chat_message`, `attachment_success`, presence, etc.).
+/// Only one thing changed here versus the template: the stream used to emit
+/// `MessageModel.fromText(...)`, a helper that belonged to the old flat
+/// `MessageModel {text}`. That model is now the real `MessageDTO` (§6.4) —
+/// `id`, `seq`, `attachments`, nested `reply_to` — and cannot be conjured from
+/// a bare echo string, so the demo now surfaces raw frames as [String].
+/// Nothing in the REST feature imports this class.
 abstract class ChatRemoteDataSource {
-  /// Raw text frames, exactly as received.
+  /// Raw text frames, exactly as received. Prompt 5 replaces this with a
+  /// stream of parsed §7.4 events.
   Stream<String> get messages;
   Future<void> connect();
   Future<void> sendMessage(String message);
@@ -49,7 +48,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       _channel!.stream.listen(
         (data) {
           Logger.debug('WebSocket received: $data');
-          // Forwarded verbatim — decoding belongs to the §7 implementation.
+          // Expecting simple text echo from this server
           if (data is String) {
             _messageController.add(data);
           }

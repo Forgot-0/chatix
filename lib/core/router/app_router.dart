@@ -345,3 +345,56 @@ final routerProvider = Provider<GoRouter>((ref) {
     ),
   );
 });
+
+/// Shown when a route matched structurally but its path parameter is unusable
+/// (an empty `:id` segment, say). Distinct from `errorBuilder`'s 404: the URL
+/// *is* a known route, so "Page not found" would be misleading — and building
+/// the real screen with an empty id would fire a request to `/chats//` that
+/// can only 404 on the server. Failing here keeps that round-trip off the wire.
+class _InvalidRouteScreen extends StatelessWidget {
+  final String message;
+
+  const _InvalidRouteScreen({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(message)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.link_off,
+                size: 48,
+                color: theme.colorScheme.outline,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This link is incomplete or no longer valid.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.go(AppConstants.chatRoute),
+                child: const Text('Back to chats'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -110,6 +110,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  # Required because `l10n.yaml` exists: the tool runs gen_l10n as part of every
+  # build and hard-fails ("Attempted to generate localizations code without
+  # having the flutter: generate flag turned on") unless this is set — so
+  # without it `flutter build` / `flutter run` cannot start at all.
+  generate: true
 
   # Assets for the application
   assets:
