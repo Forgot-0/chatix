@@ -10,9 +10,7 @@ ProjectRoleModel _$ProjectRoleModelFromJson(Map<String, dynamic> json) =>
     ProjectRoleModel(
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
-      permissions: (json['permissions'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, e as bool),
-      ),
+      permissions: Map<String, bool>.from(json['permissions'] as Map),
     );
 
 Map<String, dynamic> _$ProjectRoleModelToJson(ProjectRoleModel instance) =>

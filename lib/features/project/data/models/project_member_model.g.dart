@@ -15,9 +15,8 @@ ProjectMemberModel _$ProjectMemberModelFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String,
       invitedBy: (json['invited_by'] as num?)?.toInt(),
       joinedAt: json['joined_at'] as String?,
-      permissionsOverrides:
-          (json['permissions_overrides'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, e as bool),
+      permissionsOverrides: Map<String, bool>.from(
+        json['permissions_overrides'] as Map,
       ),
       role: json['role'] == null
           ? null
