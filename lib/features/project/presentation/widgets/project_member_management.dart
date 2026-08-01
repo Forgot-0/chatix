@@ -77,7 +77,7 @@ Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int pro
                     const SizedBox(height: 12),
                     rolesAsync.when(
                       loading: () => const CircularProgressIndicator(),
-                      error: (_, __) => const Text('Failed to load roles'),
+                      error: (_, _) => const Text('Failed to load roles'),
                       data: (roles) => DropdownButtonFormField<int>(
                         initialValue: selectedRoleId,
                         decoration: const InputDecoration(labelText: 'Role'),
@@ -156,7 +156,7 @@ Future<void> showChangeRoleDialog(
                     height: 60,
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (_, __) => const Text('Failed to load roles'),
+                  error: (_, _) => const Text('Failed to load roles'),
                   data: (roles) => DropdownButtonFormField<int>(
                     initialValue: selectedRoleId,
                     decoration: const InputDecoration(labelText: 'Role'),

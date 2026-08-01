@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_bubble.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {

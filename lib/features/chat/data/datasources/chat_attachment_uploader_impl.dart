@@ -1,12 +1,12 @@
 import 'dart:io';
 
+import 'package:chatix/features/chat/data/repositories/chat_attachment_uploader.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/providers/network_providers.dart';
-import 'package:chatix/features/chat/data/datasources/chat_attachment_uploader.dart';
 
 /// Implements step 2 of the attachment flow (api-docs §6.5): a **raw `PUT`**
 /// of the file's bytes to the presigned `upload_url`, sent through the bare

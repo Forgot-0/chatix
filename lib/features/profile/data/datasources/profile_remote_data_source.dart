@@ -87,12 +87,12 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final result = await _apiClient.get(
       '/profiles/',
       queryParameters: {
-        if (username != null) 'username': username,
-        if (displayName != null) 'display_name': displayName,
-        if (skills != null) 'skills': skills,
+        'username': ?username,
+        'display_name': ?displayName,
+        'skills': ?skills,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
 
@@ -123,11 +123,11 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final result = await _apiClient.put(
       '/profiles/$profileId/',
       data: {
-        if (specialization != null) 'specialization': specialization,
-        if (displayName != null) 'display_name': displayName,
-        if (bio != null) 'bio': bio,
-        if (skills != null) 'skills': skills,
-        if (dateBirthday != null) 'date_birthday': dateBirthday,
+        'specialization': ?specialization,
+        'display_name': ?displayName,
+        'bio': ?bio,
+        'skills': ?skills,
+        'date_birthday': ?dateBirthday,
       },
     );
     return result.map((_) {});

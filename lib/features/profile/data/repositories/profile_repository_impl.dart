@@ -9,8 +9,9 @@ import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.da
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 
-/// Talks to [ProfileRemoteDataSource] and turns its `Either<Failure,
-/// Model>` into `Either<Failure, Entity>`. No local persistence or
+/// Talks to [ProfileRemoteDataSource] and turns its
+/// `Either<Failure, Model>` into `Either<Failure, Entity>`.
+/// No local persistence or
 /// orchestration is needed here (unlike `AuthRepositoryImpl`) — every
 /// profile call is a straight passthrough plus the model→entity mapping.
 class ProfileRepositoryImpl implements ProfileRepository {

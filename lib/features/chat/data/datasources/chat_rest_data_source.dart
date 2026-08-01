@@ -182,7 +182,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
         'limit': limit,
         // Cursor params are omitted entirely on the first page — sending
         // explicit nulls makes the backend treat them as provided-but-empty.
-        if (lastChatId != null) 'last_chat_id': lastChatId,
+        'last_chat_id': ?lastChatId,
         if (lastActivityAt != null)
           'last_activity_at': lastActivityAt.toUtc().toIso8601String(),
       },
@@ -226,14 +226,14 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     final result = await _apiClient.post(
       '/chats/',
       data: {
-        if (name != null) 'name': name,
-        if (description != null) 'description': description,
+        'name': ?name,
+        'description': ?description,
         'chat_type': chatType.wire,
         'member_ids': memberIds,
         'is_public': isPublic,
         'admin_only': adminOnly,
         'slow_mode_seconds': slowModeSeconds,
-        if (permissions != null) 'permissions': permissions,
+        'permissions': ?permissions,
       },
     );
     return result.map(
@@ -266,12 +266,12 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     final result = await _apiClient.patch(
       '/chats/$chatId/',
       data: {
-        if (name != null) 'name': name,
-        if (description != null) 'description': description,
-        if (isPublic != null) 'is_public': isPublic,
-        if (adminOnly != null) 'admin_only': adminOnly,
-        if (slowModeSeconds != null) 'slow_mode_seconds': slowModeSeconds,
-        if (permissions != null) 'permissions': permissions,
+        'name': ?name,
+        'description': ?description,
+        'is_public': ?isPublic,
+        'admin_only': ?adminOnly,
+        'slow_mode_seconds': ?slowModeSeconds,
+        'permissions': ?permissions,
       },
     );
     return result.map(
@@ -310,7 +310,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       '/chats/$chatId/members/',
       queryParameters: {
         'limit': limit,
-        if (cursorUserId != null) 'cursor_user_id': cursorUserId,
+        'cursor_user_id': ?cursorUserId,
         'include_presence': includePresence,
       },
     );
@@ -355,7 +355,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     final result = await _apiClient.patch(
       '/chats/$chatId/members/$userId/ban/',
       data: {
-        if (reason != null) 'reason': reason,
+        'reason': ?reason,
         // ⚠️ `bannet_to`, not `banned_to` — the typo is in the backend schema
         // (api-docs §6.3) and must be sent verbatim or the expiry is silently
         // dropped and the ban becomes permanent.
@@ -383,7 +383,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       '/chats/$chatId/messages/',
       queryParameters: {
         'limit': limit,
-        if (cursorMessageSeq != null) 'cursor_message_seq': cursorMessageSeq,
+        'cursor_message_seq': ?cursorMessageSeq,
       },
     );
     return result.map(
@@ -429,8 +429,8 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     final result = await _apiClient.post(
       '/chats/$chatId/messages/',
       data: {
-        if (content != null) 'content': content,
-        if (replyToId != null) 'reply_to_id': replyToId,
+        'content': ?content,
+        'reply_to_id': ?replyToId,
         if (messageType != null) 'message_type': messageType.wire,
         if (uploadTokens != null && uploadTokens.isNotEmpty)
           'upload_tokens': uploadTokens,
@@ -493,7 +493,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       data: {
         'source_chat_id': sourceChatId,
         'source_message_id': sourceMessageId,
-        if (comment != null) 'comment': comment,
+        'comment': ?comment,
       },
     );
     return result.map(

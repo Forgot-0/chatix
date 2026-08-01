@@ -5,8 +5,9 @@ import 'package:chatix/features/profile/domain/entities/avatar_upload_stage.dart
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
-/// Bridges `UploadAvatarUseCase`'s `Stream<Either<Failure,
-/// AvatarUploadStage>>` into a plain `AsyncValue<AvatarUploadStage?>` so
+/// Bridges `UploadAvatarUseCase`'s
+/// `Stream<Either<Failure, AvatarUploadStage>>` into a plain
+/// `AsyncValue<AvatarUploadStage?>` so
 /// `AvatarPickerWidget` can drive a step indicator the same way it would
 /// for any other async operation: `loading` while idle-but-not-started
 /// isn't distinguished from "nothing happening yet" (`data(null)`) — the

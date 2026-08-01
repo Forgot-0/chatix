@@ -99,10 +99,10 @@ class PositionRemoteDataSourceImpl implements PositionRemoteDataSource {
       data: {
         'title': title,
         'description': description,
-        if (responsibilities != null) 'responsibilities': responsibilities,
-        if (requiredSkills != null) 'required_skills': requiredSkills,
-        if (locationType != null) 'location_type': locationType,
-        if (expectedLoad != null) 'expected_load': expectedLoad,
+        'responsibilities': ?responsibilities,
+        'required_skills': ?requiredSkills,
+        'location_type': ?locationType,
+        'expected_load': ?expectedLoad,
       },
     );
     return result.map((_) {});
@@ -123,14 +123,14 @@ class PositionRemoteDataSourceImpl implements PositionRemoteDataSource {
     final result = await _apiClient.get(
       '/projects/$projectId/positions/',
       queryParameters: {
-        if (title != null) 'title': title,
-        if (requiredSkills != null) 'required_skills': requiredSkills,
+        'title': ?title,
+        'required_skills': ?requiredSkills,
         'is_open': isOpen,
-        if (locationType != null) 'location_type': locationType,
-        if (expectedLoad != null) 'expected_load': expectedLoad,
+        'location_type': ?locationType,
+        'expected_load': ?expectedLoad,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(
@@ -157,15 +157,15 @@ class PositionRemoteDataSourceImpl implements PositionRemoteDataSource {
     final result = await _apiClient.get(
       '/positions/',
       queryParameters: {
-        if (projectId != null) 'project_id': projectId,
-        if (title != null) 'title': title,
-        if (requiredSkills != null) 'required_skills': requiredSkills,
+        'project_id': ?projectId,
+        'title': ?title,
+        'required_skills': ?requiredSkills,
         'is_open': isOpen,
-        if (locationType != null) 'location_type': locationType,
-        if (expectedLoad != null) 'expected_load': expectedLoad,
+        'location_type': ?locationType,
+        'expected_load': ?expectedLoad,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(
@@ -196,12 +196,12 @@ class PositionRemoteDataSourceImpl implements PositionRemoteDataSource {
     final result = await _apiClient.put(
       '/positions/$positionId/',
       data: {
-        if (title != null) 'title': title,
-        if (description != null) 'description': description,
-        if (responsibilities != null) 'responsibilities': responsibilities,
-        if (requiredSkills != null) 'required_skills': requiredSkills,
-        if (locationType != null) 'location_type': locationType,
-        if (expectedLoad != null) 'expected_load': expectedLoad,
+        'title': ?title,
+        'description': ?description,
+        'responsibilities': ?responsibilities,
+        'required_skills': ?requiredSkills,
+        'location_type': ?locationType,
+        'expected_load': ?expectedLoad,
       },
     );
     return result.map((_) {});
@@ -226,12 +226,12 @@ class PositionRemoteDataSourceImpl implements PositionRemoteDataSource {
     final result = await _apiClient.get(
       '/positions/$positionId/applications/',
       queryParameters: {
-        if (projectId != null) 'project_id': projectId,
-        if (candidateId != null) 'candidate_id': candidateId,
-        if (status != null) 'status': status,
+        'project_id': ?projectId,
+        'candidate_id': ?candidateId,
+        'status': ?status,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(
@@ -249,7 +249,7 @@ class PositionRemoteDataSourceImpl implements PositionRemoteDataSource {
   }) async {
     final result = await _apiClient.post(
       '/positions/$positionId/applications/',
-      data: {if (message != null) 'message': message},
+      data: {'message': ?message},
     );
     return result.map((_) {});
   }

@@ -53,13 +53,13 @@ class ApplicationRemoteDataSourceImpl implements ApplicationRemoteDataSource {
     final result = await _apiClient.get(
       '/applications/',
       queryParameters: {
-        if (projectId != null) 'project_id': projectId,
-        if (positionId != null) 'position_id': positionId,
-        if (candidateId != null) 'candidate_id': candidateId,
-        if (status != null) 'status': status,
+        'project_id': ?projectId,
+        'position_id': ?positionId,
+        'candidate_id': ?candidateId,
+        'status': ?status,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(
@@ -82,12 +82,12 @@ class ApplicationRemoteDataSourceImpl implements ApplicationRemoteDataSource {
     final result = await _apiClient.get(
       '/applications/me/',
       queryParameters: {
-        if (positionId != null) 'position_id': positionId,
-        if (projectId != null) 'project_id': projectId,
-        if (status != null) 'status': status,
+        'position_id': ?positionId,
+        'project_id': ?projectId,
+        'status': ?status,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(

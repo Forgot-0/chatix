@@ -112,11 +112,11 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       data: {
         'name': name,
         'slug': slug,
-        if (smallDescription != null) 'small_description': smallDescription,
-        if (description != null) 'description': description,
-        if (visibility != null) 'visibility': visibility,
-        if (metaData != null) 'meta_data': metaData,
-        if (tags != null) 'tags': tags,
+        'small_description': ?smallDescription,
+        'description': ?description,
+        'visibility': ?visibility,
+        'meta_data': ?metaData,
+        'tags': ?tags,
       },
     );
     return result.map((_) {});
@@ -134,12 +134,12 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     final result = await _apiClient.get(
       '/projects/',
       queryParameters: {
-        if (name != null) 'name': name,
-        if (slug != null) 'slug': slug,
-        if (tags != null) 'tags': tags,
+        'name': ?name,
+        'slug': ?slug,
+        'tags': ?tags,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(
@@ -187,11 +187,11 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     final result = await _apiClient.put(
       '/projects/$projectId/',
       data: {
-        if (name != null) 'name': name,
-        if (description != null) 'description': description,
-        if (visibility != null) 'visibility': visibility,
-        if (metaData != null) 'meta_data': metaData,
-        if (tags != null) 'tags': tags,
+        'name': ?name,
+        'description': ?description,
+        'visibility': ?visibility,
+        'meta_data': ?metaData,
+        'tags': ?tags,
       },
     );
     return result.map((_) {});
@@ -215,7 +215,7 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       data: {
         'user_id': userId,
         'role_id': roleId,
-        if (permissionsOverrides != null) 'permissions_overrides': permissionsOverrides,
+        'permissions_overrides': ?permissionsOverrides,
       },
     );
     return result.map((_) {});
@@ -285,10 +285,10 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
     final result = await _apiClient.get(
       '/project_roles/',
       queryParameters: {
-        if (name != null) 'name': name,
+        'name': ?name,
         'page': page,
         'page_size': pageSize,
-        if (sort != null) 'sort': sort,
+        'sort': ?sort,
       },
     );
     return result.map(
