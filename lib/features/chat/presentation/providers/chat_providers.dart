@@ -1,5 +1,5 @@
-import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart.dart';
-import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart.dart';
+import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';

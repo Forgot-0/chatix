@@ -1,7 +1,7 @@
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
-import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart.dart';
+import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:fpdart/fpdart.dart';
 
 /// `PATCH /chats/{chat_id}/` 🔒 4/5min (api-docs §6.2).

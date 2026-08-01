@@ -36,7 +36,22 @@ class AppConstants {
   // Route constants
   static const String initialRoute = '/';
   static const String homeRoute = '/home';
+
+  /// `/chat` — the chat list (api-docs §6.2). Kept under the historical
+  /// `chatRoute` name so existing links (home screen, deep links) still work.
   static const String chatRoute = '/chat';
+
+  /// `/chat/create` — new-chat form. Declared **before** the `/chat/{id}`
+  /// route in `app_router.dart` so "create" is never parsed as a chat UUID.
+  static const String createChatRoute = '/chat/create';
+
+  /// `/chat/{id}` — one conversation. Chat ids are UUID strings
+  /// (api-docs §1.8), not ints like project/profile ids.
+  static String chatDetailRoute(String chatId) => '/chat/$chatId';
+
+  /// `/chat/{id}/members` — roles, bans and kicks (api-docs §6.3).
+  static String chatMembersRoute(String chatId) => '/chat/$chatId/members';
+
   static const String surveyRoute = '/survey';
   static const String loginRoute = '/login';
   static const String registerRoute = '/register';
