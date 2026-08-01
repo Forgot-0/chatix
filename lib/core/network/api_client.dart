@@ -78,6 +78,28 @@ class ApiClient {
     }
   }
 
+  /// Partial update. Distinct from [put] on purpose — the chats module uses
+  /// `PATCH` for chat settings, member roles and bans (api-docs §6.2–§6.4),
+  /// where omitted fields mean "leave unchanged", while `/profiles/` uses a
+  /// full `PUT` (§4.4). Sending one where the other is expected either wipes
+  /// fields or 405s.
+  Future<Either<Failure, dynamic>> patch(
+    String path, {
+    dynamic data,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.patch<dynamic>(
+        buildPath(path),
+        data: data,
+        options: options,
+      );
+      return Right(response.data);
+    } on DioException catch (e) {
+      return Left(_handleError(e));
+    }
+  }
+
   Future<Either<Failure, dynamic>> delete(
     String path, {
     Options? options,
