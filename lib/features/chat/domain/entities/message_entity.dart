@@ -106,6 +106,56 @@ class MessageEntity extends Equatable {
     (a) => a.attachmentStatus == AttachmentStatus.pending,
   );
 
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Added for the realtime layer (api-docs §7): a `message_deleted` event
+  /// carries only `{message_id, seq, deleted_by}`, so rendering the message as
+  /// a tombstone means clearing [content] and [attachments] on the copy the
+  /// screen already holds — there is nothing left to re-fetch, since the
+  /// message is gone server-side.
+  ///
+  /// ⚠️ [content] is cleared through [clearContent], not by passing `null`:
+  /// `null` content is a legitimate value (an attachment-only message with no
+  /// caption), so it cannot double as "leave unchanged".
+  MessageEntity copyWith({
+    String? id,
+    String? chatId,
+    int? seq,
+    int? authorId,
+    MessageType? type,
+    String? content,
+    String? replyToId,
+    String? forwardedFromChatId,
+    String? forwardedFromMessageId,
+    String? forwardedFromAuthorId,
+    bool? isEdited,
+    DateTime? createdAt,
+    List<AttachmentEntity>? attachments,
+    MessageEntity? replyTo,
+    MessageEntity? forwardedFrom,
+    bool clearContent = false,
+  }) {
+    return MessageEntity(
+      id: id ?? this.id,
+      chatId: chatId ?? this.chatId,
+      seq: seq ?? this.seq,
+      authorId: authorId ?? this.authorId,
+      type: type ?? this.type,
+      content: clearContent ? null : (content ?? this.content),
+      replyToId: replyToId ?? this.replyToId,
+      forwardedFromChatId: forwardedFromChatId ?? this.forwardedFromChatId,
+      forwardedFromMessageId:
+          forwardedFromMessageId ?? this.forwardedFromMessageId,
+      forwardedFromAuthorId:
+          forwardedFromAuthorId ?? this.forwardedFromAuthorId,
+      isEdited: isEdited ?? this.isEdited,
+      createdAt: createdAt ?? this.createdAt,
+      attachments: attachments ?? this.attachments,
+      replyTo: replyTo ?? this.replyTo,
+      forwardedFrom: forwardedFrom ?? this.forwardedFrom,
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

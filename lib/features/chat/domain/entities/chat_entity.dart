@@ -150,6 +150,66 @@ class ChatEntity extends Equatable {
     return null;
   }
 
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Added for the realtime layer (api-docs §7). WebSocket events carry only
+  /// *deltas* — `chat_updated` brings the changed settings, `new_message`
+  /// brings nothing but ids — so applying one means rebuilding the row with a
+  /// few fields swapped. Without this, the only way to reflect an event would
+  /// be to re-`GET` the chat, which defeats the point of the event.
+  ///
+  /// ⚠️ [unreadCount], [me], [lastRead] and [members] use explicit `clearX`
+  /// flags rather than plain `null` sentinels. For every other entity in this
+  /// codebase `null` means "leave unchanged", but for these four `null` is a
+  /// *meaningful value* — see the class doc: it distinguishes "this endpoint
+  /// didn't send it" from zero/empty. A `?? this.x` fallback alone could never
+  /// express "set this back to unknown", and silently promoting a `ChatDTO`'s
+  /// `me` onto a `ChatDetaiDTO` copy would make `membershipOf` answer from
+  /// stale data.
+  ChatEntity copyWith({
+    String? id,
+    int? seqCounter,
+    DateTime? lastActivityAt,
+    ChatType? type,
+    String? name,
+    String? description,
+    String? avatarS3Key,
+    bool? isPublic,
+    bool? adminOnly,
+    int? slowModeSeconds,
+    Map<String, bool>? permissions,
+    int? createdBy,
+    int? memberCount,
+    int? unreadCount,
+    ChatMemberEntity? me,
+    ReadDetailEntity? lastRead,
+    List<ChatMemberEntity>? members,
+    bool clearUnreadCount = false,
+    bool clearMe = false,
+    bool clearLastRead = false,
+    bool clearMembers = false,
+  }) {
+    return ChatEntity(
+      id: id ?? this.id,
+      seqCounter: seqCounter ?? this.seqCounter,
+      lastActivityAt: lastActivityAt ?? this.lastActivityAt,
+      type: type ?? this.type,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      avatarS3Key: avatarS3Key ?? this.avatarS3Key,
+      isPublic: isPublic ?? this.isPublic,
+      adminOnly: adminOnly ?? this.adminOnly,
+      slowModeSeconds: slowModeSeconds ?? this.slowModeSeconds,
+      permissions: permissions ?? this.permissions,
+      createdBy: createdBy ?? this.createdBy,
+      memberCount: memberCount ?? this.memberCount,
+      unreadCount: clearUnreadCount ? null : (unreadCount ?? this.unreadCount),
+      me: clearMe ? null : (me ?? this.me),
+      lastRead: clearLastRead ? null : (lastRead ?? this.lastRead),
+      members: clearMembers ? null : (members ?? this.members),
+    );
+  }
+
   @override
   List<Object?> get props => [
     id,

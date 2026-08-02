@@ -1,13 +1,21 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 
 const _pageSize = 30;
 const _uuid = Uuid();
@@ -65,10 +73,11 @@ class PendingMessage extends Equatable {
 /// State of a single chat screen: the chat itself, the loaded slice of its
 /// history and anything still in flight.
 ///
-/// ⚠️ REST-only for now. Nothing here reacts to another participant's
-/// activity — new messages appear on pull-to-refresh or when this user sends
-/// one. The live stream (api-docs §7) is a separate layer that will push into
-/// this same controller.
+/// Kept up to date by two sources at once: `GET /chats/{id}/messages/` for the
+/// initial page and paging, and the WebSocket subscription for everything that
+/// happens afterwards (api-docs §7). The realtime path never *replaces* this
+/// state wholesale — it folds individual events in through
+/// [ChatRealtimeMerge], so scroll position and pending sends survive.
 class ChatDetailState extends Equatable {
   final ChatEntity? chat;
 
@@ -96,6 +105,17 @@ class ChatDetailState extends Equatable {
   /// would fail closed and the composer would be permanently disabled.
   final int? myUserId;
 
+  /// Set when a `chat_deleted` event arrives for this chat, or when we are
+  /// kicked/banned out of it (api-docs §7.4).
+  ///
+  /// A flag rather than an immediate navigation: a provider must not push
+  /// routes. The screen watches this and shows a terminal "this chat is no
+  /// longer available" state, which is also the honest thing to render — every
+  /// request against this id will now fail, so silently leaving the stale
+  /// history on screen would invite the user to type into a chat that cannot
+  /// receive it.
+  final bool isGone;
+
   const ChatDetailState({
     this.chat,
     this.messages = const [],
@@ -105,6 +125,7 @@ class ChatDetailState extends Equatable {
     this.pending = const [],
     this.replyTo,
     this.myUserId,
+    this.isGone = false,
   });
 
   bool get canLoadMore => hasNext && nextCursor != null;
@@ -137,6 +158,7 @@ class ChatDetailState extends Equatable {
     MessageEntity? replyTo,
     bool clearReplyTo = false,
     int? myUserId,
+    bool? isGone,
   }) {
     return ChatDetailState(
       chat: chat ?? this.chat,
@@ -149,6 +171,7 @@ class ChatDetailState extends Equatable {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       pending: pending ?? this.pending,
       replyTo: clearReplyTo ? null : (replyTo ?? this.replyTo),
+      isGone: isGone ?? this.isGone,
     );
   }
 
@@ -162,10 +185,16 @@ class ChatDetailState extends Equatable {
     pending,
     replyTo,
     myUserId,
+    isGone,
   ];
 }
 
 /// Drives `ChatDetailScreen` for one `chatId`.
+///
+/// Owns both halves of the protocol for this chat: the REST reads (§6.4) and
+/// the live subscription (§7). The socket itself is *not* owned here — it is an
+/// app-wide singleton (see `chat_socket_provider.dart`); this controller only
+/// subscribes to one chat for as long as its screen is mounted.
 class ChatDetailController
     extends AsyncNotifier<ChatDetailState> {
   ChatDetailController(this._chatId);
@@ -175,8 +204,307 @@ class ChatDetailController
   /// the provider below forwards it.
   final String _chatId;
 
+  StreamSubscription<WSEvent>? _eventSubscription;
+
+  /// Message ids currently being fetched in response to a `new_message` /
+  /// `message_edited` event.
+  ///
+  /// Guards against a duplicate in-flight `GET .../messages/{id}/`: the same
+  /// event can be delivered twice (a reconnect replaying a gap that overlaps
+  /// what we already saw), and [ChatRealtimeMerge.shouldFetchMessage] cannot
+  /// see a fetch that has been started but not yet returned. Without this, two
+  /// requests race and the loser overwrites the winner with identical data —
+  /// harmless but wasteful, and it doubles traffic on a busy chat.
+  final Set<String> _inFlightFetches = <String>{};
+
   @override
-  Future<ChatDetailState> build() => _load();
+  Future<ChatDetailState> build() async {
+    // Registered before the first await: `onDispose` callbacks added after an
+    // async gap are silently dropped if the provider is disposed during the
+    // gap, which is exactly the "user opened and immediately backed out" case
+    // — and would leak the subscription for the rest of the session.
+    ref.onDispose(_teardown);
+
+    final loaded = await _load();
+
+    // Subscribe only after history is loaded, so `lastSeq` is the real
+    // high-water mark. Subscribing first would either send no cursor (and get
+    // no gap replay) or a stale one.
+    _attachRealtime(loaded);
+
+    return loaded;
+  }
+
+  /// Opens the live subscription for this chat and starts folding events in.
+  ///
+  /// `subscribe` carries the newest `seq` we hold, so the server answers with a
+  /// `ws.history` batch covering anything that happened between the REST read
+  /// and the subscription taking effect (§7.3). That window is small but real,
+  /// and without the cursor those messages would be lost until the next manual
+  /// refresh.
+  void _attachRealtime(ChatDetailState loaded) {
+    final socket = ref.read(chatSocketServiceProvider);
+
+    socket.subscribe(
+      _chatId,
+      lastSeq: ChatRealtimeMerge.highestSeq(loaded.messages),
+    );
+
+    // Filtering happens here rather than in the service: the socket is shared
+    // by every chat, and each controller cares only about its own.
+    _eventSubscription = socket.events.listen(
+      _onEvent,
+      // A malformed frame must not cancel this subscription — that would end
+      // live updates for this chat with no visible symptom. The parser already
+      // degrades bad frames to `WsUnknown`, so reaching here is unexpected.
+      onError: (Object error, StackTrace stackTrace) {
+        Logger.error('ChatDetail($_chatId): event stream error', error, stackTrace);
+      },
+      cancelOnError: false,
+    );
+  }
+
+  void _teardown() {
+    _eventSubscription?.cancel();
+    _eventSubscription = null;
+    // Tell the server to stop sending us this chat's events. Safe even if the
+    // socket is down — the service forgets the subscription either way, so a
+    // later reconnect won't resurrect it.
+    ref.read(chatSocketServiceProvider).unsubscribe(_chatId);
+  }
+
+  /// Folds one event into this chat's state (§7.4/§7.5).
+  ///
+  /// The `switch` is exhaustive over the sealed [WSEvent] hierarchy, so a new
+  /// event type added to the protocol breaks this build until it is handled
+  /// here — which is the point: silently ignoring a new event is how a chat
+  /// quietly stops updating.
+  Future<void> _onEvent(WSEvent event) async {
+    // Events for other chats belong to other controllers (and to the list).
+    if (event is WSDomainEvent && event.chatId != _chatId) return;
+
+    switch (event) {
+      case NewMessage():
+        await _onNewMessage(event);
+
+      case MessageEdited():
+        // The event carries `modified_by` but no content (§7.4), so the only
+        // way to learn the new body is to re-read the message. Forced, unlike
+        // `new_message`: the message is already on screen with *stale* text,
+        // and skipping the fetch would leave the edit invisible.
+        await _fetchAndUpsert(event.messageId, force: true);
+
+      case MessageDeleted():
+        _mutate(
+          (s) => s.copyWith(
+            messages: ChatRealtimeMerge.applyMessageDeleted(
+              s.messages,
+              event.messageId,
+              asTombstone: true,
+            ),
+            // Drop a reply draft pointing at a message that no longer exists,
+            // otherwise sending it would fail with a dangling `reply_to_id`.
+            clearReplyTo: s.replyTo?.id == event.messageId,
+            nextCursor: s.nextCursor,
+          ),
+        );
+
+      case WsHistory():
+        if (event.chatId != _chatId) return;
+        _onHistory(event);
+
+      case MessagesRead():
+        // Another member's read receipt. Nothing on this screen renders it yet
+        // (per-message read ticks would need it), but it is *not* an error and
+        // must not trigger a refetch — see the warning in
+        // `ChatSocketService._onFrame` about never treating this seq as a
+        // delivery cursor.
+        break;
+
+      case ChatUpdated():
+        _mutate((s) {
+          final chat = s.chat;
+          if (chat == null) return s;
+          return s.copyWith(
+            chat: ChatRealtimeMerge.applyChatUpdated(chat, event),
+            nextCursor: s.nextCursor,
+          );
+        });
+
+      case ChatDeleted():
+        _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
+
+      case MemberKick():
+        // Only terminal if *we* are the target; kicking someone else just
+        // changes the roster.
+        if (event.targetUserId == state.value?.myUserId) {
+          _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
+        } else {
+          _invalidateMembers();
+        }
+
+      case MemberBanned():
+        if (event.targetUserId == state.value?.myUserId && event.ban) {
+          _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
+        } else {
+          _invalidateMembers();
+        }
+
+      case MemberJoined():
+      case MemberLeft():
+        // The roster lives in its own provider (`chatMembersProvider`) with its
+        // own pagination, so it is refreshed rather than patched here. The
+        // composer's permission checks read `chat.members`, so a role change
+        // arriving this way also needs the chat itself re-read — deferred to
+        // the members provider to avoid two requests for one event.
+        _invalidateMembers();
+
+      case AttachmentSuccess():
+        // Handled by `confirmedAttachmentTokensProvider`, which watches the
+        // same stream. Duplicating it here would fight that provider for
+        // ownership of the composer's spinner state.
+        break;
+
+      // ── Not this controller's concern ──
+      case ChatCreated():
+        // A chat we are already inside cannot be created; if it somehow
+        // arrives, the list provider is the right consumer.
+        break;
+
+      case WsReady():
+        // Re-subscription is the service's job (`_resumeSubscriptions` sends a
+        // `resume` with our cursor). Nothing to do here — and calling
+        // `subscribe` would race that.
+        break;
+
+      case WsSubscribed():
+      case WsUnsubscribed():
+      case WsPing():
+      case WsPong():
+      case WsErrorBadCommand():
+      case WsErrorNotChatMember():
+      case WsAuthInvalid():
+      case WsUnimplementedEvent():
+      case WsUnknown():
+        break;
+    }
+  }
+
+  /// §7.5 step 3 for `new_message`: decide, then fetch only if needed.
+  Future<void> _onNewMessage(NewMessage event) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final needsFetch = ChatRealtimeMerge.shouldFetchMessage(
+      event,
+      current.messages,
+      myUserId: current.myUserId,
+    );
+
+    if (!needsFetch) return;
+
+    await _fetchAndUpsert(event.messageId);
+
+    // The user is looking at this chat, so an arriving message is read on
+    // arrival. Fire-and-forget, exactly like the send path.
+    await _markReadUpTo(event.seq);
+  }
+
+  /// Fetches one message by id and folds it in (§6.4, §7.4).
+  ///
+  /// [force] bypasses the "already have it" check for `message_edited`, where
+  /// the point *is* to replace a copy we hold.
+  Future<void> _fetchAndUpsert(String messageId, {bool force = false}) async {
+    if (!_inFlightFetches.add(messageId)) return;
+
+    try {
+      final result = await ref
+          .read(getMessageUseCaseProvider)
+          .execute(_chatId, messageId);
+
+      result.match(
+        (failure) {
+          // A 404 is legitimate: the message was deleted between the event and
+          // this fetch. Logged, never surfaced — a failed background fetch must
+          // not replace a readable conversation with an error screen.
+          Logger.warning(
+            'ChatDetail($_chatId): could not fetch message $messageId '
+            '(${failure.message})',
+          );
+        },
+        (message) {
+          if (!force && _hasMessage(messageId)) return;
+          _mutate(
+            (s) => s.copyWith(
+              messages: ChatRealtimeMerge.upsertMessage(s.messages, message),
+              nextCursor: s.nextCursor,
+            ),
+          );
+        },
+      );
+    } finally {
+      _inFlightFetches.remove(messageId);
+    }
+  }
+
+  /// Folds a `ws.history` gap replay in (§7.4).
+  ///
+  /// These frames carry **full `MessageDTO`s** — the only place in the protocol
+  /// where message content arrives over the socket — so they need no follow-up
+  /// requests at all. Decoded with the same `MessageModel.fromJson` used for
+  /// REST, since it is the same DTO.
+  ///
+  /// `has_more: true` means the gap was larger than one batch. Rather than
+  /// paging the socket, the messages received are merged and the user can pull
+  /// to refresh; the alternative (a `subscribe` loop chasing `next_last_seq`)
+  /// risks hammering the connection on a long absence.
+  void _onHistory(WsHistory event) {
+    if (event.messages.isEmpty) return;
+
+    final decoded = <MessageEntity>[];
+    for (final raw in event.messages) {
+      try {
+        decoded.add(MessageModel.fromJson(raw).toEntity());
+      } catch (error) {
+        // One malformed row must not discard the rest of the batch.
+        Logger.warning('ChatDetail($_chatId): bad ws.history message: $error');
+      }
+    }
+    if (decoded.isEmpty) return;
+
+    _mutate((s) {
+      var messages = s.messages;
+      for (final message in decoded) {
+        messages = ChatRealtimeMerge.upsertMessage(messages, message);
+      }
+      return s.copyWith(messages: messages, nextCursor: s.nextCursor);
+    });
+
+    // The whole replayed batch is on screen, so it is read.
+    final newest = ChatRealtimeMerge.highestSeq(decoded);
+    if (newest != null) _markReadUpTo(newest);
+  }
+
+  bool _hasMessage(String messageId) =>
+      state.value?.messages.any((m) => m.id == messageId) ?? false;
+
+  void _invalidateMembers() {
+    ref.invalidate(chatMembersProvider(_chatId));
+  }
+
+  /// Applies [transform] to the current data state, if there is one.
+  ///
+  /// Every realtime mutation goes through this. It exists to keep two rules in
+  /// one place: never write while the provider is loading or errored (which
+  /// would resurrect a dead screen), and never touch `state` after disposal —
+  /// Riverpod 3 throws on that, and an event can arrive in the same microtask
+  /// as the dispose.
+  void _mutate(ChatDetailState Function(ChatDetailState state) transform) {
+    if (!ref.mounted) return;
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncValue.data(transform(current));
+  }
 
   Future<void> refresh() async {
     // Keeps the current frame on screen while re-fetching (no spinner flash)
@@ -186,6 +514,21 @@ class ChatDetailController
     state = next.hasError && previous != null
         ? AsyncValue.data(previous)
         : next;
+
+    // Re-point the socket's cursor at what we now hold. A refresh can pull in
+    // messages the subscription never delivered (it was down, or the user
+    // pulled to refresh mid-outage), and leaving the old cursor in place would
+    // make the next `resume` replay history already on screen.
+    //
+    // `subscribe` is idempotent server-side and the service takes the *max* of
+    // the two cursors, so this cannot rewind anything.
+    final messages = state.value?.messages;
+    if (messages != null && messages.isNotEmpty) {
+      ref.read(chatSocketServiceProvider).subscribe(
+        _chatId,
+        lastSeq: ChatRealtimeMerge.highestSeq(messages),
+      );
+    }
   }
 
   /// Appends the next page of older history.
@@ -338,15 +681,18 @@ class ChatDetailController
         ),
       ),
       (message) {
-        // The server's message replaces the pending row. Guard against the
-        // idempotent-replay case: replaying a key returns a message we may
-        // already be displaying, and appending it blindly would show it twice.
-        final alreadyPresent = current.messages.any((m) => m.id == message.id);
+        // The server's message replaces the pending row. Merged through
+        // `upsertMessage` rather than prepended, which handles both hazards in
+        // one place: the idempotent-replay case (a replayed key returns a
+        // message we may already be displaying) and a racing `new_message`
+        // event for this very send that got fetched first. Keyed on `id`, so
+        // either way there is exactly one bubble.
         return AsyncValue.data(
           current.copyWith(
-            messages: alreadyPresent
-                ? current.messages
-                : [message, ...current.messages],
+            messages: ChatRealtimeMerge.upsertMessage(
+              current.messages,
+              message,
+            ),
             pending: current.pending
                 .where((p) => p.idempotencyKey != pending.idempotencyKey)
                 .toList(),
@@ -356,7 +702,19 @@ class ChatDetailController
       },
     );
 
-    await _markReadUpTo(result.getRight().toNullable()?.seq);
+    final sent = result.getRight().toNullable();
+
+    // Keep the socket's cursor level with our own send. Without this, our
+    // message's `seq` is only learned from the (ignored) `new_message` echo, and
+    // a reconnect immediately after sending would ask the server to replay it.
+    if (sent != null) {
+      ref.read(chatSocketServiceProvider).subscribe(
+        _chatId,
+        lastSeq: sent.seq,
+      );
+    }
+
+    await _markReadUpTo(sent?.seq);
   }
 
   /// Marks the chat read up to [seq] (api-docs §6.4). Fire-and-forget: a
@@ -440,9 +798,25 @@ class ChatDetailController
   }
 }
 
+/// One controller per open chat.
+///
+/// ⚠️ **`isAutoDispose: true` is load-bearing, not a memory optimisation.**
+/// Riverpod 3 defaults `isAutoDispose` to `false` for hand-written providers
+/// (only code-generated ones default to on), so without this flag the
+/// controller — and with it the event subscription — would live for the rest of
+/// the session after the screen closed. Three concrete consequences:
+///
+/// * `_teardown` would never run, so `unsubscribe` would never be sent and the
+///   server would keep pushing every message of every chat the user had *ever*
+///   opened (§7.3).
+/// * Those chats would stay in the service's subscription list and so keep
+///   competing for the 20 slots a `resume` may carry (§7.3), eventually
+///   crowding out the chat actually on screen.
+/// * Each abandoned controller would go on fetching message bodies for events
+///   nobody is rendering.
 final chatDetailProvider =
     AsyncNotifierProvider.family<
       ChatDetailController,
       ChatDetailState,
       String
-    >(ChatDetailController.new);
+    >(ChatDetailController.new, isAutoDispose: true);
