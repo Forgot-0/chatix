@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livekit_client/livekit_client.dart';
 
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
-import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/call_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
