@@ -1,10 +1,11 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /chats/` 🔒 (api-docs §6.2) — the user's conversations, newest
 /// activity first.
@@ -61,7 +62,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
       body: listState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ErrorView(
-          message: error is Failure ? error.message : 'Failed to load chats',
+          message: friendlyFailureMessage(error, fallback: 'Failed to load chats'),
           onRetry: () => ref.read(chatListProvider.notifier).refresh(),
         ),
         data: (state) {
@@ -87,10 +88,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 if (index >= state.items.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
+                  return const AppLoadMoreIndicator();
                 }
                 return ChatListTile(chat: state.items[index]);
               },
@@ -99,7 +97,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppConstants.createChatRoute),
+        onPressed: () => context.push(CreateChatRoute.location),
         icon: const Icon(Icons.add_comment_outlined),
         label: const Text('New chat'),
       ),
@@ -149,7 +147,7 @@ class ChatListTile extends StatelessWidget {
             ),
         ],
       ),
-      onTap: () => context.push(AppConstants.chatDetailRoute(chat.id)),
+      onTap: () => context.push(ChatDetailRoute(chat.id).location),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
@@ -5,6 +6,7 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /chats/{id}/members/` 🔒 (api-docs §6.3) with the moderation actions
 /// of the same section.
@@ -70,7 +72,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       body: membersState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ErrorView(
-          message: error is Failure ? error.message : 'Failed to load members',
+          message: friendlyFailureMessage(error, fallback: 'Failed to load members'),
           onRetry: () =>
               ref.read(chatMembersProvider(widget.chatId).notifier).refresh(),
         ),
@@ -100,10 +102,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       if (index >= state.members.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
+                        return const AppLoadMoreIndicator();
                       }
                       final member = state.members[index];
                       return _MemberTile(

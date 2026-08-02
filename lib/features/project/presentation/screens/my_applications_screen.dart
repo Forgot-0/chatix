@@ -1,11 +1,11 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/project/domain/entities/application_entity.dart';
 import 'package:chatix/features/project/presentation/providers/my_applications_provider.dart';
 import 'package:chatix/features/project/presentation/widgets/project_common.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// `GET /applications/me/` 🔒 (api-docs §5.4) — the current candidate's own
 /// applications, filterable by status. ⚠️ The server defaults the filter to
@@ -39,10 +39,11 @@ class MyApplicationsScreen extends ConsumerWidget {
           Expanded(
             child: appsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => ProjectErrorView(
-                message: error is Failure ? error.message : 'Failed to load applications',
-                onRetry: () => ref.read(myApplicationsProvider.notifier).refresh(),
-              ),
+              error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load applications',
+          onRetry: () => ref.read(myApplicationsProvider.notifier).refresh(),
+        ),
               data: (apps) {
                 if (apps.isEmpty) {
                   return const Center(child: Text('No applications with this status'));
@@ -70,7 +71,10 @@ class MyApplicationsScreen extends ConsumerWidget {
                               applicationStatusColor(app.status).withValues(alpha: 0.15),
                         ),
                         onTap: () =>
-                            context.push(AppConstants.positionDetailRoute(app.positionId)),
+                            context.push(PositionDetailRoute(
+                          projectId: app.projectId,
+                          positionId: app.positionId,
+                        ).location),
                       );
                     },
                   ),

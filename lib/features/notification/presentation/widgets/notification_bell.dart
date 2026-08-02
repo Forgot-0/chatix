@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// App-bar bell with the unread count (api-docs §8.3), opening
 /// `NotificationsScreen`.
@@ -26,7 +26,7 @@ class NotificationBell extends ConsumerWidget {
       tooltip: unreadCount > 0
           ? '$unreadCount unread notifications'
           : 'Notifications',
-      onPressed: onTap ?? () => context.push(AppConstants.notificationsRoute),
+      onPressed: onTap ?? () => context.push(NotificationsRoute.location),
       icon: Badge(
         // `isLabelVisible: false` keeps the icon's layout identical whether
         // or not there's a badge, so the app bar doesn't shift when the

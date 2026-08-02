@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -48,7 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (next.hasError && !next.isLoading) {
         AppUtils.showSnackBar(
           context,
-          message: _messageFor(next.error),
+          message: friendlyFailureMessage(next.error),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -192,7 +192,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.go(AppConstants.loginRoute);
+                          context.go(LoginRoute.location);
                         },
                         child: const Text('Login'),
                       ),
@@ -207,8 +207,4 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  String _messageFor(Object? error) {
-    if (error is Failure) return error.message;
-    return 'Something went wrong. Please try again.';
-  }
 }

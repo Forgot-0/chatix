@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
@@ -10,6 +8,8 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/avatar_picker_widget.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// Views a profile — the signed-in person's own when [profileId] is `null`,
 /// otherwise whichever profile [profileId] points to. The "Edit" entry
@@ -40,14 +40,14 @@ class ProfileScreen extends ConsumerWidget {
           if (canEdit)
             IconButton(
               icon: const Icon(Icons.edit),
-              onPressed: () => context.push(AppConstants.profileEditRoute),
+              onPressed: () => context.push(ProfileEditRoute.location),
             ),
         ],
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ProfileError(
-          message: error is Failure ? error.message : 'Could not load this profile',
+          message: friendlyFailureMessage(error, fallback: 'Could not load this profile'),
           onRetry: () => ref.invalidate(profileDetailProvider(resolvedProfileId)),
         ),
         data: (profile) => RefreshIndicator(

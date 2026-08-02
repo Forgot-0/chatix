@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_upload_stage.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/avatar_upload_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// Own-profile-only avatar widget: shows the current avatar, a camera
 /// button to replace it, and a step indicator over the 3-step upload flow
@@ -82,7 +82,7 @@ class AvatarPickerWidget extends ConsumerWidget {
         final error = next.error;
         AppUtils.showSnackBar(
           context,
-          message: error is Failure ? error.message : 'Could not update avatar',
+          message: friendlyFailureMessage(error, fallback: 'Could not update avatar'),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }

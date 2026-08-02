@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// Step 1/2 of password reset — `POST /auth/password-resets/` (api-docs
 /// §3.7). Rate limit: 3/hour.
@@ -51,7 +51,7 @@ class _ResetPasswordRequestScreenState
           context,
           message: 'Check your email for a reset code.',
         );
-        context.push(AppConstants.resetPasswordConfirmRoute);
+        context.push(ResetPasswordConfirmRoute.location);
       },
     );
   }
@@ -97,7 +97,7 @@ class _ResetPasswordRequestScreenState
                 Center(
                   child: TextButton(
                     onPressed: () =>
-                        context.push(AppConstants.resetPasswordConfirmRoute),
+                        context.push(ResetPasswordConfirmRoute.location),
                     child: const Text('I already have a code'),
                   ),
                 ),

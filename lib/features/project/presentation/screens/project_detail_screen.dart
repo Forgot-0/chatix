@@ -1,8 +1,7 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/project/domain/entities/project_entity.dart';
 import 'package:chatix/features/project/domain/entities/project_member_entity.dart';
@@ -14,6 +13,7 @@ import 'package:chatix/features/project/presentation/utils/project_permissions.d
 import 'package:chatix/features/project/presentation/widgets/project_common.dart';
 import 'package:chatix/features/project/presentation/widgets/project_member_management.dart';
 import 'package:chatix/features/project/presentation/widgets/create_position_dialog.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// `GET /projects/{id}/` 🔒 (api-docs §5.1) with three tabs: Info, Members,
 /// Positions. Management controls (invite / change role / edit permissions /
@@ -45,10 +45,11 @@ class ProjectDetailScreen extends ConsumerWidget {
         ),
         body: projectAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => ProjectErrorView(
-            message: error is Failure ? error.message : 'Failed to load project',
-            onRetry: () => ref.invalidate(projectDetailProvider(projectId)),
-          ),
+          error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load project',
+          onRetry: () => ref.invalidate(projectDetailProvider(projectId)),
+        ),
           data: (project) {
             final me = myUserId == null ? null : project.membershipOf(myUserId);
             return TabBarView(
@@ -209,10 +210,11 @@ class _PositionsTab extends ConsumerWidget {
       children: [
         positionsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => ProjectErrorView(
-            message: error is Failure ? error.message : 'Failed to load positions',
-            onRetry: () => ref.invalidate(projectPositionsProvider(project.id)),
-          ),
+          error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load positions',
+          onRetry: () => ref.invalidate(projectPositionsProvider(project.id)),
+        ),
           data: (positions) {
             if (positions.isEmpty) {
               return const Center(child: Text('No open positions'));
@@ -231,7 +233,10 @@ class _PositionsTab extends ConsumerWidget {
                     '${p.isOpen ? '' : ' · closed'}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push(AppConstants.positionDetailRoute(p.id)),
+                  onTap: () => context.push(PositionDetailRoute(
+                        projectId: project.id,
+                        positionId: p.id,
+                      ).location),
                 );
               },
             );

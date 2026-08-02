@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// Step 2/2 of password reset — `POST /auth/password-resets/confirm/`
 /// (api-docs §3.7): token from the email + a new password (same complexity
@@ -56,7 +56,7 @@ class _ResetPasswordConfirmScreenState
           context,
           message: 'Password updated — please log in.',
         );
-        context.go(AppConstants.loginRoute);
+        context.go(LoginRoute.location);
       },
     );
   }

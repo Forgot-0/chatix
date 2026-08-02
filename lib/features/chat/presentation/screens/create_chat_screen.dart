@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// `POST /chats/` 🔒 4/5min (api-docs §6.2).
 ///
@@ -217,7 +217,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
         if (existingChatId != null) {
           ref.read(chatListProvider.notifier).refresh();
           context.pushReplacement(
-            AppConstants.chatDetailRoute(existingChatId),
+            ChatDetailRoute(existingChatId).location,
           );
           return;
         }
@@ -225,7 +225,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
       },
       (chat) {
         ref.read(chatListProvider.notifier).refresh();
-        context.pushReplacement(AppConstants.chatDetailRoute(chat.id));
+        context.pushReplacement(ChatDetailRoute(chat.id).location);
       },
     );
   }

@@ -1,5 +1,3 @@
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (next.hasError && !next.isLoading) {
         AppUtils.showSnackBar(
           context,
-          message: _messageFor(next.error),
+          message: friendlyFailureMessage(next.error),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -121,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        context.push(AppConstants.resetPasswordRequestRoute);
+                        context.push(ResetPasswordRoute.location);
                       },
                       child: const Text('Forgot Password?'),
                     ),
@@ -179,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.go(AppConstants.registerRoute);
+                          context.go(RegisterRoute.location);
                         },
                         child: const Text('Register'),
                       ),
@@ -194,8 +192,4 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  String _messageFor(Object? error) {
-    if (error is Failure) return error.message;
-    return 'Something went wrong. Please try again.';
-  }
 }

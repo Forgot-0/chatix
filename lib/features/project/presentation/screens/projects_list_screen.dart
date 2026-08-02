@@ -1,10 +1,11 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/project/domain/entities/project_entity.dart';
 import 'package:chatix/features/project/presentation/providers/project_list_provider.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /projects/` 🔒 (api-docs §5.1). Auth-required list with name + tag
 /// filters. ⚠️ Unlike `ProfilesListScreen`, there is no public read path in
@@ -68,12 +69,12 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
           IconButton(
             tooltip: 'My projects',
             icon: const Icon(Icons.folder_shared_outlined),
-            onPressed: () => context.push(AppConstants.myProjectsRoute),
+            onPressed: () => context.push(MyProjectsRoute.location),
           ),
           IconButton(
             tooltip: 'My invites',
             icon: const Icon(Icons.mail_outline),
-            onPressed: () => context.push(AppConstants.myInvitesRoute),
+            onPressed: () => context.push(MyInvitesRoute.location),
           ),
         ],
       ),
@@ -118,7 +119,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
             child: listState.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => _ErrorView(
-                message: error is Failure ? error.message : 'Failed to load projects',
+                message: friendlyFailureMessage(error, fallback: 'Failed to load projects'),
                 onRetry: () => ref.read(projectListProvider.notifier).refresh(),
               ),
               data: (state) {
@@ -132,10 +133,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
                     itemCount: state.items.length + (state.hasNext ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index >= state.items.length) {
-                        return const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
+                        return const AppLoadMoreIndicator();
                       }
                       return ProjectListTile(project: state.items[index]);
                     },
@@ -147,7 +145,7 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppConstants.createProjectRoute),
+        onPressed: () => context.push(CreateProjectRoute.location),
         icon: const Icon(Icons.add),
         label: const Text('New project'),
       ),
@@ -172,7 +170,7 @@ class ProjectListTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: _VisibilityChip(visibility: project.visibility),
-      onTap: () => context.push(AppConstants.projectDetailRoute(project.id)),
+      onTap: () => context.push(ProjectDetailRoute(project.id).location),
     );
   }
 }

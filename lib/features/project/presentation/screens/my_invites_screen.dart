@@ -1,11 +1,11 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/project/presentation/providers/my_invites_provider.dart';
 import 'package:chatix/features/project/presentation/providers/my_projects_provider.dart';
 import 'package:chatix/features/project/presentation/widgets/project_common.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// `GET /profiles/invites/my/` 🔒 (api-docs §5.2) — incoming project invites
 /// with an "Accept" action (`POST /projects/{id}/members/accept/`).
@@ -20,8 +20,9 @@ class MyInvitesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('My invites')),
       body: invitesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => ProjectErrorView(
-          message: error is Failure ? error.message : 'Failed to load invites',
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load invites',
           onRetry: () => ref.read(myInvitesProvider.notifier).refresh(),
         ),
         data: (invites) {
@@ -47,7 +48,7 @@ class MyInvitesScreen extends ConsumerWidget {
                     child: const Text('Accept'),
                   ),
                   onTap: () =>
-                      context.push(AppConstants.projectDetailRoute(invite.projectId)),
+                      context.push(ProjectDetailRoute(invite.projectId).location),
                 );
               },
             ),

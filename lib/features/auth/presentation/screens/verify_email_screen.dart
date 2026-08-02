@@ -5,6 +5,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// api-docs §3.6. Two independent actions on one screen:
 ///  - confirm a token the person already has (from the email they got), and
@@ -47,7 +48,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     result.fold(
       (failure) => AppUtils.showSnackBar(
         context,
-        message: _messageFor(failure),
+        message: friendlyFailureMessage(failure),
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
       (_) => AppUtils.showSnackBar(context, message: 'Email verified!'),
@@ -76,7 +77,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         // rather than a generic error.
         message: failure is RateLimitFailure
             ? 'Too many attempts — please try again later.'
-            : _messageFor(failure),
+            : friendlyFailureMessage(failure),
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
       (_) => AppUtils.showSnackBar(
@@ -167,8 +168,4 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     );
   }
 
-  String _messageFor(Object? error) {
-    if (error is Failure) return error.message;
-    return 'Something went wrong. Please try again.';
-  }
 }

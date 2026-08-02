@@ -1,12 +1,13 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/notification/domain/entities/notification_entity.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_list_provider.dart';
 import 'package:chatix/features/notification/presentation/utils/notification_route_resolver.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /notifications/` 🔒 (api-docs §8.2) — the notification inbox.
 ///
@@ -132,7 +133,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       body: listState.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ErrorView(
-          message: error is Failure ? error.message : 'Failed to load notifications',
+          message: friendlyFailureMessage(error, fallback: 'Failed to load notifications'),
           onRetry: () => ref.read(notificationListProvider.notifier).refresh(),
         ),
         data: (state) {
@@ -160,10 +161,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 if (index >= state.items.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
+                  return const AppLoadMoreIndicator();
                 }
                 final notification = state.items[index];
                 return _NotificationTile(

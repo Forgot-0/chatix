@@ -42,8 +42,8 @@ class AppConstants {
   // was rebuilt around the shell they were no longer merely redundant — they
   // were *wrong*:
   //
-  //   AppConstants.chatDetailRoute(id)      -> '/chat/{id}'      (404: '/chats/{id}')
-  //   AppConstants.profileDetailRoute(id)   -> '/profile/{id}'   (404: '/profiles/{id}')
+  //   ChatDetailRoute(id).location      -> '/chat/{id}'      (404: '/chats/{id}')
+  //   ProfileDetailRoute(id).location   -> '/profile/{id}'   (404: '/profiles/{id}')
   //   AppConstants.positionDetailRoute(id)  -> '/positions/{id}' (404: nested under its project)
   //
   // A wrong route string fails at runtime, on a device, in whichever screen

@@ -1,12 +1,11 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/project/domain/usecases/create_project_use_case.dart';
 import 'package:chatix/features/project/presentation/providers/my_projects_provider.dart';
 import 'package:chatix/features/project/presentation/screens/projects_list_screen.dart';
-import 'package:chatix/features/project/presentation/widgets/project_common.dart';
+import 'package:chatix/core/router/app_routes.dart';
 
 /// `GET /projects/my/` 🔒 (api-docs §5.1). Also the natural home for the
 /// "create project" affordance: once the user owns
@@ -50,8 +49,9 @@ class _MyProjectsScreenState extends ConsumerState<MyProjectsScreen> {
       appBar: AppBar(title: const Text('My projects')),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => ProjectErrorView(
-          message: error is Failure ? error.message : 'Failed to load your projects',
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load your projects',
           onRetry: () => ref.read(myProjectsProvider.notifier).refresh(),
         ),
         data: (data) {
@@ -65,10 +65,7 @@ class _MyProjectsScreenState extends ConsumerState<MyProjectsScreen> {
               itemCount: data.items.length + (data.hasNext ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= data.items.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
+                  return const AppLoadMoreIndicator();
                 }
                 return ProjectListTile(project: data.items[index]);
               },
@@ -86,7 +83,7 @@ class _MyProjectsScreenState extends ConsumerState<MyProjectsScreen> {
                     ),
                   ),
                 )
-            : () => context.push(AppConstants.createProjectRoute),
+            : () => context.push(CreateProjectRoute.location),
         backgroundColor: atLimit ? Theme.of(context).disabledColor : null,
         icon: const Icon(Icons.add),
         label: Text(atLimit ? 'Limit reached' : 'New project'),

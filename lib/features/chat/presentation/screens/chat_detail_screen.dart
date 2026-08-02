@@ -1,11 +1,10 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
@@ -20,6 +19,8 @@ import 'package:chatix/features/chat/presentation/providers/chat_socket_provider
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// Which of api-docs §6.5's two attachment buckets the user is picking from.
 /// They can't be combined in one message — see `_pickAttachments`.
@@ -96,14 +97,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             tooltip: 'Members',
             icon: const Icon(Icons.people_outline),
             onPressed: () =>
-                context.push(AppConstants.chatMembersRoute(widget.chatId)),
+                context.push(ChatMembersRoute.locationOf(widget.chatId)),
           ),
         ],
       ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _ErrorView(
-          message: error is Failure ? error.message : 'Failed to load chat',
+          message: friendlyFailureMessage(error, fallback: 'Failed to load chat'),
           onRetry: () =>
               ref.read(chatDetailProvider(widget.chatId).notifier).refresh(),
         ),
@@ -436,10 +437,7 @@ class _MessageList extends ConsumerWidget {
 
         final messageIndex = index - pendingCount;
         if (messageIndex >= state.messages.length) {
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const AppLoadMoreIndicator();
         }
 
         final message = state.messages[messageIndex];

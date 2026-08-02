@@ -1,7 +1,7 @@
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/project/domain/entities/position_entity.dart';
 import 'package:chatix/features/project/presentation/providers/position_detail_provider.dart';
@@ -32,13 +32,12 @@ class PositionDetailScreen extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, _) => ProjectErrorView(
-          message: error is Failure
-              ? error.message
-              : 'Failed to load position',
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load position',
           onRetry: () => ref.invalidate(
             positionDetailProvider(positionId),
-          ),
+        ),
         ),
         data: (position) => _PositionBody(position: position),
       ),
@@ -234,11 +233,10 @@ class _ApplicationsSection extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => ProjectErrorView(
-        message: error is Failure
-            ? error.message
-            : 'Failed to load applications',
-        onRetry: () => ref.invalidate(
+      error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load applications',
+          onRetry: () => ref.invalidate(
           positionApplicationsProvider(positionId),
         ),
       ),

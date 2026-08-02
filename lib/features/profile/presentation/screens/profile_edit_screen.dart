@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -10,6 +9,7 @@ import 'package:chatix/features/profile/presentation/providers/profile_detail_pr
 import 'package:chatix/features/profile/presentation/providers/profile_edit_provider.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_field_validators.dart';
 import 'package:chatix/features/profile/presentation/widgets/skills_chips_field.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 /// Edits the signed-in person's own profile (api-docs §4.4/§4.6 — there's
 /// no route/way to reach this screen for anyone else's profile, matching
@@ -67,7 +67,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         final error = next.error;
         AppUtils.showSnackBar(
           context,
-          message: error is Failure ? error.message : 'Could not save changes',
+          message: friendlyFailureMessage(error, fallback: 'Could not save changes'),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -78,7 +78,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) =>
-            Center(child: Text(error is Failure ? error.message : 'Could not load your profile')),
+            Center(child: Text(friendlyFailureMessage(error, fallback: 'Could not load your profile'))),
         data: (profile) => _EditForm(
           formKey: _formKey,
           profile: profile,

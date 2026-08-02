@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/notification/presentation/widgets/notification_bell.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -21,7 +21,7 @@ class HomeScreen extends ConsumerWidget {
         final error = next.error;
         AppUtils.showSnackBar(
           context,
-          message: error is Failure ? error.message : 'Something went wrong.',
+          message: friendlyFailureMessage(error, fallback: 'Something went wrong.'),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -126,7 +126,7 @@ class HomeScreen extends ConsumerWidget {
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: () {
-                              context.push(AppConstants.profileRoute);
+                              context.push(ProfileRoute.location);
                             },
                           ),
                         ],
@@ -170,7 +170,7 @@ class HomeScreen extends ConsumerWidget {
                         title: 'Survey',
                         color: Colors.orange,
                         onTap: () {
-                          context.push(AppConstants.surveyRoute);
+                          context.push(SurveyRoute.location);
                         },
                       ),
                       _buildFeatureTile(
@@ -179,7 +179,7 @@ class HomeScreen extends ConsumerWidget {
                         title: 'Profiles',
                         color: Colors.teal,
                         onTap: () {
-                          context.push(AppConstants.profilesListRoute);
+                          context.push(ProfilesRoute.location);
                         },
                       ),
                       _buildFeatureTile(
@@ -188,7 +188,7 @@ class HomeScreen extends ConsumerWidget {
                         title: 'Live Chat',
                         color: Colors.purple,
                         onTap: () {
-                          context.push(AppConstants.chatRoute);
+                          context.push(ChatsRoute.location);
                         },
                       ),
                     ],
