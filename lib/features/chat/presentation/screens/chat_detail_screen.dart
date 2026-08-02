@@ -16,6 +16,8 @@ import 'package:chatix/features/chat/presentation/providers/chat_attachment_prov
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 
@@ -23,13 +25,17 @@ import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 /// They can't be combined in one message — see `_pickAttachments`.
 enum _AttachmentSource { media, document }
 
-/// One conversation: history + composer (api-docs §6.4, §6.5, §6.6).
+/// One conversation: history + composer (api-docs §6.4, §6.5, §6.6), kept live
+/// over the WebSocket (§7).
 ///
-/// ⚠️ **No live updates in this build.** Messages arrive only from
-/// `GET /chats/{id}/messages/` — on open, on pull-to-refresh (which loads the
-/// newest page) and on scroll-to-top (which pages *backwards* into history).
-/// The WebSocket layer of api-docs §7 will push into the same controller
-/// later; nothing here needs to change for that to work.
+/// Initial history comes from `GET /chats/{id}/messages/`; after that
+/// `ChatDetailController` subscribes to this chat and merges `new_message` /
+/// `message_edited` / `message_deleted` as they arrive (§7.4). Pull-to-refresh
+/// and scroll-to-top paging still work as before.
+///
+/// The socket's state is surfaced by [_ConnectionBanner] rather than hidden:
+/// when the connection drops, the message list is silently stale, and a chat
+/// that looks live but isn't is worse than one that admits it.
 ///
 /// Which composer/action controls are shown is decided by the §9.1 permission
 /// matrix through `canSendMessage` / `canEditMessage` / `canDeleteMessage`.
@@ -107,6 +113,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
           return Column(
             children: [
+              // Above the list, not floating over it: a dropped connection
+              // means everything below is potentially stale, and the banner
+              // reads as a header for that content.
+              const _ConnectionBanner(),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () => ref
@@ -171,6 +181,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // for the WS `attachment_success` event (api-docs §6.5).
           uploadTokens: attachments?.uploadTokens ?? const [],
         );
+
+    // Drop these tokens from the session-wide confirmed set once they've been
+    // spent: nothing asks about them again, and leaving them in would make the
+    // set grow for as long as the app runs.
+    final spent = attachments?.uploadTokens ?? const <String>[];
+    if (spent.isNotEmpty) {
+      ref.read(confirmedAttachmentTokensProvider.notifier).release(spent);
+    }
 
     ref.read(chatAttachmentProvider(widget.chatId).notifier).clear();
   }
@@ -636,6 +654,88 @@ class _PendingBubble extends ConsumerWidget {
   }
 }
 
+/// Live-connection indicator for the chat screen (§5 of the WS integration).
+///
+/// Deliberately asymmetric: a healthy connection renders **nothing**. A
+/// permanent "connected" badge trains users to ignore the spot, which is
+/// exactly where the one message that matters will appear.
+///
+/// `ready` and the very first `connecting` are both silent — during a cold
+/// open the list is showing its own spinner, and a "connecting…" bar on top of
+/// it says nothing new. Only losing an *established* connection, or ending up
+/// with none at all, is worth the user's attention.
+class _ConnectionBanner extends ConsumerWidget {
+  const _ConnectionBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // `.value` with a fallback to the service's current status: the status
+    // stream is a broadcast stream and replays nothing, so a screen opened
+    // while already connected would otherwise see `loading` for one frame and
+    // flash a banner that isn't true.
+    final status = ref.watch(chatSocketStatusProvider).value ??
+        ref.read(chatSocketServiceProvider).status;
+
+    final theme = Theme.of(context);
+
+    final (String message, Color background, bool spinner) = switch (status) {
+      // Live, or cold-starting behind the list's own loading state.
+      ChatSocketStatus.ready || ChatSocketStatus.connecting => ('', Colors.transparent, false),
+
+      // Was live and no longer is. Backoff is running and cursors are intact,
+      // so this resolves itself — hence "reconnecting", not an error.
+      ChatSocketStatus.reconnecting => (
+        'Reconnecting…',
+        theme.colorScheme.secondaryContainer,
+        true,
+      ),
+
+      // No socket and none being sought (signed out, or a 1008 awaiting
+      // re-auth). Pull-to-refresh still works, so say so.
+      ChatSocketStatus.disconnected => (
+        'Offline — pull to refresh',
+        theme.colorScheme.errorContainer,
+        false,
+      ),
+    };
+
+    // AnimatedSize so the list doesn't jump when the banner appears/vanishes.
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      child: message.isEmpty
+          ? const SizedBox(width: double.infinity, height: 0)
+          : Container(
+              width: double.infinity,
+              color: background,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (spinner)
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(Icons.cloud_off_outlined,
+                        size: 14, color: theme.colorScheme.onErrorContainer),
+                  const SizedBox(width: 8),
+                  Text(
+                    message,
+                    style: theme.textTheme.bodySmall,
+                    // Announced to screen readers: the visual cue is small and
+                    // easy to miss, and the state change is meaningful.
+                    semanticsLabel: message,
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
 class _ReplyBanner extends StatelessWidget {
   const _ReplyBanner({required this.message, required this.onCancel});
 
@@ -670,7 +770,13 @@ class _ReplyBanner extends StatelessWidget {
   }
 }
 
-/// Progress/error strip for the attachment upload in flight (api-docs §6.5).
+/// Progress/error strip for the attachment upload in flight (api-docs §6.5),
+/// including the server-side processing step reported over the socket.
+///
+/// Three states get distinct copy, because they fail differently:
+/// uploading (bytes moving, §6.5 step 2), *processing* (bytes delivered,
+/// backend still validating — `confirm/` returned 202 and we are waiting for
+/// `attachment_success`, §7.4), and ready.
 class _AttachmentBar extends ConsumerWidget {
   const _AttachmentBar({required this.chatId});
 
@@ -708,6 +814,27 @@ class _AttachmentBar extends ConsumerWidget {
       (sum, upload) => sum + upload.fileSize,
     );
 
+    // Watched (not just read) so the strip rebuilds the moment
+    // `attachment_success` lands for these tokens.
+    ref.watch(confirmedAttachmentTokensProvider);
+    final confirmed = ref
+        .read(confirmedAttachmentTokensProvider.notifier)
+        .areReady(state.uploadTokens);
+
+    // Tokens exist but the backend hasn't confirmed them yet.
+    final processing = state.uploadTokens.isNotEmpty && !confirmed;
+
+    final String status;
+    if (state.isUploading) {
+      status = '';
+    } else if (processing) {
+      status = ' — processing…';
+    } else if (state.isReady) {
+      status = ' — ready to send';
+    } else {
+      status = '';
+    }
+
     return Container(
       color: theme.colorScheme.surfaceContainerHighest,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -722,7 +849,7 @@ class _AttachmentBar extends ConsumerWidget {
                 child: Text(
                   '${state.selected.length} file(s), '
                   '${ChatAttachmentLimits.formatBytes(totalBytes)}'
-                  '${state.isReady ? ' — ready to send' : ''}',
+                  '$status',
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -739,6 +866,13 @@ class _AttachmentBar extends ConsumerWidget {
               child: LinearProgressIndicator(
                 value: state.progress?.fraction,
               ),
+            )
+          // Indeterminate: the backend gives no progress for the async
+          // validation pass, only a terminal `attachment_success`.
+          else if (processing)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: LinearProgressIndicator(minHeight: 2),
             ),
         ],
       ),

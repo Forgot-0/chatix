@@ -28,12 +28,12 @@ void main() {
   }) {
     return {
       'type': type,
-      if (eventName != null) 'event_name': eventName,
-      if (eventId != null) 'event_id': eventId,
+      'event_name': ?eventName,
+      'event_id': ?eventId,
       'chat_id': chatId,
       'payload': payload,
       'ts': ts,
-      if (seq != null) 'seq': seq,
+      'seq': ?seq,
     };
   }
 
