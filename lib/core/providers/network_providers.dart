@@ -1,3 +1,4 @@
+import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/network/interceptors/auth_interceptor.dart';
@@ -24,6 +25,17 @@ final cookieJarProvider = Provider<CookieJar>((ref) {
 Dio dio(Ref ref) {
   final cookieJar = ref.watch(cookieJarProvider);
   final secureStorage = ref.watch(secureStorageServiceProvider);
+  // The "your session is gone" bus (core/auth/session_events.dart). Read, not
+  // watched: it is a leaf provider that never rebuilds, and watching it would
+  // add a rebuild edge to `dioProvider` for no reason.
+  //
+  // ⚠️ Handing it to the interceptor is what makes the whole expired-session
+  // story work. Without it `AuthInterceptor` still clears the stored token but
+  // nobody hears about it: `AuthController` keeps holding a `UserEntity`, the
+  // shell keeps showing four tabs, and the router never re-evaluates its
+  // redirect — the user is left tapping around an app where every request
+  // 401s. See `AuthController._listenForSessionExpiry`.
+  final sessionExpiredSignal = ref.read(sessionExpiredSignalProvider);
 
   final dio = Dio(
     BaseOptions(
@@ -41,7 +53,13 @@ Dio dio(Ref ref) {
 
   dio.interceptors.add(CookieManager(cookieJar));
   dio.interceptors.add(TrailingSlashInterceptor());
-  dio.interceptors.add(AuthInterceptor(dio: dio, secureStorage: secureStorage));
+  dio.interceptors.add(
+    AuthInterceptor(
+      dio: dio,
+      secureStorage: secureStorage,
+      sessionExpiredSignal: sessionExpiredSignal,
+    ),
+  );
   dio.interceptors.add(RetryInterceptor(dio: dio));
 
   if (kDebugMode) {

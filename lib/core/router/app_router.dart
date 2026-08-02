@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/locale_aware_router.dart';
@@ -10,6 +9,7 @@ import 'package:chatix/examples/localization_assets_demo.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
+import 'package:chatix/features/auth/presentation/screens/oauth_callback_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/register_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_confirm_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_request_screen.dart';
@@ -365,6 +365,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ResetPasswordConfirmScreen(),
           ),
         ],
+      ),
+
+      // The provider redirect lands here (api-docs §3.8 step 3). Registered
+      // even though the token hand-back isn't wired yet: the path is already
+      // in `publicRoutePrefixes`, and a whitelisted path with no route is a
+      // 404 page shown to a user who did nothing wrong. See
+      // [OAuthCallbackScreen] for why it stops short of consuming a token.
+      GoRoute(
+        path: OAuthCallbackRoute.path,
+        name: RouteNames.oauthCallback,
+        builder: (context, state) =>
+            OAuthCallbackScreen(error: state.uri.queryParameters['error']),
       ),
 
       // ---------------------------------------------------------------

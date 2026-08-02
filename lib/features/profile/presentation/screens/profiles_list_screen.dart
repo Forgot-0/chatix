@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_list_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 
@@ -70,27 +70,41 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
           ),
           Expanded(
             child: listState.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => _ListError(
-                message: error is Failure ? error.message : 'Could not load profiles',
+              loading: () => const AppListSkeleton(),
+              error: (error, _) => AppErrorState(
+                error: error,
+                fallbackMessage: 'Could not load profiles.',
                 onRetry: () => ref.read(profileListProvider.notifier).refresh(),
               ),
               data: (state) {
                 if (state.items.isEmpty) {
-                  return const Center(child: Text('No profiles found'));
+                  final isSearching = _searchController.text.trim().isNotEmpty;
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        ref.read(profileListProvider.notifier).refresh(),
+                    child: AppEmptyState(
+                      icon: isSearching
+                          ? Icons.person_search_outlined
+                          : Icons.people_outline,
+                      title: isSearching
+                          ? 'Nobody matches that name'
+                          : 'No profiles yet',
+                      message: isSearching
+                          ? 'Try a shorter or differently spelled name.'
+                          : null,
+                    ),
+                  );
                 }
 
                 return RefreshIndicator(
                   onRefresh: () => ref.read(profileListProvider.notifier).refresh(),
                   child: ListView.builder(
                     controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: state.items.length + (state.hasNext ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index >= state.items.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(child: CircularProgressIndicator()),
-                        );
+                        return const AppLoadMoreIndicator();
                       }
 
                       final profile = state.items[index];
@@ -100,7 +114,8 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                         subtitle: profile.specialization != null
                             ? Text(profile.specialization!)
                             : null,
-                        onTap: () => context.push(AppConstants.profileDetailRoute(profile.id)),
+                        onTap: () =>
+                            context.push(ProfileDetailRoute(profile.id).location),
                       );
                     },
                   ),
@@ -109,32 +124,6 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ListError extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ListError({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 48),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
       ),
     );
   }
