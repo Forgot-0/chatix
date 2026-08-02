@@ -70,7 +70,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Members')),
       body: membersState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppListSkeleton(),
         error: (error, _) => _ErrorView(
           message: friendlyFailureMessage(error, fallback: 'Failed to load members'),
           onRetry: () =>

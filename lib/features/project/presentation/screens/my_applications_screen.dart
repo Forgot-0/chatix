@@ -38,15 +38,22 @@ class MyApplicationsScreen extends ConsumerWidget {
           ),
           Expanded(
             child: appsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppListSkeleton(),
               error: (error, _) => AppErrorState(
-          error: error,
-          fallbackMessage: 'Failed to load applications',
-          onRetry: () => ref.read(myApplicationsProvider.notifier).refresh(),
-        ),
+                error: error,
+                fallbackMessage: 'Failed to load applications',
+                onRetry: () => ref.read(myApplicationsProvider.notifier).refresh(),
+              ),
               data: (apps) {
                 if (apps.isEmpty) {
-                  return const Center(child: Text('No applications with this status'));
+                  return RefreshIndicator(
+                    onRefresh: () => ref.read(myApplicationsProvider.notifier).refresh(),
+                    child: const AppEmptyState(
+                      icon: Icons.description_outlined,
+                      title: 'No applications with this status',
+                      message: 'Try a different status filter or refresh.',
+                    ),
+                  );
                 }
                 return RefreshIndicator(
                   onRefresh: () => ref.read(myApplicationsProvider.notifier).refresh(),

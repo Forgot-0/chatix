@@ -48,7 +48,7 @@ class _MyProjectsScreenState extends ConsumerState<MyProjectsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('My projects')),
       body: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppListSkeleton(),
         error: (error, _) => AppErrorState(
           error: error,
           fallbackMessage: 'Failed to load your projects',
@@ -56,7 +56,19 @@ class _MyProjectsScreenState extends ConsumerState<MyProjectsScreen> {
         ),
         data: (data) {
           if (data.items.isEmpty) {
-            return const Center(child: Text("You aren't in any projects yet"));
+            return RefreshIndicator(
+              onRefresh: () => ref.read(myProjectsProvider.notifier).refresh(),
+              child: AppEmptyState(
+                icon: Icons.folder_open_outlined,
+                title: "You aren't in any projects yet",
+                message: 'Create one to get started.',
+                action: FilledButton.icon(
+                  onPressed: () => context.push(CreateProjectRoute.location),
+                  icon: const Icon(Icons.add),
+                  label: const Text('New project'),
+                ),
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () => ref.read(myProjectsProvider.notifier).refresh(),

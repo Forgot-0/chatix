@@ -19,7 +19,7 @@ class MyInvitesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('My invites')),
       body: invitesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const AppListSkeleton(),
         error: (error, _) => AppErrorState(
           error: error,
           fallbackMessage: 'Failed to load invites',
@@ -27,7 +27,14 @@ class MyInvitesScreen extends ConsumerWidget {
         ),
         data: (invites) {
           if (invites.isEmpty) {
-            return const Center(child: Text('No pending invites'));
+            return RefreshIndicator(
+              onRefresh: () => ref.read(myInvitesProvider.notifier).refresh(),
+              child: const AppEmptyState(
+                icon: Icons.mail_outline,
+                title: 'No pending invites',
+                message: 'You have no outstanding project invitations.',
+              ),
+            );
           }
           return RefreshIndicator(
             onRefresh: () => ref.read(myInvitesProvider.notifier).refresh(),

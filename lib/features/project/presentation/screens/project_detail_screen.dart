@@ -209,15 +209,18 @@ class _PositionsTab extends ConsumerWidget {
     return Stack(
       children: [
         positionsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => AppErrorState(
-          error: error,
-          fallbackMessage: 'Failed to load positions',
-          onRetry: () => ref.invalidate(projectPositionsProvider(project.id)),
-        ),
+          loading: () => const AppInlineSkeleton(hasLeading: true),
+          error: (error, _) => AppInlineError(
+            error: error,
+            onRetry: () => ref.invalidate(projectPositionsProvider(project.id)),
+            fallbackMessage: 'Failed to load positions',
+          ),
           data: (positions) {
             if (positions.isEmpty) {
-              return const Center(child: Text('No open positions'));
+              return const AppInlineEmpty(
+                icon: Icons.work_outline,
+                title: 'No open positions',
+              );
             }
             return ListView.builder(
               padding: const EdgeInsets.only(bottom: 88),
@@ -257,7 +260,6 @@ class _PositionsTab extends ConsumerWidget {
               label: const Text('Add position'),
             ),
           ),
-      ],
-    );
+      ],    );
   }
 }

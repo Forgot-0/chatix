@@ -117,14 +117,21 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
           ),
           Expanded(
             child: listState.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const AppListSkeleton(hasTrailing: true),
               error: (error, _) => _ErrorView(
                 message: friendlyFailureMessage(error, fallback: 'Failed to load projects'),
                 onRetry: () => ref.read(projectListProvider.notifier).refresh(),
               ),
               data: (state) {
                 if (state.items.isEmpty) {
-                  return const Center(child: Text('No projects found'));
+                  return RefreshIndicator(
+                    onRefresh: () => ref.read(projectListProvider.notifier).refresh(),
+                    child: const AppEmptyState(
+                      icon: Icons.search_off_outlined,
+                      title: 'No projects found',
+                      message: 'Try a different name or set of tags.',
+                    ),
+                  );
                 }
                 return RefreshIndicator(
                   onRefresh: () => ref.read(projectListProvider.notifier).refresh(),
