@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart' show debugPrint, debugPrintStack;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
+import 'package:chatix/features/notification/presentation/providers/notification_providers.dart';
 
 /// Session state: `null` = signed out, otherwise the current [UserEntity].
 /// Failures surface through `AsyncValue.error` so screens can read
@@ -44,6 +47,11 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
 
     await _refreshCurrentUser();
+
+    // Push registration (api-docs §8.1). Deliberately *after* the session is
+    // established and deliberately **not awaited into the result**: see
+    // [_registerDeviceForPush].
+    await _registerDeviceForPush();
   }
 
   Future<void> register({
@@ -110,6 +118,57 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       (failure) => AsyncValue.error(failure, StackTrace.current),
       (user) => AsyncValue.data(user),
     );
+  }
+
+  /// Registers this device's push token with the backend (`POST /devices/`,
+  /// api-docs §8.1) right after a successful login.
+  ///
+  /// ### This can never fail the login
+  ///
+  /// Every failure path below is swallowed on purpose. The user asked to sign
+  /// in; whether our server can later send them a push is unrelated to
+  /// whether that succeeded, and there is nothing they could do about it
+  /// anyway. In particular this must not touch [state] — flipping it to
+  /// `AsyncValue.error` here would sign a perfectly good session straight
+  /// back out.
+  ///
+  /// ### Why it's expected to fail today
+  ///
+  /// `NotificationService` is currently wired to `DebugNotificationService`
+  /// (see `core/notifications/notification_providers.dart`) — there is no
+  /// Firebase project set up yet, so `getToken()` returns a fake token, or on
+  /// a real FCM implementation without configuration would return `null` or
+  /// throw. All three are handled:
+  ///
+  /// * `null`/empty token → skip quietly;
+  /// * a throw from `getToken()` → caught, skipped quietly;
+  /// * an unsupported platform (desktop) → `RegisterDeviceUseCase` returns a
+  ///   `Left` and it is ignored.
+  ///
+  /// When FCM is properly configured later, the *only* change needed is
+  /// swapping the implementation behind `notificationServiceProvider`. This
+  /// call site, the use case, the repository and the endpoint stay as they
+  /// are — that's the point of putting the integration here now rather than
+  /// waiting.
+  Future<void> _registerDeviceForPush() async {
+    // Only for a session we actually established.
+    if (state.value == null) return;
+
+    try {
+      final notificationService = ref.read(notificationServiceProvider);
+      final token = await notificationService.getToken();
+      if (token == null || token.isEmpty) return;
+
+      await ref.read(registerDeviceUseCaseProvider).execute(
+        token: token,
+        deviceName: AppConstants.appName,
+      );
+    } catch (error, stackTrace) {
+      // A throwing push SDK (unconfigured Firebase, missing plist/json,
+      // simulator without APNs) must not take the login down with it.
+      debugPrint('Push device registration skipped: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 }
 

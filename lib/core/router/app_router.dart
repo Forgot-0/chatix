@@ -23,6 +23,7 @@ import 'package:chatix/features/project/presentation/screens/position_detail_scr
 import 'package:chatix/features/project/presentation/screens/my_applications_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
+import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/features/chat/presentation/screens/call_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
@@ -144,6 +145,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppConstants.languageSettingsRoute,
         name: 'language_settings',
         builder: (context, state) => const LanguageSettingsScreen(),
+      ),
+
+      // Notification inbox (api-docs §8.2). Flat, with no ':id' child: a
+      // notification is not a destination, it points at one — the tap
+      // handler resolves its `payload` to an existing chat/project route.
+      GoRoute(
+        path: AppConstants.notificationsRoute,
+        name: 'notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // Localization Assets Demo route

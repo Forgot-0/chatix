@@ -87,6 +87,12 @@ class AppConstants {
 
   static const String settingsRoute = '/settings';
   static const String languageSettingsRoute = '/settings/language';
+
+  /// `/notifications` — the notification inbox (api-docs §8.2). No detail
+  /// route: a notification has no page of its own, tapping one navigates to
+  /// whatever its `payload` points at (see `resolveNotificationRoute`).
+  static const String notificationsRoute = '/notifications';
+
   static const String localizationDemoRoute = '/demo/localization';
   static const String localizationAssetsDemoRoute = '/demo/localization/assets';
 
