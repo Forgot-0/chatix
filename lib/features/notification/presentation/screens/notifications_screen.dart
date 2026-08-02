@@ -7,7 +7,6 @@ import 'package:chatix/features/notification/domain/entities/notification_entity
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_list_provider.dart';
 import 'package:chatix/features/notification/presentation/utils/notification_route_resolver.dart';
-import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /notifications/` 🔒 (api-docs §8.2) — the notification inbox.
 ///
@@ -131,23 +130,48 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ],
       ),
       body: listState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _ErrorView(
-          message: friendlyFailureMessage(error, fallback: 'Failed to load notifications'),
+        // No leading avatar in the skeleton? There is one — every row has a
+        // circular type icon — and a trailing chevron on the rows that lead
+        // somewhere, so the placeholder mirrors both.
+        loading: () => const AppListSkeleton(hasTrailing: true),
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Could not load your notifications.',
           onRetry: () => ref.read(notificationListProvider.notifier).refresh(),
         ),
         data: (state) {
           if (state.items.isEmpty) {
+            // "Nothing at all" and "nothing matching this filter" are
+            // different problems: the second one is fixed by changing the
+            // filter, and saying "No notifications yet" while a filter is
+            // active reads as a bug.
             return RefreshIndicator(
-              onRefresh: () => ref.read(notificationListProvider.notifier).refresh(),
-              // A scrollable is required for pull-to-refresh to work on an
-              // otherwise empty page.
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('No notifications yet')),
-                ],
+              onRefresh: () =>
+                  ref.read(notificationListProvider.notifier).refresh(),
+              child: AppEmptyState(
+                icon: switch (state.isReadFilter) {
+                  null => Icons.notifications_none_outlined,
+                  _ => Icons.filter_list_off,
+                },
+                title: switch (state.isReadFilter) {
+                  null => 'No notifications yet',
+                  false => 'Nothing unread',
+                  true => 'Nothing read yet',
+                },
+                message: switch (state.isReadFilter) {
+                  null =>
+                    "We'll let you know about invites, applications and "
+                        'messages here.',
+                  _ => 'Switch the filter to “All” to see everything.',
+                },
+                action: state.isReadFilter == null
+                    ? null
+                    : TextButton(
+                        onPressed: () => ref
+                            .read(notificationListProvider.notifier)
+                            .setFilter(),
+                        child: const Text('Show all'),
+                      ),
               ),
             );
           }
@@ -242,26 +266,3 @@ class _NotificationTile extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      ),
-    );
-  }
-}

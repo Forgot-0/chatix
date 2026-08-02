@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/core/router/app_routes.dart';
-import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /chats/` 🔒 (api-docs §6.2) — the user's conversations, newest
 /// activity first.
@@ -60,20 +59,29 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Chats')),
       body: listState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _ErrorView(
-          message: friendlyFailureMessage(error, fallback: 'Failed to load chats'),
+        // First fetch only: with riverpod's `skipLoadingOnRefresh`, a
+        // pull-to-refresh keeps the old rows on screen instead of flashing
+        // this. Trailing block on, because every real row has a timestamp
+        // and possibly an unread badge there.
+        loading: () => const AppListSkeleton(hasTrailing: true),
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Could not load your chats.',
           onRetry: () => ref.read(chatListProvider.notifier).refresh(),
         ),
         data: (state) {
           if (state.items.isEmpty) {
             return RefreshIndicator(
               onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
-              child: ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('No chats yet')),
-                ],
+              child: AppEmptyState(
+                icon: Icons.forum_outlined,
+                title: 'No chats yet',
+                message: 'Start a conversation and it will show up here.',
+                action: FilledButton.icon(
+                  onPressed: () => context.push(CreateChatRoute.location),
+                  icon: const Icon(Icons.add_comment_outlined),
+                  label: const Text('New chat'),
+                ),
               ),
             );
           }
@@ -82,6 +90,9 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
             onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
             child: ListView.separated(
               controller: _scrollController,
+              // Keeps pull-to-refresh reachable when a short list doesn't
+              // fill the viewport.
+              physics: const AlwaysScrollableScrollPhysics(),
               // The extra row is the "loading more" spinner; it exists only
               // while the server says another page is reachable.
               itemCount: state.items.length + (state.canLoadMore ? 1 : 0),
@@ -190,31 +201,5 @@ class ChatListTile extends StatelessWidget {
     }
     return '${local.day.toString().padLeft(2, '0')}.'
         '${local.month.toString().padLeft(2, '0')}.${local.year}';
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(message, textAlign: TextAlign.center),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
-    );
   }
 }
