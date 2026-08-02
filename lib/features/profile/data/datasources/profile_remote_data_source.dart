@@ -27,6 +27,9 @@ abstract class ProfileRemoteDataSource {
   /// `GET /profiles/{profile_id}/` 🔓 (api-docs §4.3).
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId);
 
+  /// `GET /profiles/my/` 🔓 (api-docs §4.3).
+  Future<Either<Failure, ProfileModel>> fetchMyProfile();
+
   /// `PUT /profiles/{profile_id}/` 🔒 (api-docs §4.4). Only the
   /// non-`null` named parameters actually supplied by the caller are put
   /// on the wire — see the ⚠️ on `ProfileRepository.updateProfile` for why
@@ -62,7 +65,10 @@ abstract class ProfileRemoteDataSource {
   });
 
   /// `DELETE /profiles/{profile_id}/{provider}/delete/` 🔒 (api-docs §4.6).
-  Future<Either<Failure, void>> removeContact(int profileId, {required String provider});
+  Future<Either<Failure, void>> removeContact(
+    int profileId, {
+    required String provider,
+  });
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -107,7 +113,17 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId) async {
     final result = await _apiClient.get('/profiles/$profileId/');
-    return result.map((data) => ProfileModel.fromJson(data as Map<String, dynamic>));
+    return result.map(
+      (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<Either<Failure, ProfileModel>> fetchMyProfile() async {
+    final result = await _apiClient.get('/profiles/my/');
+    return result.map(
+      (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   @override
@@ -143,7 +159,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       '/profiles/avatar/presign/',
       data: {'filename': filename, 'size': size, 'content_type': contentType},
     );
-    return result.map((data) => AvatarPresignModel.fromJson(data as Map<String, dynamic>));
+    return result.map(
+      (data) => AvatarPresignModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   @override
@@ -175,14 +193,21 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, void>> removeContact(int profileId, {required String provider}) async {
+  Future<Either<Failure, void>> removeContact(
+    int profileId, {
+    required String provider,
+  }) async {
     // api-docs §4.6 ⚠️: NOT /profiles/{id}/contacts/{provider}/ — the
     // path has no `/contacts/` segment and ends with `/delete/` instead.
-    final result = await _apiClient.delete('/profiles/$profileId/$provider/delete/');
+    final result = await _apiClient.delete(
+      '/profiles/$profileId/$provider/delete/',
+    );
     return result.map((_) {});
   }
 }
 
-final profileRemoteDataSourceProvider = Provider<ProfileRemoteDataSource>((ref) {
+final profileRemoteDataSourceProvider = Provider<ProfileRemoteDataSource>((
+  ref,
+) {
   return ProfileRemoteDataSourceImpl(ref.watch(apiClientProvider));
 });

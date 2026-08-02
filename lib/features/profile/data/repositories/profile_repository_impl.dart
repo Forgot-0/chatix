@@ -46,6 +46,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<Either<Failure, ProfileEntity>> getMyProfile() async {
+    final result = await _remoteDataSource.fetchMyProfile();
+    return result.map((model) => model.toEntity());
+  }
+
+  @override
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,
@@ -98,11 +104,18 @@ class ProfileRepositoryImpl implements ProfileRepository {
     required String provider,
     required String contact,
   }) {
-    return _remoteDataSource.addContact(profileId, provider: provider, contact: contact);
+    return _remoteDataSource.addContact(
+      profileId,
+      provider: provider,
+      contact: contact,
+    );
   }
 
   @override
-  Future<Either<Failure, void>> removeContact(int profileId, {required String provider}) {
+  Future<Either<Failure, void>> removeContact(
+    int profileId, {
+    required String provider,
+  }) {
     return _remoteDataSource.removeContact(profileId, provider: provider);
   }
 

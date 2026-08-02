@@ -25,6 +25,10 @@ abstract class ProfileRepository {
   /// 'NOT_FOUND_PROFILE'))` on 404.
   Future<Either<Failure, ProfileEntity>> getProfile(int profileId);
 
+  /// `GET /profiles/my/` 🔓 (api-docs §4.3). Used for the signed-in user's
+  /// own profile.
+  Future<Either<Failure, ProfileEntity>> getMyProfile();
+
   /// `PUT /profiles/{profile_id}/` 🔒 (api-docs §4.4) — note this is a real
   /// `PUT`, not a `PATCH`. All parameters are optional on the wire, but the
   /// backend applies whatever it receives *including explicit `null`s*, so
