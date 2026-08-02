@@ -17390,3 +17390,35 @@ at:
 #1      Future.any.onValue (dart:async/future.dart:637)
 <asynchronous suspension>
 
+[custom_lint] 2026-08-02T18:05:34.379255 Unhandled exception:
+[custom_lint] 2026-08-02T18:05:34.379255 SocketException: Запрос на отправку или получение данных  (when sending on a datagram socket using a sendto call) no address was supplied (OS Error: Запрос на отправку или получение данных  (when sending on a datagram socket using a sendto call) no address was supplied, errno = 10057), address = ::1, port = 36145
+[custom_lint] 2026-08-02T18:05:34.379255 #0      _NativeSocket.startConnect (dart:io-patch/socket_patch.dart:817:35)
+[custom_lint] 2026-08-02T18:05:34.379255 #1      _NativeSocket.connect (dart:io-patch/socket_patch.dart:1142:12)
+[custom_lint] 2026-08-02T18:05:34.379255 #2      _RawSocket.connect (dart:io-patch/socket_patch.dart:2256:26)
+[custom_lint] 2026-08-02T18:05:34.379255 #3      RawSocket.connect (dart:io-patch/socket_patch.dart:31:23)
+[custom_lint] 2026-08-02T18:05:34.379255 #4      Socket._connect (dart:io-patch/socket_patch.dart:2526:22)
+[custom_lint] 2026-08-02T18:05:34.379255 #5      Socket.connect (dart:io/socket.dart:869:21)
+[custom_lint] 2026-08-02T18:05:34.379255 #6      runSocket.<anonymous closure>.<anonymous closure> (package:custom_lint_builder/src/channel.dart:69:35)
+[custom_lint] 2026-08-02T18:05:34.379255 #7      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[custom_lint] 2026-08-02T18:05:34.379255 #8      _rootRun (dart:async/zone_root.dart:27:47)
+[custom_lint] 2026-08-02T18:05:34.379255 #9      _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-08-02T18:05:34.379255 #10     _CustomZone.runGuarded (dart:async/zone.dart:625:7)
+[custom_lint] 2026-08-02T18:05:34.379255 #11     _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:666:23)
+[custom_lint] 2026-08-02T18:05:34.379255 #12     _rootRun (dart:async/zone_root.dart:35:13)
+[custom_lint] 2026-08-02T18:05:34.379255 #13     _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-08-02T18:05:34.379255 #14     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:649:23)
+[custom_lint] 2026-08-02T18:05:34.379255 #15     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[custom_lint] 2026-08-02T18:05:34.379255 #16     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:423:19)
+[custom_lint] 2026-08-02T18:05:34.379255 #17     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:454:5)
+[custom_lint] 2026-08-02T18:05:34.379255 #18     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:192:12)
+[custom_lint] 2026-08-02T18:05:34.379255
+[custom_lint] 2026-08-02T18:05:34.379255
+Failed to start pluginsThe request analysis.setContextRoots failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+Bad state: Failed to start the plugins.
+at:
+#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223)
+<asynchronous suspension>
+#1      Future.any.onValue (dart:async/future.dart:637)
+<asynchronous suspension>
+
