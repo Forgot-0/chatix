@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/features/project/domain/entities/project_entity.dart';
 import 'package:chatix/features/project/presentation/providers/project_list_provider.dart';
 import 'package:chatix/core/router/app_routes.dart';
-import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /projects/` 🔒 (api-docs §5.1). Auth-required list with name + tag
 /// filters. ⚠️ Unlike `ProfilesListScreen`, there is no public read path in
@@ -117,9 +116,12 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
           ),
           Expanded(
             child: listState.when(
-              loading: () => const AppListSkeleton(hasTrailing: true),
-              error: (error, _) => _ErrorView(
-                message: friendlyFailureMessage(error, fallback: 'Failed to load projects'),
+              // First fetch only — a pull-to-refresh keeps the old rows on
+              // screen instead of flashing this (see ChatsListScreen).
+              loading: () => const AppListSkeleton(),
+              error: (error, _) => AppErrorState(
+                error: error,
+                fallbackMessage: 'Failed to load projects',
                 onRetry: () => ref.read(projectListProvider.notifier).refresh(),
               ),
               data: (state) {
@@ -127,9 +129,9 @@ class _ProjectsListScreenState extends ConsumerState<ProjectsListScreen> {
                   return RefreshIndicator(
                     onRefresh: () => ref.read(projectListProvider.notifier).refresh(),
                     child: const AppEmptyState(
-                      icon: Icons.search_off_outlined,
+                      icon: Icons.workspaces_outline,
                       title: 'No projects found',
-                      message: 'Try a different name or set of tags.',
+                      message: 'Try different filters, or create your own project.',
                     ),
                   );
                 }
@@ -198,32 +200,6 @@ class _VisibilityChip extends StatelessWidget {
       avatar: Icon(icon, size: 16),
       label: Text(label),
       visualDensity: VisualDensity.compact,
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(message, textAlign: TextAlign.center),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
     );
   }
 }

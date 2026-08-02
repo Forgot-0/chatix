@@ -20,7 +20,6 @@ import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/core/router/app_routes.dart';
-import 'package:chatix/core/error/failure_messages.dart';
 
 /// Which of api-docs §6.5's two attachment buckets the user is picking from.
 /// They can't be combined in one message — see `_pickAttachments`.
@@ -103,8 +102,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _ErrorView(
-          message: friendlyFailureMessage(error, fallback: 'Failed to load chat'),
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load chat',
           onRetry: () =>
               ref.read(chatDetailProvider(widget.chatId).notifier).refresh(),
         ),
@@ -995,32 +995,6 @@ class _ForwardTargetDialog extends ConsumerWidget {
           child: const Text('Cancel'),
         ),
       ],
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(message, textAlign: TextAlign.center),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
     );
   }
 }

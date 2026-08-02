@@ -169,6 +169,17 @@ void main() {
   });
 
   group('/projects/:projectId/positions/:positionId', () {
+    // `PositionDetailRoute` is nested under `ProjectDetailRoute` in the route
+    // table (mirroring `app_router.dart`), and this harness has no
+    // `ShellRoute`/`parentNavigatorKey` to change that. Deep-linking straight
+    // to the position therefore makes go_router build the **whole** matched
+    // page stack, not just the leaf — `/projects/:projectId`'s own builder
+    // also runs (and records its own id into the same `parsed` list) so that
+    // "back" lands on the project page underneath. That's real, intended
+    // go_router behaviour for non-shell nested routes, not something
+    // `PositionDetailRoute.from` got wrong — so these assertions check that
+    // the leaf's parsed value showed up, rather than that it was the *only*
+    // thing recorded.
     testWidgets('carries both ids, each with its own type', (tester) async {
       final parsed = await go(
         tester,
@@ -177,12 +188,17 @@ void main() {
           positionId: 'a1b2c3-uuid',
         ).location,
       );
-      expect(parsed, [(42, 'a1b2c3-uuid')]);
+      expect(parsed, contains((42, 'a1b2c3-uuid')));
     });
 
     testWidgets('a bad project id invalidates the whole pair', (tester) async {
       final parsed = await go(tester, '/projects/oops/positions/a1b2c3-uuid');
-      expect(parsed, [null]);
+      // Both the ancestor `ProjectDetailRoute` builder and the leaf
+      // `PositionDetailRoute` builder fail to parse "oops" and each record
+      // `null` — the pair is invalidated at both levels, which is exactly
+      // the "whole pair" the test name refers to.
+      expect(parsed, everyElement(isNull));
+      expect(parsed, isNotEmpty);
     });
   });
 

@@ -6,7 +6,6 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
-import 'package:chatix/core/error/failure_messages.dart';
 
 /// `GET /chats/{id}/members/` 🔒 (api-docs §6.3) with the moderation actions
 /// of the same section.
@@ -71,8 +70,9 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       appBar: AppBar(title: const Text('Members')),
       body: membersState.when(
         loading: () => const AppListSkeleton(),
-        error: (error, _) => _ErrorView(
-          message: friendlyFailureMessage(error, fallback: 'Failed to load members'),
+        error: (error, _) => AppErrorState(
+          error: error,
+          fallbackMessage: 'Failed to load members',
           onRetry: () =>
               ref.read(chatMembersProvider(widget.chatId).notifier).refresh(),
         ),
@@ -499,32 +499,6 @@ class _EmptyMembersView extends StatelessWidget {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(message, textAlign: TextAlign.center),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );
