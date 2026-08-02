@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 
@@ -14,6 +15,10 @@ class HomeScreen extends ConsumerWidget {
     // Watch auth state to get current user
     final authState = ref.watch(authProvider);
     final user = authState.value;
+
+    // Unread count (api-docs §8.3) behind the bottom-nav bell. Poll-driven —
+    // see NotificationBadgeController, there is no realtime channel for this.
+    final unreadCount = ref.watch(notificationBadgeProvider);
 
     ref.listen(authProvider, (previous, next) {
       if (next.hasError && !next.isLoading) {
@@ -242,20 +247,34 @@ class HomeScreen extends ConsumerWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
+        items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.explore),
+            label: 'Explore',
           ),
           BottomNavigationBarItem(
+            // `isLabelVisible: false` keeps this tab's layout stable whether
+            // or not there's a badge — same reasoning as `NotificationBell`.
+            icon: Badge(
+              isLabelVisible: unreadCount > 0,
+              label: Text(unreadCount > 99 ? '99+' : '$unreadCount'),
+              child: const Icon(Icons.notifications),
+            ),
+            label: 'Notifications',
+          ),
+          const BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
         onTap: (index) {
-          // Handle navigation
+          // `GET /notifications/` (api-docs §8.2) — the only tab that's
+          // actually wired up; the rest stay the template's placeholder.
+          if (index == 2) {
+            context.push(AppConstants.notificationsRoute);
+            return;
+          }
           if (index != 0) {
             AppUtils.showSnackBar(
               context,
