@@ -13,9 +13,11 @@ import 'package:chatix/features/project/presentation/widgets/project_common.dart
 class PositionDetailScreen extends ConsumerWidget {
   const PositionDetailScreen({
     super.key,
+    required this.projectId,
     required this.positionId,
   });
 
+  final int projectId;
   final String positionId;
 
   @override

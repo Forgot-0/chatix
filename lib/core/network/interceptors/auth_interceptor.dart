@@ -1,3 +1,4 @@
+import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_path.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
@@ -7,15 +8,34 @@ import 'package:synchronized/synchronized.dart';
 /// Attaches access tokens and refreshes them via HttpOnly refresh cookie.
 ///
 /// Refresh token never touches Dart storage — only [PersistCookieJar] sends it.
+///
+/// ### Announcing the end of a session
+///
+/// Clearing the stored token is not enough on its own: the rest of the app
+/// (an `AuthController` still holding a `UserEntity`, a shell still drawing
+/// four tabs) has no way to find out. Whenever this interceptor concludes the
+/// session is unrecoverable it therefore also fires [sessionExpiredSignal],
+/// which `AuthController` turns into a signed-out state and the router turns
+/// into a redirect to `/login` — from anywhere, including code paths with no
+/// `BuildContext`. See `core/auth/session_events.dart` for why this is a bus
+/// rather than a direct call.
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor({
     required Dio dio,
     required SecureStorageService secureStorage,
+    SessionExpiredSignal? sessionExpiredSignal,
   }) : _dio = dio,
-       _secureStorage = secureStorage;
+       _secureStorage = secureStorage,
+       _sessionExpiredSignal = sessionExpiredSignal;
 
   final Dio _dio;
   final SecureStorageService _secureStorage;
+
+  /// Nullable so the existing tests (and any non-app usage) can construct an
+  /// interceptor without wiring the whole signal; when absent, behaviour is
+  /// exactly what it was before — clear the token, propagate the error.
+  final SessionExpiredSignal? _sessionExpiredSignal;
+
   final Lock _refreshLock = Lock();
 
   static const _refreshPath = '/auth/refresh/';
@@ -45,7 +65,9 @@ class AuthInterceptor extends QueuedInterceptor {
     }
 
     if (_isInvalidToken(err)) {
-      await _clearSession();
+      // api-docs §2.3: a `403 INVALID_TOKEN` means the token is structurally
+      // unusable, so there is nothing a refresh could fix.
+      await _endSession(SessionExpiredReason.invalidToken);
       handler.next(err);
       return;
     }
@@ -58,7 +80,9 @@ class AuthInterceptor extends QueuedInterceptor {
     try {
       final newToken = await _refreshLock.synchronized(_performRefresh);
       if (newToken == null) {
-        await _clearSession();
+        // The refresh itself came back with a terminal answer (dead session,
+        // rejected cookie) — this is the "session expired mid-use" case.
+        await _endSession(SessionExpiredReason.refreshFailed);
         handler.next(err);
         return;
       }
@@ -68,7 +92,7 @@ class AuthInterceptor extends QueuedInterceptor {
       final response = await _dio.fetch(requestOptions);
       handler.resolve(response);
     } catch (_) {
-      await _clearSession();
+      await _endSession(SessionExpiredReason.refreshFailed);
       handler.next(err);
     }
   }
@@ -156,6 +180,16 @@ class AuthInterceptor extends QueuedInterceptor {
     }
 
     return false;
+  }
+
+  /// Drops the local session and tells the app about it.
+  ///
+  /// Order matters: the token is deleted **before** the signal is emitted, so
+  /// that anything reacting to the signal (`AuthController` re-reading
+  /// storage, a retry) can never observe a session that is half gone.
+  Future<void> _endSession(SessionExpiredReason reason) async {
+    await _clearSession();
+    _sessionExpiredSignal?.notify(reason);
   }
 
   Future<void> _clearSession() async {

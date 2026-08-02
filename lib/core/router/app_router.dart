@@ -1,339 +1,499 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:chatix/core/constants/app_constants.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:chatix/core/providers/localization_providers.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/locale_aware_router.dart';
 import 'package:chatix/examples/localization_assets_demo.dart';
+import 'package:chatix/features/auth/domain/entities/user_entity.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/register_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_confirm_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_request_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
-import 'package:chatix/features/home/presentation/screens/home_screen.dart';
-import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
-import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
-import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
-import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
-import 'package:chatix/features/project/presentation/screens/projects_list_screen.dart';
-import 'package:chatix/features/project/presentation/screens/my_projects_screen.dart';
-import 'package:chatix/features/project/presentation/screens/create_project_screen.dart';
-import 'package:chatix/features/project/presentation/screens/my_invites_screen.dart';
-import 'package:chatix/features/project/presentation/screens/project_detail_screen.dart';
-import 'package:chatix/features/project/presentation/screens/position_detail_screen.dart';
-import 'package:chatix/features/project/presentation/screens/my_applications_screen.dart';
-import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
-import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
-import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
-import 'package:go_router/go_router.dart';
 import 'package:chatix/features/chat/presentation/screens/call_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
+import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
+import 'package:chatix/features/project/presentation/screens/create_project_screen.dart';
+import 'package:chatix/features/project/presentation/screens/my_applications_screen.dart';
+import 'package:chatix/features/project/presentation/screens/my_invites_screen.dart';
+import 'package:chatix/features/project/presentation/screens/my_projects_screen.dart';
+import 'package:chatix/features/project/presentation/screens/position_detail_screen.dart';
+import 'package:chatix/features/project/presentation/screens/project_detail_screen.dart';
+import 'package:chatix/features/project/presentation/screens/projects_list_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/survey/presentation/screens/survey_screen.dart';
 
+/// The app's route table.
+///
+/// ### Shape
+///
+/// One `StatefulShellRoute.indexedStack` holding the four tabbed areas
+/// (Chats / Projects / Notifications / Profile), and a set of flat routes for
+/// everything you *enter* rather than *switch to* — a conversation, a project,
+/// a position, someone else's profile, settings, the auth flow. Flat routes
+/// are pushed above the shell, so they cover the navigation bar: a full-screen
+/// conversation whose tab bar could switch out from under it is how a
+/// half-typed message gets lost.
+///
+/// ### The redirect
+///
+/// Unchanged in spirit from the previous version — a single `redirect`
+/// callback driven by `authProvider`, holding its decision while the session
+/// is still resolving, sending signed-out users to `/login` and signed-in
+/// users away from it. Two things did change:
+///
+/// * the public set now covers the whole auth flow, including
+///   `/oauth-callback` (see [OAuthCallbackRoute] for why it is whitelisted
+///   before the screen exists);
+/// * the decision logic is extracted into [resolveAuthRedirect], a pure
+///   function, so the "session died mid-session" behaviour is unit-testable
+///   without a widget tree.
+///
+/// ### Why `refreshListenable` and not `ref.watch`
+///
+/// `ref.watch(authProvider)` inside this provider would rebuild the whole
+/// `GoRouter` on every auth change. A new `GoRouter` starts from
+/// `initialLocation` with an empty history — so a token refresh, or any
+/// state flip, would silently throw away the user's navigation stack. Feeding
+/// auth changes into a `Listenable` instead keeps one router instance for the
+/// app's lifetime and merely asks it to re-evaluate `redirect`, which is
+/// exactly the amount of work the situation calls for.
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // Bridges riverpod → Listenable. `fireImmediately` is not needed: the
+  // router evaluates `redirect` on its first navigation anyway, and the
+  // redirect reads the current state directly.
+  final authListenable = ValueNotifier<AsyncValue<UserEntity?>>(
+    const AsyncValue.loading(),
+  );
+  ref.onDispose(authListenable.dispose);
+  ref.listen<AsyncValue<UserEntity?>>(
+    authProvider,
+    (previous, next) => authListenable.value = next,
+    fireImmediately: true,
+  );
 
-  // Watch for locale changes - this rebuilds the router when locale changes
-  ref.watch(persistentLocaleProvider);
-
-  // Create a router with locale awareness
   return GoRouter(
-    initialLocation: AppConstants.initialRoute,
+    initialLocation: SplashRoute.location,
     debugLogDiagnostics: true,
-    // Add the observer for locale awareness
+    // Required for `parentNavigatorKey: _rootNavigatorKey` below to resolve —
+    // that is what lets a detail route be pushed *over* the shell instead of
+    // inside the active branch.
+    navigatorKey: _rootNavigatorKey,
+    refreshListenable: authListenable,
     observers: [ref.read(localizationRouterObserverProvider)],
     redirect: (context, state) {
-      // While AuthController.build() is still resolving a stored token
-      // (app cold start) or a login/register/logout call is in flight,
-      // don't force a redirect based on a not-yet-settled auth state —
-      // otherwise a returning user with a valid token flashes through the
-      // login screen before bouncing back to home. (The initial '/' route
-      // below still has to make an immediate choice since it has no
-      // builder of its own — that one small flash on cold start is a known
-      // limitation, to be addressed with a proper splash route in the
-      // fuller routing pass.)
-      if (authState.isLoading) {
-        return null;
-      }
-
-      // Get the authentication status
-      final isLoggedIn = authState.isAuthenticated;
-
-      // Check if the user is going to the login page
-      final isGoingToLogin = state.matchedLocation == AppConstants.loginRoute;
-
-      // Check if the user is going to the register page
-      final isGoingToRegister =
-          state.matchedLocation == AppConstants.registerRoute;
-
-      // Email verification / password reset are reachable whether or not
-      // the person is currently logged in (e.g. a logged-in user can still
-      // want to verify their email or reset a forgotten password).
-      final isGoingToPublicAuthFlow = isGoingToLogin ||
-          isGoingToRegister ||
-          state.matchedLocation == AppConstants.verifyEmailRoute ||
-          state.matchedLocation == AppConstants.resetPasswordRequestRoute ||
-          state.matchedLocation == AppConstants.resetPasswordConfirmRoute;
-
-      // If not logged in and not going to a public auth screen, redirect to login
-      if (!isLoggedIn && !isGoingToPublicAuthFlow) {
-        return AppConstants.loginRoute;
-      }
-
-      // If logged in and going to login/register, redirect to home
-      if (isLoggedIn && (isGoingToLogin || isGoingToRegister)) {
-        return AppConstants.homeRoute;
-      }
-
-      // No redirect needed
-      return null;
+      // Read, don't watch: watching here would rebuild the provider (and the
+      // router with it). The `refreshListenable` above is what makes this
+      // callback run again when the session changes.
+      final authState = ref.read(authProvider);
+      return resolveAuthRedirect(
+        location: state.matchedLocation,
+        isSessionUnresolved: authState.isSessionUnresolved,
+        isAuthenticated: authState.isAuthenticated,
+      );
     },
     routes: [
-      // Home route
-      GoRoute(
-        path: AppConstants.homeRoute,
-        name: 'home',
-        builder: (context, state) => const HomeScreen(),
-      ),
-
-      // Login route
-      GoRoute(
-        path: AppConstants.loginRoute,
-        name: 'login',
-        builder: (context, state) => const LoginScreen(),
-      ),
-
-      // Register route
-      GoRoute(
-        path: AppConstants.registerRoute,
-        name: 'register',
-        builder: (context, state) => const RegisterScreen(),
-      ),
-
-      // Verify email route
-      GoRoute(
-        path: AppConstants.verifyEmailRoute,
-        name: 'verify_email',
-        builder: (context, state) => const VerifyEmailScreen(),
-      ),
-
-      // Reset password — request a code
-      GoRoute(
-        path: AppConstants.resetPasswordRequestRoute,
-        name: 'reset_password_request',
-        builder: (context, state) => const ResetPasswordRequestScreen(),
-      ),
-
-      // Reset password — confirm code + new password
-      GoRoute(
-        path: AppConstants.resetPasswordConfirmRoute,
-        name: 'reset_password_confirm',
-        builder: (context, state) => const ResetPasswordConfirmScreen(),
-      ),
-
-      // Settings route
-      GoRoute(
-        path: AppConstants.settingsRoute,
-        name: 'settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
-
-      // Language settings route
-      GoRoute(
-        path: AppConstants.languageSettingsRoute,
-        name: 'language_settings',
-        builder: (context, state) => const LanguageSettingsScreen(),
-      ),
-
-      // Notification inbox (api-docs §8.2). Flat, with no ':id' child: a
-      // notification is not a destination, it points at one — the tap
-      // handler resolves its `payload` to an existing chat/project route.
-      GoRoute(
-        path: AppConstants.notificationsRoute,
-        name: 'notifications',
-        builder: (context, state) => const NotificationsScreen(),
-      ),
-
-      // Localization Assets Demo route
-      GoRoute(
-        path: AppConstants.localizationAssetsDemoRoute,
-        name: 'localization_assets_demo',
-        builder: (context, state) => const LocalizationAssetsDemo(),
-      ),
-
-      // Chats (api-docs §6). Nested so the static 'create' child can never be
-      // captured as a chat id by the dynamic ':id' child — go_router prefers a
-      // static child over a dynamic one at the same level (same reasoning as
-      // the profile/project routes; the guarantee only holds when nested).
-      GoRoute(
-        path: AppConstants.chatRoute,
-        name: 'chat',
-        builder: (context, state) => const ChatsListScreen(),
-        routes: [
-          GoRoute(
-            path: 'create',
-            name: 'create_chat',
-            builder: (context, state) => const CreateChatScreen(),
-          ),
-          GoRoute(
-            path: ':id',
-            name: 'chat_detail',
-            builder: (context, state) {
-              // Chat ids are UUID strings (api-docs §1.8), so there is
-              // nothing to parse — but an empty segment would produce a
-              // request to `/chats//` that 404s, so it is caught here.
-              final id = state.pathParameters['id'];
-              if (id == null || id.isEmpty) {
-                return const _InvalidRouteScreen(message: 'Unknown chat');
-              }
-              return ChatDetailScreen(chatId: id);
-            },
+      // ---------------------------------------------------------------
+      // The signed-in frame: four branches, one persistent bottom bar.
+      // ---------------------------------------------------------------
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
+        branches: [
+          // --- Chats -------------------------------------------------
+          StatefulShellBranch(
             routes: [
               GoRoute(
-                path: 'members',
-                name: 'chat_members',
-                builder: (context, state) {
-                  final id = state.pathParameters['id'];
-                  if (id == null || id.isEmpty) {
-                    return const _InvalidRouteScreen(message: 'Unknown chat');
-                  }
-                  return ChatMembersScreen(chatId: id);
-                },
+                path: ChatsRoute.path,
+                name: RouteNames.chats,
+                builder: (context, state) => const ChatsListScreen(),
+                routes: [
+                  // Static child before the dynamic one — go_router prefers a
+                  // static sibling, so 'create' can never be read as a chat id.
+                  GoRoute(
+                    path: CreateChatRoute.path,
+                    name: RouteNames.createChat,
+                    // `parentNavigatorKey` puts the form above the shell: it's
+                    // a task you finish or abandon, not a place to tab away
+                    // from mid-way.
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const CreateChatScreen(),
+                  ),
+                  GoRoute(
+                    path: ChatDetailRoute.path,
+                    name: RouteNames.chatDetail,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) {
+                      final chatId = ChatDetailRoute.idFrom(state);
+                      if (chatId == null) {
+                        return const _InvalidRouteScreen(message: 'Unknown chat');
+                      }
+                      return ChatDetailScreen(chatId: chatId);
+                    },
+                    routes: [
+                      GoRoute(
+                        path: ChatMembersRoute.path,
+                        name: RouteNames.chatMembers,
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final chatId = ChatDetailRoute.idFrom(state);
+                          if (chatId == null) {
+                            return const _InvalidRouteScreen(
+                              message: 'Unknown chat',
+                            );
+                          }
+                          return ChatMembersScreen(chatId: chatId);
+                        },
+                      ),
+                      GoRoute(
+                        path: ChatCallRoute.path,
+                        name: RouteNames.chatCall,
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final chatId = ChatDetailRoute.idFrom(state);
+                          if (chatId == null) {
+                            return const _InvalidRouteScreen(
+                              message: 'Unknown chat',
+                            );
+                          }
+                          return CallScreen(chatId: chatId);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              // The LiveKit call room (api-docs §6.6). A separate route rather
-              // than a dialog so the OS back gesture leaves the call and the
-              // room can be disposed in one place.
+            ],
+          ),
+
+          // --- Projects ----------------------------------------------
+          StatefulShellBranch(
+            routes: [
               GoRoute(
-                path: 'call',
-                name: 'chat_call',
-                builder: (context, state) {
-                  final id = state.pathParameters['id'];
-                  if (id == null || id.isEmpty) {
-                    return const _InvalidRouteScreen(message: 'Unknown chat');
-                  }
-                  return CallScreen(chatId: id);
-                },
+                path: ProjectsRoute.path,
+                name: RouteNames.projects,
+                builder: (context, state) => const ProjectsListScreen(),
+                routes: [
+                  GoRoute(
+                    path: MyProjectsRoute.path,
+                    name: RouteNames.myProjects,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const MyProjectsScreen(),
+                  ),
+                  GoRoute(
+                    path: CreateProjectRoute.path,
+                    name: RouteNames.createProject,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const CreateProjectScreen(),
+                  ),
+                  GoRoute(
+                    path: MyInvitesRoute.path,
+                    name: RouteNames.myInvites,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const MyInvitesScreen(),
+                  ),
+                  GoRoute(
+                    path: ProjectDetailRoute.path,
+                    name: RouteNames.projectDetail,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) {
+                      final projectId = ProjectDetailRoute.idFrom(state);
+                      if (projectId == null) {
+                        return const _InvalidRouteScreen(
+                          message: 'Unknown project',
+                        );
+                      }
+                      return ProjectDetailScreen(projectId: projectId);
+                    },
+                    routes: [
+                      // /projects/{projectId}/positions/{positionId}
+                      GoRoute(
+                        path: PositionDetailRoute.path,
+                        name: RouteNames.positionDetail,
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final route = PositionDetailRoute.from(state);
+                          if (route == null) {
+                            return const _InvalidRouteScreen(
+                              message: 'Unknown position',
+                            );
+                          }
+                          return PositionDetailScreen(
+                            projectId: route.projectId,
+                            positionId: route.positionId,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // --- Notifications -----------------------------------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: NotificationsRoute.path,
+                name: RouteNames.notifications,
+                // No ':id' child: a notification is not a destination, it
+                // points at one — the tap handler resolves its `payload` to a
+                // chat/project route (see `resolveNotificationRoute`).
+                builder: (context, state) => const NotificationsScreen(),
+              ),
+            ],
+          ),
+
+          // --- Profile -----------------------------------------------
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: ProfileRoute.path,
+                name: RouteNames.profile,
+                builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: ProfileEditRoute.path,
+                    name: RouteNames.profileEdit,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const ProfileEditScreen(),
+                  ),
+                ],
               ),
             ],
           ),
         ],
       ),
 
-      // Survey route
-      GoRoute(
-        path: AppConstants.surveyRoute,
-        name: 'survey',
-        builder: (context, state) => const SurveyScreen(),
-      ),
+      // ---------------------------------------------------------------
+      // Flat routes — pushed over the shell.
+      // ---------------------------------------------------------------
 
-      // Profile route — the signed-in person's own profile, with 'edit'
-      // and ':id' nested underneath. Nesting (rather than 3 flat sibling
-      // routes) matters here: go_router matches a static child path
-      // ('edit') before a dynamic one (':id') at the same level
-      // regardless of declaration order, guaranteeing '/profile/edit'
-      // can never be captured as profileId "edit" by the ':id' route —
-      // that guarantee does NOT hold for flat top-level routes, which
-      // are matched in declaration order instead.
+      // The candidate's own applications: spans every project they applied
+      // to, so it belongs to none of them.
       GoRoute(
-        path: AppConstants.profileRoute,
-        name: 'profile',
-        builder: (context, state) => const ProfileScreen(),
-        routes: [
-          // Edit the signed-in person's own profile: '/profile/edit'.
-          GoRoute(
-            path: 'edit',
-            name: 'profile_edit',
-            builder: (context, state) => const ProfileEditScreen(),
-          ),
-
-          // Someone else's profile, by id: '/profile/{id}'.
-          GoRoute(
-            path: ':id',
-            name: 'profile_detail',
-            builder: (context, state) {
-              final id = int.tryParse(state.pathParameters['id'] ?? '');
-              return ProfileScreen(profileId: id);
-            },
-          ),
-        ],
-      ),
-
-      // Browse/search all profiles.
-      GoRoute(
-        path: AppConstants.profilesListRoute,
-        name: 'profiles_list',
-        builder: (context, state) => const ProfilesListScreen(),
-      ),
-
-      // Projects (api-docs §5). Nested under '/projects' so the static
-      // children ('my', 'create', 'invites') can never be captured as a
-      // projectId by the dynamic ':id' child — go_router prefers a static
-      // child over a dynamic one at the same level (same reasoning as the
-      // profile routes; that guarantee only holds for nested routes).
-      GoRoute(
-        path: AppConstants.projectsListRoute,
-        name: 'projects_list',
-        builder: (context, state) => const ProjectsListScreen(),
-        routes: [
-          GoRoute(
-            path: 'my',
-            name: 'my_projects',
-            builder: (context, state) => const MyProjectsScreen(),
-          ),
-          GoRoute(
-            path: 'create',
-            name: 'create_project',
-            builder: (context, state) => const CreateProjectScreen(),
-          ),
-          GoRoute(
-            path: 'invites',
-            name: 'my_invites',
-            builder: (context, state) => const MyInvitesScreen(),
-          ),
-          GoRoute(
-            path: ':id',
-            name: 'project_detail',
-            builder: (context, state) {
-              final id = int.tryParse(state.pathParameters['id'] ?? '');
-              if (id == null) {
-                return const Scaffold(
-                  body: Center(child: Text('Invalid project id')),
-                );
-              }
-              return ProjectDetailScreen(projectId: id);
-            },
-          ),
-        ],
-      ),
-
-      // Public position detail by UUID: '/positions/{id}'.
-      GoRoute(
-        path: '/positions/:id',
-        name: 'position_detail',
-        builder: (context, state) =>
-            PositionDetailScreen(positionId: state.pathParameters['id'] ?? ''),
-      ),
-
-      // The current candidate's own applications: '/applications/my'.
-      GoRoute(
-        path: AppConstants.myApplicationsRoute,
-        name: 'my_applications',
+        path: MyApplicationsRoute.path,
+        name: RouteNames.myApplications,
         builder: (context, state) => const MyApplicationsScreen(),
       ),
 
-      // Initial route - redirects based on auth state
+      // Other people's profiles live in their own collection, so that
+      // '/profile' can stay unambiguously "mine" (and keep an 'edit' child
+      // with no risk of it being parsed as an id).
       GoRoute(
-        path: AppConstants.initialRoute,
-        name: 'initial',
-        redirect: (context, state) => authState.isAuthenticated
-            ? AppConstants.homeRoute
-            : AppConstants.loginRoute,
+        path: ProfilesRoute.path,
+        name: RouteNames.profiles,
+        builder: (context, state) => const ProfilesListScreen(),
+        routes: [
+          GoRoute(
+            path: ProfileDetailRoute.path,
+            name: RouteNames.profileDetail,
+            builder: (context, state) {
+              final profileId = ProfileDetailRoute.idFrom(state);
+              if (profileId == null) {
+                return const _InvalidRouteScreen(message: 'Unknown profile');
+              }
+              return ProfileScreen(profileId: profileId);
+            },
+          ),
+        ],
+      ),
+
+      GoRoute(
+        path: SettingsRoute.path,
+        name: RouteNames.settings,
+        builder: (context, state) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: LanguageSettingsRoute.path,
+            name: RouteNames.languageSettings,
+            builder: (context, state) => const LanguageSettingsScreen(),
+          ),
+        ],
+      ),
+
+      GoRoute(
+        path: SurveyRoute.path,
+        name: RouteNames.survey,
+        builder: (context, state) => const SurveyScreen(),
+      ),
+
+      GoRoute(
+        path: LocalizationAssetsDemoRoute.path,
+        name: RouteNames.localizationAssetsDemo,
+        builder: (context, state) => const LocalizationAssetsDemo(),
+      ),
+
+      // ---------------------------------------------------------------
+      // Public auth flow.
+      // ---------------------------------------------------------------
+      GoRoute(
+        path: LoginRoute.path,
+        name: RouteNames.login,
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RegisterRoute.path,
+        name: RouteNames.register,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: VerifyEmailRoute.path,
+        name: RouteNames.verifyEmail,
+        builder: (context, state) => const VerifyEmailScreen(),
+      ),
+      GoRoute(
+        path: ResetPasswordRoute.path,
+        name: RouteNames.resetPasswordRequest,
+        builder: (context, state) => const ResetPasswordRequestScreen(),
+        routes: [
+          GoRoute(
+            path: ResetPasswordConfirmRoute.path,
+            name: RouteNames.resetPasswordConfirm,
+            builder: (context, state) => const ResetPasswordConfirmScreen(),
+          ),
+        ],
+      ),
+
+      // ---------------------------------------------------------------
+      // '/' — no screen of its own; the redirect above resolves it as soon
+      // as the session is known. Reaching the builder means auth settled to
+      // "signed in" between the redirect and the build, so send them to the
+      // first tab.
+      // ---------------------------------------------------------------
+      GoRoute(
+        path: SplashRoute.path,
+        name: RouteNames.splash,
+        redirect: (context, state) {
+          final authState = ref.read(authProvider);
+          if (authState.isSessionUnresolved) return null;
+          return authState.isAuthenticated
+              ? ChatsRoute.location
+              : LoginRoute.location;
+        },
+        builder: (context, state) => const _SessionLoadingScreen(),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('Page Not Found')),
+    errorBuilder: (context, state) => _NotFoundScreen(uri: state.uri),
+  );
+});
+
+/// The root navigator, so that a flat/detail route can be pushed **over** the
+/// shell rather than inside a branch.
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+/// Where the router should send someone standing at [location], or `null` to
+/// let them stay.
+///
+/// Extracted from the `redirect` callback so the whole policy — including the
+/// "session expired mid-use" path, which is otherwise awkward to reach — can
+/// be tested as a pure function. There is no `BuildContext`, no `GoRouter`,
+/// and no widget tree involved in the decision; that is the point.
+///
+/// ### The rules
+///
+/// 1. **Session not resolved yet** → stay put. On a cold start the stored
+///    token is being exchanged for a `GET /users/me/`; deciding now would
+///    flash a returning user through `/login` and immediately back.
+/// 2. **Signed out, heading somewhere private** → `/login`.
+/// 3. **Signed in, heading for `/login` or `/register`** → the first tab.
+///    Only those two: a signed-in user may legitimately open
+///    `/verify-email` or `/reset-password`.
+/// 4. Otherwise stay put.
+///
+/// Rule 2 is what makes an expired session self-correcting. Nothing in a
+/// screen has to notice a 401: `AuthInterceptor` fires the session-expired
+/// signal, `AuthController` flips to signed-out, the router's
+/// `refreshListenable` fires, this function runs for whatever location the
+/// user is on, and they land on `/login` — identically from a chat, a project
+/// detail, or a background-triggered navigation.
+String? resolveAuthRedirect({
+  required String location,
+  required bool isSessionUnresolved,
+  required bool isAuthenticated,
+}) {
+  if (isSessionUnresolved) return null;
+
+  final isPublic = isPublicLocation(location);
+
+  if (!isAuthenticated) {
+    // '/' has its own redirect and would otherwise be sent to '/login' twice.
+    if (isPublic) return null;
+    return LoginRoute.location;
+  }
+
+  // Signed in: bounce off the two screens that exist to get you signed in.
+  if (location == LoginRoute.path || location == RegisterRoute.path) {
+    return ChatsRoute.location;
+  }
+
+  return null;
+}
+
+/// Shown for the instant `/` is on screen before the redirect resolves.
+class _SessionLoadingScreen extends StatelessWidget {
+  const _SessionLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+}
+
+/// Shown when a route matched structurally but its path parameter is unusable
+/// (an empty `:chatId`, a non-numeric `:projectId`). Distinct from a 404: the
+/// URL *is* a known route, so "page not found" would be misleading — and
+/// building the real screen with a bad id would fire a request guaranteed to
+/// fail, then show that failure as if the server were at fault.
+class _InvalidRouteScreen extends StatelessWidget {
+  const _InvalidRouteScreen({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.link_off, size: 48),
+            const SizedBox(height: 12),
+            Text(message),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () => context.go(ChatsRoute.location),
+              child: const Text('Go to chats'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NotFoundScreen extends StatelessWidget {
+  const _NotFoundScreen({required this.uri});
+
+  final Uri uri;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page not found')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -343,66 +503,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('Page ${state.uri.path} not found'),
+            Text('${uri.path} does not exist'),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.go(AppConstants.homeRoute),
-              child: const Text('Go Home'),
+              onPressed: () => context.go(ChatsRoute.location),
+              child: const Text('Go to chats'),
             ),
           ],
-        ),
-      ),
-    ),
-  );
-});
-
-/// Shown when a route matched structurally but its path parameter is unusable
-/// (an empty `:id` segment, say). Distinct from `errorBuilder`'s 404: the URL
-/// *is* a known route, so "Page not found" would be misleading — and building
-/// the real screen with an empty id would fire a request to `/chats//` that
-/// can only 404 on the server. Failing here keeps that round-trip off the wire.
-class _InvalidRouteScreen extends StatelessWidget {
-  final String message;
-
-  const _InvalidRouteScreen({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(message)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.link_off,
-                size: 48,
-                color: theme.colorScheme.outline,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'This link is incomplete or no longer valid.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => context.go(AppConstants.chatRoute),
-                child: const Text('Back to chats'),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show debugPrint, debugPrintStack;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
@@ -14,6 +15,8 @@ import 'package:chatix/features/notification/presentation/providers/notification
 class AuthController extends AsyncNotifier<UserEntity?> {
   @override
   Future<UserEntity?> build() async {
+    _listenForSessionExpiry();
+
     final token = await ref.read(secureStorageServiceProvider).read(
       key: AppConstants.accessTokenKey,
     );
@@ -120,6 +123,57 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     );
   }
 
+  /// Subscribes to the HTTP layer's "this session is gone" bus.
+  ///
+  /// ### Why the controller listens instead of the screens
+  ///
+  /// A session can die at any moment: the refresh token is revoked from
+  /// another device, the session row is deactivated, the token is
+  /// blacklisted (api-docs §2.3, §3.4). Whichever request happens to be in
+  /// flight when that happens is arbitrary — it might be a background
+  /// notification-badge poll with no screen attached at all. Making each
+  /// screen recognise its own 401 and navigate would mean every screen
+  /// re-implementing the same reaction, every new screen being a place to
+  /// forget it, and no reaction whatsoever from code with no `BuildContext`.
+  ///
+  /// Instead there is exactly one reaction, here: flip to signed-out. The
+  /// router watches this provider and redirects to `/login` on its own (see
+  /// `core/router/app_router.dart`), which makes the behaviour identical no
+  /// matter where in the app the user was standing.
+  ///
+  /// Re-subscribing on every `build()` is correct: the old subscription is
+  /// cancelled through [Ref.onDispose] when the notifier is rebuilt or
+  /// disposed, so there is never more than one live listener.
+  void _listenForSessionExpiry() {
+    final subscription = ref
+        .read(sessionExpiredSignalProvider)
+        .stream
+        .listen(_onSessionExpired);
+    ref.onDispose(subscription.cancel);
+  }
+
+  /// Turns a session-expiry signal into signed-out state.
+  ///
+  /// Idempotent by the `state.value == null` guard: several requests can fail
+  /// together (a screen that fires three calls on open), and each one emits.
+  /// Without the guard the second signal would re-notify listeners with an
+  /// identical state and make the router re-evaluate its redirect for
+  /// nothing.
+  ///
+  /// Note this reports **data(null)**, not `AsyncValue.error`. An expired
+  /// session is not an error the user made or can retry — it is simply the
+  /// signed-out state, and modelling it as an error would (a) make
+  /// `isAuthenticated` ambiguous and (b) pop an error snackbar on top of the
+  /// login screen the router is already sending them to. The token is
+  /// already gone from storage by the time this runs — `AuthInterceptor`
+  /// clears it before signalling.
+  void _onSessionExpired(SessionExpiredReason reason) {
+    if (state.value == null) return;
+
+    debugPrint('Session ended (${reason.name}) — signing out.');
+    state = const AsyncValue.data(null);
+  }
+
   /// Registers this device's push token with the backend (`POST /devices/`,
   /// api-docs §8.1) right after a successful login.
   ///
@@ -176,15 +230,25 @@ final authProvider = AsyncNotifierProvider<AuthController, UserEntity?>(
   AuthController.new,
 );
 
-/// `authState.isAuthenticated` for the router (prompt 7 will build a fuller
-/// routing scheme on top of this) — true once we're confidently resolved to
-/// a logged-in user. Defined on the watched [AsyncValue] rather than on the
-/// notifier so it stays reactive: watching `authProvider.notifier` directly
-/// would NOT rebuild on state changes, only on notifier identity changes.
+/// `authState.isAuthenticated` for the router — true once we're confidently
+/// resolved to a logged-in user. Defined on the watched [AsyncValue] rather
+/// than on the notifier so it stays reactive: watching `authProvider.notifier`
+/// directly would NOT rebuild on state changes, only on notifier identity
+/// changes.
 ///
 /// Note: riverpod 3.x's `AsyncValue.value` is already the nullable/"don't
 /// throw" accessor (it's `requireValue` that throws) — there is no separate
 /// `valueOrNull` like in riverpod 2.x.
 extension AuthStateX on AsyncValue<UserEntity?> {
   bool get isAuthenticated => value != null;
+
+  /// Whether the session question is still open — a cold start reading the
+  /// stored token, or a login/register/logout in flight.
+  ///
+  /// The router uses this to hold its redirect decision instead of bouncing a
+  /// returning user through `/login` before their stored token resolves.
+  /// `isLoading` alone is not enough: riverpod keeps `isLoading == true`
+  /// during a *refresh* that already has data underneath it, and in that case
+  /// there is a perfectly good answer to give.
+  bool get isSessionUnresolved => isLoading && !hasValue;
 }
