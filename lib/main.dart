@@ -26,14 +26,10 @@ void main() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   CookieJar cookieJar;
 
-  if (kIsWeb) {
-    cookieJar = CookieJar(); // Только в памяти
-  } else {
-    final appDir = await getApplicationDocumentsDirectory();
-    cookieJar = PersistCookieJar(
-      storage: FileStorage('${appDir.path}/.cookies/'),
-    );
-  }
+  final appDir = await getApplicationDocumentsDirectory();
+  cookieJar = PersistCookieJar(
+    storage: FileStorage('${appDir.path}/.cookies/'),
+  );
 
   runApp(
     ProviderScope(
