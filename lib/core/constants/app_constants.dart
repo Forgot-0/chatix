@@ -33,68 +33,26 @@ class AppConstants {
   static const int connectTimeout = 30000;
   static const int receiveTimeout = 30000;
 
-  // Route constants
-  static const String initialRoute = '/';
-  static const String homeRoute = '/home';
-
-  /// `/chat` — the chat list (api-docs §6.2). Kept under the historical
-  /// `chatRoute` name so existing links (home screen, deep links) still work.
-  static const String chatRoute = '/chat';
-
-  /// `/chat/create` — new-chat form. Declared **before** the `/chat/{id}`
-  /// route in `app_router.dart` so "create" is never parsed as a chat UUID.
-  static const String createChatRoute = '/chat/create';
-
-  /// `/chat/{id}` — one conversation. Chat ids are UUID strings
-  /// (api-docs §1.8), not ints like project/profile ids.
-  static String chatDetailRoute(String chatId) => '/chat/$chatId';
-
-  /// `/chat/{id}/members` — roles, bans and kicks (api-docs §6.3).
-  static String chatMembersRoute(String chatId) => '/chat/$chatId/members';
-
-  /// `/chat/{id}/call` — the LiveKit call room (api-docs §6.6). A route of its
-  /// own rather than a dialog, so the OS back gesture ends the call and the
-  /// room is disposed in exactly one place.
-  static String chatCallRoute(String chatId) => '/chat/$chatId/call';
-
-  static const String surveyRoute = '/survey';
-  static const String loginRoute = '/login';
-  static const String registerRoute = '/register';
-  static const String verifyEmailRoute = '/verify-email';
-  static const String resetPasswordRequestRoute = '/reset-password';
-  static const String resetPasswordConfirmRoute = '/reset-password/confirm';
-  static const String profileRoute = '/profile';
-  static const String profileEditRoute = '/profile/edit';
-  static const String profilesListRoute = '/profiles';
-
-  /// `/profile/{id}` — viewing someone else's profile. Kept as a helper
-  /// rather than another constant since it needs the id interpolated;
-  /// mirrors the [profileRoute] ("my own profile", no id) vs. this ("a
-  /// specific profile") split in `app_router.dart`.
-  static String profileDetailRoute(int profileId) => '/profile/$profileId';
-  // Project feature (api-docs §5).
-  static const String projectsListRoute = '/projects';
-  static const String myProjectsRoute = '/projects/my';
-  static const String createProjectRoute = '/projects/create';
-  static const String myInvitesRoute = '/projects/invites';
-  static const String myApplicationsRoute = '/applications/my';
-
-  /// `/projects/{id}` — a specific project's detail (tabs: info/members/positions).
-  static String projectDetailRoute(int projectId) => '/projects/$projectId';
-
-  /// `/positions/{id}` — a specific position's detail (UUID). Public read.
-  static String positionDetailRoute(String positionId) => '/positions/$positionId';
-
-  static const String settingsRoute = '/settings';
-  static const String languageSettingsRoute = '/settings/language';
-
-  /// `/notifications` — the notification inbox (api-docs §8.2). No detail
-  /// route: a notification has no page of its own, tapping one navigates to
-  /// whatever its `payload` points at (see `resolveNotificationRoute`).
-  static const String notificationsRoute = '/notifications';
-
-  static const String localizationDemoRoute = '/demo/localization';
-  static const String localizationAssetsDemoRoute = '/demo/localization/assets';
+  // ---------------------------------------------------------------------
+  // Routes — REMOVED. See `core/router/app_routes.dart`.
+  //
+  // This class used to carry a parallel set of route strings
+  // (`chatDetailRoute(id)`, `profileDetailRoute(id)`, `positionDetailRoute(id)`,
+  // …). They are gone, deliberately and completely, because after the router
+  // was rebuilt around the shell they were no longer merely redundant — they
+  // were *wrong*:
+  //
+  //   AppConstants.chatDetailRoute(id)      -> '/chat/{id}'      (404: '/chats/{id}')
+  //   AppConstants.profileDetailRoute(id)   -> '/profile/{id}'   (404: '/profiles/{id}')
+  //   AppConstants.positionDetailRoute(id)  -> '/positions/{id}' (404: nested under its project)
+  //
+  // A wrong route string fails at runtime, on a device, in whichever screen
+  // nobody re-tested — while `ChatDetailRoute(chat.id).location` cannot even
+  // be spelled with an int, and `PositionDetailRoute` will not compile
+  // without the project id the URL needs. Keeping both sets and "just
+  // updating them together" is the exact arrangement that produced the drift
+  // in the first place, so there is now one source of truth.
+  // ---------------------------------------------------------------------
 
   // Hive box names
   static const String settingsBox = 'settings';

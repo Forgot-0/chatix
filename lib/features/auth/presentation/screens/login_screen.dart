@@ -1,9 +1,11 @@
+import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/constants/app_constants.dart';
-import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';

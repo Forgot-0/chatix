@@ -1,4 +1,4 @@
-import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/features/notification/domain/entities/notification_entity.dart';
 
 /// Where tapping [notification] should take the user, or `null` when the
@@ -23,12 +23,12 @@ import 'package:chatix/features/notification/domain/entities/notification_entity
 String? resolveNotificationRoute(NotificationEntity notification) {
   final chatId = notification.chatId;
   if (chatId != null) {
-    return AppConstants.chatDetailRoute(chatId);
+    return ChatDetailRoute(chatId).location;
   }
 
   final projectId = notification.projectId;
   if (projectId != null) {
-    return AppConstants.projectDetailRoute(projectId);
+    return ProjectDetailRoute(projectId).location;
   }
 
   // No recognised target. Deliberately does NOT fall back to a "type
