@@ -32,7 +32,6 @@ import 'package:chatix/features/project/presentation/screens/project_detail_scre
 import 'package:chatix/features/project/presentation/screens/projects_list_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
-import 'package:chatix/features/survey/presentation/screens/survey_screen.dart';
 
 /// The app's route table.
 ///
@@ -322,12 +321,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const LanguageSettingsScreen(),
           ),
         ],
-      ),
-
-      GoRoute(
-        path: SurveyRoute.path,
-        name: RouteNames.survey,
-        builder: (context, state) => const SurveyScreen(),
       ),
 
       GoRoute(

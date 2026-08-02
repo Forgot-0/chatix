@@ -87,7 +87,6 @@ abstract final class RouteNames {
   static const String settings = 'settings';
   static const String languageSettings = 'languageSettings';
   static const String localizationAssetsDemo = 'localizationAssetsDemo';
-  static const String survey = 'survey';
 }
 
 // ---------------------------------------------------------------------------
@@ -341,11 +340,6 @@ abstract final class LanguageSettingsRoute {
 abstract final class LocalizationAssetsDemoRoute {
   static const String path = '/demo/localization/assets';
   static const String location = '/demo/localization/assets';
-}
-
-abstract final class SurveyRoute {
-  static const String path = '/survey';
-  static const String location = '/survey';
 }
 
 // ---------------------------------------------------------------------------

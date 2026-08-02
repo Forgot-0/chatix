@@ -68,6 +68,20 @@ class AuthInterceptor extends QueuedInterceptor {
 
   static const _refreshPath = '/auth/refresh/';
 
+  /// The header and scheme the access token rides in (api-docs §1.2).
+  ///
+  /// Declared once and used by every site that reads or writes the token:
+  /// [onRequest] when attaching it, the replay in [onError] when swapping in
+  /// the fresh one, and [_refreshOrReuse] when comparing the token a request
+  /// went out with against what is in storage now. That comparison is the
+  /// reason these are constants rather than inline literals — it only works
+  /// if the string written by [onRequest] is byte-identical to the one
+  /// rebuilt in [_refreshOrReuse], and a stray `'Bearer'` without the
+  /// trailing space would silently make every sibling look "stale" and
+  /// trigger the redundant-refresh storm this class exists to prevent.
+  static const _authHeader = 'Authorization';
+  static const _bearerPrefix = 'Bearer ';
+
   @override
   Future<void> onRequest(
     RequestOptions options,
@@ -76,7 +90,7 @@ class AuthInterceptor extends QueuedInterceptor {
     if (!_isPublicPath(options.path)) {
       final token = await _secureStorage.read(key: AppConstants.accessTokenKey);
       if (token != null && token.isNotEmpty) {
-        options.headers['Authorization'] = 'Bearer $token';
+        options.headers[_authHeader] = '$_bearerPrefix$token';
       }
     }
     handler.next(options);
@@ -143,7 +157,7 @@ class AuthInterceptor extends QueuedInterceptor {
 
     try {
       final requestOptions = err.requestOptions;
-      requestOptions.headers['Authorization'] = 'Bearer $newToken';
+      requestOptions.headers[_authHeader] = '$_bearerPrefix$newToken';
       handler.resolve(await _sideChannel.fetch(requestOptions));
     } on DioException catch (e) {
       // The replay failed on its own merits. The session is fine; hand back

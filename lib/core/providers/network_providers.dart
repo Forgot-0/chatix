@@ -21,6 +21,49 @@ final cookieJarProvider = Provider<CookieJar>((ref) {
   );
 });
 
+/// The auth-free [Dio] that [AuthInterceptor] uses for `POST /auth/refresh/`
+/// and for replaying the request that just 401'd.
+///
+/// It deliberately shares exactly two things with [dioProvider] — the
+/// `baseUrl` (the refresh endpoint is a normal `{BASE_URL}/api/v1` path) and
+/// the [CookieJar] (the refresh token is an HttpOnly cookie, so without the
+/// jar the refresh has nothing to authenticate with) — and deliberately
+/// carries **no** [AuthInterceptor].
+///
+/// That omission is the whole point. [AuthInterceptor] is a
+/// [QueuedInterceptor]: its `onError` holds dio's single callback slot for as
+/// long as it is awaiting the refresh. Issuing the refresh on the *same*
+/// client would queue that nested request's `onError` behind the outer one
+/// that is waiting for it — a deadlock with no timeout, which would strike
+/// precisely on the expired-session path this class exists to serve. See the
+/// class doc on [AuthInterceptor].
+///
+/// [TrailingSlashInterceptor] is kept because it is a pure path normalizer
+/// with no I/O of its own, and the replayed [RequestOptions] must be
+/// normalized the same way the original was. [RetryInterceptor] is left off
+/// on purpose: a refresh that fails should end the session immediately rather
+/// than be retried behind the held queue slot.
+final authSideChannelDioProvider = Provider<Dio>((ref) {
+  final cookieJar = ref.watch(cookieJarProvider);
+
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: AppConstants.apiBaseUrl,
+      connectTimeout: const Duration(milliseconds: AppConstants.connectTimeout),
+      receiveTimeout: const Duration(milliseconds: AppConstants.receiveTimeout),
+      headers: const {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ),
+  );
+
+  dio.interceptors.add(CookieManager(cookieJar));
+  dio.interceptors.add(TrailingSlashInterceptor());
+
+  return dio;
+});
+
 @riverpod
 Dio dio(Ref ref) {
   final cookieJar = ref.watch(cookieJarProvider);
@@ -44,7 +87,11 @@ Dio dio(Ref ref) {
   dio.interceptors.add(TrailingSlashInterceptor());
   dio.interceptors.add(
     AuthInterceptor(
-      dio: dio,
+      // NOT `dio` — see [authSideChannelDioProvider]. Passing the client this
+      // interceptor is installed on is what the compiler was rejecting here,
+      // and it would have deadlocked dio's callback queue on every expired
+      // session even if it had compiled.
+      sideChannel: ref.watch(authSideChannelDioProvider),
       secureStorage: secureStorage,
       // The missing half of the "session expired mid-use" path. Without this
       // argument the interceptor still cleared the stored token, but nothing

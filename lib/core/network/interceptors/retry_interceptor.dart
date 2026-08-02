@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'package:chatix/core/utils/logger.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 /// Interceptor that retries failed requests
 class RetryInterceptor extends Interceptor {
@@ -28,8 +28,9 @@ class RetryInterceptor extends Interceptor {
 
       if (attempt < maxRetries && attempt < retryDelays.length) {
         final delay = retryDelays[attempt];
-        debugPrint(
-          '🔄 Retry attempt ${attempt + 1}/$maxRetries for ${err.requestOptions.path} after ${delay.inSeconds}s',
+        Logger.info(
+          'RetryInterceptor: attempt ${attempt + 1}/$maxRetries for '
+          '${err.requestOptions.path} in ${delay.inSeconds}s',
         );
 
         // Update retry attempt count
@@ -64,8 +65,28 @@ class RetryInterceptor extends Interceptor {
           );
 
           return handler.resolve(response);
-        } catch (e) {
-          // If retry fails, passed error will be handled by next error
+        } catch (e, stackTrace) {
+          // The retry failed too. The *original* error is what propagates —
+          // it is the one the caller's error mapping was written against —
+          // but the retry's own exception must not vanish: when a retry
+          // fails for a different reason than the original (a 500 where the
+          // first attempt timed out, say), that difference is the only clue
+          // in the logs about what actually went wrong.
+          Logger.warning(
+            'RetryInterceptor: attempt ${attempt + 1}/$maxRetries for '
+            '${err.requestOptions.method} ${err.requestOptions.path} failed '
+            '($e); propagating the original ${err.type}',
+          );
+          if (e is! DioException) {
+            // A non-Dio throw here means the retry machinery itself broke,
+            // not the network — that is a bug, not a flaky connection.
+            Logger.error(
+              'RetryInterceptor: non-DioException while retrying '
+              '${err.requestOptions.path}',
+              e,
+              stackTrace,
+            );
+          }
           return super.onError(err, handler);
         }
       }
