@@ -43,6 +43,9 @@ ChatModel _$ChatModelFromJson(Map<String, dynamic> json) => ChatModel(
   lastRead: json['last_read'] == null
       ? null
       : ReadDetailModel.fromJson(json['last_read'] as Map<String, dynamic>),
+  lastMessage: json['last_message'] == null
+      ? null
+      : MessageModel.fromJson(json['last_message'] as Map<String, dynamic>),
   members: (json['members'] as List<dynamic>?)
       ?.map((e) => ChatMemberModel.fromJson(e as Map<String, dynamic>))
       .toList(),
@@ -65,6 +68,7 @@ Map<String, dynamic> _$ChatModelToJson(ChatModel instance) => <String, dynamic>{
   'unread_count': instance.unreadCount,
   'me': instance.me,
   'last_read': instance.lastRead,
+  'last_message': instance.lastMessage,
   'members': instance.members,
 };
 
