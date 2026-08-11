@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/core/router/app_routes.dart';
 

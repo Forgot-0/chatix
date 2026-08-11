@@ -287,6 +287,8 @@ class _AttachmentRow extends StatelessWidget {
           AttachmentType.image => Icons.image_outlined,
           AttachmentType.video => Icons.videocam_outlined,
           AttachmentType.file => Icons.attach_file,
+          AttachmentType.voice => Icons.mic_outlined,
+          AttachmentType.videoNote => Icons.videocam_rounded,
         },
         ChatAttachmentLimits.formatBytes(attachment.size),
       ),

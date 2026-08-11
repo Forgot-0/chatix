@@ -74,8 +74,8 @@ class ChatSocketService {
     this.deviceId,
     Uri Function(Uri uri)? channelFactoryUri,
     WebSocketChannel Function(Uri uri)? channelFactory,
-  })  : _secureStorage = secureStorage,
-        _channelFactory = channelFactory ?? WebSocketChannel.connect;
+  }) : _secureStorage = secureStorage,
+       _channelFactory = channelFactory ?? WebSocketChannel.connect;
 
   final SecureStorageService _secureStorage;
 
@@ -225,7 +225,9 @@ class ChatSocketService {
   /// 1008 loop instead.
   Future<void> connect() async {
     if (_connecting || _channel != null) {
-      Logger.debug('ChatSocket: connect() ignored, already connected/connecting');
+      Logger.debug(
+        'ChatSocket: connect() ignored, already connected/connecting',
+      );
       return;
     }
 
@@ -240,16 +242,17 @@ class ChatSocketService {
     );
 
     try {
-      final token = await _secureStorage.read(
-        key: AppConstants.accessTokenKey,
-      );
+      final token = await _secureStorage.read(key: AppConstants.accessTokenKey);
 
       if (token == null || token.isEmpty) {
         // Same end state as a server-side 1008, reached without a pointless
         // round-trip: no token means the handshake cannot succeed.
         Logger.warning('ChatSocket: no access token, not connecting');
         _connecting = false;
-        _flagTokenInvalid(closeCode: null, closeReason: 'no stored access token');
+        _flagTokenInvalid(
+          closeCode: null,
+          closeReason: 'no stored access token',
+        );
         return;
       }
 
@@ -373,7 +376,10 @@ class ChatSocketService {
     // Merge before sending so a later reconnect still knows about chats that
     // were dropped from *this* resume by the clamp.
     for (final entry in cursors.entries) {
-      _cursors[entry.key] = max(_cursors[entry.key] ?? entry.value, entry.value);
+      _cursors[entry.key] = max(
+        _cursors[entry.key] ?? entry.value,
+        entry.value,
+      );
     }
     for (final chatId in selected.keys) {
       if (!_subscribedChatIds.contains(chatId)) _subscribedChatIds.add(chatId);
@@ -432,7 +438,9 @@ class ChatSocketService {
         // Not retryable: we are not (or no longer) a member. Left to the app
         // layer to reconcile — it knows which subscribe was in flight, which
         // this event does not say.
-        Logger.warning('ChatSocket: NOT_CHAT_MEMBER (${event.detail ?? "no detail"})');
+        Logger.warning(
+          'ChatSocket: NOT_CHAT_MEMBER (${event.detail ?? "no detail"})',
+        );
 
       case WsErrorBadCommand():
         // A client bug by definition. Loud in logs, invisible to the user.
@@ -582,7 +590,9 @@ class ChatSocketService {
       milliseconds: (_heartbeatTimeout * 1000 * 0.6).round(),
     );
 
-    _heartbeatTimer = Timer.periodic(Duration(seconds: _heartbeatInterval), (_) {
+    _heartbeatTimer = Timer.periodic(Duration(seconds: _heartbeatInterval), (
+      _,
+    ) {
       final lastSent = _lastSentAt;
       if (lastSent == null ||
           DateTime.now().difference(lastSent) >= idleThreshold) {
@@ -629,7 +639,9 @@ class ChatSocketService {
       // the problem, so reconnecting with it produces a tight, unrecoverable
       // loop. Hand it upward for refresh-or-logout instead.
       case 1008:
-        Logger.warning('ChatSocket: closed 1008 — access token invalid, not reconnecting');
+        Logger.warning(
+          'ChatSocket: closed 1008 — access token invalid, not reconnecting',
+        );
         _flagTokenInvalid(closeCode: closeCode, closeReason: closeReason);
 
       // 1001 — we missed the heartbeat window. 1012 — a third connection
@@ -641,7 +653,9 @@ class ChatSocketService {
       // jitter is what lets them settle into the 2-connection budget.
       case 1001:
       case 1012:
-        Logger.info('ChatSocket: closed $closeCode (expected), reconnecting quietly');
+        Logger.info(
+          'ChatSocket: closed $closeCode (expected), reconnecting quietly',
+        );
         _scheduleReconnect();
 
       default:
@@ -657,7 +671,8 @@ class ChatSocketService {
     if (_reconnectTimer?.isActive ?? false) return;
 
     final index = min(_reconnectAttempt, _backoffSchedule.length - 1);
-    final delay = _backoffSchedule[index] +
+    final delay =
+        _backoffSchedule[index] +
         Duration(milliseconds: _random.nextInt(_maxJitterMs));
     _reconnectAttempt++;
 
@@ -745,7 +760,11 @@ class ChatSocketService {
       _lastSentAt = DateTime.now();
     } catch (error, stackTrace) {
       // A closed sink races with `onDone`; the reconnect path handles it.
-      Logger.error('ChatSocket: failed to send "${command['op']}"', error, stackTrace);
+      Logger.error(
+        'ChatSocket: failed to send "${command['op']}"',
+        error,
+        stackTrace,
+      );
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:chatix/features/chat/domain/entities/call_token_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 /// Chats REST surface (api-docs §6). Everything here requires auth.
 ///
@@ -270,4 +271,48 @@ abstract class ChatRepository {
     int userId,
     bool muted,
   );
+
+  // ───────────────────────────── Reactions (§6.7) ─────────────────────────────
+
+  /// `PUT /chats/{chat_id}/messages/{message_id}/reactions/{emoji}/` 🔒 10/sec
+  /// → 204 (api-docs §6.7.1).
+  ///
+  /// ⚠️ **Set, not add.** One reaction per user per message
+  /// (`UniqueConstraint(message_id, user_id)`, §6.7.2), so calling this while
+  /// another emoji is set *replaces* it: the old counter drops, the new one
+  /// rises and the backend publishes two `reaction_updated` events. Calling it
+  /// with the emoji already set is a no-op that still answers 204.
+  ///
+  /// [emoji] is passed raw — URL-encoding it for the path is the data source's
+  /// job, so callers never have to remember it.
+  ///
+  /// Failures worth handling: `400 INVALID_REACTION`,
+  /// `400 TOO_MANY_REACTION` (20 distinct emoji per message).
+  Future<Either<Failure, void>> setReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  );
+
+  /// `DELETE .../reactions/{emoji}/` 🔒 10/sec → 204 (api-docs §6.7.1).
+  /// Removing a reaction that isn't there is a no-op, also 204.
+  Future<Either<Failure, void>> removeReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  );
+
+  /// `GET .../reactions/` 🔒 (api-docs §6.7.1) — two modes in one endpoint:
+  ///
+  /// * [emoji] `null` → only the chip summary for the message;
+  /// * [emoji] set → additionally a page of *who* reacted with it, for the
+  ///   long-press sheet, continued with [cursorUserId] from the previous
+  ///   response's `next_user_id`.
+  Future<Either<Failure, MessageReactionsEntity>> getReactions(
+    String chatId,
+    String messageId, {
+    String? emoji,
+    int limit = 50,
+    int? cursorUserId,
+  });
 }

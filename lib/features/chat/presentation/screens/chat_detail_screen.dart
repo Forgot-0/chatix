@@ -941,6 +941,31 @@ class _Composer extends StatelessWidget {
                 ),
               ),
             ),
+            // TODO(voice): record a voice message / video note from the
+            // device and upload it as an exclusive attachment.
+            //
+            // Everything below the UI is already in place — `MessageType.voice`
+            // / `MessageType.videoNote`, `AttachmentType.voice` /
+            // `AttachmentType.videoNote`, the size/duration/resolution caps in
+            // `ChatAttachmentLimits`, the exclusivity check in
+            // `UploadChatAttachmentUseCase.validate` and the mandatory
+            // explicit `attachment_type` in `requestAttachmentUpload`
+            // (api-docs §6.4 / §6.5).
+            //
+            // What is missing is purely on-device capture, which needs a
+            // package this project does not depend on yet (mic/camera
+            // permissions, an encoder producing one of the §6.5 MIME types,
+            // and a duration measurement — the backend's ≤600 s / ≤60 s and
+            // ≤640 px limits cannot be derived from a file's size or MIME, so
+            // whatever records the clip has to measure it and refuse up front).
+            // Deliberately left as a disabled affordance rather than a hidden
+            // one: it documents the gap instead of silently pretending the
+            // feature doesn't exist.
+            IconButton(
+              tooltip: 'Voice messages are not available yet',
+              icon: const Icon(Icons.mic_none_outlined),
+              onPressed: null,
+            ),
             const SizedBox(width: 8),
             IconButton.filled(
               icon: const Icon(Icons.send),

@@ -187,6 +187,64 @@ final class MessagesRead extends WSDomainEvent {
   List<Object?> get props => [...super.props, seq, readerId];
 }
 
+/// `chats.message.reaction_updated` — a reaction counter on one message
+/// changed (api-docs §6.7.5).
+///
+/// ⚠️ **The wire `type` is the full domain event name**, not a short alias.
+/// Every other domain event in this file arrives as a compact string
+/// (`new_message`, `message_edited`, …) because the backend maps it through
+/// `CHAT_EVENT_TO_WS_TYPE`; this one has no entry in that table, so the raw
+/// event name reaches the client. Matching on `"reaction_updated"` here would
+/// silently never fire.
+///
+/// ⚠️ **[count] is absolute, not a delta.** It is the total number of people
+/// who currently have [emoji] on [messageId] — assign it, never add it. The
+/// backend debounces fan-out, so a client that accumulated deltas would drift
+/// permanently the first time a frame was coalesced or replayed.
+///
+/// `count == 0` means the last person removed that reaction: the chip should
+/// disappear, not render a zero.
+///
+/// [changedBy] is the user who caused the change. When that is the current
+/// user, the local `reacted_by_me` flag must be left alone — it was already
+/// set optimistically when the PUT/DELETE was issued, and this event carries
+/// no per-viewer state at all.
+///
+/// Note a *replacement* (a user switching emoji) produces **two** of these
+/// events, one per affected emoji, in no guaranteed order.
+final class ReactionUpdated extends WSDomainEvent {
+  final String messageId;
+
+  /// The emoji whose counter changed — raw, unescaped, exactly as it must be
+  /// matched against `ReactionSummaryEntity.emoji`.
+  final String emoji;
+
+  /// Absolute number of reactions with [emoji] after the change. See class doc.
+  final int count;
+
+  /// Who set or removed their reaction.
+  final int changedBy;
+
+  const ReactionUpdated({
+    required super.chatId,
+    required this.messageId,
+    required this.emoji,
+    required this.count,
+    required this.changedBy,
+    super.eventName,
+    super.eventId,
+    super.ts,
+  }) : super(wireType);
+
+  /// The literal `type` on the wire (api-docs §6.7.5). Exposed so the parser
+  /// and its tests share one constant instead of two string literals that can
+  /// drift apart.
+  static const String wireType = 'chats.message.reaction_updated';
+
+  @override
+  List<Object?> get props => [...super.props, messageId, emoji, count, changedBy];
+}
+
 /// `member_joined` — a member was added or joined a public chat.
 final class MemberJoined extends WSDomainEvent {
   final int userId;

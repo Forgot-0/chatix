@@ -60,6 +60,11 @@ WSEvent parseWsEvent(Map<String, dynamic> raw) {
       'message_edited' => _parseMessageEdited(raw),
       'message_deleted' => _parseMessageDeleted(raw),
       'messages_read' => _parseMessagesRead(raw),
+
+      // ⚠️ The one domain event whose wire `type` is the full backend event
+      // name rather than a short alias: it has no entry in the server's
+      // `CHAT_EVENT_TO_WS_TYPE` map (api-docs §6.7.5), so nothing shortens it.
+      ReactionUpdated.wireType => _parseReactionUpdated(raw),
       'member_joined' => _parseMemberJoined(raw),
       'member_left' => _parseMemberLeft(raw),
       'member_kick' => _parseMemberKick(raw),
@@ -331,6 +336,43 @@ WSEvent _parseMessagesRead(Map<String, dynamic> raw) {
     chatId: chatId,
     seq: seq,
     readerId: readerId,
+    eventName: _asString(raw['event_name']),
+    eventId: _asString(raw['event_id']),
+    ts: _asDate(raw['ts']),
+  );
+}
+
+/// `chats.message.reaction_updated` (api-docs §6.7.5).
+///
+/// `count` is **absolute** and is taken verbatim — including `0`, which is the
+/// legitimate "last reaction removed, drop the chip" value and must not be
+/// confused with a missing field. Hence the explicit null check rather than a
+/// `?? 0` default: a malformed payload that silently became 0 would erase a
+/// chip that still has reactions on it.
+WSEvent _parseReactionUpdated(Map<String, dynamic> raw) {
+  const type = ReactionUpdated.wireType;
+
+  final chatId = _chatIdOf(raw);
+  if (chatId == null) return _unknown(type, raw, 'no chat_id');
+
+  final payload = _payloadOf(raw);
+  final messageId = _asString(payload['message_id']);
+  final emoji = _asString(payload['emoji']);
+  final count = _asInt(payload['count']);
+
+  if (messageId == null || emoji == null || emoji.isEmpty || count == null) {
+    return _unknown(type, raw, 'missing message_id/emoji/count');
+  }
+
+  return ReactionUpdated(
+    chatId: chatId,
+    messageId: messageId,
+    emoji: emoji,
+    // A negative count cannot be rendered and would mean the server and we
+    // disagree about reality; clamped rather than dropped so the chip at least
+    // disappears instead of freezing at a stale number.
+    count: count < 0 ? 0 : count,
+    changedBy: _asInt(payload['changed_by']) ?? 0,
     eventName: _asString(raw['event_name']),
     eventId: _asString(raw['event_id']),
     ts: _asDate(raw['ts']),

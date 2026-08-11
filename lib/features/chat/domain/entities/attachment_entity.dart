@@ -1,21 +1,39 @@
 import 'package:equatable/equatable.dart';
+import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 
 /// `AttachmentDTO.attachment_type` (api-docs §6.5). Drives which upload
-/// limits apply: [image]/[video] share one bucket (≤50 MB, ≤10 per message),
-/// [file] is its own (≤100 MB, ≤1 per message).
+/// limits apply:
+///
+/// * [image]/[video] share one bucket (≤50 MB, ≤10 per message);
+/// * [file] is its own (≤100 MB, ≤1 per message);
+/// * [voice] (≤20 MB, ≤600 s) and [videoNote] (≤40 MB, ≤60 s, ≤640 px) are
+///   **exclusive**: one per message and never alongside anything else — see
+///   [ChatAttachmentLimits.exclusivityViolation].
 enum AttachmentType {
   image,
   video,
-  file;
+  file,
+  voice,
 
-  String get wire => name;
+  /// ⚠️ `video_note` on the wire — the one value whose Dart name and JSON
+  /// name differ, hence the explicit [wire] override below. Parsing it by
+  /// `name` alone would silently degrade every video note to [file].
+  videoNote;
+
+  String get wire => switch (this) {
+    AttachmentType.videoNote => 'video_note',
+    _ => name,
+  };
 
   static AttachmentType fromWire(String? value) {
     return AttachmentType.values.firstWhere(
-      (t) => t.name == value,
-      // Unknown types are treated as a plain file — the strictest bucket
-      // (1 per message), so an unexpected value can never let 10 oversized
-      // uploads through the client-side check.
+      (t) => t.wire == value,
+      // Unknown types are treated as a plain file — the strictest *shared*
+      // bucket (1 per message), so an unexpected value can never let 10
+      // oversized uploads through the client-side check. Deliberately not
+      // `voice`/`videoNote`: those are exclusive types whose presence changes
+      // how the whole message is validated, and guessing one of them for an
+      // unrecognised string would reject legitimate mixed selections.
       orElse: () => AttachmentType.file,
     );
   }
@@ -183,14 +201,62 @@ class AttachmentUploadRequestEntity extends Equatable {
   /// exist.
   final List<int>? bytes;
 
+  /// Explicit `uploads[].attachment_type` for step 1 (api-docs §6.5).
+  ///
+  /// `null` means "let the backend infer it from the MIME", which is correct
+  /// and normal for images, videos and documents.
+  ///
+  /// ⚠️ **Mandatory** for [AttachmentType.voice] and
+  /// [AttachmentType.videoNote]: that inference only ever yields
+  /// `image`/`video`/`file`, so a voice message sent without this field is
+  /// stored as a plain audio *file* and a video note as a plain *video* —
+  /// silently, with the wrong size limits and the wrong bubble. [resolvedType]
+  /// and `UploadChatAttachmentUseCase.validate` enforce that it is set.
+  final AttachmentType? attachmentType;
+
   const AttachmentUploadRequestEntity({
     required this.filename,
     required this.mimeType,
     required this.fileSize,
     this.filePath,
     this.bytes,
+    this.attachmentType,
   });
 
+  /// Convenience constructor for a voice message — sets the mandatory
+  /// [attachmentType] so a caller cannot forget it.
+  const AttachmentUploadRequestEntity.voice({
+    required this.filename,
+    required this.mimeType,
+    required this.fileSize,
+    this.filePath,
+    this.bytes,
+  }) : attachmentType = AttachmentType.voice;
+
+  /// Convenience constructor for a video note — see
+  /// [AttachmentUploadRequestEntity.voice].
+  const AttachmentUploadRequestEntity.videoNote({
+    required this.filename,
+    required this.mimeType,
+    required this.fileSize,
+    this.filePath,
+    this.bytes,
+  }) : attachmentType = AttachmentType.videoNote;
+
+  /// The type this upload will actually be: the explicit [attachmentType] when
+  /// the caller set one, otherwise whatever the MIME resolves to — the same
+  /// inference the backend performs. `null` means the MIME is not accepted at
+  /// all.
+  AttachmentType? get resolvedType =>
+      attachmentType ?? ChatAttachmentLimits.typeOf(mimeType);
+
   @override
-  List<Object?> get props => [filename, mimeType, fileSize, filePath, bytes];
+  List<Object?> get props => [
+    filename,
+    mimeType,
+    fileSize,
+    filePath,
+    bytes,
+    attachmentType,
+  ];
 }

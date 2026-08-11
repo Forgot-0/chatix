@@ -10,6 +10,7 @@ import 'package:chatix/features/chat/data/models/call_token_model.dart';
 import 'package:chatix/features/chat/data/models/chat_member_model.dart';
 import 'package:chatix/features/chat/data/models/chat_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
+import 'package:chatix/features/chat/data/models/reaction_model.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
@@ -159,6 +160,28 @@ abstract class ChatRestDataSource {
     int userId,
     bool muted,
   );
+
+  // ───────────────────────────── Reactions (§6.7) ─────────────────────────────
+
+  Future<Either<Failure, void>> setReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  );
+
+  Future<Either<Failure, void>> removeReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  );
+
+  Future<Either<Failure, MessageReactionsModel>> fetchReactions(
+    String chatId,
+    String messageId, {
+    String? emoji,
+    int limit = 50,
+    int? cursorUserId,
+  });
 }
 
 class ChatRestDataSourceImpl implements ChatRestDataSource {
@@ -528,6 +551,17 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
                 'filename': upload.filename,
                 'mime_type': upload.mimeType,
                 'file_size': upload.fileSize,
+                // ⚠️ Sent whenever the caller set one, and MANDATORY for
+                // voice/video_note (api-docs §6.5): with the field absent the
+                // backend derives the type from the MIME, and that derivation
+                // can only produce image/video/file — it will never guess
+                // `voice` or `video_note` on its own, so omitting it here
+                // silently downgrades a voice message to a plain audio file.
+                // Omitted (rather than sent as null) for the other three
+                // types, where the backend's inference is correct and the
+                // field is optional.
+                if (upload.attachmentType != null)
+                  'attachment_type': upload.attachmentType!.wire,
               },
             )
             .toList(),
@@ -596,6 +630,78 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       data: {'muted': muted},
     );
     return result.map((_) {});
+  }
+
+  // ───────────────────────────── Reactions (§6.7) ─────────────────────────────
+
+  /// Percent-encodes an emoji for use as a **path** segment (api-docs §6.7.1).
+  ///
+  /// ⚠️ Not optional and not cosmetic: an emoji is multi-byte UTF-8 (👍 is
+  /// `F0 9F 91 8D`), and several common reactions are sequences containing
+  /// ZWJ (`U+200D`) or a variation selector. Interpolated raw, those bytes go
+  /// into the request line unescaped — some proxies reject the request
+  /// outright, and a `#` or `?` inside a longer "emoji" string (the field is
+  /// any 1..32-character string server-side, not strictly an emoji) would
+  /// truncate the path silently.
+  ///
+  /// `Uri.encodeComponent` rather than `encodeFull`, because the latter
+  /// deliberately leaves `#`, `?` and `/` intact — exactly the characters that
+  /// must not survive inside one path segment.
+  static String encodeEmojiPathSegment(String emoji) =>
+      Uri.encodeComponent(emoji);
+
+  @override
+  Future<Either<Failure, void>> setReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  ) async {
+    final encoded = encodeEmojiPathSegment(emoji);
+    // 204 with an empty body. Setting the emoji already set is a server-side
+    // no-op that still answers 204 (§6.7.2), so no special-casing here.
+    final result = await _apiClient.put(
+      '/chats/$chatId/messages/$messageId/reactions/$encoded/',
+    );
+    return result.map((_) {});
+  }
+
+  @override
+  Future<Either<Failure, void>> removeReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  ) async {
+    final encoded = encodeEmojiPathSegment(emoji);
+    // Removing a reaction that isn't there is also a 204 no-op (§6.7.2).
+    final result = await _apiClient.delete(
+      '/chats/$chatId/messages/$messageId/reactions/$encoded/',
+    );
+    return result.map((_) {});
+  }
+
+  @override
+  Future<Either<Failure, MessageReactionsModel>> fetchReactions(
+    String chatId,
+    String messageId, {
+    String? emoji,
+    int limit = 50,
+    int? cursorUserId,
+  }) async {
+    final result = await _apiClient.get(
+      '/chats/$chatId/messages/$messageId/reactions/',
+      queryParameters: {
+        'limit': limit,
+        // ⚠️ Here the emoji is a *query* parameter, so Dio encodes it — it
+        // must NOT be pre-encoded, or the server would receive the literal
+        // "%F0%9F%91%8D" and match no reaction. Only the path form above is
+        // encoded by hand.
+        if (emoji != null && emoji.isNotEmpty) 'emoji': emoji,
+        if (cursorUserId != null) 'cursor_user_id': cursorUserId,
+      },
+    );
+    return result.map(
+      (data) => MessageReactionsModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 }
 

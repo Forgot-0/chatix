@@ -219,14 +219,52 @@ class UploadChatAttachmentUseCase {
 
     var mediaCount = 0;
     var fileCount = 0;
+    final types = <AttachmentType>[];
 
     for (final upload in uploads) {
-      final type = ChatAttachmentLimits.typeOf(upload.mimeType);
+      // The explicit `attachment_type` when the caller set one, otherwise the
+      // MIME-derived type — i.e. exactly what the backend will conclude at
+      // step 1, so these checks agree with the server's.
+      final type = upload.resolvedType;
       if (type == null) {
         return InputFailure(
           message:
               '"${upload.filename}" can\'t be attached — '
               '${upload.mimeType} files are not supported',
+        );
+      }
+      types.add(type);
+
+      // ⚠️ api-docs §6.5: voice/video_note are never inferred from the MIME,
+      // so a request that omits `attachment_type` for them is wrong on the
+      // wire even though it would succeed — the attachment would come back as
+      // a plain file/video. Caught here rather than trusted, because the two
+      // convenience constructors are not the only way to build this entity.
+      if (ChatAttachmentLimits.requiresExplicitAttachmentType(type) &&
+          upload.attachmentType == null) {
+        return InputFailure(
+          message:
+              '"${upload.filename}" must be attached with an explicit '
+              '${type.wire} type',
+        );
+      }
+
+      // MIME allow-lists are per-type (api-docs §6.5) and the exclusive types
+      // have their own, so a voice message claiming `image/png` is rejected
+      // before the upload rather than after it.
+      final allowedForType = switch (type) {
+        AttachmentType.voice => ChatAttachmentLimits.voiceMimeTypes,
+        AttachmentType.videoNote => ChatAttachmentLimits.videoNoteMimeTypes,
+        AttachmentType.image ||
+        AttachmentType.video ||
+        AttachmentType.file => null,
+      };
+      if (allowedForType != null &&
+          !allowedForType.contains(upload.mimeType.toLowerCase())) {
+        return InputFailure(
+          message:
+              '${upload.mimeType} is not a supported format for a '
+              '${type.wire} attachment',
         );
       }
 
@@ -251,12 +289,31 @@ class UploadChatAttachmentUseCase {
         );
       }
 
-      // Images and videos share one bucket; documents have their own.
-      if (type == AttachmentType.file) {
-        fileCount++;
-      } else {
-        mediaCount++;
+      // Images and videos share one bucket; documents have their own. The
+      // exclusive types (voice/video_note) count towards NEITHER — api-docs
+      // §6.5 keeps them out of the shared counters entirely, and mixing them
+      // in here would let one photo + one voice message pass the media check.
+      switch (type) {
+        case AttachmentType.file:
+          fileCount++;
+        case AttachmentType.image:
+        case AttachmentType.video:
+          mediaCount++;
+        case AttachmentType.voice:
+        case AttachmentType.videoNote:
+          break;
       }
+    }
+
+    // ⚠️ The exclusivity rule (api-docs §6.5), checked over the whole
+    // selection rather than per file: a lone voice message is legal and a lone
+    // photo is legal, but the combination is not. Enforced here, next to the
+    // count/size checks and before step 1, so a rejected mix costs nothing —
+    // the backend's `400 ATTACHMENT_LIMIT_EXCEEDED` stays the final authority,
+    // but by then the bytes would already have been uploaded.
+    final exclusivity = ChatAttachmentLimits.exclusivityViolation(types);
+    if (exclusivity != null) {
+      return InputFailure(message: exclusivity);
     }
 
     if (mediaCount > ChatAttachmentLimits.maxMediaCount) {

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:chatix/features/chat/data/models/chat_member_model.dart';
+import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 
@@ -37,8 +38,9 @@ extension ReadDetailModelX on ReadDetailModel {
 
 /// `ChatDTO` **and** `ChatDetaiDTO` (api-docs §6.2) in one model.
 ///
-/// The two DTOs are supersets of a common core; the four fields that differ
-/// ([unreadCount], [me], [lastRead], [members]) are all nullable here, so the
+/// The two DTOs are supersets of a common core; the five fields that differ
+/// ([unreadCount], [me], [lastRead], [lastMessage], [members]) are all
+/// nullable here, so the
 /// same class parses either response and `null` faithfully means "this
 /// endpoint doesn't send it" — see [ChatEntity]'s table. Splitting them into
 /// two models would duplicate 12 identical fields and force two parse paths
@@ -74,6 +76,12 @@ class ChatModel extends Equatable {
   /// `ChatDTO` only.
   final ReadDetailModel? lastRead;
 
+  /// `ChatDTO` only — preview of the newest message for the chat list
+  /// (api-docs §6.2). The same `MessageDTO` shape as everywhere else, so it is
+  /// parsed with the same [MessageModel] rather than a trimmed-down copy.
+  /// `null` both when the endpoint doesn't send it and when the chat is empty.
+  final MessageModel? lastMessage;
+
   /// `ChatDetaiDTO` only. Left `null` (not `[]`) when absent so the entity can
   /// distinguish "not sent" from "no members".
   final List<ChatMemberModel>? members;
@@ -95,6 +103,7 @@ class ChatModel extends Equatable {
     this.unreadCount,
     this.me,
     this.lastRead,
+    this.lastMessage,
     this.members,
   });
 
@@ -116,6 +125,7 @@ class ChatModel extends Equatable {
     unreadCount,
     me,
     lastRead,
+    lastMessage,
     members,
   ];
 
@@ -146,6 +156,7 @@ extension ChatModelX on ChatModel {
       unreadCount: unreadCount,
       me: me?.toEntity(),
       lastRead: lastRead?.toEntity(),
+      lastMessage: lastMessage?.toEntity(),
       members: members
           ?.map<ChatMemberEntity>((member) => member.toEntity())
           .toList(),

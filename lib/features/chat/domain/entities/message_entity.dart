@@ -3,19 +3,34 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 
 /// `MessageDTO.type` / `SendMessageRequest.message_type` (api-docs §6.4).
+///
+/// [voice] and [videoNote] additionally require the message's single
+/// attachment to have been requested with a matching explicit
+/// `attachment_type` (api-docs §6.5) — the backend cross-checks the two and
+/// will not infer either type from the MIME alone.
 enum MessageType {
   text,
   image,
   file,
   system,
   reply,
-  forward;
+  forward,
+  voice,
 
-  String get wire => name;
+  /// ⚠️ `video_note` on the wire — see [wire]; the enum name is camelCase to
+  /// satisfy Dart's naming lint, so the two must be mapped explicitly.
+  videoNote;
+
+  String get wire => switch (this) {
+    MessageType.videoNote => 'video_note',
+    _ => name,
+  };
 
   static MessageType fromWire(String? value) {
     return MessageType.values.firstWhere(
-      (t) => t.name == value,
+      // Matched on [wire], not `name`, so `"video_note"` resolves instead of
+      // falling into the default below.
+      (t) => t.wire == value,
       // `SendMessageRequest.message_type` defaults to "text" server-side
       // (api-docs §6.4); mirror that for unknown/missing values.
       orElse: () => MessageType.text,

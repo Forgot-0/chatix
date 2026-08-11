@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
 /// `ChatType` (api-docs §6.1). ⚠️ **Four** values — `supergroup` is a
 /// separate type from `group` (different member cap, different default role
@@ -148,6 +149,7 @@ class ChatEntity extends Equatable {
     this.unreadCount,
     this.me,
     this.lastRead,
+    this.lastMessage,
     this.members,
   });
 
@@ -174,9 +176,10 @@ class ChatEntity extends Equatable {
   /// few fields swapped. Without this, the only way to reflect an event would
   /// be to re-`GET` the chat, which defeats the point of the event.
   ///
-  /// ⚠️ [unreadCount], [me], [lastRead] and [members] use explicit `clearX`
-  /// flags rather than plain `null` sentinels. For every other entity in this
-  /// codebase `null` means "leave unchanged", but for these four `null` is a
+  /// ⚠️ [unreadCount], [me], [lastRead], [lastMessage] and [members] use
+  /// explicit `clearX` flags rather than plain `null` sentinels. For every
+  /// other entity in this codebase `null` means "leave unchanged", but for
+  /// these five `null` is a
   /// *meaningful value* — see the class doc: it distinguishes "this endpoint
   /// didn't send it" from zero/empty. A `?? this.x` fallback alone could never
   /// express "set this back to unknown", and silently promoting a `ChatDTO`'s
@@ -199,10 +202,12 @@ class ChatEntity extends Equatable {
     int? unreadCount,
     ChatMemberEntity? me,
     ReadDetailEntity? lastRead,
+    MessageEntity? lastMessage,
     List<ChatMemberEntity>? members,
     bool clearUnreadCount = false,
     bool clearMe = false,
     bool clearLastRead = false,
+    bool clearLastMessage = false,
     bool clearMembers = false,
   }) {
     return ChatEntity(
@@ -222,6 +227,9 @@ class ChatEntity extends Equatable {
       unreadCount: clearUnreadCount ? null : (unreadCount ?? this.unreadCount),
       me: clearMe ? null : (me ?? this.me),
       lastRead: clearLastRead ? null : (lastRead ?? this.lastRead),
+      lastMessage: clearLastMessage
+          ? null
+          : (lastMessage ?? this.lastMessage),
       members: clearMembers ? null : (members ?? this.members),
     );
   }
@@ -244,6 +252,7 @@ class ChatEntity extends Equatable {
     unreadCount,
     me,
     lastRead,
+    lastMessage,
     members,
   ];
 }

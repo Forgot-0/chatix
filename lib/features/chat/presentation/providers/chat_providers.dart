@@ -22,6 +22,9 @@ import 'package:chatix/features/chat/domain/usecases/join_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/kick_member_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/leave_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_reactions_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/remove_reaction_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mute_call_participant_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_use_case.dart';
@@ -156,3 +159,16 @@ final muteCallParticipantUseCaseProvider = Provider<MuteCallParticipantUseCase>(
     return MuteCallParticipantUseCase(ref.watch(chatRepositoryProvider));
   },
 );
+// ───────────────────────────── Reactions (§6.7) ─────────────────────────────
+
+final setReactionUseCaseProvider = Provider<SetReactionUseCase>((ref) {
+  return SetReactionUseCase(ref.watch(chatRepositoryProvider));
+});
+
+final removeReactionUseCaseProvider = Provider<RemoveReactionUseCase>((ref) {
+  return RemoveReactionUseCase(ref.watch(chatRepositoryProvider));
+});
+
+final getReactionsUseCaseProvider = Provider<GetReactionsUseCase>((ref) {
+  return GetReactionsUseCase(ref.watch(chatRepositoryProvider));
+});
