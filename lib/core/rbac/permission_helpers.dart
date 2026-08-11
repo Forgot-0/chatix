@@ -1,4 +1,5 @@
 library;
+
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/project/domain/entities/project_member_entity.dart';
@@ -42,7 +43,6 @@ import 'package:chatix/features/project/domain/entities/project_member_entity.da
 /// isn't reflected until the next fetch. A hidden control is therefore never
 /// a guarantee, and a visible one is never a promise: every action must
 /// still surface the server's error if it comes back 403.
-
 
 export 'package:chatix/features/chat/domain/entities/chat_member_entity.dart'
     show ChatPermissions;
@@ -119,11 +119,7 @@ bool canSendMessage(ChatEntity? chat, ChatMemberEntity? me) {
 ///
 /// Authors may always remove their own message; removing somebody else's
 /// needs [ChatPermissions.messageDelete] (api-docs §9.1).
-bool canDeleteMessage(
-  ChatEntity? chat,
-  ChatMemberEntity? me,
-  int? authorId,
-) {
+bool canDeleteMessage(ChatEntity? chat, ChatMemberEntity? me, int? authorId) {
   if (me == null) return false;
   if (authorId != null && authorId == me.userId) return true;
   return hasChatPermission(chat, me, ChatPermissions.messageDelete);
@@ -175,17 +171,11 @@ bool canLeaveChat(ChatEntity? chat, ChatMemberEntity? me) {
 /// Canonical project-permission keys (api-docs §9.2). Use these constants
 /// everywhere instead of hand-typing the strings — one typo in a literal
 /// silently disables a button.
-///
-/// ⚠️ [memberUpdate] maps to the string `"member:udpate"` — the misspelling
-/// (`udpate`, no second "a") is baked into the backend seed data and must be
-/// sent/compared verbatim, even though our Dart symbol is spelled correctly.
 abstract final class ProjectPermissions {
   static const String memberRead = 'member:read';
   static const String memberInvite = 'member:invite';
   static const String memberKick = 'member:kick';
-
-  /// ⚠️ Intentional backend typo — see class doc.
-  static const String memberUpdate = 'member:udpate';
+  static const String memberUpdate = 'member:update';
 
   static const String projectRead = 'project:read';
   static const String projectUpdate = 'project:update';

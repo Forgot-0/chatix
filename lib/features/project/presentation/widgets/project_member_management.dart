@@ -10,10 +10,6 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 
-/// One member row. When [canManage] is true (current user has `member:udpate`)
-/// a trailing menu exposes "Change role" and "Edit permissions", wired to
-/// `changeMemberRole` / `updateMemberPermissions` and invalidating the project
-/// detail afterwards so the tab reflects the new state.
 class MemberListTile extends ConsumerWidget {
   const MemberListTile({
     super.key,
@@ -59,7 +55,11 @@ class MemberListTile extends ConsumerWidget {
 /// The invitee is picked by username through [UserSearchField] (the same
 /// widget the chat feature uses), not typed as a raw numeric id. The request
 /// still sends an `int` `user_id` \u2014 only the way it is found changed.
-Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int projectId) async {
+Future<void> showInviteMemberDialog(
+  BuildContext context,
+  WidgetRef ref,
+  int projectId,
+) async {
   ProfileEntity? selectedProfile;
   int? selectedRoleId;
 
@@ -106,7 +106,12 @@ Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int pro
                         initialValue: selectedRoleId,
                         decoration: const InputDecoration(labelText: 'Role'),
                         items: roles
-                            .map((r) => DropdownMenuItem(value: r.id, child: Text(r.name)))
+                            .map(
+                              (r) => DropdownMenuItem(
+                                value: r.id,
+                                child: Text(r.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: (v) => setState(() => selectedRoleId = v),
                       ),
@@ -123,24 +128,30 @@ Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int pro
                       final userId = selectedProfile?.id;
                       if (userId == null || selectedRoleId == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Pick a person and a role')),
+                          const SnackBar(
+                            content: Text('Pick a person and a role'),
+                          ),
                         );
                         return;
                       }
-                      final result = await ref.read(inviteMemberUseCaseProvider).execute(
+                      final result = await ref
+                          .read(inviteMemberUseCaseProvider)
+                          .execute(
                             projectId,
                             userId: userId,
                             roleId: selectedRoleId!,
                           );
                       if (!dialogContext.mounted) return;
                       result.fold(
-                        (f) => ScaffoldMessenger.of(dialogContext)
-                            .showSnackBar(SnackBar(content: Text(f.message))),
+                        (f) => ScaffoldMessenger.of(
+                          dialogContext,
+                        ).showSnackBar(SnackBar(content: Text(f.message))),
                         (_) {
                           ref.invalidate(projectDetailProvider(projectId));
                           Navigator.pop(dialogContext);
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(content: Text('Invite sent')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Invite sent')),
+                          );
                         },
                       );
                     },
@@ -185,7 +196,12 @@ Future<void> showChangeRoleDialog(
                     initialValue: selectedRoleId,
                     decoration: const InputDecoration(labelText: 'Role'),
                     items: roles
-                        .map((r) => DropdownMenuItem(value: r.id, child: Text(r.name)))
+                        .map(
+                          (r) => DropdownMenuItem(
+                            value: r.id,
+                            child: Text(r.name),
+                          ),
+                        )
                         .toList(),
                     onChanged: (v) => setState(() => selectedRoleId = v),
                   ),
@@ -198,15 +214,18 @@ Future<void> showChangeRoleDialog(
                   FilledButton(
                     onPressed: () async {
                       if (selectedRoleId == null) return;
-                      final result = await ref.read(changeMemberRoleUseCaseProvider).execute(
+                      final result = await ref
+                          .read(changeMemberRoleUseCaseProvider)
+                          .execute(
                             projectId,
                             userId: member.userId,
                             roleId: selectedRoleId!,
                           );
                       if (!dialogContext.mounted) return;
                       result.fold(
-                        (f) => ScaffoldMessenger.of(dialogContext)
-                            .showSnackBar(SnackBar(content: Text(f.message))),
+                        (f) => ScaffoldMessenger.of(
+                          dialogContext,
+                        ).showSnackBar(SnackBar(content: Text(f.message))),
                         (_) {
                           ref.invalidate(projectDetailProvider(projectId));
                           Navigator.pop(dialogContext);
@@ -267,12 +286,14 @@ Future<void> showEditPermissionsDialog(
               child: ListView(
                 shrinkWrap: true,
                 children: allKeys
-                    .map((k) => SwitchListTile(
-                          dense: true,
-                          title: Text(k),
-                          value: overrides[k] ?? false,
-                          onChanged: (v) => setState(() => overrides[k] = v),
-                        ))
+                    .map(
+                      (k) => SwitchListTile(
+                        dense: true,
+                        title: Text(k),
+                        value: overrides[k] ?? false,
+                        onChanged: (v) => setState(() => overrides[k] = v),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -292,8 +313,9 @@ Future<void> showEditPermissionsDialog(
                       );
                   if (!dialogContext.mounted) return;
                   result.fold(
-                    (f) => ScaffoldMessenger.of(dialogContext)
-                        .showSnackBar(SnackBar(content: Text(f.message))),
+                    (f) => ScaffoldMessenger.of(
+                      dialogContext,
+                    ).showSnackBar(SnackBar(content: Text(f.message))),
                     (_) {
                       ref.invalidate(projectDetailProvider(projectId));
                       Navigator.pop(dialogContext);

@@ -46,10 +46,10 @@ class ProjectDetailScreen extends ConsumerWidget {
         body: projectAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => AppErrorState(
-          error: error,
-          fallbackMessage: 'Failed to load project',
-          onRetry: () => ref.invalidate(projectDetailProvider(projectId)),
-        ),
+            error: error,
+            fallbackMessage: 'Failed to load project',
+            onRetry: () => ref.invalidate(projectDetailProvider(projectId)),
+          ),
           data: (project) {
             final me = myUserId == null ? null : project.membershipOf(myUserId);
             return TabBarView(
@@ -74,14 +74,20 @@ class _InfoTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canDelete = hasProjectPermission(me, ProjectPermissions.projectDelete);
+    final canDelete = hasProjectPermission(
+      me,
+      ProjectPermissions.projectDelete,
+    );
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(project.name, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 4),
-        Text('slug: ${project.slug}', style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          'slug: ${project.slug}',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -92,7 +98,10 @@ class _InfoTab extends ConsumerWidget {
         ),
         if (project.smallDescription != null) ...[
           const SizedBox(height: 16),
-          Text(project.smallDescription!, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            project.smallDescription!,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ],
         if (project.fullDescription != null) ...[
           const SizedBox(height: 12),
@@ -127,7 +136,10 @@ class _InfoTab extends ConsumerWidget {
         title: const Text('Delete project?'),
         content: const Text('This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
@@ -138,16 +150,20 @@ class _InfoTab extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result = await ref.read(deleteProjectUseCaseProvider).execute(project.id);
+    final result = await ref
+        .read(deleteProjectUseCaseProvider)
+        .execute(project.id);
     if (!context.mounted) return;
     result.fold(
-      (failure) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
       (_) {
         // Refresh the "my projects" list so the deleted project disappears.
         ref.invalidate(myProjectsProvider);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Project deleted')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Project deleted')));
         context.pop();
       },
     );
@@ -163,7 +179,6 @@ class _MembersTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final canInvite = hasProjectPermission(me, ProjectPermissions.memberInvite);
-    // ⚠️ Backend typo preserved: the "can edit member" right is `member:udpate`.
     final canManage = hasProjectPermission(me, ProjectPermissions.memberUpdate);
 
     return Stack(
@@ -203,7 +218,10 @@ class _PositionsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final canCreate = hasProjectPermission(me, ProjectPermissions.positionCreate);
+    final canCreate = hasProjectPermission(
+      me,
+      ProjectPermissions.positionCreate,
+    );
     final positionsAsync = ref.watch(projectPositionsProvider(project.id));
 
     return Stack(
@@ -236,10 +254,12 @@ class _PositionsTab extends ConsumerWidget {
                     '${p.isOpen ? '' : ' · closed'}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push(PositionDetailRoute(
-                        projectId: project.id,
-                        positionId: p.id,
-                      ).location),
+                  onTap: () => context.push(
+                    PositionDetailRoute(
+                      projectId: project.id,
+                      positionId: p.id,
+                    ).location,
+                  ),
                 );
               },
             );
@@ -254,12 +274,15 @@ class _PositionsTab extends ConsumerWidget {
                 context,
                 ref,
                 projectId: project.id,
-                currentOpenCount: positionsAsync.value?.where((p) => p.isOpen).length,
+                currentOpenCount: positionsAsync.value
+                    ?.where((p) => p.isOpen)
+                    .length,
               ),
               icon: const Icon(Icons.add),
               label: const Text('Add position'),
             ),
           ),
-      ],    );
+      ],
+    );
   }
 }

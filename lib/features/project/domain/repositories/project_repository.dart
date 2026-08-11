@@ -106,7 +106,7 @@ abstract class ProjectRepository {
 
   /// `PUT /projects/{project_id}/members/{user_id}/permissions/` 🔒 — replaces
   /// the member's permission overrides (api-docs §5.2). Gate the UI on
-  /// `member:udpate`/`permission:update`.
+  /// `member:update`/`permission:update`.
   Future<Either<Failure, void>> updateMemberPermissions(
     int projectId, {
     required int userId,
@@ -176,7 +176,8 @@ abstract class ProjectRepository {
 
   /// `GET /positions/{position_id}/applications/` 🔒 — applications to a
   /// position, for the position's owner/maintainer (api-docs §5.3).
-  Future<Either<Failure, PageResult<ApplicationEntity>>> getPositionApplications(
+  Future<Either<Failure, PageResult<ApplicationEntity>>>
+  getPositionApplications(
     String positionId, {
     int? projectId,
     int? candidateId,

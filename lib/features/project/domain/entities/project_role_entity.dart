@@ -14,11 +14,6 @@ class ProjectRoleEntity extends Equatable {
   /// The full permission matrix for this role, keyed by permission string
   /// (e.g. `project:update`, `member:invite`). See [ProjectPermissions] for
   /// the canonical key list and api-docs §9.2 for the per-role matrix.
-  ///
-  /// ⚠️ One of the keys is literally spelled `member:udpate` (typo baked
-  /// into the backend seed data, api-docs §9.2) — we keep our Dart symbol
-  /// readable ([ProjectPermissions.memberUpdate]) but the *string* sent to
-  /// and compared against the server must stay `member:udpate` verbatim.
   final Map<String, bool> permissions;
 
   const ProjectRoleEntity({

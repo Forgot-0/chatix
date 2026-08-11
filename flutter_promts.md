@@ -1,5 +1,80 @@
-Выполни все промты по порядку в одном ответе проверяй не реализован ли уже промт и если он полностью готов пропускай его и переходи к следующему. Если промт реализован частично то доведи его до полной реализации.
+Проверь что сделанно а что еще нужно
 https://github.com/Forgot-0/social_github/tree/main
+## Промпт 2 — `last_message` в списке чатов + сверка `ChatDetailDTO`
+
+```
+Контекст: api-docs.md §6.2 теперь описывает last_message: MessageDTO | null
+в ChatDTO (превью последнего сообщения для списка чатов), и на бэкенде
+исправлена опечатка ChatDetaiDTO → ChatDetailDTO.
+
+Прочитай lib/features/chat/domain/entities/chat_entity.dart (класс-докстринг
+ChatEntity подробно объясняет разницу ChatDTO/ChatDetaiDTO — частично
+устарел) и lib/features/chat/data/models/chat_model.dart,
+lib/features/chat/presentation/screens/chats_list_screen.dart (ChatListTile).
+
+Задача:
+1. Добавь MessageEntity? lastMessage в ChatEntity — только для ChatDTO,
+   null у ChatDetaiDTO, как и остальные ChatDTO-only поля. Следуй
+   существующему паттерну unreadCount/me/lastRead: добавь clearLastMessage
+   в copyWith по той же логике "null — значимое значение, а не default".
+2. В ChatModel добавь соответствующее поле, обнови .g.dart.
+3. В ChatListTile используй lastMessage для превью последнего сообщения —
+   сначала посмотри, откуда превью берётся сейчас, и не удаляй этот источник
+   вслепую, если он используется где-то ещё.
+4. Термин "ChatDetaiDTO" в комментариях — либо оставь как есть, либо
+   переименуй в ChatDetailDTO вслед за бэкендом; реши сам, но сделай
+   единообразно по всему файлу.
+
+Не меняй сам факт различий ChatDTO vs ChatDetaiDTO (unreadCount/me/lastRead
+vs members) — это два разных ответа, как и раньше.
+```
+
+---
+
+## Промпт 3 — Голосовые сообщения и видео-кружки
+
+```
+Контекст: api-docs.md §6.4/§6.5 добавил message_type/attachment_type "voice"
+и "video_note" со своими лимитами размера, длительности и правилом
+эксклюзивности (voice/video_note нельзя смешивать друг с другом и с обычными
+media/file в одном сообщении).
+
+Прочитай api-docs.md §6.4-6.5 целиком, а также:
+lib/features/chat/domain/entities/message_entity.dart (enum MessageType),
+lib/features/chat/domain/entities/attachment_entity.dart (enum AttachmentType),
+lib/features/chat/domain/entities/chat_attachment_limits.dart,
+lib/features/chat/data/datasources/chat_rest_data_source.dart
+(requestAttachmentUpload/confirmAttachmentUpload).
+
+Задача:
+1. Добавь voice и video_note в enum MessageType и enum AttachmentType.
+   В fromWire-фолбэках логику не трогай — voice/video_note должны нормально
+   парситься, а не проваливаться в дефолт.
+2. В ChatAttachmentLimits добавь: maxVoiceSizeBytes (20 МБ),
+   maxVideoNoteSizeBytes (40 МБ), maxVoiceDurationSeconds (600),
+   maxVideoNoteDurationSeconds (60), maxVideoNoteResolutionPx (640), плюс
+   отдельные MIME-сеты для voice/video_note из §6.5. Обнови maxSizeFor()/
+   maxCountFor() под расширенный enum — сейчас switch там exhaustive по
+   старым значениям, компилятор сам укажет все места для дополнения.
+3. ⚠️ Правило эксклюзивности: voice/video_note не идут в общий счётчик с
+   image/video/file и не сочетаются друг с другом в одном запросе — заложи
+   эту проверку на клиенте до похода на бэкенд (там же, где уже проверяются
+   лимиты count/size). Бэкенд всё равно вернёт 400 ATTACHMENT_LIMIT_EXCEEDED
+   как финальную защиту, но клиенту незачем тратить аплоад впустую.
+4. Для voice/video_note в запросе requestAttachmentUpload attachment_type
+   теперь ОБЯЗАТЕЛЕН (без него бэкенд выводит тип из MIME и никогда не
+   определит voice/video_note сам) — убедись, что клиент всегда передаёт
+   явный attachment_type для этих двух типов.
+5. Если записи голоса/видео-кружка с устройства в проекте ещё нет ни в каком
+   виде — не придумывай нативную запись в этом промпте. Заведи только
+   модели/лимиты/маппинг типов, а кнопку записи оставь TODO-заглушкой в
+   composer со ссылкой на api-docs §6.4/§6.5.
+
+Не трогай существующие лимиты image/video/file — только добавляй новые типы
+рядом.
+```
+
+---
 
 ## Промпт 4 — Реакции на сообщения (новая фича)
 

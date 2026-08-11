@@ -83,11 +83,6 @@ class MessageEntity extends Equatable {
   final String? forwardedFromChatId;
   final String? forwardedFromMessageId;
 
-  /// ⚠️ A **string** on the wire, unlike every other user id in the API
-  /// (api-docs §6.4 types it `string | null`, while `author_id` is a number).
-  /// Kept as `String?` deliberately — parsing it to `int` here would hide
-  /// that inconsistency and break the day the backend sends a non-numeric
-  /// value.
   final int? forwardedFromAuthorId;
 
   final bool isEdited;
