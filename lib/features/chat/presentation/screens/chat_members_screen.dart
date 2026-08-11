@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 
 /// `GET /chats/{id}/members/` 🔒 (api-docs §6.3) with the moderation actions
 /// of the same section.
@@ -83,8 +85,9 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
             return _EmptyMembersView(
               canInvite: canInvite,
               onInvite: _addMember,
-              onRefresh: () =>
-                  ref.read(chatMembersProvider(widget.chatId).notifier).refresh(),
+              onRefresh: () => ref
+                  .read(chatMembersProvider(widget.chatId).notifier)
+                  .refresh(),
             );
           }
 
@@ -133,9 +136,22 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
   }
 
   Future<void> _addMember() async {
+    // Existing members are excluded from the search so the only pickable
+    // people are ones who can actually be added — otherwise the reward for
+    // picking a member is a `409 ALREADY_CHAT_MEMBER`.
+    //
+    // ⚠️ Only the members loaded *so far* are excluded: the list is
+    // cursor-paginated (§6.3), so someone on an unfetched page can still be
+    // picked. That's why the 409 is still handled below rather than treated
+    // as impossible.
+    final loaded = ref.read(chatMembersProvider(widget.chatId)).value;
+    final existingIds =
+        loaded?.members.map((member) => member.userId).toSet() ?? const <int>{};
+
     final userId = await showDialog<int>(
       context: context,
-      builder: (dialogContext) => const _AddMemberDialog(),
+      builder: (dialogContext) =>
+          _AddMemberDialog(excludedUserIds: existingIds),
     );
     if (userId == null) return;
 
@@ -145,9 +161,14 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
           .addMember(userId);
     } on Failure catch (failure) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          // `TOO_LONG_CHAT_ROLE_NAME` / `ALREADY_CHAT_MEMBER` /
+          // `MEMBER_LIMIT_EXCEEDED` get phrasing that names the real problem
+          // (api-docs §6.3); anything else keeps its own message.
+          content: Text(addMemberFailureMessage(failure) ?? failure.message),
+        ),
+      );
     }
   }
 }
@@ -173,8 +194,7 @@ class _MemberTile extends ConsumerWidget {
     // owner. Each action then needs its own §9.1 permission on top.
     final moderatable = canModerate(me, member);
     final canChangeRole =
-        moderatable &&
-        hasChatPermission(chat, me, ChatPermissions.roleChange);
+        moderatable && hasChatPermission(chat, me, ChatPermissions.roleChange);
     final canBan =
         moderatable && hasChatPermission(chat, me, ChatPermissions.memberBan);
     final canKick =
@@ -192,9 +212,7 @@ class _MemberTile extends ConsumerWidget {
           // avatar_url is used directly and never cached beyond this screen
           // (it expires; see ChatProfileEntity.avatarUrl).
           CircleAvatar(
-            foregroundImage: avatarUrl == null
-                ? null
-                : NetworkImage(avatarUrl),
+            foregroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl),
             child: const Icon(Icons.person_outline),
           ),
           if (isOnline == true)
@@ -222,10 +240,7 @@ class _MemberTile extends ConsumerWidget {
           if (username != null && username.isNotEmpty) ...[
             const SizedBox(width: 8),
             Flexible(
-              child: Text(
-                '@$username',
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text('@$username', overflow: TextOverflow.ellipsis),
             ),
           ],
           if (member.isMuted) ...[
@@ -269,8 +284,7 @@ class _MemberTile extends ConsumerWidget {
         case 'role':
           final role = await showDialog<ChatRole>(
             context: context,
-            builder: (dialogContext) =>
-                _RolePickerDialog(current: member.role),
+            builder: (dialogContext) => _RolePickerDialog(current: member.role),
           );
           if (role == null) return;
           await notifier.changeRole(member.userId, role);
@@ -379,10 +393,7 @@ class _BanDialogState extends State<_BanDialog> {
                       : 'Until ${_bannedTo!.toLocal()}',
                 ),
               ),
-              TextButton(
-                onPressed: _pickDate,
-                child: const Text('Set date'),
-              ),
+              TextButton(onPressed: _pickDate, child: const Text('Set date')),
             ],
           ),
         ],
@@ -421,45 +432,35 @@ class _BanDialogState extends State<_BanDialog> {
   }
 }
 
-class _AddMemberDialog extends StatefulWidget {
-  const _AddMemberDialog();
+/// Picks one person to add to the chat, by username (`GET /profiles/?username=`,
+/// api-docs §4.2).
+///
+/// Pops the chosen `user_id` — the same `int` the old numeric field returned,
+/// because `POST /chats/{id}/members/` still takes an id (§6.3). Selecting a
+/// result closes the dialog immediately: there is nothing to confirm once a
+/// specific person has been tapped, so there is no "Add" button to press.
+class _AddMemberDialog extends StatelessWidget {
+  const _AddMemberDialog({this.excludedUserIds = const {}});
 
-  @override
-  State<_AddMemberDialog> createState() => _AddMemberDialogState();
-}
-
-class _AddMemberDialogState extends State<_AddMemberDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final Set<int> excludedUserIds;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Add member'),
-      content: TextField(
-        controller: _controller,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'User ID',
-          border: OutlineInputBorder(),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: UserSearchField(
+          autofocus: true,
+          labelText: 'Search by username',
+          excludedUserIds: excludedUserIds,
+          onSelected: (profile) => Navigator.of(context).pop(profile.id),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () {
-            final userId = int.tryParse(_controller.text.trim());
-            if (userId != null) Navigator.of(context).pop(userId);
-          },
-          child: const Text('Add'),
         ),
       ],
     );

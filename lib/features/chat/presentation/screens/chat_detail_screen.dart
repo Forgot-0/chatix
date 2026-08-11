@@ -11,6 +11,7 @@ import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -737,6 +738,39 @@ class _MessageList extends ConsumerWidget {
         .editMessage(message.id, result);
   }
 
+  /// Long-press on a reaction chip → "who reacted with this emoji"
+  /// (`GET .../reactions/?emoji=`, api-docs §6.7.1).
+  ///
+  /// Opened as a modal sheet rather than resolved inline because the roster is
+  /// **paginated** (`cursor_user_id`, ≤100 per page) and is not part of the
+  /// chip summary the screen already holds: `MessageReactionsEntity.users` is
+  /// only ever populated by the `?emoji=` form of the call, so this is a fresh
+  /// request every time and needs somewhere to show a spinner and a "load
+  /// more" affordance.
+  ///
+  /// The names come from the members already loaded into `ChatDetailState`
+  /// (`ChatDetaiDTO.members`, §6.2) — `ReactionUserDTO` carries only a
+  /// `user_id`, so anyone not in that list renders as the `User #id`
+  /// diagnostic fallback rather than triggering an N+1 `/profiles/{id}/` fan
+  /// out per row.
+  void _showReactionUsers(
+    BuildContext context,
+    WidgetRef ref,
+    String messageId,
+    String emoji,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => _ReactionUsersSheet(
+        chatId: chatId,
+        messageId: messageId,
+        emoji: emoji,
+        members: state.chat?.members ?? const [],
+      ),
+    );
+  }
+
   /// Forwards into another chat. ⚠️ The **destination** goes in the URL while
   /// the source pair travels in the body (api-docs §6.4) — the use case takes
   /// only named arguments so the two can't be swapped.
@@ -1260,6 +1294,183 @@ class _ForwardTargetDialog extends ConsumerWidget {
           child: const Text('Cancel'),
         ),
       ],
+    );
+  }
+}
+
+/// "Who reacted with 👍" — one page of `GET .../reactions/?emoji=`
+/// (api-docs §6.7.1/§6.7.3).
+///
+/// Stateful and self-loading rather than provider-backed: this list is
+/// throwaway view data with no place in `ChatDetailState` (which keeps only
+/// the live chip *summary*), it is scoped to a sheet that is discarded on
+/// dismiss, and caching it would only make it go stale the moment the next
+/// `reaction_updated` arrives.
+///
+/// ⚠️ Paginated by `cursor_user_id`, not by page number — the next request is
+/// driven by `next_user_id` from the previous response, so this can only ever
+/// move forward (api-docs §1.6).
+class _ReactionUsersSheet extends ConsumerStatefulWidget {
+  const _ReactionUsersSheet({
+    required this.chatId,
+    required this.messageId,
+    required this.emoji,
+    required this.members,
+  });
+
+  final String chatId;
+  final String messageId;
+  final String emoji;
+
+  /// Members of this chat, used to put a name against a `user_id`. Possibly
+  /// empty — see the `User #id` fallback in [_label].
+  final List<ChatMemberEntity> members;
+
+  @override
+  ConsumerState<_ReactionUsersSheet> createState() =>
+      _ReactionUsersSheetState();
+}
+
+class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
+  final _users = <ReactionUserEntity>[];
+
+  bool _isLoading = true;
+  bool _hasNext = false;
+  int? _nextUserId;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final result = await ref
+        .read(getReactionsUseCaseProvider)
+        .executeUsers(
+          widget.chatId,
+          widget.messageId,
+          emoji: widget.emoji,
+          cursorUserId: _nextUserId,
+        );
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      result.match((failure) => _error = failure.message, (page) {
+        _users.addAll(page.users);
+        _hasNext = page.hasNext;
+        _nextUserId = page.nextUserId;
+      });
+    });
+  }
+
+  /// `ReactionUserDTO` carries only `user_id` (§6.7.3), so the name is looked
+  /// up in the chat's member list. A miss (someone who reacted and then left,
+  /// a member page not loaded) falls back to the same `User #id` diagnostic
+  /// form used everywhere else — see `chatDisplayName`.
+  String _label(int userId) {
+    for (final member in widget.members) {
+      if (member.userId == userId) return member.displayLabel;
+    }
+    return 'User #$userId';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Text(widget.emoji, style: theme.textTheme.titleLarge),
+                  const SizedBox(width: 8),
+                  Text('Reacted', style: theme.textTheme.titleMedium),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(child: _buildBody(theme)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(ThemeData theme) {
+    if (_error != null && _users.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            TextButton(onPressed: _load, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
+    if (_isLoading && _users.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_users.isEmpty) {
+      // Reachable: the chip was tapped just as the last reaction was removed
+      // elsewhere. An empty roster is the honest answer, not an error.
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: Text('Nobody has reacted with this yet')),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: _users.length + (_hasNext ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= _users.length) {
+          return _isLoading
+              ? const AppLoadMoreIndicator()
+              : Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: TextButton(
+                      onPressed: _load,
+                      child: const Text('Show more'),
+                    ),
+                  ),
+                );
+        }
+
+        final user = _users[index];
+        return ListTile(
+          leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+          title: Text(_label(user.userId)),
+          // Echoed per row because §6.7.3 sends it per row: with the
+          // single-choice constraint it is also this person's *only* reaction
+          // on the message.
+          trailing: Text(user.emoji, style: theme.textTheme.titleMedium),
+        );
+      },
     );
   }
 }

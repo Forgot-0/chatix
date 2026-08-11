@@ -108,3 +108,62 @@ class CreateChatUseCase {
   Future<Either<Failure, ChatEntity>> _fail(String message) =>
       Future.value(Left(InputFailure(message: message)));
 }
+
+/// `409 DIRECT_CHAT_EXISTS` → the id of the conversation that already exists,
+/// or `null` for every other failure (api-docs §6.2).
+///
+/// Lives next to the use case rather than inside a screen because **two**
+/// entry points create direct chats — the create-chat form and the "Message"
+/// button on a profile — and both must react the same way: open the existing
+/// conversation instead of reporting an error the user cannot act on.
+///
+/// The id is read defensively: `detail` is typed `dynamic` in the error
+/// envelope (api-docs §2.1) and is a free-form object per code, so a shape
+/// that doesn't match is treated as "not this case" and falls through to the
+/// plain error message rather than throwing inside a failure handler.
+String? existingDirectChatId(Failure failure) {
+  if (failure is! ApiFailure) return null;
+  if (failure.code != 'DIRECT_CHAT_EXISTS') return null;
+
+  final detail = failure.detail;
+  if (detail is! Map) return null;
+
+  final chatId = detail['chat_id'];
+  if (chatId is! String || chatId.isEmpty) return null;
+
+  return chatId;
+}
+
+/// Turns a chat-creation/update failure into a message that names the actual
+/// problem, for the §6.2/§6.3 codes whose own wording is unhelpful.
+///
+/// Returns `null` when the code isn't one of these, so callers fall back to
+/// `failure.message` untouched.
+///
+/// * `SLOW_MODE_OUT_OF_RANGE` (400) — `detail` is
+///   `{seconds, valid_range: [0, 86400]}`. The bound is echoed from the
+///   response rather than hardcoded, so a backend that widens the range
+///   doesn't leave this text lying.
+/// * `MEMBER_LIMIT_EXCEEDED` (400) — also raised for a *direct* chat whose
+///   `member_ids` isn't exactly one, where "limit exceeded" points at the
+///   wrong problem entirely.
+String? chatFailureMessage(Failure failure) {
+  if (failure is! ApiFailure) return null;
+  final detail = failure.detail;
+
+  switch (failure.code) {
+    case 'SLOW_MODE_OUT_OF_RANGE':
+      final range = detail is Map ? detail['valid_range'] : null;
+      if (range is List && range.length == 2) {
+        return 'Slow mode must be between ${range[0]} and ${range[1]} seconds';
+      }
+      return 'Slow mode must be between 0 and '
+          '${CreateChatUseCase.maxSlowModeSeconds} seconds';
+
+    case 'MEMBER_LIMIT_EXCEEDED':
+      return 'This chat cannot take that many members';
+
+    default:
+      return null;
+  }
+}

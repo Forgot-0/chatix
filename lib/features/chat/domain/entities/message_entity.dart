@@ -88,7 +88,7 @@ class MessageEntity extends Equatable {
   /// Kept as `String?` deliberately — parsing it to `int` here would hide
   /// that inconsistency and break the day the backend sends a non-numeric
   /// value.
-  final String? forwardedFromAuthorId;
+  final int? forwardedFromAuthorId;
 
   final bool isEdited;
   final DateTime createdAt;
@@ -156,7 +156,7 @@ class MessageEntity extends Equatable {
     String? replyToId,
     String? forwardedFromChatId,
     String? forwardedFromMessageId,
-    String? forwardedFromAuthorId,
+    int? forwardedFromAuthorId,
     bool? isEdited,
     DateTime? createdAt,
     List<AttachmentEntity>? attachments,

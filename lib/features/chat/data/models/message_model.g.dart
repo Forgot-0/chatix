@@ -16,7 +16,7 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
   replyToId: json['reply_to_id'] as String?,
   forwardedFromChatId: json['forwarded_from_chat_id'] as String?,
   forwardedFromMessageId: json['forwarded_from_message_id'] as String?,
-  forwardedFromAuthorId: json['forwarded_from_author_id'] as String?,
+  forwardedFromAuthorId: json['forwarded_from_author_id'] as int?,
   isEdited: json['is_edited'] as bool,
   createdAt: json['created_at'] as String,
   attachments:

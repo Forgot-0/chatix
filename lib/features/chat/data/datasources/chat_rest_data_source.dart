@@ -147,7 +147,8 @@ abstract class ChatRestDataSource {
     List<String> uploadTokens,
   );
 
-  Future<Either<Failure, AttachmentDownloadUrlModel>> fetchAttachmentDownloadUrl(
+  Future<Either<Failure, AttachmentDownloadUrlModel>>
+  fetchAttachmentDownloadUrl(
     String chatId,
     String messageId,
     String attachmentId,

@@ -16,9 +16,9 @@ part 'message_model.g.dart';
 /// [type] and [createdAt] stay as wire strings and are converted in
 /// [toEntity], matching the rest of the module's model↔entity boundary.
 ///
-/// ⚠️ [forwardedFromAuthorId] is a `String?` even though every other user id
-/// in the API is an `int` — that is the documented DTO type (§6.4), not an
-/// oversight here.
+/// ⚠️ [forwardedFromAuthorId] is an `int?` — api-docs §6.4 types it
+/// `number | null`, like every other user id in the API. It used to be
+/// documented as a `string`, and the model followed; both have been corrected.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MessageModel extends Equatable {
   final String id;
@@ -30,7 +30,7 @@ class MessageModel extends Equatable {
   final String? replyToId;
   final String? forwardedFromChatId;
   final String? forwardedFromMessageId;
-  final String? forwardedFromAuthorId;
+  final int? forwardedFromAuthorId;
   final bool isEdited;
   final String createdAt;
 

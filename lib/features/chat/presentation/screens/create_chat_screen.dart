@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
 /// `POST /chats/` 🔒 4/5min (api-docs §6.2).
@@ -17,6 +18,12 @@ import 'package:chatix/core/router/app_routes.dart';
 /// here (and again in `CreateChatUseCase`) instead of coming back as
 /// `400 MEMBER_LIMIT_EXCEEDED`, whose name is actively misleading for the
 /// "I selected nobody" case.
+///
+/// Participants are picked by username through [MultiUserSearchField]
+/// (`GET /profiles/?username=`, §4.2) rather than typed as raw numeric ids.
+/// The request body is unchanged — it still carries `member_ids: int[]`,
+/// derived from [_selectedMembers] — only the way a user finds those ids
+/// moved out of their memory and into a search box.
 class CreateChatScreen extends ConsumerStatefulWidget {
   const CreateChatScreen({super.key});
 
@@ -27,8 +34,14 @@ class CreateChatScreen extends ConsumerStatefulWidget {
 class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _memberIdsController = TextEditingController();
   final _slowModeController = TextEditingController(text: '0');
+
+  /// People picked in the search field, in pick order.
+  ///
+  /// The whole profile is kept rather than just the id so the chips can show
+  /// a name and avatar; [_memberIds] projects it back down to what the API
+  /// takes.
+  final List<ProfileEntity> _selectedMembers = [];
 
   ChatType _chatType = ChatType.direct;
   bool _isPublic = false;
@@ -40,16 +53,33 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _memberIdsController.dispose();
     _slowModeController.dispose();
     super.dispose();
   }
 
-  List<int> get _memberIds => _memberIdsController.text
-      .split(',')
-      .map((part) => int.tryParse(part.trim()))
-      .whereType<int>()
-      .toList();
+  /// `CreateChatRequest.member_ids` — unchanged on the wire.
+  List<int> get _memberIds =>
+      _selectedMembers.map((profile) => profile.id).toList();
+
+  void _addMember(ProfileEntity profile) {
+    setState(() {
+      // A direct chat takes exactly one other participant, so a second pick
+      // replaces the first instead of producing a selection the submit button
+      // would then have to reject.
+      if (_chatType == ChatType.direct) {
+        _selectedMembers
+          ..clear()
+          ..add(profile);
+      } else if (!_selectedMembers.any((p) => p.id == profile.id)) {
+        _selectedMembers.add(profile);
+      }
+      _error = null;
+    });
+  }
+
+  void _removeMember(ProfileEntity profile) {
+    setState(() => _selectedMembers.removeWhere((p) => p.id == profile.id));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,19 +129,17 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
             const SizedBox(height: 12),
           ],
 
-          TextField(
-            controller: _memberIdsController,
-            keyboardType: TextInputType.number,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              labelText: isDirect
-                  ? 'Other participant user ID'
-                  : 'Member IDs (comma-separated)',
-              helperText: isDirect
-                  ? 'Exactly one ID is required for a direct chat'
-                  : 'Up to ${CreateChatUseCase.maxInitialMembers} members',
-              border: const OutlineInputBorder(),
-            ),
+          MultiUserSearchField(
+            selected: _selectedMembers,
+            onAdd: _addMember,
+            onRemove: _removeMember,
+            labelText: isDirect
+                ? 'Who do you want to message?'
+                : 'Add people by username',
+            helperText: isDirect
+                ? 'Pick exactly one person — a direct chat has two members'
+                : 'Up to ${CreateChatUseCase.maxInitialMembers} people now; '
+                      'you can add more later',
           ),
           const SizedBox(height: 12),
 
@@ -177,9 +205,9 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
       setState(() {
         _error = memberIds.isEmpty
             ? 'A direct chat needs exactly one other participant — '
-                  'enter their user ID'
+                  'search for them by username'
             : 'A direct chat can only have one other participant, but '
-                  '${memberIds.length} were entered — pick Group instead';
+                  '${memberIds.length} were selected — pick Group instead';
       });
       return;
     }
@@ -213,40 +241,22 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
         // `409 DIRECT_CHAT_EXISTS` carries the existing chat's id in
         // `detail.chat_id` (api-docs §6.2), so the useful response is to open
         // that conversation rather than to report an error the user can't fix.
-        final existingChatId = _existingDirectChatId(failure);
+        // Shared with the profile screen's "Message" button — see
+        // `existingDirectChatId` in create_chat_use_case.dart.
+        final existingChatId = existingDirectChatId(failure);
         if (existingChatId != null) {
           ref.read(chatListProvider.notifier).refresh();
-          context.pushReplacement(
-            ChatDetailRoute(existingChatId).location,
-          );
+          context.pushReplacement(ChatDetailRoute(existingChatId).location);
           return;
         }
-        setState(() => _error = failure.message);
+        // `SLOW_MODE_OUT_OF_RANGE` / `MEMBER_LIMIT_EXCEEDED` get a phrasing
+        // that names the real problem; anything else keeps its own message.
+        setState(() => _error = chatFailureMessage(failure) ?? failure.message);
       },
       (chat) {
         ref.read(chatListProvider.notifier).refresh();
         context.pushReplacement(ChatDetailRoute(chat.id).location);
       },
     );
-  }
-
-  /// `409 DIRECT_CHAT_EXISTS` → the id of the conversation that already exists,
-  /// or `null` for every other failure (api-docs §6.2).
-  ///
-  /// The id is read defensively: `detail` is typed `dynamic` in the envelope
-  /// (api-docs §2.1) and is a free-form object per error code, so a shape that
-  /// doesn't match is treated as "not this case" and falls through to the plain
-  /// error message rather than throwing inside the failure handler.
-  String? _existingDirectChatId(Failure failure) {
-    if (failure is! ApiFailure) return null;
-    if (failure.code != 'DIRECT_CHAT_EXISTS') return null;
-
-    final detail = failure.detail;
-    if (detail is! Map) return null;
-
-    final chatId = detail['chat_id'];
-    if (chatId is! String || chatId.isEmpty) return null;
-
-    return chatId;
   }
 }
