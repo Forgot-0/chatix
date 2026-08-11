@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 /// One message row (api-docs §6.4).
 ///
@@ -19,6 +20,15 @@ class MessageBubble extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onOpenAttachment,
+    this.reactions,
+    this.onToggleReaction,
+    this.onShowReactionUsers,
+    this.readByPeer = false,
+    this.showReadTicks = false,
+    this.onStartSelection,
+    this.selectionMode = false,
+    this.isSelected = false,
+    this.onSelectionToggled,
   });
 
   final MessageEntity message;
@@ -37,6 +47,43 @@ class MessageBubble extends StatelessWidget {
   final VoidCallback? onDelete;
 
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
+
+  /// Reaction chips for this message (§6.7). `null` while the summary has not
+  /// been loaded, which renders the same as "no reactions" — an absent row.
+  ///
+  /// Never sourced from [MessageEntity]: `MessageDTO` carries no reactions
+  /// field (§6.4), so this always arrives from the chat controller's separate
+  /// summary map.
+  final MessageReactionsEntity? reactions;
+
+  /// Tap on a chip — sets, replaces or clears the viewer's one reaction. The
+  /// single-choice rule (§6.7.2) lives in the controller, not here.
+  final void Function(String emoji)? onToggleReaction;
+
+  /// Long-press on a chip — opens the "who reacted" sheet via
+  /// `GET .../reactions/?emoji=`.
+  final void Function(String emoji)? onShowReactionUsers;
+
+  /// Whether the peer has read this message; drives the double tick.
+  ///
+  /// Only ever true in a direct chat — see `ChatDetailState.isReadByPeer` for
+  /// why group read state is deliberately not aggregated.
+  final bool readByPeer;
+
+  /// Whether to render ticks at all. False for other people's messages (in
+  /// Telegram only your own carry them) and for chat types where the receipt
+  /// has no unambiguous meaning.
+  final bool showReadTicks;
+
+  /// Long-press action that turns on the screen's multi-select mode.
+  final VoidCallback? onStartSelection;
+
+  /// While true, a plain tap toggles the checkbox instead of doing anything
+  /// else, and long-press actions are suppressed.
+  final bool selectionMode;
+
+  final bool isSelected;
+  final VoidCallback? onSelectionToggled;
 
   @override
   Widget build(BuildContext context) {
@@ -58,10 +105,14 @@ class MessageBubble extends StatelessWidget {
       );
     }
 
-    return Align(
+    final bubble = Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: GestureDetector(
-        onLongPress: () => _showActions(context),
+        // In selection mode a tap toggles the checkbox and long-press does
+        // nothing: the single-message action sheet has no meaning once several
+        // messages are selected.
+        onTap: selectionMode ? onSelectionToggled : null,
+        onLongPress: selectionMode ? null : () => _showActions(context),
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
           padding: const EdgeInsets.all(10),
@@ -109,14 +160,52 @@ class MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (showReadTicks) ...[
+                    const SizedBox(width: 4),
+                    _ReadTicks(readByPeer: readByPeer),
+                  ],
                 ],
               ),
+              // Chips sit *inside* the bubble, below the timestamp, so they
+              // inherit its max-width constraint and wrap instead of stretching
+              // the row.
+              if (_hasReactions)
+                _ReactionChips(
+                  summaries: reactions!.summaries,
+                  onTap: onToggleReaction,
+                  onLongPress: onShowReactionUsers,
+                ),
             ],
           ),
         ),
       ),
     );
+
+    if (!selectionMode) return bubble;
+
+    // Selection mode wraps rather than replaces the bubble, so the row keeps
+    // its exact layout and only gains a checkbox and a tinted background.
+    return GestureDetector(
+      onTap: onSelectionToggled,
+      child: ColoredBox(
+        color: isSelected
+            ? scheme.primary.withValues(alpha: 0.08)
+            : Colors.transparent,
+        child: Row(
+          children: [
+            Checkbox(
+              value: isSelected,
+              onChanged: (_) => onSelectionToggled?.call(),
+            ),
+            Expanded(child: bubble),
+          ],
+        ),
+      ),
+    );
   }
+
+  bool get _hasReactions =>
+      reactions != null && reactions!.summaries.isNotEmpty;
 
   void _showActions(BuildContext context) {
     showModalBottomSheet<void>(
@@ -158,6 +247,15 @@ class MessageBubble extends StatelessWidget {
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   onDelete!();
+                },
+              ),
+            if (onStartSelection != null)
+              ListTile(
+                leading: const Icon(Icons.checklist),
+                title: const Text('Select'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  onStartSelection!();
                 },
               ),
           ],
@@ -319,8 +417,8 @@ class _AttachmentRow extends StatelessWidget {
                   Text(
                     label,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: attachment.attachmentStatus ==
-                              AttachmentStatus.error
+                      color:
+                          attachment.attachmentStatus == AttachmentStatus.error
                           ? theme.colorScheme.error
                           : theme.colorScheme.outline,
                     ),
@@ -330,6 +428,107 @@ class _AttachmentRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Delivery/read ticks for the viewer's own messages.
+///
+/// Telegram semantics, and only where they are unambiguous: one tick means
+/// "sent" (the server accepted it — it has an id and a seq), two mean the peer
+/// has read up to this message.
+///
+/// ⚠️ There is no "delivered to device" state anywhere in the protocol, so the
+/// single tick deliberately means *sent*, not delivered. Inventing a third
+/// state would be a lie the backend cannot back up.
+class _ReadTicks extends StatelessWidget {
+  const _ReadTicks({required this.readByPeer});
+
+  final bool readByPeer;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Icon(
+      readByPeer ? Icons.done_all : Icons.done,
+      size: 14,
+      // Read ticks are tinted, unread ones stay muted — the same "something
+      // changed" cue Telegram uses, without relying on the icon shape alone.
+      color: readByPeer ? scheme.primary : scheme.outline,
+      semanticLabel: readByPeer ? 'Read' : 'Sent',
+    );
+  }
+}
+
+/// The row of reaction chips under a message (§6.7.3).
+///
+/// One chip per emoji with its **absolute** count. The viewer's own chip is
+/// outlined and tinted — there can be at most one, because a user has exactly
+/// one reaction per message (`UniqueConstraint(message_id, user_id)`, §6.7.2).
+///
+/// Tap toggles/replaces; long-press opens the "who reacted" sheet.
+class _ReactionChips extends StatelessWidget {
+  const _ReactionChips({required this.summaries, this.onTap, this.onLongPress});
+
+  final List<ReactionSummaryEntity> summaries;
+  final void Function(String emoji)? onTap;
+  final void Function(String emoji)? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          for (final summary in summaries)
+            InkWell(
+              onTap: onTap == null ? null : () => onTap!(summary.emoji),
+              onLongPress: onLongPress == null
+                  ? null
+                  : () => onLongPress!(summary.emoji),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: summary.reactedByMe
+                      ? scheme.primary.withValues(alpha: 0.16)
+                      : scheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: summary.reactedByMe
+                        ? scheme.primary
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(summary.emoji, style: theme.textTheme.bodySmall),
+                    const SizedBox(width: 4),
+                    Text(
+                      // The count is absolute (§6.7.5) and a chip with count 0
+                      // is removed upstream, so this never renders "0".
+                      '${summary.count}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: summary.reactedByMe
+                            ? scheme.primary
+                            : scheme.outline,
+                        fontWeight: summary.reactedByMe
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

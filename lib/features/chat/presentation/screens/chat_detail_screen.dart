@@ -53,10 +53,40 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _scrollController = ScrollController();
   final _textController = TextEditingController();
 
+  /// Ids selected in multi-select mode.
+  ///
+  /// Local screen state rather than provider state on purpose: selection is
+  /// pure view concern with no server or socket counterpart, it must vanish
+  /// when the screen is popped, and putting it in `ChatDetailState` would make
+  /// every incoming WS event rebuild through a notifier that has nothing to do
+  /// with it. `null` means the mode is off — distinct from "on with nothing
+  /// selected", which still shows the selection app bar.
+  Set<String>? _selectedMessageIds;
+
+  bool get _selectionMode => _selectedMessageIds != null;
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+  }
+
+  void _startSelection(String messageId) {
+    setState(() => _selectedMessageIds = {messageId});
+  }
+
+  void _toggleSelected(String messageId) {
+    setState(() {
+      final selected = _selectedMessageIds;
+      if (selected == null) return;
+      if (!selected.remove(messageId)) selected.add(messageId);
+      // Emptying the selection keeps the mode on — Telegram does the same, and
+      // auto-exiting would fight a user who is de-selecting to re-pick.
+    });
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedMessageIds = null);
   }
 
   @override
@@ -65,6 +95,185 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _scrollController.dispose();
     _textController.dispose();
     super.dispose();
+  }
+
+  /// The "N selected" header that replaces the normal app bar (Telegram's
+  /// selection mode).
+  ///
+  /// Only Forward/Delete are offered: Reply and Edit are single-message
+  /// actions with no meaning for a set, so they are hidden rather than
+  /// disabled.
+  PreferredSizeWidget _buildSelectionAppBar(ChatDetailState? state) {
+    final selected = _selectedMessageIds ?? const <String>{};
+    final canDelete =
+        state != null &&
+        selected.isNotEmpty &&
+        // Every selected message must be deletable — a partially permitted
+        // batch would fail halfway and is better refused up front.
+        selected.every((id) {
+          final message = _findMessage(state, id);
+          return message != null &&
+              canDeleteMessage(state.chat, state.me, message.authorId);
+        });
+
+    return AppBar(
+      leading: IconButton(
+        tooltip: 'Cancel',
+        icon: const Icon(Icons.close),
+        onPressed: _clearSelection,
+      ),
+      title: Text('${selected.length} selected'),
+      actions: [
+        IconButton(
+          tooltip: 'Forward',
+          icon: const Icon(Icons.forward),
+          onPressed: selected.isEmpty ? null : _forwardSelected,
+        ),
+        IconButton(
+          tooltip: 'Delete',
+          icon: const Icon(Icons.delete_outline),
+          onPressed: canDelete ? _deleteSelected : null,
+        ),
+      ],
+    );
+  }
+
+  MessageEntity? _findMessage(ChatDetailState state, String messageId) {
+    for (final message in state.messages) {
+      if (message.id == messageId) return message;
+    }
+    return null;
+  }
+
+  /// Forwards every selected message into one target chat.
+  ///
+  /// ⚠️ Sequential single-message calls on purpose: §6.4 defines no bulk
+  /// forward endpoint, and inventing a client-side "batch" that fans out in
+  /// parallel would only make the per-chat rate limit reject the tail. Ordering
+  /// is preserved oldest-first so the copies land in the target in the order
+  /// they were written.
+  Future<void> _forwardSelected() async {
+    final state = ref.read(chatDetailProvider(widget.chatId)).value;
+    final selected = _selectedMessageIds;
+    if (state == null || selected == null || selected.isEmpty) return;
+
+    final targetChatId = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) =>
+          _ForwardTargetDialog(excludeChatId: widget.chatId),
+    );
+    if (targetChatId == null || !mounted) return;
+
+    // Oldest first: `state.messages` is newest-first (§6.4).
+    final ordered = state.messages
+        .where((message) => selected.contains(message.id))
+        .toList()
+        .reversed
+        .toList();
+
+    final useCase = ref.read(forwardMessageUseCaseProvider);
+    await _runBulk(
+      label: 'Forwarding',
+      total: ordered.length,
+      action: (index) async {
+        final message = ordered[index];
+        final result = await useCase.execute(
+          sourceChatId: message.chatId,
+          sourceMessageId: message.id,
+          targetChatId: targetChatId,
+        );
+        return result.match((failure) => failure.message, (_) => null);
+      },
+    );
+  }
+
+  /// Deletes every selected message, one call each (no bulk endpoint in §6.4).
+  Future<void> _deleteSelected() async {
+    final state = ref.read(chatDetailProvider(widget.chatId)).value;
+    final selected = _selectedMessageIds;
+    if (state == null || selected == null || selected.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Delete ${selected.length} messages?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final ids = selected.toList();
+    final notifier = ref.read(chatDetailProvider(widget.chatId).notifier);
+    await _runBulk(
+      label: 'Deleting',
+      total: ids.length,
+      action: (index) => notifier.deleteMessageReportingFailure(ids[index]),
+    );
+  }
+
+  /// Runs [action] once per item behind a progress dialog, then reports which
+  /// items failed.
+  ///
+  /// Partial failure is the normal case worth designing for here (one message
+  /// too old to delete, a rate limit part-way through), so failures are
+  /// collected and shown rather than swallowed or allowed to abort the rest.
+  Future<void> _runBulk({
+    required String label,
+    required int total,
+    required Future<String?> Function(int index) action,
+  }) async {
+    final progress = ValueNotifier<int>(0);
+    final failures = <String>[];
+
+    final dialog = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        content: ValueListenableBuilder<int>(
+          valueListenable: progress,
+          builder: (_, done, _) => Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Expanded(child: Text('$label $done of $total…')),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    for (var index = 0; index < total; index++) {
+      final failure = await action(index);
+      if (failure != null) failures.add(failure);
+      progress.value = index + 1;
+    }
+
+    if (mounted) Navigator.of(context, rootNavigator: true).pop();
+    await dialog;
+    progress.dispose();
+    if (!mounted) return;
+
+    _clearSelection();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          failures.isEmpty
+              ? '$label complete ($total)'
+              : '${total - failures.length} of $total succeeded — '
+                    '${failures.length} failed: ${failures.first}',
+        ),
+      ),
+    );
   }
 
   /// The list is `reverse: true`, so its *maxScrollExtent* end is the **oldest**
@@ -84,22 +293,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final myUserId = ref.watch(authProvider).value?.id;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(detail.value?.chat?.name ?? 'Chat'),
-        actions: [
-          IconButton(
-            tooltip: 'Call',
-            icon: const Icon(Icons.call_outlined),
-            onPressed: detail.value?.chat == null ? null : _joinCall,
-          ),
-          IconButton(
-            tooltip: 'Members',
-            icon: const Icon(Icons.people_outline),
-            onPressed: () =>
-                context.push(ChatMembersRoute.locationOf(widget.chatId)),
-          ),
-        ],
-      ),
+      appBar: _selectionMode
+          ? _buildSelectionAppBar(detail.value)
+          : AppBar(
+              title: Text(detail.value?.chat?.name ?? 'Chat'),
+              actions: [
+                IconButton(
+                  tooltip: 'Call',
+                  icon: const Icon(Icons.call_outlined),
+                  onPressed: detail.value?.chat == null ? null : _joinCall,
+                ),
+                IconButton(
+                  tooltip: 'Members',
+                  icon: const Icon(Icons.people_outline),
+                  onPressed: () =>
+                      context.push(ChatMembersRoute.locationOf(widget.chatId)),
+                ),
+              ],
+            ),
       body: detail.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => AppErrorState(
@@ -128,6 +339,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     myUserId: myUserId,
                     scrollController: _scrollController,
                     chatId: widget.chatId,
+                    selectionMode: _selectionMode,
+                    selectedIds: _selectedMessageIds ?? const <String>{},
+                    onStartSelection: _startSelection,
+                    onToggleSelected: _toggleSelected,
                   ),
                 ),
               ),
@@ -165,8 +380,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _send() async {
     final text = _textController.text.trim();
-    final attachments =
-        ref.read(chatAttachmentProvider(widget.chatId)).value;
+    final attachments = ref.read(chatAttachmentProvider(widget.chatId)).value;
 
     // The server rejects a message with neither text nor attachments
     // (`400 INVALID_MESSAGE`); no point spending a request on it.
@@ -355,7 +569,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// and server URL. Actually joining the room needs the `livekit_client` SDK,
   /// which is out of scope here.
   Future<void> _joinCall() async {
-    final result = await ref.read(joinCallUseCaseProvider).execute(widget.chatId);
+    final result = await ref
+        .read(joinCallUseCaseProvider)
+        .execute(widget.chatId);
     if (!mounted) return;
 
     result.match(
@@ -400,12 +616,21 @@ class _MessageList extends ConsumerWidget {
     required this.myUserId,
     required this.scrollController,
     required this.chatId,
+    required this.selectionMode,
+    required this.selectedIds,
+    required this.onStartSelection,
+    required this.onToggleSelected,
   });
 
   final ChatDetailState state;
   final int? myUserId;
   final ScrollController scrollController;
   final String chatId;
+
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final void Function(String messageId) onStartSelection;
+  final void Function(String messageId) onToggleSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -443,10 +668,25 @@ class _MessageList extends ConsumerWidget {
         final message = state.messages[messageIndex];
         final notifier = ref.read(chatDetailProvider(chatId).notifier);
         final me = state.me;
+        final isMine = myUserId != null && message.authorId == myUserId;
 
         return MessageBubble(
           message: message,
-          isMine: myUserId != null && message.authorId == myUserId,
+          isMine: isMine,
+          selectionMode: selectionMode,
+          isSelected: selectedIds.contains(message.id),
+          onSelectionToggled: () => onToggleSelected(message.id),
+          onStartSelection: () => onStartSelection(message.id),
+          reactions: state.reactionsFor(message.id),
+          onToggleReaction: (emoji) =>
+              notifier.toggleReaction(message.id, emoji),
+          onShowReactionUsers: (emoji) =>
+              _showReactionUsers(context, ref, message.id, emoji),
+          // Ticks only on our own messages, and only in a direct chat — see
+          // `ChatDetailState.isReadByPeer` for why group receipts are not
+          // aggregated.
+          showReadTicks: isMine && state.chat?.type == ChatType.direct,
+          readByPeer: state.isReadByPeer(message),
           onReply: canSendMessage(state.chat, me)
               ? () => notifier.setReplyTo(message)
               : null,
@@ -507,9 +747,8 @@ class _MessageList extends ConsumerWidget {
   ) async {
     final targetChatId = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => _ForwardTargetDialog(
-        excludeChatId: message.chatId,
-      ),
+      builder: (dialogContext) =>
+          _ForwardTargetDialog(excludeChatId: message.chatId),
     );
     if (targetChatId == null) return;
 
@@ -603,9 +842,7 @@ class _PendingBubble extends ConsumerWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(14),
-          border: failed
-              ? Border.all(color: theme.colorScheme.error)
-              : null,
+          border: failed ? Border.all(color: theme.colorScheme.error) : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -671,14 +908,16 @@ class _ConnectionBanner extends ConsumerWidget {
     // stream is a broadcast stream and replays nothing, so a screen opened
     // while already connected would otherwise see `loading` for one frame and
     // flash a banner that isn't true.
-    final status = ref.watch(chatSocketStatusProvider).value ??
+    final status =
+        ref.watch(chatSocketStatusProvider).value ??
         ref.read(chatSocketServiceProvider).status;
 
     final theme = Theme.of(context);
 
     final (String message, Color background, bool spinner) = switch (status) {
       // Live, or cold-starting behind the list's own loading state.
-      ChatSocketStatus.ready || ChatSocketStatus.connecting => ('', Colors.transparent, false),
+      ChatSocketStatus.ready ||
+      ChatSocketStatus.connecting => ('', Colors.transparent, false),
 
       // Was live and no longer is. Backoff is running and cursors are intact,
       // so this resolves itself — hence "reconnecting", not an error.
@@ -717,8 +956,11 @@ class _ConnectionBanner extends ConsumerWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   else
-                    Icon(Icons.cloud_off_outlined,
-                        size: 14, color: theme.colorScheme.onErrorContainer),
+                    Icon(
+                      Icons.cloud_off_outlined,
+                      size: 14,
+                      color: theme.colorScheme.onErrorContainer,
+                    ),
                   const SizedBox(width: 8),
                   Text(
                     message,
@@ -861,9 +1103,7 @@ class _AttachmentBar extends ConsumerWidget {
           if (state.isUploading)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: LinearProgressIndicator(
-                value: state.progress?.fraction,
-              ),
+              child: LinearProgressIndicator(value: state.progress?.fraction),
             )
           // Indeterminate: the backend gives no progress for the async
           // validation pass, only a terminal `attachment_success`.

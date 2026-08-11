@@ -12,6 +12,7 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
@@ -116,6 +117,32 @@ class ChatDetailState extends Equatable {
   /// receive it.
   final bool isGone;
 
+  /// `{messageId: summary}` — reaction chips for the loaded messages (§6.7).
+  ///
+  /// A separate map rather than a field on [MessageEntity], because
+  /// `MessageDTO` carries **no** reactions (§6.4): the summary arrives from its
+  /// own `GET .../reactions/` call and is then kept current by
+  /// `reaction_updated` (§6.7.5). Keying by id keeps the two lifecycles
+  /// independent, so re-fetching a message (an edit, a gap replay) never
+  /// clobbers a fresher counter.
+  ///
+  /// A missing key means "not loaded yet" and renders identically to "no
+  /// reactions" — an absent chip row.
+  final Map<String, MessageReactionsEntity> reactions;
+
+  /// `{readerId: lastReadSeq}` — how far **other** members have read (§7.4).
+  ///
+  /// ⚠️ Session-scoped and knowingly incomplete. `messages_read` is a *delta*
+  /// stream: it fires only when someone reads while we are connected, and no
+  /// endpoint returns other members' cursors on entry (§6.2/§6.3 expose only
+  /// our own `ChatDTO.last_read`). So this map starts empty on every open and
+  /// fills in as receipts arrive — ticks are accurate going forward, never
+  /// retroactively. Defaulting to "not read" is the safe direction: it
+  /// under-claims instead of falsely telling the user their message was seen.
+  ///
+  /// Never contains the current user; our own cursor is `ChatEntity.lastRead`.
+  final Map<int, int> peerReadSeq;
+
   const ChatDetailState({
     this.chat,
     this.messages = const [],
@@ -126,9 +153,33 @@ class ChatDetailState extends Equatable {
     this.replyTo,
     this.myUserId,
     this.isGone = false,
+    this.reactions = const {},
+    this.peerReadSeq = const {},
   });
 
   bool get canLoadMore => hasNext && nextCursor != null;
+
+  /// Reaction chips for [messageId] — never `null`, so the bubble has exactly
+  /// one shape to render whether the summary is absent or merely empty.
+  MessageReactionsEntity reactionsFor(String messageId) =>
+      reactions[messageId] ?? MessageReactionsEntity.empty(messageId);
+
+  /// Whether [message] has been read by the other party in a **direct** chat.
+  ///
+  /// Restricted to direct chats on purpose. There, "read by them" is
+  /// unambiguous — one peer — which is exactly Telegram's single/double check
+  /// semantics. For group/supergroup/channel this returns `false`: aggregating
+  /// "read by all N" needs per-member cursors the backend does not compute
+  /// (see [peerReadSeq]), and an invented aggregate is worse than an honest
+  /// single "sent" tick.
+  bool isReadByPeer(MessageEntity message) {
+    if (chat?.type != ChatType.direct) return false;
+    for (final entry in peerReadSeq.entries) {
+      if (entry.key == myUserId) continue;
+      if (entry.value >= message.seq) return true;
+    }
+    return false;
+  }
 
   /// The caller's own membership, from whichever field this chat carries it in
   /// — the input to every permission check on the screen.
@@ -159,6 +210,8 @@ class ChatDetailState extends Equatable {
     bool clearReplyTo = false,
     int? myUserId,
     bool? isGone,
+    Map<String, MessageReactionsEntity>? reactions,
+    Map<int, int>? peerReadSeq,
   }) {
     return ChatDetailState(
       chat: chat ?? this.chat,
@@ -172,6 +225,8 @@ class ChatDetailState extends Equatable {
       pending: pending ?? this.pending,
       replyTo: clearReplyTo ? null : (replyTo ?? this.replyTo),
       isGone: isGone ?? this.isGone,
+      reactions: reactions ?? this.reactions,
+      peerReadSeq: peerReadSeq ?? this.peerReadSeq,
     );
   }
 
@@ -186,6 +241,8 @@ class ChatDetailState extends Equatable {
     replyTo,
     myUserId,
     isGone,
+    reactions,
+    peerReadSeq,
   ];
 }
 
@@ -215,6 +272,13 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   /// requests race and the loser overwrites the winner with identical data —
   /// harmless but wasteful, and it doubles traffic on a busy chat.
   final Set<String> _inFlightFetches = <String>{};
+
+  /// Message ids whose reaction summary is being fetched right now.
+  ///
+  /// Same job as [_inFlightFetches], different endpoint: scrolling can re-enter
+  /// [loadReactionsFor] with the same ids before the first batch returns, and
+  /// without this guard every visible message would be requested repeatedly.
+  final Set<String> _reactionFetches = <String>{};
 
   @override
   Future<ChatDetailState> build() async {
@@ -317,12 +381,17 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         _onHistory(event);
 
       case MessagesRead():
-        // Another member's read receipt. Nothing on this screen renders it yet
-        // (per-message read ticks would need it), but it is *not* an error and
-        // must not trigger a refetch — see the warning in
-        // `ChatSocketService._onFrame` about never treating this seq as a
-        // delivery cursor.
-        break;
+        // Another member's read receipt (§7.4), now recorded so our own
+        // messages can render a "read" tick. See `ChatDetailState.peerReadSeq`
+        // for why that map is session-scoped and starts empty.
+        //
+        // ⚠️ Still never triggers a refetch and never moves a delivery cursor
+        // — see the warning in `ChatSocketService._onFrame`: this seq is a read
+        // watermark and may reference a message we have not received yet.
+        _onMessagesRead(event);
+
+      case ReactionUpdated():
+        _onReactionUpdated(event);
 
       case ChatUpdated():
         _mutate((s) {
@@ -502,6 +571,238 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   /// would resurrect a dead screen), and never touch `state` after disposal —
   /// Riverpod 3 throws on that, and an event can arrive in the same microtask
   /// as the dispose.
+  // ────────────────────── Read receipts (§7.4) ──────────────────────
+
+  /// Folds one `messages_read` receipt into [ChatDetailState.peerReadSeq].
+  ///
+  /// Our own receipts are dropped — the ticks answer "did *they* read it", and
+  /// our own cursor already lives in `ChatEntity.lastRead`. The `max`-style
+  /// guard matters because receipts are not ordered: a late frame carrying an
+  /// older seq must not walk a reader's cursor backwards and un-read messages
+  /// that are already ticked on screen.
+  void _onMessagesRead(MessagesRead event) {
+    if (event.readerId == state.value?.myUserId) return;
+
+    _mutate((s) {
+      final previous = s.peerReadSeq[event.readerId];
+      if (previous != null && previous >= event.seq) return s;
+      return s.copyWith(
+        peerReadSeq: {...s.peerReadSeq, event.readerId: event.seq},
+        nextCursor: s.nextCursor,
+      );
+    });
+  }
+
+  // ─────────────────────── Reactions (§6.7) ────────────────────────
+
+  /// Folds one `reaction_updated` frame into the local summary (§6.7.5).
+  ///
+  /// Three rules the payload forces, each easy to get wrong:
+  ///
+  /// * [ReactionUpdated.count] is **absolute** — assigned, never added. The
+  ///   backend debounces fan-out, so a client accumulating deltas drifts
+  ///   permanently the first time frames are coalesced or replayed.
+  /// * `count == 0` means the chip disappears, not a chip rendering zero.
+  /// * When `changedBy` is us, `reactedByMe` is left exactly as it stands: the
+  ///   event carries no per-viewer state, and our flag was already set
+  ///   optimistically when the PUT/DELETE went out. Recomputing it here is what
+  ///   makes a chip flicker back to un-highlighted right after a self-react.
+  ///
+  /// Frames for messages outside the loaded window are ignored rather than
+  /// stored: the summary is fetched when that message scrolls in, and a map
+  /// keyed by unloaded ids would grow without bound in a busy chat.
+  void _onReactionUpdated(ReactionUpdated event) {
+    _mutate((s) {
+      final existing = s.reactions[event.messageId];
+      if (existing == null && !_hasMessage(event.messageId)) return s;
+
+      final current = existing ?? MessageReactionsEntity.empty(event.messageId);
+      final summaries = <ReactionSummaryEntity>[];
+      var matched = false;
+
+      for (final chip in current.summaries) {
+        if (chip.emoji != event.emoji) {
+          summaries.add(chip);
+          continue;
+        }
+        matched = true;
+        // Absolute assignment; count == 0 drops the chip entirely. Note
+        // `reactedByMe` is carried through untouched — see the class doc.
+        if (event.count > 0) summaries.add(chip.copyWith(count: event.count));
+      }
+
+      // A brand-new emoji on this message. `reactedByMe` stays false even when
+      // `changedBy` is us: our own PUT already inserted the optimistic chip, so
+      // arriving here for our own change means that chip is gone (the screen
+      // reloaded, say) and claiming it as ours would be a guess.
+      if (!matched && event.count > 0) {
+        summaries.add(
+          ReactionSummaryEntity(
+            emoji: event.emoji,
+            count: event.count,
+            reactedByMe: false,
+          ),
+        );
+      }
+
+      return s.copyWith(
+        reactions: {
+          ...s.reactions,
+          event.messageId: current.copyWith(summaries: summaries),
+        },
+        nextCursor: s.nextCursor,
+      );
+    });
+  }
+
+  /// Loads reaction summaries for messages that don't have one yet (§6.7.1).
+  ///
+  /// Necessary because `MessageDTO` has no reactions field (§6.4): without this
+  /// a freshly opened chat shows no chips at all until somebody reacts while
+  /// the screen happens to be open.
+  ///
+  /// ⚠️ One request per message — the endpoint is per-message and §6.7 defines
+  /// no batch form. Only ids missing from the map are fetched, so paging older
+  /// history costs one round-trip per newly revealed message and re-entering a
+  /// chat costs nothing for what is already known.
+  Future<void> loadReactionsFor(Iterable<String> messageIds) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final missing = messageIds
+        .toSet()
+        .where((id) => !current.reactions.containsKey(id))
+        .where(_reactionFetches.add)
+        .toList();
+    if (missing.isEmpty) return;
+
+    final useCase = ref.read(getReactionsUseCaseProvider);
+
+    try {
+      final loaded = <String, MessageReactionsEntity>{};
+      for (final messageId in missing) {
+        final result = await useCase.execute(_chatId, messageId);
+        result.match(
+          // Never surfaced: a missing chip row is a cosmetic loss, an error
+          // banner over a readable conversation is not.
+          (failure) => Logger.warning(
+            'ChatDetail($_chatId): reactions for $messageId '
+            '(${failure.message})',
+          ),
+          (reactions) => loaded[messageId] = reactions,
+        );
+      }
+      if (loaded.isEmpty) return;
+
+      _mutate(
+        (s) => s.copyWith(
+          // A WS frame that landed while this was in flight is newer than the
+          // response, so whatever is already in the map wins.
+          reactions: {...loaded, ...s.reactions},
+          nextCursor: s.nextCursor,
+        ),
+      );
+    } finally {
+      _reactionFetches.removeAll(missing);
+    }
+  }
+
+  /// Sets, replaces or clears the current user's reaction on a message.
+  ///
+  /// Single-choice (§6.7.2): tapping the emoji we already have removes it,
+  /// tapping a different one *replaces* — no explicit DELETE for the old emoji
+  /// is needed, and the backend answers a replacement with **two**
+  /// `reaction_updated` frames.
+  ///
+  /// The summary is updated optimistically so the chip reacts to the tap
+  /// immediately rather than after a socket round-trip; a failed request rolls
+  /// the pre-tap snapshot back.
+  Future<void> toggleReaction(String messageId, String emoji) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final before = current.reactionsFor(messageId);
+    final isRemoval = before.myEmoji == emoji;
+
+    _mutate(
+      (s) => s.copyWith(
+        reactions: {
+          ...s.reactions,
+          messageId: _applyMyReaction(
+            s.reactionsFor(messageId),
+            emoji: isRemoval ? null : emoji,
+          ),
+        },
+        nextCursor: s.nextCursor,
+      ),
+    );
+
+    final result = isRemoval
+        ? await ref
+              .read(removeReactionUseCaseProvider)
+              .execute(_chatId, messageId, emoji)
+        : await ref
+              .read(setReactionUseCaseProvider)
+              .execute(_chatId, messageId, emoji);
+
+    result.match((failure) {
+      Logger.warning(
+        'ChatDetail($_chatId): reaction $emoji on $messageId failed '
+        '(${failure.message})',
+      );
+      // Restore the pre-tap snapshot rather than re-deriving it: the request
+      // never took effect, so the truth is exactly what we had before.
+      _mutate(
+        (s) => s.copyWith(
+          reactions: {...s.reactions, messageId: before},
+          nextCursor: s.nextCursor,
+        ),
+      );
+    }, (_) {});
+  }
+
+  /// Applies "my reaction is now [emoji]" (or none) to a summary locally.
+  ///
+  /// Enforces the single-choice invariant client-side: the previous chip loses
+  /// its count and highlight in the same step the new one gains them, which is
+  /// what stops a replacement from briefly showing two highlighted chips while
+  /// the two WS frames are still in flight.
+  MessageReactionsEntity _applyMyReaction(
+    MessageReactionsEntity summary, {
+    required String? emoji,
+  }) {
+    final next = <ReactionSummaryEntity>[];
+    var found = false;
+
+    for (final chip in summary.summaries) {
+      if (chip.emoji == emoji) {
+        found = true;
+        next.add(
+          chip.copyWith(
+            // Guard against double-counting a chip that is already ours.
+            count: chip.reactedByMe ? chip.count : chip.count + 1,
+            reactedByMe: true,
+          ),
+        );
+      } else if (chip.reactedByMe) {
+        // The emoji we are moving away from; drop it if we were its only fan.
+        if (chip.count > 1) {
+          next.add(chip.copyWith(count: chip.count - 1, reactedByMe: false));
+        }
+      } else {
+        next.add(chip);
+      }
+    }
+
+    if (emoji != null && !found) {
+      next.add(
+        ReactionSummaryEntity(emoji: emoji, count: 1, reactedByMe: true),
+      );
+    }
+
+    return summary.copyWith(summaries: next);
+  }
+
   void _mutate(ChatDetailState Function(ChatDetailState state) transform) {
     if (!ref.mounted) return;
     final current = state.value;
@@ -718,6 +1019,24 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   Future<void> _markReadUpTo(int? seq) async {
     if (seq == null) return;
     await ref.read(markReadUseCaseProvider).execute(_chatId, seq);
+  }
+
+  /// Deletes one message and **returns** the failure message instead of
+  /// throwing, for callers that must keep going after a failure.
+  ///
+  /// Exists because [deleteMessage] rethrows so a single-message UI can show
+  /// an error dialog — which is exactly wrong for a bulk loop, where one
+  /// refusal (a message too old, a rate limit) must not abort the remaining
+  /// deletions or leave them silently unattempted.
+  ///
+  /// Returns `null` on success.
+  Future<String?> deleteMessageReportingFailure(String messageId) async {
+    try {
+      await deleteMessage(messageId);
+      return null;
+    } on Failure catch (failure) {
+      return failure.message;
+    }
   }
 
   Future<void> deleteMessage(String messageId) async {
