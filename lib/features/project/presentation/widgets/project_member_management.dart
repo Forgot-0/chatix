@@ -6,6 +6,9 @@ import 'package:chatix/features/project/presentation/providers/project_detail_pr
 import 'package:chatix/features/project/presentation/providers/project_providers.dart';
 import 'package:chatix/features/project/presentation/utils/project_permissions.dart';
 import 'package:chatix/features/project/presentation/widgets/project_common.dart';
+import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 
 /// One member row. When [canManage] is true (current user has `member:udpate`)
 /// a trailing menu exposes "Change role" and "Edit permissions", wired to
@@ -52,8 +55,12 @@ class MemberListTile extends ConsumerWidget {
 
 /// `POST /projects/{id}/invite/` — pick a user id + role (roles come from the
 /// public `GET /project_roles/`). [roleId] is required (api-docs §9.2).
+///
+/// The invitee is picked by username through [UserSearchField] (the same
+/// widget the chat feature uses), not typed as a raw numeric id. The request
+/// still sends an `int` `user_id` \u2014 only the way it is found changed.
 Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int projectId) async {
-  final userIdController = TextEditingController();
+  ProfileEntity? selectedProfile;
   int? selectedRoleId;
 
   await showDialog<void>(
@@ -69,11 +76,28 @@ Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int pro
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
-                      controller: userIdController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'User id'),
-                    ),
+                    if (selectedProfile == null)
+                      UserSearchField(
+                        labelText: 'Search by username',
+                        onSelected: (profile) =>
+                            setState(() => selectedProfile = profile),
+                      )
+                    else
+                      // `!` rather than promotion: `selectedProfile` is
+                      // captured by this closure, and captured variables are
+                      // never promoted by a null check. It cannot be null in
+                      // this branch \u2014 the `if` above is exactly that test.
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: ProfileAvatar(profile: selectedProfile!),
+                        title: Text(profileLabel(selectedProfile!)),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.close),
+                          tooltip: 'Clear',
+                          onPressed: () =>
+                              setState(() => selectedProfile = null),
+                        ),
+                      ),
                     const SizedBox(height: 12),
                     rolesAsync.when(
                       loading: () => const CircularProgressIndicator(),
@@ -96,10 +120,10 @@ Future<void> showInviteMemberDialog(BuildContext context, WidgetRef ref, int pro
                   ),
                   FilledButton(
                     onPressed: () async {
-                      final userId = int.tryParse(userIdController.text.trim());
+                      final userId = selectedProfile?.id;
                       if (userId == null || selectedRoleId == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Enter a user id and pick a role')),
+                          const SnackBar(content: Text('Pick a person and a role')),
                         );
                         return;
                       }

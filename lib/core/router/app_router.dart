@@ -17,6 +17,7 @@ import 'package:chatix/features/auth/presentation/screens/verify_email_screen.da
 import 'package:chatix/features/chat/presentation/screens/call_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
@@ -129,6 +130,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) => const CreateChatScreen(),
                   ),
+                  // Second static child, matched before `:chatId` for exactly
+                  // the same reason as 'create' above. Also above the shell:
+                  // search is a task you finish or abandon, not a fifth tab.
+                  GoRoute(
+                    path: ChatSearchRoute.path,
+                    name: RouteNames.chatSearch,
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) => const ChatSearchScreen(),
+                  ),
                   GoRoute(
                     path: ChatDetailRoute.path,
                     name: RouteNames.chatDetail,
@@ -136,7 +146,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       final chatId = ChatDetailRoute.idFrom(state);
                       if (chatId == null) {
-                        return const _InvalidRouteScreen(message: 'Unknown chat');
+                        return const _InvalidRouteScreen(
+                          message: 'Unknown chat',
+                        );
                       }
                       return ChatDetailScreen(chatId: chatId);
                     },

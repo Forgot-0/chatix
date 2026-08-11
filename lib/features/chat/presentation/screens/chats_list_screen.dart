@@ -58,7 +58,16 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     final listState = ref.watch(chatListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chats')),
+      appBar: AppBar(
+        title: const Text('Chats'),
+        actions: [
+          IconButton(
+            onPressed: () => context.push(ChatSearchRoute.location),
+            icon: const Icon(Icons.search),
+            tooltip: 'Search chats and people',
+          ),
+        ],
+      ),
       body: listState.when(
         // First fetch only: with riverpod's `skipLoadingOnRefresh`, a
         // pull-to-refresh keeps the old rows on screen instead of flashing

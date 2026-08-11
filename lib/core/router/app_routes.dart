@@ -1,4 +1,5 @@
 library;
+
 import 'package:go_router/go_router.dart';
 
 /// Every route in the app, as a typed object.
@@ -42,7 +43,6 @@ import 'package:go_router/go_router.dart';
 /// URL carries the project id and the position screen can offer "back to the
 /// project" without a second round trip to discover which project it was.
 
-
 /// Shared parameter names, so the pattern and the parser can never disagree
 /// about spelling.
 abstract final class RouteParams {
@@ -64,6 +64,7 @@ abstract final class RouteNames {
   static const String oauthCallback = 'oauthCallback';
 
   static const String chats = 'chats';
+  static const String chatSearch = 'chatSearch';
   static const String createChat = 'createChat';
   static const String chatDetail = 'chatDetail';
   static const String chatMembers = 'chatMembers';
@@ -185,6 +186,16 @@ abstract final class CreateChatRoute {
   static const String location = '/chats/create';
 }
 
+/// `/chats/search` — the one-box search over conversations **and** people.
+///
+/// Static sibling of `:chatId`, for exactly the reason spelled out on
+/// [CreateChatRoute]: nested under [ChatsRoute] the literal `search` segment
+/// is preferred over the dynamic one, so it can never be parsed as a chat id.
+abstract final class ChatSearchRoute {
+  static const String path = 'search';
+  static const String location = '/chats/search';
+}
+
 /// `/chats/{chatId}` — one conversation. Chat ids are UUID **strings**
 /// (api-docs §1.8), never ints.
 class ChatDetailRoute {
@@ -270,7 +281,10 @@ class ProjectDetailRoute {
 /// and it makes the URL self-describing when it arrives from a notification
 /// payload.
 class PositionDetailRoute {
-  const PositionDetailRoute({required this.projectId, required this.positionId});
+  const PositionDetailRoute({
+    required this.projectId,
+    required this.positionId,
+  });
 
   final int projectId;
   final String positionId;

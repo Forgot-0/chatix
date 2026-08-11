@@ -38,6 +38,13 @@ void main() {
               },
             ),
             GoRoute(
+              path: ChatSearchRoute.path,
+              builder: (_, _) {
+                parsed.add('chat-search');
+                return const Placeholder();
+              },
+            ),
+            GoRoute(
               path: ChatDetailRoute.path,
               builder: (_, state) {
                 parsed.add(ChatDetailRoute.idFrom(state));
@@ -144,6 +151,15 @@ void main() {
       // silently becomes a request for a chat whose id is "create".
       final parsed = await go(tester, CreateChatRoute.location);
       expect(parsed, ['create-chat']);
+    });
+
+    testWidgets('the static "search" child wins over :chatId', (tester) async {
+      // Same trap as 'create', and the reason ChatSearchRoute is nested under
+      // /chats rather than declared as a flat top-level route: as siblings of
+      // a dynamic segment, only the static-beats-dynamic rule keeps the
+      // magnifier from opening a chat whose id is literally "search".
+      final parsed = await go(tester, ChatSearchRoute.location);
+      expect(parsed, ['chat-search']);
     });
   });
 
