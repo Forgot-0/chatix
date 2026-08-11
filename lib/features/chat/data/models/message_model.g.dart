@@ -30,6 +30,9 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
   forwardedFrom: json['forwarded_from'] == null
       ? null
       : MessageModel.fromJson(json['forwarded_from'] as Map<String, dynamic>),
+  profile: json['profile'] == null
+      ? null
+      : ChatProfileModel.fromJson(json['profile'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
@@ -49,6 +52,7 @@ Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
       'attachments': instance.attachments,
       'reply_to': instance.replyTo,
       'forwarded_from': instance.forwardedFrom,
+      'profile': instance.profile,
     };
 
 MessagesModel _$MessagesModelFromJson(Map<String, dynamic> json) =>

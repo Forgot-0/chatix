@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/data/models/chat_profile_model.dart';
 
 part 'chat_member_model.g.dart';
 
@@ -19,12 +20,17 @@ class ChatMemberModel extends Equatable {
   @JsonKey(defaultValue: <String, bool>{})
   final Map<String, bool> permissionsOverrides;
 
+  /// `MemberChatDTO.profile` (api-docs §6.3) — denormalized profile snapshot,
+  /// nullable on the wire and left nullable here.
+  final ChatProfileModel? profile;
+
   const ChatMemberModel({
     required this.userId,
     required this.roleId,
     required this.isMuted,
     required this.isBanned,
     required this.permissionsOverrides,
+    this.profile,
   });
 
   @override
@@ -34,6 +40,7 @@ class ChatMemberModel extends Equatable {
     isMuted,
     isBanned,
     permissionsOverrides,
+    profile,
   ];
 
   factory ChatMemberModel.fromJson(Map<String, dynamic> json) =>
@@ -50,6 +57,7 @@ extension ChatMemberModelX on ChatMemberModel {
       isMuted: isMuted,
       isBanned: isBanned,
       permissionsOverrides: permissionsOverrides,
+      profile: profile?.toEntity(),
     );
   }
 }

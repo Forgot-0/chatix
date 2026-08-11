@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:chatix/features/chat/data/models/attachment_model.dart';
+import 'package:chatix/features/chat/data/models/chat_profile_model.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
 part 'message_model.g.dart';
@@ -39,6 +40,10 @@ class MessageModel extends Equatable {
   final MessageModel? replyTo;
   final MessageModel? forwardedFrom;
 
+  /// `MessageDTO.profile` (api-docs §6.4) — author's denormalized profile,
+  /// nullable (system messages have no author).
+  final ChatProfileModel? profile;
+
   const MessageModel({
     required this.id,
     required this.chatId,
@@ -55,6 +60,7 @@ class MessageModel extends Equatable {
     required this.attachments,
     this.replyTo,
     this.forwardedFrom,
+    this.profile,
   });
 
   @override
@@ -74,6 +80,7 @@ class MessageModel extends Equatable {
     attachments,
     replyTo,
     forwardedFrom,
+    profile,
   ];
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
@@ -100,6 +107,7 @@ extension MessageModelX on MessageModel {
       attachments: attachments.map((a) => a.toEntity()).toList(),
       replyTo: replyTo?.toEntity(),
       forwardedFrom: forwardedFrom?.toEntity(),
+      profile: profile?.toEntity(),
     );
   }
 }

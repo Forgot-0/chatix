@@ -17,6 +17,9 @@ ChatMemberModel _$ChatMemberModelFromJson(Map<String, dynamic> json) =>
             (k, e) => MapEntry(k, e as bool),
           ) ??
           {},
+      profile: json['profile'] == null
+          ? null
+          : ChatProfileModel.fromJson(json['profile'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$ChatMemberModelToJson(ChatMemberModel instance) =>
@@ -26,6 +29,7 @@ Map<String, dynamic> _$ChatMemberModelToJson(ChatMemberModel instance) =>
       'is_muted': instance.isMuted,
       'is_banned': instance.isBanned,
       'permissions_overrides': instance.permissionsOverrides,
+      'profile': instance.profile,
     };
 
 MemberPresenceModel _$MemberPresenceModelFromJson(Map<String, dynamic> json) =>

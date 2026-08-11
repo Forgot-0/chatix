@@ -197,9 +197,12 @@ class _ForwardHeader extends StatelessWidget {
           Icon(Icons.forward, size: 14, color: theme.colorScheme.outline),
           const SizedBox(width: 4),
           Text(
+            // Prefer the denormalized author profile on the nested original
+            // (api-docs §6.4). `origin == null` means the source is no longer
+            // readable by us, so there is no author to name at all.
             origin == null
                 ? 'Forwarded message'
-                : 'Forwarded from ${origin.authorId ?? 'unknown'}',
+                : 'Forwarded from ${origin.authorLabel}',
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.outline,
             ),

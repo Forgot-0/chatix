@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 
 /// Chat member roles (`ChatRolesEnum`, api-docs §9.1). The numeric ids are
 /// backend seed data, so they are pinned explicitly rather than relying on
@@ -239,9 +240,25 @@ abstract final class ChatPermissions {
   };
 }
 
-/// `MemberChatDTO` (api-docs §6.2/§6.3) — exactly five fields; the DTO
-/// carries no username/avatar, so member screens must resolve display data
-/// from the profiles module by [userId].
+/// `MemberChatDTO` (api-docs §6.2/§6.3).
+///
+/// The DTO now carries a denormalized [profile] snapshot, so member screens
+/// render a name/avatar straight from this object — no `/profiles/{id}/`
+/// round trip per row (which used to be N+1 requests for a member list).
+///
+/// ⚠️ [profile] is still nullable (deleted user, or a profile not yet
+/// materialized by the Kafka consumer — api-docs §0), so every render path
+/// keeps a `User #id` fallback; see `chatDisplayName`.
+///
+/// ### Why there is no `MemberDetailEntity`
+///
+/// api-docs §6.3 documents a richer `MemberDetailDTO` (adds `is_online` and
+/// a nested `role` object), but **no endpoint this client calls returns it**:
+/// `GET /chats/{id}/members/` responds with `ListMembers`, whose `members`
+/// array is `MemberChatDTO[]`, and online state arrives out-of-band in the
+/// sibling `presence` array (already modelled as [MemberPresenceEntity]).
+/// Adding a `MemberDetailEntity` would be modelling an endpoint that isn't
+/// wired up — so it is deliberately omitted until one returns it.
 class ChatMemberEntity extends Equatable {
   final int userId;
 
@@ -257,13 +274,22 @@ class ChatMemberEntity extends Equatable {
   /// the chat-level overrides (api-docs §9.1).
   final Map<String, bool> permissionsOverrides;
 
+  /// `MemberChatDTO.profile` — denormalized display data (see class doc).
+  /// `null` when the backend has no profile to attach.
+  final ChatProfileEntity? profile;
+
   const ChatMemberEntity({
     required this.userId,
     required this.roleId,
     required this.isMuted,
     required this.isBanned,
     required this.permissionsOverrides,
+    this.profile,
   });
+
+  /// Name to show for this member, falling back to `User #id` (see
+  /// `chatDisplayName`).
+  String get displayLabel => chatDisplayName(profile, userId);
 
   /// `null` when [roleId] isn't one of the six documented roles.
   ChatRole? get role => ChatRole.fromId(roleId);
@@ -275,6 +301,7 @@ class ChatMemberEntity extends Equatable {
     isMuted,
     isBanned,
     permissionsOverrides,
+    profile,
   ];
 }
 

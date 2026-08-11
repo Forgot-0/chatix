@@ -181,11 +181,22 @@ class _MemberTile extends ConsumerWidget {
         moderatable && hasChatPermission(chat, me, ChatPermissions.memberKick);
 
     final role = member.role;
+    final avatarUrl = member.profile?.avatarUrl;
+    final username = member.profile?.username;
 
     return ListTile(
       leading: Stack(
         children: [
-          const CircleAvatar(child: Icon(Icons.person_outline)),
+          // Avatar comes from the denormalized MemberChatDTO.profile
+          // (api-docs §6.3) — no per-row /profiles/{id}/ fetch. The presigned
+          // avatar_url is used directly and never cached beyond this screen
+          // (it expires; see ChatProfileEntity.avatarUrl).
+          CircleAvatar(
+            foregroundImage: avatarUrl == null
+                ? null
+                : NetworkImage(avatarUrl),
+            child: const Icon(Icons.person_outline),
+          ),
           if (isOnline == true)
             Positioned(
               right: 0,
@@ -201,12 +212,22 @@ class _MemberTile extends ConsumerWidget {
             ),
         ],
       ),
-      title: Text('User #${member.userId}'),
+      // Falls back to "User #id" only when the backend attached no profile.
+      title: Text(member.displayLabel),
       subtitle: Row(
         children: [
           // An unknown role_id (added to the backend seed after this build)
           // renders as its raw number rather than a wrong label.
           Text(role?.name ?? 'role ${member.roleId}'),
+          if (username != null && username.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                '@$username',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
           if (member.isMuted) ...[
             const SizedBox(width: 8),
             const Icon(Icons.volume_off_outlined, size: 14),

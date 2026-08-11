@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 
 /// `MessageDTO.type` / `SendMessageRequest.message_type` (api-docs §6.4).
 enum MessageType {
@@ -36,6 +37,12 @@ enum MessageType {
 /// source message/chat is no longer readable by the caller, in which case
 /// the nested object comes back `null`. Prefer the nested object for
 /// rendering and fall back to the ids for "message unavailable" states.
+///
+/// [profile] is the author's denormalized profile snapshot, attached by the
+/// backend to every `MessageDTO` (api-docs §6.4) — a bubble renders its
+/// author line without a `/profiles/{id}/` lookup. It is `null` for `system`
+/// messages (no author at all) and for authors whose profile is missing, so
+/// render it through `chatDisplayName` rather than dereferencing directly.
 class MessageEntity extends Equatable {
   final String id;
   final String chatId;
@@ -47,6 +54,10 @@ class MessageEntity extends Equatable {
 
   /// `null` for `system` messages, which have no human author.
   final int? authorId;
+
+  /// `MessageDTO.profile` (api-docs §6.4) — the author's denormalized
+  /// profile. See class doc; `null` for system messages.
+  final ChatProfileEntity? profile;
 
   final MessageType type;
 
@@ -90,7 +101,12 @@ class MessageEntity extends Equatable {
     this.attachments = const [],
     this.replyTo,
     this.forwardedFrom,
+    this.profile,
   });
+
+  /// Author label for this message, falling back to `User #id` when the
+  /// backend attached no profile (see `chatDisplayName`).
+  String get authorLabel => chatDisplayName(profile, authorId);
 
   /// True when this message was forwarded from somewhere, regardless of
   /// whether the source is still readable (see the ⚠️ in the class doc).
@@ -133,6 +149,7 @@ class MessageEntity extends Equatable {
     List<AttachmentEntity>? attachments,
     MessageEntity? replyTo,
     MessageEntity? forwardedFrom,
+    ChatProfileEntity? profile,
     bool clearContent = false,
   }) {
     return MessageEntity(
@@ -153,6 +170,7 @@ class MessageEntity extends Equatable {
       attachments: attachments ?? this.attachments,
       replyTo: replyTo ?? this.replyTo,
       forwardedFrom: forwardedFrom ?? this.forwardedFrom,
+      profile: profile ?? this.profile,
     );
   }
 
@@ -173,5 +191,6 @@ class MessageEntity extends Equatable {
     attachments,
     replyTo,
     forwardedFrom,
+    profile,
   ];
 }
