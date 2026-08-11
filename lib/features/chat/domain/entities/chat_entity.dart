@@ -54,18 +54,23 @@ class ReadDetailEntity extends Equatable {
   List<Object?> get props => [lastReadMessageSeq, lastReadAt];
 }
 
-/// `ChatDTO` **and** `ChatDetaiDTO` (api-docs §6.2 — the "Detai" spelling
-/// without the "l" is the real name in the backend code).
+/// `ChatDTO` **and** `ChatDetailDTO` (api-docs §6.2).
+///
+/// ℹ️ This type used to be called `ChatDetaiDTO` (missing "l") in the backend
+/// and in these docs; the typo has since been fixed server-side, so the
+/// correct spelling is used throughout this file. Only the name changed —
+/// the two responses still differ exactly as they always did.
 ///
 /// Both DTOs are modelled by this one entity because they describe the same
-/// chat and share 12 of their fields; the difference is which extras the
+/// chat and share most of their fields; the difference is which extras the
 /// endpoint bothers to compute:
 ///
-/// | field | `ChatDTO` (list/create/update) | `ChatDetaiDTO` (`GET /chats/{id}/`) |
+/// | field | `ChatDTO` (list/create/update) | `ChatDetailDTO` (`GET /chats/{id}/`) |
 /// |---|---|---|
 /// | [unreadCount] | ✅ | ❌ `null` |
 /// | [me] | ✅ | ❌ `null` |
 /// | [lastRead] | ✅ | ❌ `null` |
+/// | [lastMessage] | ✅ | ❌ `null` |
 /// | [members] | ❌ `null` | ✅ full list |
 ///
 /// So `null` here means "this endpoint didn't send it", **not** "zero" or
@@ -112,7 +117,18 @@ class ChatEntity extends Equatable {
   /// `ChatDTO` only — `null` from `GET /chats/{id}/`.
   final ReadDetailEntity? lastRead;
 
-  /// `ChatDetaiDTO` only — `null` in list/create/update responses.
+  /// `ChatDTO` only — the newest message of the chat, denormalized by the
+  /// backend as a **preview for the chat list** (api-docs §6.2
+  /// `ChatDTO.last_message`).
+  ///
+  /// Same nullability rule as the other `ChatDTO`-only fields: `null` means
+  /// either "this endpoint didn't send it" (`GET /chats/{id}/` never does) or
+  /// "this chat has no messages yet". Both render as "no preview", so the two
+  /// cases don't need to be told apart here — but neither may be rendered as
+  /// an empty message row.
+  final MessageEntity? lastMessage;
+
+  /// `ChatDetailDTO` only — `null` in list/create/update responses.
   final List<ChatMemberEntity>? members;
 
   const ChatEntity({
@@ -137,7 +153,7 @@ class ChatEntity extends Equatable {
 
   /// The caller's membership, wherever this instance happens to carry it:
   /// [me] for a `ChatDTO`, or the matching entry of [members] for a
-  /// `ChatDetaiDTO`. Returns `null` when the caller isn't a member (e.g.
+  /// `ChatDetailDTO`. Returns `null` when the caller isn't a member (e.g.
   /// previewing a public chat before `join`), which every permission check
   /// must treat as "deny".
   ChatMemberEntity? membershipOf(int userId) {
@@ -164,7 +180,7 @@ class ChatEntity extends Equatable {
   /// *meaningful value* — see the class doc: it distinguishes "this endpoint
   /// didn't send it" from zero/empty. A `?? this.x` fallback alone could never
   /// express "set this back to unknown", and silently promoting a `ChatDTO`'s
-  /// `me` onto a `ChatDetaiDTO` copy would make `membershipOf` answer from
+  /// `me` onto a `ChatDetailDTO` copy would make `membershipOf` answer from
   /// stale data.
   ChatEntity copyWith({
     String? id,

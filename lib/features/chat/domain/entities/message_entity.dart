@@ -110,17 +110,15 @@ class MessageEntity extends Equatable {
 
   /// True when this message was forwarded from somewhere, regardless of
   /// whether the source is still readable (see the ⚠️ in the class doc).
-  bool get isForward =>
-      forwardedFromMessageId != null || forwardedFrom != null;
+  bool get isForward => forwardedFromMessageId != null || forwardedFrom != null;
 
   bool get isReply => replyToId != null || replyTo != null;
 
   /// True while any attachment is still being processed by the backend, so
   /// the bubble should show a spinner instead of a broken thumbnail
   /// (api-docs §6.5).
-  bool get hasPendingAttachments => attachments.any(
-    (a) => a.attachmentStatus == AttachmentStatus.pending,
-  );
+  bool get hasPendingAttachments =>
+      attachments.any((a) => a.attachmentStatus == AttachmentStatus.pending);
 
   /// Returns a copy with the given fields replaced.
   ///

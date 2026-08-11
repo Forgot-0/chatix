@@ -136,7 +136,17 @@ class ChatListTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        chat.description ?? '${chat.memberCount} members',
+        // Preview precedence, richest first:
+        //   1. `last_message` — what Telegram shows and what api-docs §6.2
+        //      added `ChatDTO.last_message` for.
+        //   2. the chat's own `description` — the previous source. NOT
+        //      removed: it is a real `ChatDTO` field, it is the only subtitle
+        //      a chat with no messages yet can show, and `GET /chats/{id}/`
+        //      (`ChatDetailDTO`) sends a description but never a last message,
+        //      so a `ChatListTile` built from a detail response would lose its
+        //      subtitle entirely if this fallback were dropped.
+        //   3. the member count, as before.
+        _previewOf(chat) ?? chat.description ?? '${chat.memberCount} members',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -150,7 +160,7 @@ class ChatListTile extends StatelessWidget {
               style: Theme.of(context).textTheme.labelSmall,
             ),
           // `unread_count` is only present on ChatDTO (this list), never on
-          // ChatDetaiDTO — see ChatEntity's doc table.
+          // ChatDetailDTO — see ChatEntity's doc table.
           if (unread > 0)
             Padding(
               padding: const EdgeInsets.only(top: 4),
@@ -160,6 +170,42 @@ class ChatListTile extends StatelessWidget {
       ),
       onTap: () => context.push(ChatDetailRoute(chat.id).location),
     );
+  }
+
+  /// One-line preview of [ChatEntity.lastMessage], or `null` when there is
+  /// nothing worth showing.
+  ///
+  /// An attachment-only message has `content: null` (a legitimate value, not
+  /// missing data — api-docs §6.4), so it is labelled by its type instead of
+  /// rendering as a blank subtitle. Deleted messages arrive as `system`, whose
+  /// content the backend writes itself, so it is shown verbatim.
+  static String? _previewOf(ChatEntity chat) {
+    final message = chat.lastMessage;
+    if (message == null) return null;
+
+    final content = message.content?.trim();
+    if (content != null && content.isNotEmpty) {
+      // The sender's name is only useful where more than one person can post.
+      if (chat.type == ChatType.direct || message.type == MessageType.system) {
+        return content;
+      }
+      return '${message.authorLabel}: $content';
+    }
+
+    final label = switch (message.type) {
+      MessageType.image => '📷 Photo',
+      MessageType.file => '📎 File',
+      MessageType.voice => '🎤 Voice message',
+      MessageType.videoNote => '📹 Video message',
+      MessageType.system => null,
+      MessageType.text || MessageType.reply || MessageType.forward =>
+        message.attachments.isEmpty ? null : '📎 Attachment',
+    };
+    if (label == null) return null;
+
+    return chat.type == ChatType.direct
+        ? label
+        : '${message.authorLabel}: $label';
   }
 
   static IconData _iconFor(ChatType type) {
