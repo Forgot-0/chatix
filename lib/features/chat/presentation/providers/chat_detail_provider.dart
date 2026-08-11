@@ -195,8 +195,7 @@ class ChatDetailState extends Equatable {
 /// the live subscription (§7). The socket itself is *not* owned here — it is an
 /// app-wide singleton (see `chat_socket_provider.dart`); this controller only
 /// subscribes to one chat for as long as its screen is mounted.
-class ChatDetailController
-    extends AsyncNotifier<ChatDetailState> {
+class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   ChatDetailController(this._chatId);
 
   /// The chat this controller is scoped to. Riverpod 3's manual `family` API
@@ -258,7 +257,11 @@ class ChatDetailController
       // live updates for this chat with no visible symptom. The parser already
       // degrades bad frames to `WsUnknown`, so reaching here is unexpected.
       onError: (Object error, StackTrace stackTrace) {
-        Logger.error('ChatDetail($_chatId): event stream error', error, stackTrace);
+        Logger.error(
+          'ChatDetail($_chatId): event stream error',
+          error,
+          stackTrace,
+        );
       },
       cancelOnError: false,
     );
@@ -524,10 +527,9 @@ class ChatDetailController
     // the two cursors, so this cannot rewind anything.
     final messages = state.value?.messages;
     if (messages != null && messages.isNotEmpty) {
-      ref.read(chatSocketServiceProvider).subscribe(
-        _chatId,
-        lastSeq: ChatRealtimeMerge.highestSeq(messages),
-      );
+      ref
+          .read(chatSocketServiceProvider)
+          .subscribe(_chatId, lastSeq: ChatRealtimeMerge.highestSeq(messages));
     }
   }
 
@@ -557,10 +559,7 @@ class ChatDetailController
       // scrolled-through conversation because one page failed is far worse
       // than the missing page.
       (_) => AsyncValue.data(
-        current.copyWith(
-          isLoadingMore: false,
-          nextCursor: current.nextCursor,
-        ),
+        current.copyWith(isLoadingMore: false, nextCursor: current.nextCursor),
       ),
       (page) => AsyncValue.data(
         current.copyWith(
@@ -708,10 +707,7 @@ class ChatDetailController
     // message's `seq` is only learned from the (ignored) `new_message` echo, and
     // a reconnect immediately after sending would ask the server to replay it.
     if (sent != null) {
-      ref.read(chatSocketServiceProvider).subscribe(
-        _chatId,
-        lastSeq: sent.seq,
-      );
+      ref.read(chatSocketServiceProvider).subscribe(_chatId, lastSeq: sent.seq);
     }
 
     await _markReadUpTo(sent?.seq);
@@ -733,9 +729,7 @@ class ChatDetailController
     result.match((failure) => throw failure, (_) {
       state = AsyncValue.data(
         current.copyWith(
-          messages: current.messages
-              .where((m) => m.id != messageId)
-              .toList(),
+          messages: current.messages.where((m) => m.id != messageId).toList(),
           nextCursor: current.nextCursor,
         ),
       );
@@ -815,8 +809,7 @@ class ChatDetailController
 /// * Each abandoned controller would go on fetching message bodies for events
 ///   nobody is rendering.
 final chatDetailProvider =
-    AsyncNotifierProvider.family<
-      ChatDetailController,
-      ChatDetailState,
-      String
-    >(ChatDetailController.new, isAutoDispose: true);
+    AsyncNotifierProvider.family<ChatDetailController, ChatDetailState, String>(
+      ChatDetailController.new,
+      isAutoDispose: true,
+    );

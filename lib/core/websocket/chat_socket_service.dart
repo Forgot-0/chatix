@@ -469,6 +469,12 @@ class ChatSocketService {
         break;
 
       // No cursor bookkeeping; forwarded straight to consumers.
+      //
+      // `ReactionUpdated` belongs here for the same reason as `MessagesRead`:
+      // it carries no `seq` at all (§6.7.5 — only messageId/emoji/count/
+      // changedBy), so there is nothing that could advance a delivery cursor,
+      // and reacting to an old message must never move it.
+      case ReactionUpdated():
       case MemberJoined():
       case MemberLeft():
       case MemberKick():

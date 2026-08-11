@@ -7,12 +7,14 @@ import 'package:chatix/features/chat/data/models/call_token_model.dart';
 import 'package:chatix/features/chat/data/models/chat_member_model.dart';
 import 'package:chatix/features/chat/data/models/chat_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
+import 'package:chatix/features/chat/data/models/reaction_model.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/call_token_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
 /// Maps [ChatRestDataSource] models onto domain entities (api-docs §6).
@@ -269,8 +271,7 @@ class ChatRepositoryImpl implements ChatRepository {
   ) => _remote.confirmAttachmentUpload(chatId, uploadTokens);
 
   @override
-  Future<Either<Failure, AttachmentDownloadUrlEntity>>
-  getAttachmentDownloadUrl(
+  Future<Either<Failure, AttachmentDownloadUrlEntity>> getAttachmentDownloadUrl(
     String chatId,
     String messageId,
     String attachmentId,
@@ -297,6 +298,44 @@ class ChatRepositoryImpl implements ChatRepository {
     int userId,
     bool muted,
   ) => _remote.muteCallParticipant(chatId, userId, muted);
+
+  // ────────────────────────────── Reactions (§6.7) ──────────────────────────
+
+  /// [emoji] travels raw through this layer on purpose: percent-encoding it
+  /// for the path segment is [ChatRestDataSourceImpl.encodeEmojiPathSegment]'s
+  /// job, so the domain never handles an escaped form it would then have to
+  /// unescape before rendering.
+  @override
+  Future<Either<Failure, void>> setReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  ) => _remote.setReaction(chatId, messageId, emoji);
+
+  @override
+  Future<Either<Failure, void>> removeReaction(
+    String chatId,
+    String messageId,
+    String emoji,
+  ) => _remote.removeReaction(chatId, messageId, emoji);
+
+  @override
+  Future<Either<Failure, MessageReactionsEntity>> getReactions(
+    String chatId,
+    String messageId, {
+    String? emoji,
+    int limit = 50,
+    int? cursorUserId,
+  }) async {
+    final result = await _remote.fetchReactions(
+      chatId,
+      messageId,
+      emoji: emoji,
+      limit: limit,
+      cursorUserId: cursorUserId,
+    );
+    return result.map((model) => model.toEntity());
+  }
 
   // ────────────────────────────── mapping ─────────────────────────────
 

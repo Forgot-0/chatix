@@ -135,13 +135,16 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   /// badge for such a chat is therefore correct as of the last `GET /chats/`,
   /// which is what pull-to-refresh and re-entering the screen are for.
   void _attachRealtime() {
-    _eventSubscription = ref.read(chatSocketServiceProvider).events.listen(
-      _onEvent,
-      onError: (Object error, StackTrace stackTrace) {
-        Logger.error('ChatList: event stream error', error, stackTrace);
-      },
-      cancelOnError: false,
-    );
+    _eventSubscription = ref
+        .read(chatSocketServiceProvider)
+        .events
+        .listen(
+          _onEvent,
+          onError: (Object error, StackTrace stackTrace) {
+            Logger.error('ChatList: event stream error', error, stackTrace);
+          },
+          cancelOnError: false,
+        );
   }
 
   /// Folds one event into the list. Exhaustive over [WSEvent] by design — a new
@@ -156,8 +159,11 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         final myUserId = ref.read(authProvider).value?.id;
         _patchRow(
           event.chatId,
-          (chat) =>
-              ChatRealtimeMerge.applyMessagesRead(chat, event, myUserId: myUserId),
+          (chat) => ChatRealtimeMerge.applyMessagesRead(
+            chat,
+            event,
+            myUserId: myUserId,
+          ),
         );
 
       case ChatUpdated():
@@ -189,7 +195,11 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         // join in every group the user belongs to.
         _mutate(
           (s) => s.copyWith(
-            items: ChatRealtimeMerge.adjustMemberCount(s.items, event.chatId, 1),
+            items: ChatRealtimeMerge.adjustMemberCount(
+              s.items,
+              event.chatId,
+              1,
+            ),
             nextDate: s.nextDate,
             nextChatId: s.nextChatId,
           ),
@@ -230,6 +240,13 @@ class ChatListController extends AsyncNotifier<ChatListState> {
       case WsHistory():
         // Gap replay is addressed to whichever chat screen asked for it, and
         // carries message bodies this screen doesn't render.
+        break;
+
+      case ReactionUpdated():
+        // Reactions never reach a list row: the preview renders
+        // `ChatDTO.last_message` (§6.2), which carries no reactions field, and
+        // reacting is not an unread event. The open chat's controller owns it
+        // (§6.7.5).
         break;
 
       case WsReady():
@@ -296,7 +313,9 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     if (!_inFlightChatFetches.add(event.chatId)) return;
 
     try {
-      final result = await ref.read(getChatUseCaseProvider).execute(event.chatId);
+      final result = await ref
+          .read(getChatUseCaseProvider)
+          .execute(event.chatId);
 
       result.match(
         (failure) => Logger.warning(
@@ -336,7 +355,10 @@ class ChatListController extends AsyncNotifier<ChatListState> {
 
   /// Replaces one row in place, leaving the list untouched if the chat isn't
   /// loaded (it may simply be on a page the user hasn't scrolled to).
-  void _patchRow(String chatId, ChatEntity Function(ChatEntity chat) transform) {
+  void _patchRow(
+    String chatId,
+    ChatEntity Function(ChatEntity chat) transform,
+  ) {
     _mutate((s) {
       final index = s.items.indexWhere((c) => c.id == chatId);
       if (index < 0) return s;
