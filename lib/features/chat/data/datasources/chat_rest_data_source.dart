@@ -697,7 +697,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
         // "%F0%9F%91%8D" and match no reaction. Only the path form above is
         // encoded by hand.
         if (emoji?.isNotEmpty == true) 'emoji': emoji,
-        if (cursorUserId != null) 'cursor_user_id': cursorUserId,
+        ...?cursorUserId != null ? {'cursor_user_id': cursorUserId} : null,
       },
     );
     return result.map(
