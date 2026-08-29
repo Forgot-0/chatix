@@ -241,7 +241,7 @@ interface ErrorResponse {
 | `SLOW_MODE_LIMIT` | 429 | `{ "chat_id": string, "retry_after": number }` — слишком часто пишет при включённом slow-mode |
 | `ALREADY_CHAT_MEMBER` | 409 | `{ "user_id": number, "chat_id": string }` |
 | `TOO_LONG_CHAT_ROLE_NAME` | 400 | `{ "role_name": string, "max_len": 32 }` |
-| `DIRECT_CHAT_EXISTS` | 409 | `{ "chat_id": string }` — личный чат с этим пользователем уже есть |
+| `DIRECT_CHAT_EXISTS` | 409 | `{ "chat_id": string }` |
 | `MEMBER_LIMIT_EXCEEDED` | 400 | `{ "limit": number }` — лимит зависит от типа чата (2/500/1000000/10000000), см. раздел 9 |
 | `MESSAGE_TOO_LONG` | 400 | `{ "length": number, "max_length": 4096 }` |
 | `LIVEKIT_ERROR` | 502 | `{ "reason": string }` |
@@ -256,6 +256,10 @@ interface ErrorResponse {
 | `INVALID_MESSAGE` | 400 | `{ "reason": string }` |
 | `EMPTY_ATTACHMENT_UPLOAD_REQUEST` | 400 | `{}` |
 | `MAX_LIMIT_CURSOR` | 429 | `{ "max": number, "current": number }` — только в WS-команде `resume`, лимит 20 курсоров |
+| `INVALID_REACTION` | 400 | `{ "emoji": string }` (обрезан до 64 симв.) — пустой эмодзи, длиннее 32 симв., только пробелы или содержит `\x00`; см. 6.7.4 |
+| `TOO_MANY_REACTION` | 400 | `{}` — на сообщении уже 20 различных эмодзи (`MAX_REACTIONS_PER_MESSAGE`); см. 6.7.4 |
+
+⚠️ `ATTACHMENT_MEDIA_VALIDATION` (класс `AttachmentMediaValidationError`) в этой таблице **намеренно не указан** — он никогда не долетает до HTTP-ответа: возникает только внутри фонового воркера `ProccessAttachmentsCommandHandler` (см. 6.5), там же перехватывается и сворачивается в `attachment_status: "error"`. Клиенту как код ошибки API не отдаётся.
 
 ### 2.8 Коды модуля `notifications`
 
@@ -711,7 +715,7 @@ interface ProjectRoleDTO { id: number; name: string; permissions: Record<string,
 
 Базовый путь для всех эндпоинтов ниже (если не указано иное) — `/chats` и вложенные `/chats/{chat_id}/...`. Все требуют авторизации.
 
-> ⚠️ **Раздел полностью пересобран в версии 2.1** по коду на коммите `7162e9b`. Главные добавления относительно версии 2.0: реакции (6.7), голосовые сообщения и видео-кружки (6.5), поле `profile` в DTO сообщений и участников, `last_message` в `ChatDTO`. Расширенная версия этого раздела с построчными ссылками на код лежит в `docs/chats-module.md`.
+> ⚠️ **Раздел полностью пересобран в версии 2.1** по коду на коммите `7162e9b`. Главные добавления относительно версии 2.0: реакции (6.7), голосовые сообщения и видео-кружки (6.5), поле `profile` в DTO сообщений и участников, `last_message` в `ChatDTO`. (Ссылка на расширенную версию с построчными ссылками на код, ранее заявленную как `docs/chats-module.md`, убрана — такого файла в репозитории нет.)
 
 ### 6.0 Карта путей модуля (из `app/chats/routers.py`)
 
@@ -723,7 +727,7 @@ interface ProjectRoleDTO { id: number; name: string; permissions: Record<string,
 | `/chats/{chat_id}` | `routes/v1/attachments.py` | `chat-attachments` | ✅ |
 | `/chats/{chat_id}/calls` | `routes/v1/calls.py` | `chat-calls` | ✅ |
 | `/chats` (ws) | `routes/v1/ws.py` | `chats-ws` | ✅ |
-| `/chats/{chat_id}/messages/{message_id}/reactions` | `routes/v1/reactions.py` | — | ✅ |
+| `/chats/{chat_id}/messages/{message_id}/reactions` | `routes/v1/reactions.py` | `chat-reactions` | ✅ |
 
 ### 6.1 Типы чатов и роли — коротко
 
@@ -742,6 +746,8 @@ interface ProjectRoleDTO { id: number; name: string; permissions: Record<string,
 | DELETE | `/chats/{chat_id}/` | 4/5мин | — | `204` |
 | POST | `/chats/{chat_id}/join/` | 10/5мин | — | `204` — вступить в публичный чат |
 | POST | `/chats/{chat_id}/leave/` | 4/5мин | — | `204` |
+
+⚠️ **Создатель чата (`created_by`) не может выйти через `/leave/`** — `Chat.leave()` сравнивает `user_id` с полем `created_by` (не с ролью!) и при совпадении кидает `403 CHAT_ACCESS_DENIED`. Это ограничение не снимается сменой роли через `PATCH /members/{user_id}/role/` — `created_by` не меняется никаким эндпоинтом, так что создатель заперт в чате навсегда (может только удалить чат целиком через `DELETE /chats/{chat_id}/`, если у него остались права `chat:delete`).
 
 ```ts
 // CreateChatRequest
@@ -791,7 +797,9 @@ interface ReadDetail { last_read_message_seq: number; last_read_at: string }
 
 ⚠️ **Курсор списка чатов двусоставной**: для следующей страницы нужно передать **оба** значения — `last_activity_at = next_date` и `last_chat_id = next_chat_id` (сортировка `last_activity_at DESC, id DESC`, второй ключ разрешает коллизии по времени).
 
-Ошибки: `400 MEMBER_LIMIT_EXCEEDED` (для direct — если `member_ids.length != 1`), `400 SLOW_MODE_OUT_OF_RANGE`, `403 CHAT_ACCESS_DENIED/NOT_CHAT_MEMBER`, `404 NOT_FOUND_CHAT`, `409 DIRECT_CHAT_EXISTS` (при повторном создании direct-чата с тем же собеседником — в `detail.chat_id` уже придёт id существующего чата, можно сразу открывать его).
+Ошибки: `400 MEMBER_LIMIT_EXCEEDED` (для direct — если `member_ids.length != 1`), `400 SLOW_MODE_OUT_OF_RANGE`, `403 CHAT_ACCESS_DENIED/NOT_CHAT_MEMBER`, `404 NOT_FOUND_CHAT`.
+
+⚠️ **`409 DIRECT_CHAT_EXISTS` в реальности не возникает** (см. предупреждение в разделе 2.7) — повторный `POST /chats/` с `chat_type: "direct"` на того же собеседника создаст второй, дублирующийся direct-чат. Если клиенту нужна идемпотентность 1:1-чатов, дедуп нужно делать на своей стороне до вызова создания.
 
 ### 6.3 Участники чата
 
@@ -834,6 +842,11 @@ interface MemberPresenceDTO { user_id: number; is_online: boolean }
 ```
 
 ⚠️ `presence` — **отдельный массив**, а не поле внутри `members`. Клиент сам джойнит по `user_id`; отсутствие записи трактовать как offline.
+
+⚠️ **Забаненные участники по-разному видны в разных эндпоинтах** (несогласованность в текущей реализации, не архитектурное решение):
+- `GET /chats/{chat_id}/members/` (постраничный список, `ChatRepository.get_chat_members`) **полностью исключает** из выборки как перманентно забаненных (`banned_to = null`), так и временно забаненных прямо сейчас (`banned_to` в будущем) участников — SQL-фильтр `banned_to IS NOT NULL AND banned_to < now()`. Такие пользователи просто не попадут в список, а не придут с `is_banned: true`.
+- `GET /chats/{chat_id}/` (`ChatDetailDTO.members`, через `get_by_id(with_members=True)`) отдаёт **всех** участников без этого фильтра — там забаненные будут присутствовать с `is_banned: true`.
+- Тот же фильтр применяется к `GET /chats/` — если текущий пользователь сам забанен (перманентно или временно) в каком-то чате, этот чат **пропадёт из его собственного списка чатов** до истечения/снятия бана, без какой-либо отдельной пометки.
 
 Ошибки: `403 NOT_CHAT_MEMBER/CHAT_ACCESS_DENIED`, `404 NOT_FOUND_CHAT`, `409 ALREADY_CHAT_MEMBER`, `400 MEMBER_LIMIT_EXCEEDED`, `400 TOO_LONG_CHAT_ROLE_NAME`.
 
@@ -895,7 +908,9 @@ interface MessagesDTO {   // курсорная пагинация, has_next —
 
 **Порядок и курсор:** `GET /messages/` идёт `direction="backward"` — от новых к старым. `next_cursor` — `seq` последнего (самого старого) элемента страницы, заполняется **только когда `has_next == true`**, иначе `null`.
 
-Правка сообщения ограничена окном `MAX_EDIT_WINDOW_HOURS = 48` часов; история правок хранится до `MAX_EDIT_HISTORY = 20` записей.
+⚠️ **Никакого окна на редактирование и истории правок в коде нет** (ранее в этом разделе ошибочно указывались несуществующие константы `MAX_EDIT_WINDOW_HOURS`/`MAX_EDIT_HISTORY`). Реальные правила:
+- **`PATCH .../messages/{message_id}/` (правка)** — разрешена **только автору сообщения** (`message.author_id == user_id`), без ограничения по времени и без permission-based обхода; чужое сообщение поправить нельзя вообще, даже с `message:delete`/`chat:update`. При несовпадении автора — `403 CHAT_ACCESS_DENIED`. Хранится только текущая версия текста (`is_edited: true`), прошлые версии нигде не сохраняются.
+- **`DELETE .../messages/{message_id}/` (удаление)** — разрешено автору **или** любому участнику с правом `message:delete` (роли `owner`/`admin`/`editor`, см. 9.1), в отличие от правки. Мягкое удаление (`is_deleted = true`), контент из БД физически не стирается.
 
 Ошибки: `400 MESSAGE_TOO_LONG/INVALID_MESSAGE/SLOW_MODE_OUT_OF_RANGE`, `403 NOT_CHAT_MEMBER/CHAT_ACCESS_DENIED`, `404 NOT_FOUND_CHAT/NOT_FOUND_MESSAGE`, `409 IDEMPOTENCY_CONFLICT`, `429 SLOW_MODE_LIMIT`.
 
@@ -940,7 +955,9 @@ Array<{
   expires_in: number;
 }>
 ```
-Имя файла санитизируется регуляркой `[^\w.\-]` → `_` и обрезается до 200 символов; ключ в S3 — `chats/{chat_id}/{uuid4}/{clean_filename}`, бакет `chat-attachments`.
+Имя файла санитизируется регуляркой `[^\w.\-]` → `_` и обрезается до 200 символов; ключ в S3 — `chats/{chat_id}/{uuid4}/{clean_filename}`.
+
+⚠️ **Presigned PUT из шага 1 указывает не на финальный бакет.** Загрузка идёт в промежуточный бакет `chat-pending-attachments` (`ATTACHMENT_BUCKET_PENDING`). Только после успешной фоновой валидации (шаг 3) файл копируется в `chat-attachments` (`ATTACHMENT_BUCKET`) и удаляется из pending-бакета. Для клиента это прозрачно (просто PUT по выданному URL), но если что-то читает/пишет в S3/MinIO напрямую в обход API — важно не путать эти два бакета.
 
 **Шаг 2 — `PUT <upload_url>`** напрямую в S3/MinIO (минуя бэкенд), `Content-Type: <mime_type файла>`, тело — сырые байты файла целиком. Никакого multipart, никаких дополнительных полей.
 
@@ -951,6 +968,8 @@ Array<{
 // Response 202 Accepted, пустое тело — обработка асинхронная (fire-and-forget)
 ```
 После `202` бэкенд в фоне валидирует реальное содержимое файла и заполняет `width/height/duration_seconds`, переводя статус `pending → success` (или `error`). Готовность отслеживается через WS-событие `attachment_success` (раздел 7.4) — в его `payload.tokens` попадут завершённые `upload_token`. Отдельного WS-события на ОШИБКУ обработки в протоколе нет — для проверки неудачи ориентируйтесь на `attachment_status: "error"` после отправки сообщения.
+
+Внутри фонового воркера (`ProccessAttachmentsCommandHandler`) причина падения в `error` может быть любой из: несовпадение размера с заявленным, несовпадение реального MIME (magic bytes) с заявленным, инфраструктурная ошибка стораджа, а для `voice`/`video_note` — дополнительно любая из `AttachmentRejectionReason` (`size_limit_exceeded`, `duration_limit_exceeded`, `resolution_limit_exceeded` — только video_note, `frame_rate_limit_exceeded` — только video_note, `metadata_unreadable`, `probe_timeout`, `invalid_media` — напр. voice без аудиодорожки или с видеодорожкой, video_note не с одной видеодорожкой). Конкретная причина **никуда клиенту не передаётся** — только `attachment_status: "error"`, различить причины на фронте нельзя.
 
 **Шаг 4 — отправить сообщение**, передав `upload_tokens` из шагов 1/3 в `POST /chats/{chat_id}/messages/` (раздел 6.4) с корректным `message_type`.
 
@@ -1047,26 +1066,30 @@ interface MessageReactionsDTO {
 
 #### 6.7.5 WS-событие
 
-Доменное событие `chats.message.reaction_updated` (класс `ReactionUpdatedEvent`):
+Доменное событие `chats.message.reaction_updated` маппится в WS-тип `reaction_update`. В текущей delivery-цепочке исходный payload события с `emoji/count/changed_by` не передаётся клиенту напрямую: `ChatDeliveryRouter` подтягивает актуальные `ChatDTO` и `MessageDTO`, затем кладёт их в `MessagePayloadWS`.
+
 ```ts
 {
-  type: "reaction_update",   // ⚠️ НЕ короткий алиас — маппинга в CHAT_EVENT_TO_WS_TYPE нет
-  event_name: "chats.message.reaction_updated",
-  event_id: string, chat_id: string, ts: string,
+  type: "reaction_update",
+  chat_id: string,
+  ts: string,
   payload: {
-    message_id: string;
-    emoji: string;
-    count: number;        // АБСОЛЮТНОЕ новое значение счётчика, не дельта
-    changed_by: number;   // user_id того, кто изменил
+    chat: ChatDTO;
+    message: MessageDTO; // сообщение уже содержит актуальный reactions
+  },
+  delivery: {
+    require_subscription: boolean;
+    recipients: number[];
   }
 }
 ```
-Обработка: найти сообщение по `payload.message_id`, найти чипс по `payload.emoji`, выставить `count` в абсолютное значение; если `count == 0` — удалить чипс. Если `changed_by == myUserId` — не трогать локальный `reacted_by_me` (уже выставлен оптимистично).
+
+Обработка: заменить/обновить локальное сообщение из `payload.message` целиком. Отдельные поля `emoji`, `count` и `changed_by` в WS-payload сейчас не приходят.
 
 
 ## 7. Чаты — WebSocket
 
-⚠️ Это самый важный раздел документа для реализации чата на Flutter — в предыдущей версии доков он был описан на 5% от реального объёма (были упомянуты только `ws.ready` и `ws.error`). Ниже — полный протокол, вычитанный построчно из `app/chats/routes/v1/ws.py`, `app/chats/commands/websockets/*.py`, `app/chats/dtos/delivery.py`, `app/chats/models/{chat,message}.py`.
+⚠️ Это самый важный раздел документа для реализации чата на Flutter — в предыдущей версии доков он был описан на 5% от реального объёма (были упомянуты только `ws.ready` и `ws.error`). Ниже — полный протокол, вычитанный построчно из `app/chats/routes/v1/ws.py`, `app/chats/commands/websockets/*.py`, `app/chats/dtos/delivery.py`, `app/chats/services/delivery_router.py`, `app/chats/models/{chat,message}.py`.
 
 ### 7.1 Подключение
 
@@ -1125,39 +1148,47 @@ interface WSClientCommand {
 
 ### 7.4 События сервер → клиент
 
-Общий конверт для доменных событий:
+Общий конверт для событий, доставляемых через Redis stream на WS-gateway:
 ```ts
-interface WSEvent {
-  type: string;                        // см. таблицу ниже
-  event_name?: string;                 // внутреннее имя события бэкенда, например "chats.message.sent"
-  event_id?: string;
-  chat_id: string | null;
-  payload: Record<string, unknown>;
-  ts: string;                          // ISO datetime
-  seq?: number;                        // продублирован и в payload, и на верхнем уровне (если применимо)
+interface DeliveryData {
+  require_subscription: boolean;        // gateway дополнительно проверяет активную подписку на чат
+  recipients: number[];                 // user_id получателей внутри конкретной stream-записи
+}
+
+interface MessagePayloadWS {
+  chat: ChatDTO;                        // актуальный DTO чата
+  message: MessageDTO;                  // полный DTO сообщения с profile/attachments/reactions
+}
+
+interface DeliveryDTO {
+  type: string;                         // см. таблицу ниже
+  channel: string;
+  payload: MessagePayloadWS | AttachmentSuccessPayload;
+  delivery: DeliveryData;
+  ts: string;                           // ISO datetime
 }
 ```
-Служебные протокольные события (`ws.*`) имеют собственную, не всегда идентичную форму — см. подраздел "Служебные события" ниже.
+
+⚠️ Для доменных событий из брокера (`chats.*`) наружу уходит именно `DeliveryDTO`: в `payload` лежит `MessagePayloadWS { chat, message }`, а не исходный минимальный payload доменного события с `message_id`/`seq`/`changed_by`. Это актуально для `new_message`, `message_edited`, `message_deleted`, `messages_read`, member/chat-событий и `reaction_update`, если они были маршрутизированы через `ChatDeliveryRouter`. `event_name` и `event_id` в клиентский WS-конверт сейчас не попадают. Служебные протокольные события (`ws.*`) имеют собственную форму — см. подраздел "Служебные события" ниже.
 
 #### Доменные события (`type`) и точная форма `payload`
 
 | `type` | Когда | `payload` |
 |---|---|---|
-| `new_message` | Новое сообщение в чате | `{ message_id: string; seq: number; sender_id: number \| null; message_type: string }` ⚠️ **контента сообщения тут НЕТ** — только идентификаторы. Чтобы получить текст/вложения, либо взять из локального REST-запроса `POST /chats/{id}/messages/` (если это твоё же сообщение), либо запросить `GET /chats/{chat_id}/messages/{message_id}/`, либо просто дозапросить последние сообщения через `GET /chats/{chat_id}/messages/`. |
-| `message_edited` | Сообщение отредактировано | `{ message_id: string; seq: number; modified_by: number }` — контента тоже нет, перезапросить сообщение |
-| `message_deleted` | Сообщение удалено | `{ message_id: string; seq: number; deleted_by: number }` |
-| `messages_read` | Кто-то прочитал сообщения до seq X | `{ chat_id: string; seq: number; reader_id: number }` |
-| `member_joined` | Новый участник добавлен/вступил | `{ chat_id: string; user_id: number; role_id: number }` |
-| `member_left` | Участник вышел сам | `{ chat_id: string; user_id: number }` |
-| `member_kick` | Участника кикнули | `{ chat_id: string; requester_id: number; target_user_id: number }` |
-| `member_banned` | Участника забанили/разбанили | `{ chat_id: string; requester_id: number; target_user_id: number; ban: boolean }` |
-| `chat_created` | Чат создан (актуально для группового добавления сразу нескольких участников — все получат событие) | `{ chat_id: string; created_by: number; name: string \| null; member_ids: number[]; chat_type: string; member_count: number }` |
-| `chat_updated` | Изменены настройки чата | `{ chat_id: string; updated_by: number; name: string \| null; description: string \| null; is_public: boolean; admin_only: boolean; slow_mode_seconds: number; permissions: Record<string, boolean> }` |
-| `attachment_success` | Вложение(я) успешно обработаны после `confirm/` (шлётся лично пользователю-загрузчику, не всей подписке чата) | `{ user_id: number; chat_id: string; tokens: string[] }` — список готовых `upload_token` |
-| `chat_deleted` | Чат удалён | `{ chat_id: string; deleted_by: number }` |
-| `reaction_update` | Поставил/изменил реакцию на сообщении  `{message_id: string; emoji: string; count: number; changed_by: number}` | 
+| `new_message` | Новое сообщение в чате | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` — контент, вложения, профиль и реакции уже внутри `message`. |
+| `message_edited` | Сообщение отредактировано | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` — заменить локальное сообщение по `message.id`/`message.seq`. |
+| `message_deleted` | Сообщение удалено | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` — ориентироваться на состояние/поля удалённого сообщения в DTO. |
+| `messages_read` | Кто-то прочитал сообщения до seq X | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` (текущая реализация delivery-router всё равно требует `message_id` и подтягивает сообщение). |
+| `member_joined` | Новый участник добавлен/вступил | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` при доставке через брокерный router. |
+| `member_left` | Участник вышел сам | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` при доставке через брокерный router. |
+| `member_kick` | Участника кикнули | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` при доставке через брокерный router. |
+| `member_banned` | Участника забанили/разбанили | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` при доставке через брокерный router. |
+| `chat_created` | Чат создан | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` при доставке через брокерный router. |
+| `chat_updated` | Изменены настройки чата | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` при доставке через брокерный router. |
+| `reaction_update` | Поставили/изменили реакцию на сообщении | `MessagePayloadWS { chat: ChatDTO; message: MessageDTO }` — обновить сообщение целиком; отдельные `emoji/count/changed_by` в WS-payload сейчас не передаются. |
+| `attachment_success` | Вложение(я) успешно обработаны после `confirm/` (шлётся лично пользователю-загрузчику, не всей подписке чата) | `AttachmentSuccessPayload { user_id: number; chat_id: string; tokens: string[] }` — список готовых `upload_token`; `delivery.require_subscription=false`, `recipients=[user_id]`. |
 
-**Определены, но реально нигде не публикуются** (есть в `WSEventType`, но `grep` по кодовой базе не находит ни одного места, где они реально отправляются): `typing_start`, `typing_stop`, `call_started`, `call_ended`, `call_joined`, `call_left`. Не полагайтесь на их получение — заложить обработку на будущее можно, но сейчас бэкенд их не шлёт.
+**Определены, но реально нигде не публикуются** (есть в `WSEventType`, но `rg` по кодовой базе не находит ни одного места, где они реально отправляются): `typing_start`, `typing_stop`, `call_started`, `call_ended`, `call_joined`, `call_left`. `chat_deleted` в `WSEventType` сейчас не определён. Не полагайтесь на их получение — заложить обработку на будущее можно, но сейчас бэкенд их не шлёт.
 
 #### Служебные события (`ws.*`)
 
@@ -1175,7 +1206,7 @@ interface WSEvent {
 
 1. Установить соединение с `?token=...`. Слушать `ws.ready`, сохранить `heartbeat_interval`/`heartbeat_timeout`.
 2. На каждый экран чата — слать `{"op": "subscribe", "chat_id": "...", "last_seq": <последний известный seq из локального кэша>}`.
-3. При получении `new_message`/`message_edited`/`message_deleted` — НЕ пытаться отрисовать `payload` напрямую как сообщение; использовать его как триггер "перезапроси/обнови" (дозапросить конкретное сообщение по `message_id`, либо, для полностью нового сообщения, дописать в локальный стор данные, полученные при отправке через REST, если это своё сообщение).
+3. При получении `new_message`/`message_edited`/`message_deleted`/`reaction_update` — брать готовое сообщение из `payload.message` и актуальные данные чата из `payload.chat`; отдельного минимального payload с `message_id`/`seq` сейчас нет.
 4. На `ws.ping` отвечать `{"op": "pong"}`.
 5. При разрыве соединения — переподключиться с экспоненциальным backoff, затем отправить `resume` с курсорами по всем открытым в UI чатам (≤20).
 6. При закрытии с кодом `1012` — значит открыто больше 2 соединений на аккаунт; просто переподключиться нормально (не ошибка, а следствие лимита).
