@@ -170,11 +170,11 @@ class ChatEntity extends Equatable {
 
   /// Returns a copy with the given fields replaced.
   ///
-  /// Added for the realtime layer (api-docs §7). WebSocket events carry only
-  /// *deltas* — `chat_updated` brings the changed settings, `new_message`
-  /// brings nothing but ids — so applying one means rebuilding the row with a
-  /// few fields swapped. Without this, the only way to reflect an event would
-  /// be to re-`GET` the chat, which defeats the point of the event.
+  /// Added for the realtime layer (api-docs §7) — used by
+  /// `ChatRealtimeMerge.applyNewMessageToRow` to bump [seqCounter]/
+  /// [lastActivityAt]/[unreadCount] in place. `applyChatUpdated` deliberately
+  /// does *not* use this: see that function's doc for why a `chat_updated`
+  /// still goes through a direct constructor call instead.
   ///
   /// ⚠️ [unreadCount], [me], [lastRead], [lastMessage] and [members] use
   /// explicit `clearX` flags rather than plain `null` sentinels. For every

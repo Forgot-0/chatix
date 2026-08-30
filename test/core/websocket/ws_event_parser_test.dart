@@ -9,9 +9,9 @@ import 'package:chatix/core/websocket/ws_event_parser.dart';
 ///
 /// **No socket, no server, no timers** — [parseWsEvent]/[parseWsFrame] are pure
 /// functions, which is the reason they were factored out of
-/// `ChatSocketService`. Everything the protocol can get wrong (missing content
-/// in `new_message`, the `payload`-less `ws.ping`, the two meanings of
-/// `ws.error`, `member_banned`'s unban case) is decidable from a JSON literal.
+/// `ChatSocketService`. Everything the protocol can get wrong (a domain event
+/// missing its `chat`/`message` payload, the `payload`-less `ws.ping`, the two
+/// meanings of `ws.error`) is decidable from a JSON literal.
 ///
 /// Fixtures are written as the docs write them — snake_case, full envelope —
 /// so a mismatch between this file and api-docs §7.4 is visible by eye.
@@ -39,72 +39,53 @@ void main() {
 
   const chatId = '550e8400-e29b-41d4-a716-446655440000';
 
-  group('new_message', () {
-    test('parses ids only — §7.4 carries no message content', () {
+  /// A minimal `chat`/`message` `MessagePayloadWS` payload (api-docs §7.4,
+  /// revised). The parser only checks these are *maps* — decoding their
+  /// fields into `ChatModel`/`MessageModel` is the feature layer's job, tested
+  /// separately — so the fixtures stay minimal rather than full DTOs.
+  Map<String, dynamic> chatMessagePayload({
+    Map<String, dynamic> chat = const {'id': chatId, 'name': 'Team'},
+    Map<String, dynamic> message = const {'id': 'm1', 'seq': 1},
+  }) => {'chat': chat, 'message': message};
+
+  group('the generic chat/message payload (§7.4, revised)', () {
+    test('new_message decodes chat and message as raw maps', () {
       final event = parseWsEvent(
         envelope(
           'new_message',
           eventName: 'chats.message.sent',
           eventId: 'evt-1',
-          seq: 42,
-          payload: {
-            'message_id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-            'seq': 42,
-            'sender_id': 7,
-            'message_type': 'text',
-          },
+          payload: chatMessagePayload(
+            message: const {
+              'id': 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+              'seq': 42,
+              'author_id': 7,
+              'type': 'text',
+              'content': 'hi',
+            },
+          ),
         ),
       );
 
       expect(event, isA<NewMessage>());
       final message = event as NewMessage;
       expect(message.chatId, chatId);
+      expect(message.chat, {'id': chatId, 'name': 'Team'});
+      expect(message.message['id'], 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+      expect(message.message['content'], 'hi');
       expect(message.messageId, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
-      expect(message.seq, 42);
-      expect(message.senderId, 7);
-      expect(message.messageType, 'text');
+      expect(message.messageSeq, 42);
       expect(message.eventName, 'chats.message.sent');
       expect(message.eventId, 'evt-1');
       expect(message.ts, DateTime.parse('2026-01-15T10:30:00Z'));
     });
 
-    test('accepts a null sender_id (system messages have no author)', () {
+    test('degrades to Unknown without a chat_id', () {
       final event = parseWsEvent(
-        envelope(
-          'new_message',
-          payload: {
-            'message_id': 'm1',
-            'seq': 5,
-            'sender_id': null,
-            'message_type': 'system',
-          },
-        ),
+        envelope('new_message', chatId: null, payload: chatMessagePayload()),
       );
-
-      expect((event as NewMessage).senderId, isNull);
-      expect(event.messageType, 'system');
-    });
-
-    test('defaults message_type to "text" when absent, mirroring the backend', () {
-      final event = parseWsEvent(
-        envelope('new_message', payload: {'message_id': 'm1', 'seq': 5}),
-      );
-      expect((event as NewMessage).messageType, 'text');
-    });
-
-    test('reads seq from the envelope when the payload omits it', () {
-      // §7.4: seq is duplicated at both levels, so either alone must work.
-      final event = parseWsEvent(
-        envelope('new_message', seq: 99, payload: {'message_id': 'm1'}),
-      );
-      expect((event as NewMessage).seq, 99);
-    });
-
-    test('prefers the payload seq over the envelope seq', () {
-      final event = parseWsEvent(
-        envelope('new_message', seq: 1, payload: {'message_id': 'm1', 'seq': 42}),
-      );
-      expect((event as NewMessage).seq, 42);
+      expect(event, isA<WsUnknown>());
+      expect(event.type, 'new_message');
     });
 
     test('falls back to payload.chat_id when the envelope has none', () {
@@ -112,273 +93,170 @@ void main() {
         envelope(
           'new_message',
           chatId: null,
-          payload: {'chat_id': chatId, 'message_id': 'm1', 'seq': 3},
+          payload: {...chatMessagePayload(), 'chat_id': chatId},
         ),
       );
       expect((event as NewMessage).chatId, chatId);
     });
 
-    test('degrades to Unknown without a message_id — nothing to fetch', () {
-      final event = parseWsEvent(envelope('new_message', payload: {'seq': 5}));
-      expect(event, isA<WsUnknown>());
-      expect(event.type, 'new_message');
-    });
-
-    test('degrades to Unknown without a seq rather than inventing 0', () {
-      // A fabricated seq would poison the resume cursor and silently skip
-      // messages after the next reconnect.
+    test('degrades to Unknown without a chat object', () {
       final event = parseWsEvent(
-        envelope('new_message', payload: {'message_id': 'm1'}),
+        envelope('new_message', payload: {'message': {'id': 'm1'}}),
       );
       expect(event, isA<WsUnknown>());
     });
 
-    test('degrades to Unknown when no chat_id can be resolved', () {
+    test('degrades to Unknown without a message object', () {
+      final event = parseWsEvent(
+        envelope('new_message', payload: {'chat': {'id': chatId}}),
+      );
+      expect(event, isA<WsUnknown>());
+    });
+
+    test('degrades to Unknown when chat/message are the wrong type', () {
       final event = parseWsEvent(
         envelope(
           'new_message',
-          chatId: null,
-          payload: {'message_id': 'm1', 'seq': 1},
+          payload: {'chat': 'nope', 'message': <String, dynamic>{'id': 'm1'}},
         ),
       );
       expect(event, isA<WsUnknown>());
     });
+
+    test('every event in the family shares the same decode path', () {
+      // One table-driven check that each wire type still produces its own
+      // class (the sealed hierarchy — and every exhaustive `switch` over it —
+      // depends on this), all through the one generic decoder.
+      const cases = {
+        'new_message': NewMessage,
+        'message_edited': MessageEdited,
+        'message_deleted': MessageDeleted,
+        'messages_read': MessagesRead,
+        'member_joined': MemberJoined,
+        'member_left': MemberLeft,
+        'member_kick': MemberKick,
+        'member_banned': MemberBanned,
+        'chat_created': ChatCreated,
+        'chat_updated': ChatUpdated,
+      };
+
+      for (final entry in cases.entries) {
+        final event = parseWsEvent(
+          envelope(entry.key, payload: chatMessagePayload()),
+        );
+        expect(
+          event.runtimeType,
+          entry.value,
+          reason: '${entry.key} should decode to ${entry.value}',
+        );
+        final chatMessageEvent = event as WSChatMessageEvent;
+        expect(chatMessageEvent.chat, {'id': chatId, 'name': 'Team'});
+        expect(chatMessageEvent.message, {'id': 'm1', 'seq': 1});
+      }
+    });
   });
 
-  group('message_edited / message_deleted', () {
-    test('message_edited exposes modified_by', () {
+  group('reaction_update (§6.7.5, revised)', () {
+    test('the current short alias decodes to ReactionUpdated', () {
+      final event = parseWsEvent(
+        envelope('reaction_update', payload: chatMessagePayload()),
+      );
+      expect(event, isA<ReactionUpdated>());
+      expect(event.type, 'reaction_update');
+      expect((event as ReactionUpdated).messageId, 'm1');
+    });
+
+    test('the previous raw domain-event name still decodes, for an older '
+        'backend build', () {
+      final event = parseWsEvent(
+        envelope(
+          'chats.message.reaction_updated',
+          payload: chatMessagePayload(),
+        ),
+      );
+      expect(event, isA<ReactionUpdated>());
+      // Normalised to the current wire value either way, so a consumer never
+      // has to branch on which one it received.
+      expect(event.type, ReactionUpdated.wireType);
+    });
+
+    test('degrades to Unknown without chat/message, same as its siblings', () {
+      final event = parseWsEvent(envelope('reaction_update'));
+      expect(event, isA<WsUnknown>());
+    });
+  });
+
+  group('messageId / messageSeq getters', () {
+    test('read straight from the decoded message map', () {
       final event = parseWsEvent(
         envelope(
           'message_edited',
-          payload: {'message_id': 'm1', 'seq': 43, 'modified_by': 7},
+          payload: chatMessagePayload(
+            message: const {'id': 'm7', 'seq': 43, 'content': 'edited'},
+          ),
         ),
       );
-
-      expect(event, isA<MessageEdited>());
       final edited = event as MessageEdited;
-      expect(edited.messageId, 'm1');
-      expect(edited.seq, 43);
-      expect(edited.modifiedBy, 7);
+      expect(edited.messageId, 'm7');
+      expect(edited.messageSeq, 43);
     });
 
-    test('message_deleted exposes deleted_by', () {
+    test('messageSeq accepts a whole double (JS-style JSON round-trips)', () {
       final event = parseWsEvent(
         envelope(
-          'message_deleted',
-          payload: {'message_id': 'm1', 'seq': 44, 'deleted_by': 9},
+          'new_message',
+          payload: chatMessagePayload(
+            message: const {'id': 'm1', 'seq': 42.0},
+          ),
         ),
       );
-
-      expect(event, isA<MessageDeleted>());
-      final deleted = event as MessageDeleted;
-      expect(deleted.messageId, 'm1');
-      expect(deleted.seq, 44);
-      expect(deleted.deletedBy, 9);
+      expect((event as NewMessage).messageSeq, 42);
     });
 
-    test('both degrade to Unknown when the message_id is missing', () {
-      expect(
-        parseWsEvent(envelope('message_edited', payload: {'seq': 1})),
-        isA<WsUnknown>(),
+    test('messageSeq is null for a fractional seq rather than truncating it', () {
+      // Silent truncation would advance the delivery cursor to the wrong
+      // value; `null` at least fails visibly downstream.
+      final event = parseWsEvent(
+        envelope(
+          'new_message',
+          payload: chatMessagePayload(message: const {'id': 'm1', 'seq': 4.5}),
+        ),
       );
-      expect(
-        parseWsEvent(envelope('message_deleted', payload: {'seq': 1})),
-        isA<WsUnknown>(),
+      expect((event as NewMessage).messageSeq, isNull);
+    });
+
+    test('messageSeq is null for a numeric string — no coercion attempted', () {
+      // Unlike the old per-field parsing, this getter reads the decoded JSON
+      // directly rather than through `_asInt`'s string-tolerant coercion.
+      final event = parseWsEvent(
+        envelope(
+          'new_message',
+          payload: chatMessagePayload(message: const {'id': 'm1', 'seq': '42'}),
+        ),
       );
+      expect((event as NewMessage).messageSeq, isNull);
+    });
+
+    test('messageId is null when the message map has no id', () {
+      final event = parseWsEvent(
+        envelope(
+          'new_message',
+          payload: chatMessagePayload(message: const {'seq': 1}),
+        ),
+      );
+      expect((event as NewMessage).messageId, isNull);
     });
   });
 
-  group('messages_read', () {
-    test('parses the read watermark and its reader', () {
-      final event = parseWsEvent(
-        envelope(
-          'messages_read',
-          payload: {'chat_id': chatId, 'seq': 40, 'reader_id': 12},
-        ),
-      );
-
-      expect(event, isA<MessagesRead>());
-      final read = event as MessagesRead;
-      expect(read.seq, 40);
-      expect(read.readerId, 12);
-    });
-
-    test('degrades to Unknown without a reader_id', () {
-      // Unattributable: it could be our own echo, which must be filtered out.
-      final event = parseWsEvent(
-        envelope('messages_read', payload: {'seq': 40}),
-      );
-      expect(event, isA<WsUnknown>());
-    });
-  });
-
-  group('membership events', () {
-    test('member_joined carries the chat role id', () {
-      final event = parseWsEvent(
-        envelope(
-          'member_joined',
-          payload: {'chat_id': chatId, 'user_id': 5, 'role_id': 3},
-        ),
-      );
-
-      expect(event, isA<MemberJoined>());
-      expect((event as MemberJoined).userId, 5);
-      expect(event.roleId, 3);
-    });
-
-    test('member_left carries only the user', () {
-      final event = parseWsEvent(
-        envelope('member_left', payload: {'chat_id': chatId, 'user_id': 5}),
-      );
-      expect(event, isA<MemberLeft>());
-      expect((event as MemberLeft).userId, 5);
-    });
-
-    test('member_kick distinguishes requester from target', () {
-      final event = parseWsEvent(
-        envelope(
-          'member_kick',
-          payload: {'chat_id': chatId, 'requester_id': 1, 'target_user_id': 5},
-        ),
-      );
-
-      expect(event, isA<MemberKick>());
-      final kick = event as MemberKick;
-      expect(kick.requesterId, 1);
-      expect(kick.targetUserId, 5);
-    });
-
-    test('member_banned with ban:true is a ban', () {
-      final event = parseWsEvent(
-        envelope(
-          'member_banned',
-          payload: {
-            'chat_id': chatId,
-            'requester_id': 1,
-            'target_user_id': 5,
-            'ban': true,
-          },
-        ),
-      );
-      expect((event as MemberBanned).ban, isTrue);
-    });
-
-    test('member_banned with ban:false is an UNban, not a ban', () {
-      // The event name says "banned" but §7.4 uses it for both directions;
-      // reading it as a ban unconditionally would drop every unban.
-      final event = parseWsEvent(
-        envelope(
-          'member_banned',
-          payload: {
-            'chat_id': chatId,
-            'requester_id': 1,
-            'target_user_id': 5,
-            'ban': false,
-          },
-        ),
-      );
-      expect(event, isA<MemberBanned>());
-      expect((event as MemberBanned).ban, isFalse);
-    });
-
-    test('member_kick degrades to Unknown without a target', () {
-      final event = parseWsEvent(
-        envelope('member_kick', payload: {'requester_id': 1}),
-      );
-      expect(event, isA<WsUnknown>());
-    });
-  });
-
-  group('chat lifecycle events', () {
-    test('chat_created parses the member summary', () {
-      final event = parseWsEvent(
-        envelope(
-          'chat_created',
-          payload: {
-            'chat_id': chatId,
-            'created_by': 1,
-            'name': 'Team',
-            'member_ids': [1, 2, 3],
-            'chat_type': 'supergroup',
-            'member_count': 3,
-          },
-        ),
-      );
-
-      expect(event, isA<ChatCreated>());
-      final created = event as ChatCreated;
-      expect(created.createdBy, 1);
-      expect(created.name, 'Team');
-      expect(created.memberIds, [1, 2, 3]);
-      // Never collapsed into "group" — §6.1 makes supergroup a distinct type.
-      expect(created.chatType, 'supergroup');
-      expect(created.memberCount, 3);
-    });
-
-    test('chat_created accepts a null name (direct chats have none)', () {
-      final event = parseWsEvent(
-        envelope(
-          'chat_created',
-          payload: {
-            'chat_id': chatId,
-            'created_by': 1,
-            'name': null,
-            'member_ids': [1, 2],
-            'chat_type': 'direct',
-            'member_count': 2,
-          },
-        ),
-      );
-      expect((event as ChatCreated).name, isNull);
-      expect(event.chatType, 'direct');
-    });
-
-    test('chat_updated parses settings and the permission map', () {
-      final event = parseWsEvent(
-        envelope(
-          'chat_updated',
-          payload: {
-            'chat_id': chatId,
-            'updated_by': 1,
-            'name': 'Renamed',
-            'description': 'New topic',
-            'is_public': true,
-            'admin_only': false,
-            'slow_mode_seconds': 30,
-            'permissions': {'message:send': true, 'member:kick': false},
-          },
-        ),
-      );
-
-      expect(event, isA<ChatUpdated>());
-      final updated = event as ChatUpdated;
-      expect(updated.name, 'Renamed');
-      expect(updated.description, 'New topic');
-      expect(updated.isPublic, isTrue);
-      expect(updated.adminOnly, isFalse);
-      expect(updated.slowModeSeconds, 30);
-      expect(updated.permissions, {'message:send': true, 'member:kick': false});
-    });
-
-    test('chat_updated drops non-bool permission values instead of coercing', () {
-      // Guessing at `1` or `"true"` risks showing a button the server refuses.
-      final event = parseWsEvent(
-        envelope(
-          'chat_updated',
-          payload: {
-            'chat_id': chatId,
-            'updated_by': 1,
-            'permissions': {'a': true, 'b': 'yes', 'c': 1},
-          },
-        ),
-      );
-      expect((event as ChatUpdated).permissions, {'a': true});
-    });
-
-    test('chat_deleted carries who deleted it', () {
+  group('chat_deleted', () {
+    test('parses who deleted it', () {
       final event = parseWsEvent(
         envelope('chat_deleted', payload: {'chat_id': chatId, 'deleted_by': 1}),
       );
+      // ⚠️ Not currently defined in the backend's `WSEventType` enum at all
+      // (api-docs §7.4, revised) — see `ChatDeleted`'s class doc. Parsing it
+      // defensively costs nothing and means the client is ready if a future
+      // build does add it.
       expect(event, isA<ChatDeleted>());
       expect((event as ChatDeleted).deletedBy, 1);
     });
@@ -762,7 +640,7 @@ void main() {
       final event = parseWsEvent({
         'type': 'new_message',
         'chat_id': chatId,
-        'payload': {'message_id': 'm1', 'seq': 1},
+        'payload': chatMessagePayload(),
         'ts': 'not-a-date',
       });
 
@@ -771,65 +649,20 @@ void main() {
     });
   });
 
-  group('numeric coercion', () {
-    test('accepts whole doubles for ints (JS-style JSON round-trips)', () {
-      final event = parseWsEvent(
-        envelope(
-          'new_message',
-          payload: {'message_id': 'm1', 'seq': 42.0, 'sender_id': 7.0},
-        ),
-      );
-
-      expect(event, isA<NewMessage>());
-      expect((event as NewMessage).seq, 42);
-      expect(event.senderId, 7);
-    });
-
-    test('accepts numeric strings for ints', () {
-      final event = parseWsEvent(
-        envelope('new_message', payload: {'message_id': 'm1', 'seq': '42'}),
-      );
-      expect((event as NewMessage).seq, 42);
-    });
-
-    test('rejects a fractional seq as corruption', () {
-      final event = parseWsEvent(
-        envelope('new_message', payload: {'message_id': 'm1', 'seq': 4.5}),
-      );
-      expect(event, isA<WsUnknown>());
-    });
-
-    test('accepts 0/1 and "true"/"false" for booleans', () {
-      final numeric = parseWsEvent(
-        envelope(
-          'member_banned',
-          payload: {'chat_id': chatId, 'target_user_id': 5, 'ban': 0},
-        ),
-      );
-      expect((numeric as MemberBanned).ban, isFalse);
-
-      final textual = parseWsEvent(
-        envelope(
-          'member_banned',
-          payload: {'chat_id': chatId, 'target_user_id': 5, 'ban': 'false'},
-        ),
-      );
-      expect((textual as MemberBanned).ban, isFalse);
-    });
-  });
-
   group('parseWsFrame — transport level', () {
     test('decodes a JSON text frame, the form the socket delivers', () {
       final frame = jsonEncode({
         'type': 'new_message',
         'chat_id': chatId,
-        'payload': {'message_id': 'm1', 'seq': 7, 'message_type': 'text'},
+        'payload': chatMessagePayload(
+          message: const {'id': 'm1', 'seq': 7, 'type': 'text'},
+        ),
         'ts': '2026-01-15T10:30:00Z',
       });
 
       final event = parseWsFrame(frame);
       expect(event, isA<NewMessage>());
-      expect((event as NewMessage).seq, 7);
+      expect((event as NewMessage).messageSeq, 7);
     });
 
     test('decodes a UTF-8 binary frame instead of rejecting it', () {
@@ -881,17 +714,25 @@ void main() {
     test('identical frames produce equal events, so merges can dedupe', () {
       final raw = envelope(
         'new_message',
-        payload: {'message_id': 'm1', 'seq': 1, 'message_type': 'text'},
+        payload: chatMessagePayload(
+          message: const {'id': 'm1', 'seq': 1, 'type': 'text'},
+        ),
       );
       expect(parseWsEvent(raw), equals(parseWsEvent(Map.of(raw))));
     });
 
     test('a differing seq produces unequal events', () {
       final a = parseWsEvent(
-        envelope('new_message', payload: {'message_id': 'm1', 'seq': 1}),
+        envelope(
+          'new_message',
+          payload: chatMessagePayload(message: const {'id': 'm1', 'seq': 1}),
+        ),
       );
       final b = parseWsEvent(
-        envelope('new_message', payload: {'message_id': 'm1', 'seq': 2}),
+        envelope(
+          'new_message',
+          payload: chatMessagePayload(message: const {'id': 'm1', 'seq': 2}),
+        ),
       );
       expect(a, isNot(equals(b)));
     });

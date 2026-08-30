@@ -7,6 +7,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/data/models/chat_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
@@ -122,7 +123,7 @@ class ChatDetailState extends Equatable {
   /// A separate map rather than a field on [MessageEntity], because
   /// `MessageDTO` carries **no** reactions (§6.4): the summary arrives from its
   /// own `GET .../reactions/` call and is then kept current by
-  /// `reaction_updated` (§6.7.5). Keying by id keeps the two lifecycles
+  /// `reaction_update` (§6.7.5). Keying by id keeps the two lifecycles
   /// independent, so re-fetching a message (an edit, a gap replay) never
   /// clobbers a fresher counter.
   ///
@@ -132,15 +133,13 @@ class ChatDetailState extends Equatable {
 
   /// `{readerId: lastReadSeq}` — how far **other** members have read (§7.4).
   ///
-  /// ⚠️ Session-scoped and knowingly incomplete. `messages_read` is a *delta*
-  /// stream: it fires only when someone reads while we are connected, and no
-  /// endpoint returns other members' cursors on entry (§6.2/§6.3 expose only
-  /// our own `ChatDTO.last_read`). So this map starts empty on every open and
-  /// fills in as receipts arrive — ticks are accurate going forward, never
-  /// retroactively. Defaulting to "not read" is the safe direction: it
-  /// under-claims instead of falsely telling the user their message was seen.
-  ///
-  /// Never contains the current user; our own cursor is `ChatEntity.lastRead`.
+  /// ⚠️ **Permanently empty as of the §7.4 payload revision.** `messages_read`
+  /// used to carry `reader_id`; it no longer does (see `MessagesRead`'s class
+  /// doc), and nothing else in `{chat, message}` says who read up to where.
+  /// This map is kept — rather than deleted along with [isReadByPeer] — only
+  /// so a future backend fix that restores attribution has somewhere to land
+  /// without another round of state-shape changes. Until then, [isReadByPeer]
+  /// always returns `false`.
   final Map<int, int> peerReadSeq;
 
   const ChatDetailState({
@@ -166,12 +165,10 @@ class ChatDetailState extends Equatable {
 
   /// Whether [message] has been read by the other party in a **direct** chat.
   ///
-  /// Restricted to direct chats on purpose. There, "read by them" is
-  /// unambiguous — one peer — which is exactly Telegram's single/double check
-  /// semantics. For group/supergroup/channel this returns `false`: aggregating
-  /// "read by all N" needs per-member cursors the backend does not compute
-  /// (see [peerReadSeq]), and an invented aggregate is worse than an honest
-  /// single "sent" tick.
+  /// ⚠️ **Always `false` as of the §7.4 payload revision** — see
+  /// [peerReadSeq]. Kept rather than removed so the call sites (and the
+  /// double-check-mark UI reading it) don't need to change again if/when
+  /// attribution comes back; today it degrades to a permanent single tick.
   bool isReadByPeer(MessageEntity message) {
     if (chat?.type != ChatType.direct) return false;
     for (final entry in peerReadSeq.entries) {
@@ -262,23 +259,19 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
 
   StreamSubscription<WSEvent>? _eventSubscription;
 
-  /// Message ids currently being fetched in response to a `new_message` /
-  /// `message_edited` event.
-  ///
-  /// Guards against a duplicate in-flight `GET .../messages/{id}/`: the same
-  /// event can be delivered twice (a reconnect replaying a gap that overlaps
-  /// what we already saw), and [ChatRealtimeMerge.shouldFetchMessage] cannot
-  /// see a fetch that has been started but not yet returned. Without this, two
-  /// requests race and the loser overwrites the winner with identical data —
-  /// harmless but wasteful, and it doubles traffic on a busy chat.
-  final Set<String> _inFlightFetches = <String>{};
-
   /// Message ids whose reaction summary is being fetched right now.
   ///
-  /// Same job as [_inFlightFetches], different endpoint: scrolling can re-enter
-  /// [loadReactionsFor] with the same ids before the first batch returns, and
-  /// without this guard every visible message would be requested repeatedly.
+  /// Guards against a duplicate in-flight `GET .../reactions/`: scrolling can
+  /// re-enter [loadReactionsFor] with the same ids before the first batch
+  /// returns, and a `reaction_update` can arrive while that first batch is
+  /// still in flight — without this, every visible message could be requested
+  /// repeatedly.
   final Set<String> _reactionFetches = <String>{};
+
+  /// Set while a `member_left`/`member_kick`/`member_banned` re-fetch (see
+  /// [_refreshMembershipOrLeave]) is in flight, so a burst of the same event
+  /// (plausible in an active group) doesn't queue up duplicate requests.
+  bool _membershipRefreshInFlight = false;
 
   @override
   Future<ChatDetailState> build() async {
@@ -355,18 +348,16 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         await _onNewMessage(event);
 
       case MessageEdited():
-        // The event carries `modified_by` but no content (§7.4), so the only
-        // way to learn the new body is to re-read the message. Forced, unlike
-        // `new_message`: the message is already on screen with *stale* text,
-        // and skipping the fetch would leave the edit invisible.
-        await _fetchAndUpsert(event.messageId, force: true);
+        // [message] is now the full post-edit `MessageDTO` (api-docs §7.4,
+        // revised) — decode and replace directly, no re-fetch needed.
+        _upsertDecodedMessage(event);
 
       case MessageDeleted():
         _mutate(
           (s) => s.copyWith(
             messages: ChatRealtimeMerge.applyMessageDeleted(
               s.messages,
-              event.messageId,
+              event.messageId ?? '',
               asTombstone: true,
             ),
             // Drop a reply draft pointing at a message that no longer exists,
@@ -381,24 +372,25 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         _onHistory(event);
 
       case MessagesRead():
-        // Another member's read receipt (§7.4), now recorded so our own
-        // messages can render a "read" tick. See `ChatDetailState.peerReadSeq`
-        // for why that map is session-scoped and starts empty.
-        //
-        // ⚠️ Still never triggers a refetch and never moves a delivery cursor
-        // — see the warning in `ChatSocketService._onFrame`: this seq is a read
-        // watermark and may reference a message we have not received yet.
-        _onMessagesRead(event);
+        // ⚠️ Inert. The §7.4 payload revision dropped `reader_id` with no
+        // replacement (see `MessagesRead`'s class doc) — there is no longer
+        // any way to tell "I read this on another device" from "a peer read
+        // it", so `ChatDetailState.peerReadSeq` can no longer be safely
+        // updated from this event. Our own read cursor is unaffected: it is
+        // driven entirely by our own actions (`_markReadUpTo`), never by this
+        // WS echo.
+        break;
 
       case ReactionUpdated():
-        _onReactionUpdated(event);
+        await _onReactionUpdated(event);
 
       case ChatUpdated():
         _mutate((s) {
           final chat = s.chat;
-          if (chat == null) return s;
+          final updated = _decodeChat(event.chat);
+          if (chat == null || updated == null) return s;
           return s.copyWith(
-            chat: ChatRealtimeMerge.applyChatUpdated(chat, event),
+            chat: ChatRealtimeMerge.applyChatUpdated(chat, updated),
             nextCursor: s.nextCursor,
           );
         });
@@ -407,28 +399,21 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
 
       case MemberKick():
-        // Only terminal if *we* are the target; kicking someone else just
-        // changes the roster.
-        if (event.targetUserId == state.value?.myUserId) {
-          _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
-        } else {
-          _invalidateMembers();
-        }
-
       case MemberBanned():
-        if (event.targetUserId == state.value?.myUserId && event.ban) {
-          _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
-        } else {
-          _invalidateMembers();
-        }
+      case MemberLeft():
+        // §7.4's payload revision dropped `target_user_id`/`requester_id`/
+        // `ban` (kick, banned) and `user_id` (left) with no replacement — see
+        // `WSChatMessageEvent`'s class doc. There is no longer any local
+        // signal for "was it me". The only reliable way left to find out is
+        // to ask the server: re-fetch this chat, and treat an access-denied
+        // response as "yes, it was me".
+        await _refreshMembershipOrLeave();
 
       case MemberJoined():
-      case MemberLeft():
-        // The roster lives in its own provider (`chatMembersProvider`) with its
-        // own pagination, so it is refreshed rather than patched here. The
-        // composer's permission checks read `chat.members`, so a role change
-        // arriving this way also needs the chat itself re-read — deferred to
-        // the members provider to avoid two requests for one event.
+        // Unaffected by the payload revision (`ChatRealtimeMerge.
+        // adjustMemberCount`'s doc) — no identity was ever needed here.
+        // The roster lives in its own provider (`chatMembersProvider`) with
+        // its own pagination, so it is refreshed rather than patched here.
         _invalidateMembers();
 
       case AttachmentSuccess():
@@ -462,60 +447,61 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     }
   }
 
-  /// §7.5 step 3 for `new_message`: decide, then fetch only if needed.
+  /// `new_message` (api-docs §7.4, revised).
+  ///
+  /// The old §7.5-step-3 "should we fetch?" branch is gone along with the
+  /// payload shape it was built for — [event.message] is already a complete
+  /// `MessageDTO` (see [NewMessage]'s class doc), so this just decodes and
+  /// upserts it, own message or not. `upsertMessage`'s id-based replace makes
+  /// this safe even when our own optimistic insert from `POST /messages/`
+  /// beat the event here.
   Future<void> _onNewMessage(NewMessage event) async {
-    final current = state.value;
-    if (current == null) return;
-
-    final needsFetch = ChatRealtimeMerge.shouldFetchMessage(
-      event,
-      current.messages,
-      myUserId: current.myUserId,
-    );
-
-    if (!needsFetch) return;
-
-    await _fetchAndUpsert(event.messageId);
+    final message = _upsertDecodedMessage(event);
+    if (message == null) return;
 
     // The user is looking at this chat, so an arriving message is read on
     // arrival. Fire-and-forget, exactly like the send path.
-    await _markReadUpTo(event.seq);
+    await _markReadUpTo(message.seq);
   }
 
-  /// Fetches one message by id and folds it in (§6.4, §7.4).
+  /// Decodes [event.message] and folds it into the message list, replacing
+  /// any existing copy with the same id (`ChatRealtimeMerge.upsertMessage`).
   ///
-  /// [force] bypasses the "already have it" check for `message_edited`, where
-  /// the point *is* to replace a copy we hold.
-  Future<void> _fetchAndUpsert(String messageId, {bool force = false}) async {
-    if (!_inFlightFetches.add(messageId)) return;
+  /// Returns the decoded entity so callers that need one more thing from it
+  /// (`_onNewMessage` wants [MessageEntity.seq] for the read cursor) don't
+  /// have to decode a second time; `null` when [event.message] itself could
+  /// not be decoded — a malformed frame then costs this one update, not the
+  /// whole chat.
+  MessageEntity? _upsertDecodedMessage(WSChatMessageEvent event) {
+    final message = _decodeMessage(event.message);
+    if (message == null) return null;
 
+    _mutate(
+      (s) => s.copyWith(
+        messages: ChatRealtimeMerge.upsertMessage(s.messages, message),
+        nextCursor: s.nextCursor,
+      ),
+    );
+    return message;
+  }
+
+  MessageEntity? _decodeMessage(Map<String, dynamic> raw) {
     try {
-      final result = await ref
-          .read(getMessageUseCaseProvider)
-          .execute(_chatId, messageId);
+      return MessageModel.fromJson(raw).toEntity();
+    } catch (error) {
+      // One malformed payload must not take the whole event down with it —
+      // same posture as `_onHistory`'s per-row try/catch below.
+      Logger.warning('ChatDetail($_chatId): bad message payload: $error');
+      return null;
+    }
+  }
 
-      result.match(
-        (failure) {
-          // A 404 is legitimate: the message was deleted between the event and
-          // this fetch. Logged, never surfaced — a failed background fetch must
-          // not replace a readable conversation with an error screen.
-          Logger.warning(
-            'ChatDetail($_chatId): could not fetch message $messageId '
-            '(${failure.message})',
-          );
-        },
-        (message) {
-          if (!force && _hasMessage(messageId)) return;
-          _mutate(
-            (s) => s.copyWith(
-              messages: ChatRealtimeMerge.upsertMessage(s.messages, message),
-              nextCursor: s.nextCursor,
-            ),
-          );
-        },
-      );
-    } finally {
-      _inFlightFetches.remove(messageId);
+  ChatEntity? _decodeChat(Map<String, dynamic> raw) {
+    try {
+      return ChatModel.fromJson(raw).toEntity();
+    } catch (error) {
+      Logger.warning('ChatDetail($_chatId): bad chat payload: $error');
+      return null;
     }
   }
 
@@ -564,6 +550,59 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     ref.invalidate(chatMembersProvider(_chatId));
   }
 
+  /// The shared reaction to `member_left`/`member_kick`/`member_banned`
+  /// (api-docs §7.4, revised).
+  ///
+  /// None of the three still names a target user (see their class docs), so
+  /// there is no longer a local way to tell "it was me" from "it was someone
+  /// else". This asks the server instead: re-`GET` the chat, and read an
+  /// access-denied response as the only remaining reliable signal that we
+  /// were the one removed. Any other outcome means membership merely
+  /// *changed* while we're still in it, so the fresh chat (accurate
+  /// `member_count`, permissions, etc.) replaces the stale one and the roster
+  /// provider is invalidated alongside it.
+  Future<void> _refreshMembershipOrLeave() async {
+    if (_membershipRefreshInFlight) return;
+    _membershipRefreshInFlight = true;
+
+    try {
+      final result = await ref.read(getChatUseCaseProvider).execute(_chatId);
+
+      result.match((failure) {
+        if (_isAccessDenied(failure)) {
+          _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
+        } else {
+          // Any other failure (network, 5xx) leaves the screen as-is rather
+          // than guessing — the next membership event, or re-entering the
+          // chat, will try again.
+          Logger.warning(
+            'ChatDetail($_chatId): membership refresh failed '
+            '(${failure.message})',
+          );
+        }
+      }, (chat) => _mutate((s) => s.copyWith(chat: chat, nextCursor: s.nextCursor)));
+    } finally {
+      _membershipRefreshInFlight = false;
+    }
+
+    // Refreshed regardless of the outcome above (short of the request itself
+    // failing to run): even when we're still a member, who is on the roster
+    // may have changed, and when we're not, an already-open members sheet
+    // should stop showing stale rows.
+    _invalidateMembers();
+  }
+
+  /// Whether [failure] means "you are not, or no longer, in this chat" —
+  /// the codes api-docs §6.2/§6.6 document for a chat the caller cannot see.
+  bool _isAccessDenied(Failure failure) {
+    if (failure is! ApiFailure) return false;
+    return const {
+      'NOT_CHAT_MEMBER',
+      'CHAT_ACCESS_DENIED',
+      'NOT_FOUND_CHAT',
+    }.contains(failure.code);
+  }
+
   /// Applies [transform] to the current data state, if there is one.
   ///
   /// Every realtime mutation goes through this. It exists to keep two rules in
@@ -571,88 +610,45 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   /// would resurrect a dead screen), and never touch `state` after disposal —
   /// Riverpod 3 throws on that, and an event can arrive in the same microtask
   /// as the dispose.
-  // ────────────────────── Read receipts (§7.4) ──────────────────────
-
-  /// Folds one `messages_read` receipt into [ChatDetailState.peerReadSeq].
-  ///
-  /// Our own receipts are dropped — the ticks answer "did *they* read it", and
-  /// our own cursor already lives in `ChatEntity.lastRead`. The `max`-style
-  /// guard matters because receipts are not ordered: a late frame carrying an
-  /// older seq must not walk a reader's cursor backwards and un-read messages
-  /// that are already ticked on screen.
-  void _onMessagesRead(MessagesRead event) {
-    if (event.readerId == state.value?.myUserId) return;
-
-    _mutate((s) {
-      final previous = s.peerReadSeq[event.readerId];
-      if (previous != null && previous >= event.seq) return s;
-      return s.copyWith(
-        peerReadSeq: {...s.peerReadSeq, event.readerId: event.seq},
-        nextCursor: s.nextCursor,
-      );
-    });
-  }
-
   // ─────────────────────── Reactions (§6.7) ────────────────────────
 
-  /// Folds one `reaction_updated` frame into the local summary (§6.7.5).
+  /// Reacts to `reaction_update` (api-docs §6.7.5, revised).
   ///
-  /// Three rules the payload forces, each easy to get wrong:
+  /// ⚠️ The payload no longer carries `emoji`/`count`/`changed_by` — only the
+  /// generic `chat`/`message` pair, and `MessageDTO` has no reactions field at
+  /// all (§6.4; see [ReactionUpdated]'s class doc on the §6.7.5 comment that
+  /// briefly suggested otherwise). There is nothing left to apply locally, so
+  /// the only correct reaction is to treat this as "the summary we hold for
+  /// this message is stale" and re-fetch it — unlike [loadReactionsFor], which
+  /// skips messages already cached, this refetches unconditionally.
   ///
-  /// * [ReactionUpdated.count] is **absolute** — assigned, never added. The
-  ///   backend debounces fan-out, so a client accumulating deltas drifts
-  ///   permanently the first time frames are coalesced or replayed.
-  /// * `count == 0` means the chip disappears, not a chip rendering zero.
-  /// * When `changedBy` is us, `reactedByMe` is left exactly as it stands: the
-  ///   event carries no per-viewer state, and our flag was already set
-  ///   optimistically when the PUT/DELETE went out. Recomputing it here is what
-  ///   makes a chip flicker back to un-highlighted right after a self-react.
-  ///
-  /// Frames for messages outside the loaded window are ignored rather than
-  /// stored: the summary is fetched when that message scrolls in, and a map
-  /// keyed by unloaded ids would grow without bound in a busy chat.
-  void _onReactionUpdated(ReactionUpdated event) {
-    _mutate((s) {
-      final existing = s.reactions[event.messageId];
-      if (existing == null && !_hasMessage(event.messageId)) return s;
+  /// Ignored for a message outside the loaded window, same as before: the
+  /// summary is fetched when that message scrolls in, not stored ahead of it.
+  Future<void> _onReactionUpdated(ReactionUpdated event) async {
+    final messageId = event.messageId;
+    if (messageId == null || !_hasMessage(messageId)) return;
+    if (!_reactionFetches.add(messageId)) return;
 
-      final current = existing ?? MessageReactionsEntity.empty(event.messageId);
-      final summaries = <ReactionSummaryEntity>[];
-      var matched = false;
+    try {
+      final result = await ref
+          .read(getReactionsUseCaseProvider)
+          .execute(_chatId, messageId);
 
-      for (final chip in current.summaries) {
-        if (chip.emoji != event.emoji) {
-          summaries.add(chip);
-          continue;
-        }
-        matched = true;
-        // Absolute assignment; count == 0 drops the chip entirely. Note
-        // `reactedByMe` is carried through untouched — see the class doc.
-        if (event.count > 0) summaries.add(chip.copyWith(count: event.count));
-      }
-
-      // A brand-new emoji on this message. `reactedByMe` stays false even when
-      // `changedBy` is us: our own PUT already inserted the optimistic chip, so
-      // arriving here for our own change means that chip is gone (the screen
-      // reloaded, say) and claiming it as ours would be a guess.
-      if (!matched && event.count > 0) {
-        summaries.add(
-          ReactionSummaryEntity(
-            emoji: event.emoji,
-            count: event.count,
-            reactedByMe: false,
+      result.match(
+        (failure) => Logger.warning(
+          'ChatDetail($_chatId): reactions refresh for $messageId '
+          '(${failure.message})',
+        ),
+        (reactions) => _mutate(
+          (s) => s.copyWith(
+            reactions: {...s.reactions, messageId: reactions},
+            nextCursor: s.nextCursor,
           ),
-        );
-      }
-
-      return s.copyWith(
-        reactions: {
-          ...s.reactions,
-          event.messageId: current.copyWith(summaries: summaries),
-        },
-        nextCursor: s.nextCursor,
+        ),
       );
-    });
+    } finally {
+      _reactionFetches.remove(messageId);
+    }
   }
 
   /// Loads reaction summaries for messages that don't have one yet (§6.7.1).
@@ -712,7 +708,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   /// Single-choice (§6.7.2): tapping the emoji we already have removes it,
   /// tapping a different one *replaces* — no explicit DELETE for the old emoji
   /// is needed, and the backend answers a replacement with **two**
-  /// `reaction_updated` frames.
+  /// `reaction_update` frames.
   ///
   /// The summary is updated optimistically so the chip reacts to the tap
   /// immediately rather than after a socket round-trip; a failed request rolls

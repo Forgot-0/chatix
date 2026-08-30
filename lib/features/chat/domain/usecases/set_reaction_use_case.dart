@@ -8,7 +8,7 @@ import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 /// ⚠️ **Sets** the caller's one reaction, it does not add to a set: the
 /// backend holds `UniqueConstraint(message_id, user_id)` (§6.7.2). Reacting
 /// with a second emoji therefore *replaces* the first — the old counter drops,
-/// the new one rises, and two `reaction_updated` events come back. Re-sending
+/// the new one rises, and two `reaction_update` events come back. Re-sending
 /// the emoji already set is a server-side no-op (still 204), so callers that
 /// want "tap again to remove" must use [RemoveReactionUseCase] instead of
 /// relying on this being a toggle.

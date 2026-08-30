@@ -1,20 +1,21 @@
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
-import 'package:chatix/core/websocket/ws_event.dart';
 
 /// The **pure** merge rules for folding WebSocket events into local state
 /// (api-docs §7.4/§7.5, §10.5).
 ///
 /// Everything here is a plain function over immutable values: no Riverpod, no
-/// `ref`, no HTTP, no sockets. That is deliberate and is the whole reason this
-/// file exists separately from the controllers.
+/// `ref`, no HTTP, no sockets, and — since the §7.4 payload revision — no
+/// `WSEvent` types either. Controllers decode the event's raw `chat`/`message`
+/// JSON (`WSChatMessageEvent`) into `ChatEntity`/`MessageEntity` first, using
+/// the same `ChatModel.fromJson`/`MessageModel.fromJson` REST already relies
+/// on, and hand the decoded entities in here. That keeps this file testable
+/// with plain entities and keeps the "which WS event means what" knowledge in
+/// one place (the controllers), rather than split across two layers.
 ///
 /// ## Why the rules are not inlined into the controllers
 ///
-/// The protocol's central hazard is that `new_message`, `message_edited` and
-/// `message_deleted` are **notifications, not data** — the payload is
-/// `{message_id, seq, …}` with no content whatsoever (§7.4). Getting the
-/// merge wrong therefore does not throw; it produces duplicated bubbles,
+/// Getting a merge wrong does not throw; it produces duplicated bubbles,
 /// messages that appear out of order, or a chat that silently stops updating.
 /// Those are exactly the bugs that are invisible in a widget test and obvious
 /// to a user.
@@ -113,35 +114,6 @@ abstract final class ChatRealtimeMerge {
     ];
   }
 
-  /// Whether a `new_message` event needs a follow-up
-  /// `GET /chats/{chat_id}/messages/{message_id}/`.
-  ///
-  /// This is the §7.5 step-3 decision, and the two `false` cases are the ones
-  /// that matter:
-  ///
-  /// * **Our own message** (`event.senderId == myUserId`). It was already
-  ///   inserted from the `POST /messages/` response, so a fetch would spend a
-  ///   round-trip to learn something we already know — and, if the merge were
-  ///   keyed on anything looser than `id`, would duplicate the bubble
-  ///   (§10.5 (a)). Note this is checked *before* the id lookup: the event can
-  ///   arrive before our own POST has returned, so the message may legitimately
-  ///   not be in [messages] yet and re-fetching it would race the optimistic
-  ///   insert.
-  /// * **Already present.** A re-delivery, or a `ws.history` replay covering a
-  ///   message we have.
-  ///
-  /// [myUserId] may be `null` (auth still resolving); the own-message shortcut
-  /// is then skipped and the message is fetched, which is wasteful but never
-  /// wrong.
-  static bool shouldFetchMessage(
-    NewMessage event,
-    List<MessageEntity> messages, {
-    required int? myUserId,
-  }) {
-    if (myUserId != null && event.senderId == myUserId) return false;
-    return !messages.any((m) => m.id == event.messageId);
-  }
-
   /// The highest `seq` we hold for a chat — the value to hand to
   /// `subscribe(chatId, lastSeq:)` so the server replays only the gap (§7.3).
   ///
@@ -164,11 +136,12 @@ abstract final class ChatRealtimeMerge {
   /// Applies a `new_message` to a chat **row** in the list — the §7.5 path for
   /// a chat that is *not* currently on screen.
   ///
-  /// Deliberately does **not** fetch the message. The list shows a badge and a
-  /// timestamp, neither of which needs the body; paying for a request per
-  /// incoming message across every chat the user belongs to would turn a busy
-  /// group into a request storm for content that is never rendered. The body is
-  /// fetched if and when the user opens that chat.
+  /// Deliberately does **not** need to fetch anything itself: [message] is
+  /// already the full decoded `MessageDTO` from the event (api-docs §7.4,
+  /// revised), and this only reads its [MessageEntity.seq] to advance
+  /// [ChatEntity.seqCounter]. The list still never renders the body — a
+  /// preview would need `last_message` refreshed too, which is a product
+  /// decision left to the caller, not forced here.
   ///
   /// [isOpen] suppresses the badge for the chat the user is looking at — its
   /// controller marks it read on arrival, so incrementing here would show an
@@ -182,7 +155,8 @@ abstract final class ChatRealtimeMerge {
   /// unknown would show a badge of "1" on a chat with 400 unread messages.
   static ChatEntity applyNewMessageToRow(
     ChatEntity chat,
-    NewMessage event, {
+    MessageEntity message, {
+    required DateTime? ts,
     required bool isOpen,
     required bool isOwn,
   }) {
@@ -192,78 +166,56 @@ abstract final class ChatRealtimeMerge {
     return chat.copyWith(
       // `seq_counter` tracks the newest message's seq (§6.2). Guarded with a
       // max so a re-delivered older event cannot rewind it.
-      seqCounter: event.seq > chat.seqCounter ? event.seq : chat.seqCounter,
-      // Drives the list's sort order and its "last active" label. The event's
-      // `ts` is nullable, so fall back to now — the message demonstrably just
-      // arrived.
-      lastActivityAt: event.ts ?? DateTime.now(),
+      seqCounter: message.seq > chat.seqCounter ? message.seq : chat.seqCounter,
+      // Drives the list's sort order and its "last active" label. The
+      // envelope's `ts` is nullable, so fall back to now — the message
+      // demonstrably just arrived.
+      lastActivityAt: ts ?? DateTime.now(),
       unreadCount: shouldBump && current != null ? current + 1 : current,
-    );
-  }
-
-  /// Applies a `messages_read` event (§7.4).
-  ///
-  /// ⚠️ **Only when the reader is us.** `messages_read` is broadcast to the
-  /// whole chat subscription, so it also reports *other* members reading their
-  /// own copies — clearing our badge because someone else caught up would be
-  /// straightforwardly wrong. Callers pass [myUserId] and this returns [chat]
-  /// untouched when it doesn't match.
-  ///
-  /// This is what keeps the badge honest across devices: reading a chat on a
-  /// phone clears it on a tablet, with no refetch.
-  ///
-  /// The count is *not* recomputed from `seq` arithmetic (e.g.
-  /// `seqCounter - seq`), because `seqCounter` counts every message including
-  /// our own, and system messages may not count as unread server-side. Read up
-  /// to the newest known message means zero unread; anything earlier is a
-  /// partial read whose exact remainder only the server knows, so the count is
-  /// left alone rather than guessed at.
-  static ChatEntity applyMessagesRead(
-    ChatEntity chat,
-    MessagesRead event, {
-    required int? myUserId,
-  }) {
-    if (myUserId == null || event.readerId != myUserId) return chat;
-
-    final caughtUp = event.seq >= chat.seqCounter;
-
-    return chat.copyWith(
-      unreadCount: caughtUp ? 0 : chat.unreadCount,
-      lastRead: ReadDetailEntity(
-        lastReadMessageSeq: event.seq,
-        lastReadAt: event.ts ?? DateTime.now(),
-      ),
     );
   }
 
   /// Applies a `chat_updated` event (§7.4).
   ///
-  /// The one domain event that carries its full new state, so it can be
-  /// applied with no follow-up request at all.
+  /// [updated] is the full new `ChatDTO` decoded from the event's `chat` field
+  /// — [chat] is the locally-held row before the update.
   ///
-  /// ⚠️ `name` and `description` are `string | null` on the wire and null is a
-  /// *real value* — clearing a group's description sends `null`. They are
-  /// therefore assigned directly rather than through `copyWith`'s
-  /// "null means unchanged" parameters, which would make a cleared description
-  /// stick around on screen forever.
-  static ChatEntity applyChatUpdated(ChatEntity chat, ChatUpdated event) {
+  /// Only the **settings** fields (`name`, `description`, `avatar_s3_key`,
+  /// `is_public`, `admin_only`, `slow_mode_seconds`, `permissions`) are taken
+  /// from [updated]; everything personalised to the viewer
+  /// ([ChatEntity.unreadCount], [ChatEntity.me], [ChatEntity.lastRead],
+  /// [ChatEntity.lastMessage], [ChatEntity.members]) is kept from [chat]
+  /// instead. This is deliberate, not an oversight: `chat_updated`'s embedded
+  /// `ChatDTO` is built once by `ChatDeliveryRouter` and fanned out to every
+  /// recipient of the broadcast (api-docs §7.4, revised), with no documented
+  /// guarantee that fields like `me`/`unread_count` are recomputed per
+  /// recipient. Trusting them here risks silently overwriting a correct,
+  /// personal read cursor with a stranger's (or a default/null) one.
+  ///
+  /// ⚠️ `name`/`description` being `null` on [updated] is still ambiguous
+  /// between "cleared" and "this snapshot just doesn't carry it" — assigned
+  /// directly (not through `copyWith`'s "null means unchanged" parameters)
+  /// because the alternative would make a genuinely cleared description stick
+  /// around on screen forever.
+  static ChatEntity applyChatUpdated(ChatEntity chat, ChatEntity updated) {
     return ChatEntity(
       id: chat.id,
       seqCounter: chat.seqCounter,
       lastActivityAt: chat.lastActivityAt,
       type: chat.type,
-      name: event.name,
-      description: event.description,
-      avatarS3Key: chat.avatarS3Key,
-      isPublic: event.isPublic,
-      adminOnly: event.adminOnly,
-      slowModeSeconds: event.slowModeSeconds,
-      permissions: event.permissions,
+      name: updated.name,
+      description: updated.description,
+      avatarS3Key: updated.avatarS3Key,
+      isPublic: updated.isPublic,
+      adminOnly: updated.adminOnly,
+      slowModeSeconds: updated.slowModeSeconds,
+      permissions: updated.permissions,
       createdBy: chat.createdBy,
       memberCount: chat.memberCount,
       unreadCount: chat.unreadCount,
       me: chat.me,
       lastRead: chat.lastRead,
+      lastMessage: chat.lastMessage,
       members: chat.members,
     );
   }
@@ -289,17 +241,28 @@ abstract final class ChatRealtimeMerge {
     return sorted;
   }
 
-  /// Removes a chat from the list — `chat_deleted`, `member_kick`/`member_left`
-  /// naming us, or a `member_banned` ban naming us.
+  /// Removes a chat from the list — `chat_deleted`, or a refetch after
+  /// `member_kick`/`member_left`/`member_banned` coming back access-denied
+  /// (i.e. it turned out to be *us* who left/was removed; see
+  /// `ChatListController`).
   ///
-  /// All four mean the same thing to the list: the row must go, because the
-  /// next `GET /chats/` won't include it and tapping it would 403/404.
+  /// Either way this means the same thing to the list: the row must go,
+  /// because the next `GET /chats/` won't include it and tapping it would
+  /// 403/404.
   static List<ChatEntity> removeChat(List<ChatEntity> chats, String chatId) {
     return chats.where((c) => c.id != chatId).toList();
   }
 
-  /// Applies a member-count delta from `member_joined` / `member_left` /
-  /// `member_kick` (§7.4).
+  /// Applies a member-count delta from `member_joined` (§7.4).
+  ///
+  /// ⚠️ No longer used for `member_left`/`member_kick`/`member_banned`: those
+  /// three lost their `user_id`/`target_user_id` fields in the §7.4 payload
+  /// revision, so a consumer can no longer tell locally whether the departing
+  /// member was *us* (drop the whole row) or someone else (just decrement).
+  /// `ChatListController`/`ChatDetailController` now re-fetch the chat for all
+  /// three instead — see `WSChatMessageEvent`'s class doc. `member_joined`
+  /// keeps the cheap local increment because it never needed that identity: a
+  /// join always means "count + 1" regardless of who joined.
   ///
   /// Clamped at zero: a duplicated leave event must not render "-1 members".
   static List<ChatEntity> adjustMemberCount(

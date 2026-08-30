@@ -55,23 +55,38 @@ WSEvent parseWsEvent(Map<String, dynamic> raw) {
       'ws.ping' => _parsePing(raw),
       'ws.error' => _parseError(raw),
 
-      // ── Domain events (§7.4).
-      'new_message' => _parseNewMessage(raw),
-      'message_edited' => _parseMessageEdited(raw),
-      'message_deleted' => _parseMessageDeleted(raw),
-      'messages_read' => _parseMessagesRead(raw),
+      // ── Domain events (§7.4, revised). All of these now share the generic
+      // `MessagePayloadWS { chat, message }` envelope, so one generic decoder
+      // handles them all — see `_parseChatMessageEvent`.
+      'new_message' => _parseChatMessageEvent(raw, 'new_message', NewMessage.new),
+      'message_edited' => _parseChatMessageEvent(raw, 'message_edited', MessageEdited.new),
+      'message_deleted' => _parseChatMessageEvent(raw, 'message_deleted', MessageDeleted.new),
+      'messages_read' => _parseChatMessageEvent(raw, 'messages_read', MessagesRead.new),
 
-      // ⚠️ The one domain event whose wire `type` is the full backend event
-      // name rather than a short alias: it has no entry in the server's
-      // `CHAT_EVENT_TO_WS_TYPE` map (api-docs §6.7.5), so nothing shortens it.
-      ReactionUpdated.wireType => _parseReactionUpdated(raw),
-      'member_joined' => _parseMemberJoined(raw),
-      'member_left' => _parseMemberLeft(raw),
-      'member_kick' => _parseMemberKick(raw),
-      'member_banned' => _parseMemberBanned(raw),
-      'chat_created' => _parseChatCreated(raw),
-      'chat_updated' => _parseChatUpdated(raw),
+      // Current short alias (api-docs §6.7.5, revised) plus the previous raw
+      // domain-event name, in case an older backend build is still fanning
+      // that one out — see `ReactionUpdated.legacyWireType`.
+      ReactionUpdated.wireType ||
+      ReactionUpdated.legacyWireType => _parseChatMessageEvent(
+        raw,
+        ReactionUpdated.wireType,
+        ReactionUpdated.new,
+      ),
+
+      'member_joined' => _parseChatMessageEvent(raw, 'member_joined', MemberJoined.new),
+      'member_left' => _parseChatMessageEvent(raw, 'member_left', MemberLeft.new),
+      'member_kick' => _parseChatMessageEvent(raw, 'member_kick', MemberKick.new),
+      'member_banned' => _parseChatMessageEvent(raw, 'member_banned', MemberBanned.new),
+      'chat_created' => _parseChatMessageEvent(raw, 'chat_created', ChatCreated.new),
+      'chat_updated' => _parseChatMessageEvent(raw, 'chat_updated', ChatUpdated.new),
+
+      // Unaffected by the §7.4 payload revision — its own `AttachmentSuccessPayload`
+      // shape (`user_id`/`chat_id`/`tokens`) is untouched.
       'attachment_success' => _parseAttachmentSuccess(raw),
+
+      // Not currently defined in the backend's `WSEventType` enum at all
+      // (api-docs §7.4, revised) — see `ChatDeleted`'s class doc. Parsed
+      // defensively in case a future build adds it.
       'chat_deleted' => _parseChatDeleted(raw),
 
       // ── Declared in the backend enum but never published (§7.4). Recognised
@@ -245,264 +260,55 @@ WSEvent _parseError(Map<String, dynamic> raw) {
 
 // ───────────────────────────── Domain events ─────────────────────────────
 
-WSEvent _parseNewMessage(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('new_message', raw, 'no chat_id');
+/// Constructor shape shared by every [WSChatMessageEvent] subclass — a
+/// constructor tear-off like `NewMessage.new` matches this directly, so
+/// `_parseChatMessageEvent` can be handed the right one per wire type instead
+/// of duplicating the same decode logic eleven times.
+typedef _ChatMessageEventFactory =
+    WSChatMessageEvent Function({
+      required String chatId,
+      required Map<String, dynamic> chat,
+      required Map<String, dynamic> message,
+      String? eventName,
+      String? eventId,
+      DateTime? ts,
+    });
 
-  final payload = _payloadOf(raw);
-  final messageId = _asString(payload['message_id']);
-  final seq = _seqOf(raw, payload);
-
-  // Both are load-bearing: without `message_id` the message cannot be
-  // fetched, and without `seq` it cannot be ordered or used as a cursor. A
-  // frame missing either is unusable, so it is surfaced rather than faked
-  // with a 0 seq that would corrupt the resume cursor.
-  if (messageId == null || seq == null) {
-    return _unknown('new_message', raw, 'missing message_id/seq');
-  }
-
-  return NewMessage(
-    chatId: chatId,
-    messageId: messageId,
-    seq: seq,
-    // Legitimately null for `system` messages.
-    senderId: _asInt(payload['sender_id']),
-    messageType: _asString(payload['message_type']) ?? 'text',
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMessageEdited(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('message_edited', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final messageId = _asString(payload['message_id']);
-  final seq = _seqOf(raw, payload);
-  if (messageId == null || seq == null) {
-    return _unknown('message_edited', raw, 'missing message_id/seq');
-  }
-
-  return MessageEdited(
-    chatId: chatId,
-    messageId: messageId,
-    seq: seq,
-    modifiedBy: _asInt(payload['modified_by']) ?? 0,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMessageDeleted(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('message_deleted', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final messageId = _asString(payload['message_id']);
-  final seq = _seqOf(raw, payload);
-  if (messageId == null || seq == null) {
-    return _unknown('message_deleted', raw, 'missing message_id/seq');
-  }
-
-  return MessageDeleted(
-    chatId: chatId,
-    messageId: messageId,
-    seq: seq,
-    deletedBy: _asInt(payload['deleted_by']) ?? 0,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMessagesRead(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('messages_read', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final seq = _seqOf(raw, payload);
-  final readerId = _asInt(payload['reader_id']);
-
-  // A read receipt with no seq marks nothing, and with no reader cannot be
-  // attributed (or filtered out when it's our own echo).
-  if (seq == null || readerId == null) {
-    return _unknown('messages_read', raw, 'missing seq/reader_id');
-  }
-
-  return MessagesRead(
-    chatId: chatId,
-    seq: seq,
-    readerId: readerId,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-/// `chats.message.reaction_updated` (api-docs §6.7.5).
+/// Decodes the generic `MessagePayloadWS { chat, message }` envelope shared by
+/// `new_message`, `message_edited`, `message_deleted`, `messages_read`,
+/// `member_joined`, `member_left`, `member_kick`, `member_banned`,
+/// `chat_created`, `chat_updated` and `reaction_update` (api-docs §7.4,
+/// revised — see [WSChatMessageEvent]'s class doc for why these eleven
+/// converged on one shape).
 ///
-/// `count` is **absolute** and is taken verbatim — including `0`, which is the
-/// legitimate "last reaction removed, drop the chip" value and must not be
-/// confused with a missing field. Hence the explicit null check rather than a
-/// `?? 0` default: a malformed payload that silently became 0 would erase a
-/// chip that still has reactions on it.
-WSEvent _parseReactionUpdated(Map<String, dynamic> raw) {
-  const type = ReactionUpdated.wireType;
-
+/// Both `chat` and `message` are required. Older, event-specific payloads
+/// could get away with fewer required fields (`messages_read` needed no
+/// `message` at all, conceptually) but the current backend implementation
+/// fetches both unconditionally for anything routed through
+/// `ChatDeliveryRouter`, so a frame missing either is not a smaller version of
+/// this event — it is not this event, and is surfaced as [WsUnknown] rather
+/// than decoded with a fabricated empty map that would crash the first
+/// `ChatModel.fromJson`/`MessageModel.fromJson` call downstream.
+WSEvent _parseChatMessageEvent(
+  Map<String, dynamic> raw,
+  String type,
+  _ChatMessageEventFactory create,
+) {
   final chatId = _chatIdOf(raw);
   if (chatId == null) return _unknown(type, raw, 'no chat_id');
 
   final payload = _payloadOf(raw);
-  final messageId = _asString(payload['message_id']);
-  final emoji = _asString(payload['emoji']);
-  final count = _asInt(payload['count']);
+  final chat = payload['chat'];
+  final message = payload['message'];
 
-  if (messageId == null || emoji == null || emoji.isEmpty || count == null) {
-    return _unknown(type, raw, 'missing message_id/emoji/count');
+  if (chat is! Map || message is! Map) {
+    return _unknown(type, raw, 'missing chat/message payload');
   }
 
-  return ReactionUpdated(
+  return create(
     chatId: chatId,
-    messageId: messageId,
-    emoji: emoji,
-    // A negative count cannot be rendered and would mean the server and we
-    // disagree about reality; clamped rather than dropped so the chip at least
-    // disappears instead of freezing at a stale number.
-    count: count < 0 ? 0 : count,
-    changedBy: _asInt(payload['changed_by']) ?? 0,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMemberJoined(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('member_joined', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final userId = _asInt(payload['user_id']);
-  if (userId == null) return _unknown('member_joined', raw, 'missing user_id');
-
-  return MemberJoined(
-    chatId: chatId,
-    userId: userId,
-    roleId: _asInt(payload['role_id']) ?? 0,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMemberLeft(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('member_left', raw, 'no chat_id');
-
-  final userId = _asInt(_payloadOf(raw)['user_id']);
-  if (userId == null) return _unknown('member_left', raw, 'missing user_id');
-
-  return MemberLeft(
-    chatId: chatId,
-    userId: userId,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMemberKick(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('member_kick', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final targetUserId = _asInt(payload['target_user_id']);
-  // The *target* is what the UI acts on (remove that row; leave the chat if
-  // it's us). Without it the event is inert.
-  if (targetUserId == null) {
-    return _unknown('member_kick', raw, 'missing target_user_id');
-  }
-
-  return MemberKick(
-    chatId: chatId,
-    requesterId: _asInt(payload['requester_id']) ?? 0,
-    targetUserId: targetUserId,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseMemberBanned(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('member_banned', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final targetUserId = _asInt(payload['target_user_id']);
-  if (targetUserId == null) {
-    return _unknown('member_banned', raw, 'missing target_user_id');
-  }
-
-  return MemberBanned(
-    chatId: chatId,
-    requesterId: _asInt(payload['requester_id']) ?? 0,
-    targetUserId: targetUserId,
-    // Defaults to `true` (banned) when absent: this event fires far more often
-    // for bans than unbans, and under-reacting to a ban (leaving someone
-    // visible who can no longer post) is the less confusing failure.
-    ban: _asBool(payload['ban']) ?? true,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseChatCreated(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('chat_created', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  return ChatCreated(
-    chatId: chatId,
-    createdBy: _asInt(payload['created_by']) ?? 0,
-    // Null is correct for direct chats, which have no stored name.
-    name: _asString(payload['name']),
-    memberIds: _asIntList(payload['member_ids']),
-    chatType: _asString(payload['chat_type']) ?? 'direct',
-    memberCount: _asInt(payload['member_count']) ?? 0,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseChatUpdated(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('chat_updated', raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final permissions = payload['permissions'];
-
-  return ChatUpdated(
-    chatId: chatId,
-    updatedBy: _asInt(payload['updated_by']) ?? 0,
-    name: _asString(payload['name']),
-    description: _asString(payload['description']),
-    isPublic: _asBool(payload['is_public']) ?? false,
-    adminOnly: _asBool(payload['admin_only']) ?? false,
-    slowModeSeconds: _asInt(payload['slow_mode_seconds']) ?? 0,
-    permissions: permissions is Map
-        ? {
-            // Non-bool values are dropped rather than coerced: a permission
-            // map is a security-adjacent input, and guessing at `"true"` vs
-            // `1` is how a UI ends up showing a button the server will refuse.
-            for (final entry in permissions.entries)
-              if (entry.key is String && entry.value is bool)
-                entry.key as String: entry.value as bool,
-          }
-        : const {},
+    chat: chat.cast<String, dynamic>(),
+    message: message.cast<String, dynamic>(),
     eventName: _asString(raw['event_name']),
     eventId: _asString(raw['event_id']),
     ts: _asDate(raw['ts']),
@@ -570,15 +376,6 @@ String? _chatIdOf(Map<String, dynamic> raw) {
   return _asString(raw['chat_id']) ?? _asString(_payloadOf(raw)['chat_id']);
 }
 
-/// `seq`, which §7.4 documents as duplicated at both levels.
-///
-/// Payload first: it is the value the emitting command actually set, whereas the
-/// envelope copy is added by the delivery layer and is the one more likely to be
-/// missing.
-int? _seqOf(Map<String, dynamic> raw, Map<String, dynamic> payload) {
-  return _asInt(payload['seq']) ?? _asInt(raw['seq']);
-}
-
 String? _asString(Object? value) => value is String ? value : null;
 
 /// Tolerates the `int`/`double`/numeric-string forms JSON can produce.
@@ -614,15 +411,6 @@ bool? _asBool(Object? value) {
 DateTime? _asDate(Object? value) {
   if (value is! String || value.isEmpty) return null;
   return DateTime.tryParse(value);
-}
-
-/// `member_ids` and friends. Entries that aren't ints are skipped individually.
-List<int> _asIntList(Object? value) {
-  if (value is! List) return const [];
-  return [
-    for (final entry in value)
-      if (_asInt(entry) case final int id) id,
-  ];
 }
 
 /// Logs why a frame was rejected and wraps it for the caller.

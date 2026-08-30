@@ -1305,7 +1305,7 @@ class _ForwardTargetDialog extends ConsumerWidget {
 /// throwaway view data with no place in `ChatDetailState` (which keeps only
 /// the live chip *summary*), it is scoped to a sheet that is discarded on
 /// dismiss, and caching it would only make it go stale the moment the next
-/// `reaction_updated` arrives.
+/// `reaction_update` arrives.
 ///
 /// ⚠️ Paginated by `cursor_user_id`, not by page number — the next request is
 /// driven by `next_user_id` from the previous response, so this can only ever

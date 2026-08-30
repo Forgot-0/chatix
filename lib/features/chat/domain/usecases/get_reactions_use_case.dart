@@ -13,7 +13,7 @@ import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 ///   what a chat screen needs, and the **only** way to get reactions at all:
 ///   `MessageDTO` has no `reactions` field (api-docs §6.4), so the summary is
 ///   never delivered with the message and must be fetched once per message
-///   (or per visible page) and then kept live by the `reaction_updated` WS
+///   (or per visible page) and then kept live by the `reaction_update` WS
 ///   event (§6.7.5).
 /// * [executeUsers] — with `?emoji=`: additionally a page of *who* reacted,
 ///   for the long-press sheet.

@@ -280,7 +280,7 @@ abstract class ChatRepository {
   /// ⚠️ **Set, not add.** One reaction per user per message
   /// (`UniqueConstraint(message_id, user_id)`, §6.7.2), so calling this while
   /// another emoji is set *replaces* it: the old counter drops, the new one
-  /// rises and the backend publishes two `reaction_updated` events. Calling it
+  /// rises and the backend publishes two `reaction_update` events. Calling it
   /// with the emoji already set is a no-op that still answers 204.
   ///
   /// [emoji] is passed raw — URL-encoding it for the path is the data source's

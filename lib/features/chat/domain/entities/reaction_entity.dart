@@ -10,7 +10,7 @@ import 'package:equatable/equatable.dart';
 ///
 /// * `PUT .../reactions/{new}/` while another emoji is already set is a
 ///   *replacement*, not an addition: the old counter drops, the new one rises
-///   and the backend publishes **two** `reaction_updated` events.
+///   and the backend publishes **two** `reaction_update` events.
 /// * At most one [ReactionSummaryEntity] in a message's [summaries] can ever
 ///   have `reactedByMe == true` — see [MessageReactionsEntity.myEmoji], which
 ///   is the only supported way to ask "what did I react with".
@@ -19,8 +19,9 @@ import 'package:equatable/equatable.dart';
 ///
 /// `MessageDTO` carries **no** reactions field (api-docs §6.4), so a summary
 /// is never delivered with the message: it is fetched separately when a chat's
-/// history is opened and then kept current by the `reaction_updated` WS event
-/// (§6.7.5).
+/// history is opened and then kept current by the `reaction_update` WS event
+/// (§6.7.5) — which, since that event's own payload revision, means a forced
+/// re-fetch rather than a local patch; see `ChatDetailController._onReactionUpdated`.
 
 /// `ReactionSummaryDTO` (api-docs §6.7.3) — one emoji "chip" under a message.
 class ReactionSummaryEntity extends Equatable {
@@ -152,9 +153,19 @@ class MessageReactionsEntity extends Equatable {
     );
   }
 
-  /// Applies the **absolute** count of a `reaction_updated` event (§6.7.5).
+  /// Applies an absolute reaction count as if a `reaction_update` event had
+  /// carried it directly.
   ///
-  /// Three rules, all of them load-bearing:
+  /// ⚠️ **Not currently called from anywhere.** This modelled the *old*
+  /// `chats.message.reaction_updated` payload, which carried exactly
+  /// `{emoji, count, changed_by}` (api-docs §6.7.5, pre-revision). The current
+  /// `reaction_update` event carries none of those — only the generic
+  /// `{chat, message}` pair, and `MessageDTO` has no reactions field at all
+  /// (§6.4) — so `ChatDetailController` now reacts to it by re-fetching the
+  /// summary wholesale (`GET .../reactions/`) rather than by calling this
+  /// method. Kept, rather than deleted, in case a future backend revision
+  /// restores a per-emoji delta on the event and this becomes applicable
+  /// again; the three rules below would still be the correct ones if it does.
   ///
   /// * `count` is absolute, never a delta — it is assigned, not added. The
   ///   backend debounces fan-out, so a delta-based client would drift

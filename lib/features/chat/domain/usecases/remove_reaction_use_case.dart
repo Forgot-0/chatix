@@ -8,7 +8,7 @@ import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart'
 ///
 /// Removing a reaction the caller never set is a no-op that still answers
 /// `204` (§6.7.2), so this is safe to fire from an optimistic UI that may have
-/// raced a `reaction_updated` event.
+/// raced a `reaction_update` event.
 ///
 /// ⚠️ The emoji must be the one the caller actually has on the message —
 /// there is only ever one (`UniqueConstraint(message_id, user_id)`), so

@@ -28,7 +28,8 @@ import 'package:equatable/equatable.dart';
 ///
 /// Instead every subclass exposes exactly the fields its own frame carries,
 /// already unwrapped from `payload`. Consumers never touch raw JSON — except
-/// [WsHistory.messages] and [WsUnknown.raw], both documented below.
+/// [WSChatMessageEvent.chat]/[WSChatMessageEvent.message], [WsHistory.messages]
+/// and [WsUnknown.raw], all documented below.
 sealed class WSEvent extends Equatable {
   /// Wire value of `type`, kept for logging and for [WsUnknown] round-tripping.
   final String type;
@@ -75,343 +76,324 @@ sealed class WSDomainEvent extends WSEvent {
   List<Object?> get props => [type, chatId, eventName, eventId, ts];
 }
 
-/// `new_message` — ⚠️ **a notification, not the message** (api-docs §7.4/§7.5).
+/// Base for the domain events whose payload is the generic `MessagePayloadWS`
+/// envelope (api-docs §7.4, revised): `{ chat: ChatDTO, message: MessageDTO }`.
 ///
-/// The payload is `{message_id, seq, sender_id, message_type}` and contains
-/// **no content, no attachments, no author profile**. Rendering it directly as
-/// a bubble is the single most likely mistake against this protocol.
+/// ## This replaces a whole family of per-event payload shapes
 ///
-/// The three correct reactions, in order of preference:
+/// Before this revision, `new_message`, `member_kick`, `chat_updated` and
+/// friends each carried their own minimal, hand-picked fields
+/// (`message_id`/`seq`, `target_user_id`/`requester_id`, `updated_by`/`name`/…).
+/// The backend's `ChatDeliveryRouter` no longer does that: every domain event
+/// it routes — regardless of which one it semantically is — re-fetches the
+/// current `ChatDTO` and `MessageDTO` and ships those two objects, full stop.
+/// `event_name`/`event_id` from the original domain event do not survive that
+/// trip either (§7.4).
 ///
-/// 1. **It's our own message** (`senderId == me`) — do nothing. The full
-///    message was already inserted optimistically from the `POST /messages/`
-///    response (§6.4). Re-fetching it would be a wasted round-trip, and
-///    appending it would duplicate the bubble.
-/// 2. **The chat is on screen** — fetch it: `GET /chats/{chat_id}/messages/
-///    {message_id}/`, then insert by [seq].
-/// 3. **The chat is not on screen** — do *not* fetch. Bump the list row's
-///    unread badge and `last_activity_at` and stop there; the content is paid
-///    for when (and only if) the user opens that chat.
-final class NewMessage extends WSDomainEvent {
-  final String messageId;
+/// [chat] and [message] are kept as **raw JSON maps**, not decoded models, for
+/// the same reason [WsHistory.messages] is: this file is `core/` and must not
+/// import `features/chat`'s `ChatModel`/`MessageModel`. The chat feature
+/// decodes them with `ChatModel.fromJson`/`MessageModel.fromJson` — the exact
+/// decoders it already uses for the REST responses these DTOs also appear in.
+///
+/// ## The real cost: several events lost fields with no replacement
+///
+/// A handful of scalar fields the old payloads carried have **no equivalent**
+/// in `{chat, message}` and the docs say so plainly:
+///
+/// * `messages_read` no longer says *who* read up to [messageSeq] — there is
+///   no `reader_id` anywhere in a `ChatDTO`/`MessageDTO`. A client cannot tell
+///   "it was me, on another device" from "it was a peer" any more.
+/// * `member_kick`/`member_banned`/`member_left` no longer name the target,
+///   the requester, or (for bans) the ban/unban direction.
+/// * `reaction_update` (renamed from the old `chats.message.reaction_updated`
+///   — see [ReactionUpdated]) no longer carries `emoji`/`count`/`changed_by`,
+///   and — despite a claim in api-docs §6.7.5 that the message "already
+///   contains its reactions" — §6.4 is explicit and repeated elsewhere that
+///   `MessageDTO` has **no** `reactions` field at all. That §6.7.5 comment
+///   appears to be a documentation error; nothing this client can decode
+///   contradicts §6.4's warning, so this client does not rely on it.
+///
+/// The feature layer's job in each of these cases is spelled out on the
+/// consuming controller, not here: broadly, "refetch the authoritative state
+/// instead of guessing" (`ChatRealtimeMerge`, `ChatDetailController`,
+/// `ChatListController`).
+sealed class WSChatMessageEvent extends WSDomainEvent {
+  /// Raw `ChatDTO` JSON (api-docs §6.2). Decode with `ChatModel.fromJson`.
+  final Map<String, dynamic> chat;
 
-  /// Per-chat monotonic sequence number — the ordering key and the value to
-  /// feed back as `subscribe.last_seq` / `resume.cursors` after a reconnect.
-  final int seq;
+  /// Raw `MessageDTO` JSON (api-docs §6.4). Decode with `MessageModel.fromJson`.
+  final Map<String, dynamic> message;
 
-  /// `null` for `system` messages, which have no human author.
-  final int? senderId;
+  const WSChatMessageEvent(
+    super.type, {
+    required super.chatId,
+    required this.chat,
+    required this.message,
+    super.eventName,
+    super.eventId,
+    super.ts,
+  });
 
-  /// `MessageDTO.type` on the wire (`text`/`image`/`file`/…). A raw string
-  /// here rather than the chat feature's `MessageType` enum: this file is
-  /// `core/` and must not depend on `features/chat`. The feature maps it.
-  final String messageType;
+  /// `message.id`, read without a full model decode.
+  String? get messageId => message['id'] as String?;
 
+  /// `message.seq` — the per-chat ordering/cursor value (api-docs §6.4).
+  ///
+  /// Exposed here, in `core/`, because [ChatSocketService] needs it for cursor
+  /// bookkeeping on `new_message`/`message_edited`/`message_deleted` and must
+  /// not import a decoded `MessageModel` (see that class's doc).
+  int? get messageSeq {
+    final value = message['seq'];
+
+    if (value is int) {
+      return value;
+    }
+
+    if (value is double &&
+        value.isFinite &&
+        value == value.truncateToDouble()) {
+      return value.toInt();
+    }
+
+    return null;
+  }
+
+  @override
+  List<Object?> get props => [...super.props, chat, message];
+}
+
+/// `new_message` (api-docs §7.4, revised).
+///
+/// ⚠️ **No longer just a notification.** Before this revision the payload was
+/// `{message_id, seq, sender_id, message_type}` with no content, and the §7.5
+/// playbook was built around fetching the body separately. That playbook is
+/// gone: [message] is now a **complete `MessageDTO`**, content and attachments
+/// included, so the correct reaction is simply to decode it and upsert it —
+/// see `ChatRealtimeMerge.upsertMessage`. No follow-up `GET` is needed, own
+/// message or not; `upsertMessage`'s id-based de-duplication already makes the
+/// optimistic-send path safe.
+final class NewMessage extends WSChatMessageEvent {
   const NewMessage({
     required super.chatId,
-    required this.messageId,
-    required this.seq,
-    required this.senderId,
-    required this.messageType,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('new_message');
-
-  @override
-  List<Object?> get props => [...super.props, messageId, seq, senderId, messageType];
 }
 
-/// `message_edited` — again ids only; the new `content` must be re-fetched
-/// with `GET .../messages/{message_id}/` (api-docs §7.4).
-final class MessageEdited extends WSDomainEvent {
-  final String messageId;
-  final int seq;
-  final int modifiedBy;
-
+/// `message_edited` (api-docs §7.4, revised) — [message] is the **post-edit**
+/// `MessageDTO` in full; decode and replace the local copy directly, no
+/// `GET .../messages/{message_id}/` required any more.
+final class MessageEdited extends WSChatMessageEvent {
   const MessageEdited({
     required super.chatId,
-    required this.messageId,
-    required this.seq,
-    required this.modifiedBy,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('message_edited');
-
-  @override
-  List<Object?> get props => [...super.props, messageId, seq, modifiedBy];
 }
 
-/// `message_deleted` — the only event whose payload is *sufficient on its own*:
-/// [messageId] is all a store needs to drop or tombstone the row. Never
-/// re-fetch this one; the message is gone and the request would 404.
-final class MessageDeleted extends WSDomainEvent {
-  final String messageId;
-  final int seq;
-  final int deletedBy;
-
+/// `message_deleted` (api-docs §7.4, revised).
+///
+/// [message] is a `MessageDTO` reflecting the deleted message; §6.4 documents
+/// the deletion as soft (`is_deleted = true` server-side) but that flag is not
+/// listed in the public `MessageDTO` shape, so this client does not depend on
+/// its presence. Only [WSChatMessageEvent.messageId] is treated as reliable —
+/// enough to drop or tombstone the local row (`ChatRealtimeMerge.
+/// applyMessageDeleted`), which is exactly the "state, not content" this event
+/// needs to convey.
+final class MessageDeleted extends WSChatMessageEvent {
   const MessageDeleted({
     required super.chatId,
-    required this.messageId,
-    required this.seq,
-    required this.deletedBy,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('message_deleted');
-
-  @override
-  List<Object?> get props => [...super.props, messageId, seq, deletedBy];
 }
 
-/// `messages_read` — [readerId] has read everything up to and including [seq].
+/// `messages_read` (api-docs §7.4, revised) — someone read up to
+/// [WSChatMessageEvent.messageSeq].
 ///
-/// Fires for *every* member including ourselves (our own `POST
-/// /messages/read/` echoes back), so consumers must compare [readerId] against
-/// the current user before treating it as "someone else read my message".
-final class MessagesRead extends WSDomainEvent {
-  final int seq;
-  final int readerId;
-
+/// ⚠️ **The reader's identity is gone.** The old payload's `reader_id` has no
+/// equivalent in `{chat, message}` — neither DTO says who issued the read
+/// receipt. That makes this event **unattributable**: a consumer can no longer
+/// tell "I read this on another device" from "a peer read it", which is
+/// exactly the distinction `ChatDetailState.peerReadSeq` and the chat list's
+/// unread-badge clearing depended on. Both now treat this event as inert
+/// rather than guess at attribution — see `ChatDetailController._onEvent`'s
+/// `MessagesRead` case and `ChatListController._onEvent`'s. Our own read
+/// cursor keeps advancing exactly as before, but only from *our own* actions
+/// (opening a chat, sending, receiving), never from this event.
+final class MessagesRead extends WSChatMessageEvent {
   const MessagesRead({
     required super.chatId,
-    required this.seq,
-    required this.readerId,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('messages_read');
-
-  @override
-  List<Object?> get props => [...super.props, seq, readerId];
 }
 
-/// `chats.message.reaction_updated` — a reaction counter on one message
-/// changed (api-docs §6.7.5).
+/// A reaction counter on some message changed (api-docs §6.7.5, revised).
 ///
-/// ⚠️ **The wire `type` is the full domain event name**, not a short alias.
-/// Every other domain event in this file arrives as a compact string
-/// (`new_message`, `message_edited`, …) because the backend maps it through
-/// `CHAT_EVENT_TO_WS_TYPE`; this one has no entry in that table, so the raw
-/// event name reaches the client. Matching on `"reaction_updated"` here would
-/// silently never fire.
+/// ⚠️ **Wire `type` changed.** This used to arrive as the raw domain event
+/// name `"chats.message.reaction_updated"`, because the backend's
+/// `CHAT_EVENT_TO_WS_TYPE` table had no entry for it. It now arrives as the
+/// short alias `"reaction_update"`, matching every other domain event —
+/// [wireType] is kept only so old server builds and this file's tests share
+/// one named constant instead of a bare string literal.
 ///
-/// ⚠️ **[count] is absolute, not a delta.** It is the total number of people
-/// who currently have [emoji] on [messageId] — assign it, never add it. The
-/// backend debounces fan-out, so a client that accumulated deltas would drift
-/// permanently the first time a frame was coalesced or replayed.
-///
-/// `count == 0` means the last person removed that reaction: the chip should
-/// disappear, not render a zero.
-///
-/// [changedBy] is the user who caused the change. When that is the current
-/// user, the local `reacted_by_me` flag must be left alone — it was already
-/// set optimistically when the PUT/DELETE was issued, and this event carries
-/// no per-viewer state at all.
-///
-/// Note a *replacement* (a user switching emoji) produces **two** of these
-/// events, one per affected emoji, in no guaranteed order.
-final class ReactionUpdated extends WSDomainEvent {
-  final String messageId;
-
-  /// The emoji whose counter changed — raw, unescaped, exactly as it must be
-  /// matched against `ReactionSummaryEntity.emoji`.
-  final String emoji;
-
-  /// Absolute number of reactions with [emoji] after the change. See class doc.
-  final int count;
-
-  /// Who set or removed their reaction.
-  final int changedBy;
-
+/// ⚠️ **No more `emoji`/`count`/`changed_by`.** The old payload gave an
+/// absolute per-emoji count that could be applied to `MessageReactionsEntity`
+/// with no extra request. That is gone: [message] carries no reactions field
+/// at all (§6.4 — see the warning on [WSChatMessageEvent]), so this event now
+/// only means "the reaction summary for [WSChatMessageEvent.messageId] is
+/// stale" — the consumer must re-fetch it with `GET .../reactions/` (§6.7.1).
+/// `ChatDetailController._onReactionUpdated` does exactly that, forcing a
+/// refresh even for a message whose summary was already loaded.
+final class ReactionUpdated extends WSChatMessageEvent {
   const ReactionUpdated({
     required super.chatId,
-    required this.messageId,
-    required this.emoji,
-    required this.count,
-    required this.changedBy,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super(wireType);
 
-  /// The literal `type` on the wire (api-docs §6.7.5). Exposed so the parser
-  /// and its tests share one constant instead of two string literals that can
-  /// drift apart.
-  static const String wireType = 'chats.message.reaction_updated';
+  /// The current wire value (api-docs §6.7.5). See class doc for the rename.
+  static const String wireType = 'reaction_update';
 
-  @override
-  List<Object?> get props => [...super.props, messageId, emoji, count, changedBy];
+  /// The wire value this client no longer expects to see, kept only so a
+  /// server that has not rolled the new mapping out yet is still recognised
+  /// instead of falling into [WsUnknown]. Handled identically to [wireType] by
+  /// the parser.
+  static const String legacyWireType = 'chats.message.reaction_updated';
 }
 
-/// `member_joined` — a member was added or joined a public chat.
-final class MemberJoined extends WSDomainEvent {
-  final int userId;
-
-  /// `ChatRolesEnum` id (api-docs §9.1) — drives the §10.6 permission gates.
-  final int roleId;
-
+/// `member_joined` — a member was added or joined a public chat (api-docs
+/// §7.4, revised).
+///
+/// ⚠️ **No more `user_id`/`role_id`.** Unlike the kick/ban/leave events below,
+/// this one needs no identity to stay useful: bumping a chat row's member
+/// count (`ChatRealtimeMerge.adjustMemberCount`) and invalidating the roster
+/// provider never depended on knowing *who* joined, only that [chatId]'s
+/// membership changed.
+final class MemberJoined extends WSChatMessageEvent {
   const MemberJoined({
     required super.chatId,
-    required this.userId,
-    required this.roleId,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('member_joined');
-
-  @override
-  List<Object?> get props => [...super.props, userId, roleId];
 }
 
-/// `member_left` — the member left of their own accord (contrast [MemberKick]).
-final class MemberLeft extends WSDomainEvent {
-  final int userId;
-
+/// `member_left` — a member left of their own accord (api-docs §7.4, revised).
+///
+/// ⚠️ **No more `user_id`.** Unlike [MemberJoined], this previously had to
+/// distinguish "it was me" (drop the whole chat row) from "it was someone
+/// else" (just decrement the count) — a distinction the payload can no longer
+/// make. Consumers now treat any `member_left`/[MemberKick]/[MemberBanned] as
+/// "membership changed, re-fetch this chat and see if we're still in it"; see
+/// `ChatDetailController`/`ChatListController`.
+final class MemberLeft extends WSChatMessageEvent {
   const MemberLeft({
     required super.chatId,
-    required this.userId,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('member_left');
-
-  @override
-  List<Object?> get props => [...super.props, userId];
 }
 
-/// `member_kick` — [targetUserId] was removed by [requesterId].
+/// `member_kick` — someone was removed from the chat (api-docs §7.4, revised).
 ///
-/// ⚠️ Singular `member_kick`, not `member_kicked` — the wire name breaks the
-/// past-tense pattern of its neighbours (api-docs §7.4).
-final class MemberKick extends WSDomainEvent {
-  final int requesterId;
-  final int targetUserId;
-
+/// ⚠️ **No more `requester_id`/`target_user_id`.** There is no longer any way
+/// to tell from this event alone whether *we* are the one kicked. Consumers
+/// react by re-fetching the chat (`GET /chats/{chat_id}/`); an access-denied
+/// response is now the only reliable signal that we were the target. See
+/// `ChatDetailController`'s and `ChatListController`'s handling of this event.
+final class MemberKick extends WSChatMessageEvent {
   const MemberKick({
     required super.chatId,
-    required this.requesterId,
-    required this.targetUserId,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('member_kick');
-
-  @override
-  List<Object?> get props => [...super.props, requesterId, targetUserId];
 }
 
-/// `member_banned` — ⚠️ covers **both** ban and *un*ban; [ban] says which.
-/// Treating this event as "banned" unconditionally silently drops unbans.
-final class MemberBanned extends WSDomainEvent {
-  final int requesterId;
-  final int targetUserId;
-
-  /// `true` = banned, `false` = unbanned.
-  final bool ban;
-
+/// `member_banned` — covers **both** ban and *un*ban, with no way left to tell
+/// which (api-docs §7.4, revised).
+///
+/// ⚠️ **No more `target_user_id`/`ban`.** Previously [ban] distinguished the
+/// two directions and `targetUserId` said who; both are gone. A consumer that
+/// used to flip a row to "banned" or restore it on `ban: false` can no longer
+/// do either from this event — see the same re-fetch-and-check-access strategy
+/// as [MemberKick].
+final class MemberBanned extends WSChatMessageEvent {
   const MemberBanned({
     required super.chatId,
-    required this.requesterId,
-    required this.targetUserId,
-    required this.ban,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('member_banned');
-
-  @override
-  List<Object?> get props => [...super.props, requesterId, targetUserId, ban];
 }
 
-/// `chat_created` — delivered to **every** listed member, not just the creator
-/// (api-docs §7.4), so it is how an invitee learns a chat exists without
-/// polling `GET /chats/`.
+/// `chat_created` — delivered to every listed member, not just the creator
+/// (api-docs §7.4).
 ///
-/// The payload is a summary, not a `ChatDTO`: it has [name], [chatType] and
-/// [memberCount] but no `me` membership and no permissions. Enough to insert a
-/// provisional row in the chat list; open the chat for the full object.
-final class ChatCreated extends WSDomainEvent {
-  final int createdBy;
-
-  /// `null` for direct chats, which derive their title from the peer.
-  final String? name;
-
-  final List<int> memberIds;
-
-  /// `ChatType` wire value (`direct`/`group`/`supergroup`/`channel`) — a raw
-  /// string for the same `core`-must-not-import-`features` reason as
-  /// [NewMessage.messageType].
-  final String chatType;
-
-  final int memberCount;
-
+/// [chat] is now a full `ChatDTO`, not the old name/type/member-count summary
+/// — but `ChatListController` still fetches the chat over REST rather than
+/// decoding it directly, because a `ChatDTO` embedded in a broadcast event has
+/// no documented guarantee of being personalised per recipient (`me`,
+/// `unread_count`, `last_read` are exactly the per-viewer fields a provisional
+/// row needs and cannot safely take from a possibly-shared snapshot).
+final class ChatCreated extends WSChatMessageEvent {
   const ChatCreated({
     required super.chatId,
-    required this.createdBy,
-    required this.name,
-    required this.memberIds,
-    required this.chatType,
-    required this.memberCount,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('chat_created');
-
-  @override
-  List<Object?> get props => [
-    ...super.props,
-    createdBy,
-    name,
-    memberIds,
-    chatType,
-    memberCount,
-  ];
 }
 
-/// `chat_updated` — settings changed.
+/// `chat_updated` — settings changed (api-docs §7.4).
 ///
-/// ⚠️ [name] and [description] being `null` is **ambiguous** on this event:
-/// the wire cannot distinguish "cleared" from "unchanged". Consumers should
-/// treat a `chat_updated` as a hint to refresh the chat rather than blindly
-/// overwriting local fields with nulls.
-final class ChatUpdated extends WSDomainEvent {
-  final int updatedBy;
-  final String? name;
-  final String? description;
-  final bool isPublic;
-  final bool adminOnly;
-  final int slowModeSeconds;
-
-  /// Chat-level permission map (api-docs §9.1) — feeds the §10.6 UI gates.
-  final Map<String, bool> permissions;
-
+/// [chat] is the full updated `ChatDTO`. `ChatRealtimeMerge.applyChatUpdated`
+/// still only takes the chat-settings fields from it (`name`, `description`,
+/// `is_public`, `admin_only`, `slow_mode_seconds`, `permissions`,
+/// `avatar_s3_key`) and keeps the locally-held `me`/`unread_count`/`last_read`
+/// — for the same personalisation-is-not-guaranteed reason as [ChatCreated].
+///
+/// ⚠️ `name`/`description` being `null` is still ambiguous between "cleared"
+/// and "this snapshot doesn't distinguish it"; treat this as a hint to trust
+/// the decoded [chat] over stale local copies rather than a guaranteed diff.
+final class ChatUpdated extends WSChatMessageEvent {
   const ChatUpdated({
     required super.chatId,
-    required this.updatedBy,
-    required this.name,
-    required this.description,
-    required this.isPublic,
-    required this.adminOnly,
-    required this.slowModeSeconds,
-    required this.permissions,
+    required super.chat,
+    required super.message,
     super.eventName,
     super.eventId,
     super.ts,
   }) : super('chat_updated');
-
-  @override
-  List<Object?> get props => [
-    ...super.props,
-    updatedBy,
-    name,
-    description,
-    isPublic,
-    adminOnly,
-    slowModeSeconds,
-    permissions,
-  ];
 }
 
 /// `attachment_success` — the backend finished processing uploads for
@@ -446,6 +428,14 @@ final class AttachmentSuccess extends WSDomainEvent {
 
 /// `chat_deleted` — the chat is gone. Consumers should drop it from the list
 /// and pop the detail screen if it happens to be open.
+///
+/// ⚠️ **Not currently defined in the backend's `WSEventType` enum at all**
+/// (api-docs §7.4, revised) — earlier versions of the docs implied it existed;
+/// a closer read of the backend found no such member and no publisher for it.
+/// Kept here defensively rather than removed: recognising it costs nothing,
+/// and if a future backend build does add it, this class means the client
+/// already handles it instead of it falling into [WsUnknown]. Do not build a
+/// feature that assumes it will arrive.
 final class ChatDeleted extends WSDomainEvent {
   final int deletedBy;
 

@@ -452,28 +452,35 @@ class ChatSocketService {
         Logger.info('ChatSocket: received unpublished event "${event.type}"');
 
       case NewMessage():
-        _advanceCursor(event.chatId, event.seq);
+        // `event.messageSeq` reads `payload.message.seq` (api-docs §7.4,
+        // revised) — nullable now only if the embedded `MessageDTO` itself was
+        // malformed, which the parser already tolerates rather than dropping
+        // the whole frame.
+        if (event.messageSeq case final int seq) {
+          _advanceCursor(event.chatId, seq);
+        }
 
       case MessageEdited():
-        _advanceCursor(event.chatId, event.seq);
+        if (event.messageSeq case final int seq) {
+          _advanceCursor(event.chatId, seq);
+        }
 
       case MessageDeleted():
-        _advanceCursor(event.chatId, event.seq);
-
-      case MessagesRead():
-        // ⚠️ Deliberately does NOT advance the cursor. `messages_read.seq` is
-        // a *read watermark*, not a delivery position — and another member's
-        // read receipt can reference a seq we have not received yet. Treating
-        // it as a delivery cursor would make the next `resume` skip messages
-        // we never got, which is a silent, permanent message loss.
-        break;
+        if (event.messageSeq case final int seq) {
+          _advanceCursor(event.chatId, seq);
+        }
 
       // No cursor bookkeeping; forwarded straight to consumers.
       //
-      // `ReactionUpdated` belongs here for the same reason as `MessagesRead`:
-      // it carries no `seq` at all (§6.7.5 — only messageId/emoji/count/
-      // changedBy), so there is nothing that could advance a delivery cursor,
-      // and reacting to an old message must never move it.
+      // `MessagesRead` and `ReactionUpdated` land here for the same reason:
+      // `event.messageSeq` on either one names a message that was merely
+      // *read* or *reacted to* — not necessarily the newest one delivered —
+      // so treating it as a delivery position could, in principle, advance the
+      // cursor past messages that were never actually received. The
+      // member/chat-lifecycle events below carry a `message` purely as an
+      // artefact of the shared envelope (api-docs §7.4, revised) and have no
+      // delivery position to speak of at all.
+      case MessagesRead():
       case ReactionUpdated():
       case MemberJoined():
       case MemberLeft():
