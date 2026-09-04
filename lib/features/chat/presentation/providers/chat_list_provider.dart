@@ -6,7 +6,6 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
-import 'package:chatix/features/chat/data/models/chat_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
@@ -90,29 +89,26 @@ class ChatListState extends Equatable {
 /// interest is almost the complement of theirs:
 ///
 /// * `new_message` — for chats **not** on screen. Bumps the badge and floats
-///   the row. Unlike before the §7.4 payload revision, the event now *does*
-///   carry the full message — this still never uses its content, only
-///   `MessageEntity.seq`, since the list renders no preview body.
-/// * `messages_read` — previously cleared the badge when the reader was *us*;
-///   now inert (see `MessagesRead`'s class doc — the payload lost `reader_id`
-///   with no replacement, so this can no longer be attributed to anyone).
+///   the row. The event carries the full `MessageDTO` (§7.4), but this uses
+///   only its `seq`/`author_id`: the list renders no preview body.
+/// * `messages_read` — clears the badge when the delta's `reader_id` is *us*,
+///   i.e. we read the chat on another device. A peer's receipt is ignored here.
 /// * `chat_created` / `chat_updated` / `chat_deleted` — add, patch or drop a
 ///   row without a full refetch.
-/// * `member_*` — `member_joined` adjusts the count locally (no identity
-///   needed). `member_left`/`member_kick`/`member_banned` lost the fields
-///   that used to say *who*, so all three now re-fetch the chat and treat an
-///   access-denied response as "it was us" — see `_refreshMembershipOrDrop`.
+/// * `member_*` — each names the affected user in its delta (§7.4), so all
+///   four are handled locally: ours means the row goes (or, for an unban,
+///   comes back), anyone else's is a ±1 to `member_count`.
 ///
-/// A `chat_created` is the one event that must fetch: the payload has the
-/// chat's name and type but not `unread_count`, `me` or `last_read`, so a row
-/// built from it alone would render with a broken permission state.
+/// A `chat_created` is the one event that must fetch: its delta has the chat's
+/// name, type and member count but not `unread_count`, `me` or `last_read`, so
+/// a row built from it alone would render with a broken permission state.
 class ChatListController extends AsyncNotifier<ChatListState> {
   StreamSubscription<WSEvent>? _eventSubscription;
 
   /// Chat ids currently being (re-)fetched over REST — after a `chat_created`,
-  /// or to resolve a `member_left`/`member_kick`/`member_banned` (see
-  /// `_refreshMembershipOrDrop`). Guards against duplicate in-flight requests
-  /// for the same chat, whichever event triggered the fetch.
+  /// or to restore a row after an unban (see `_refetchRow`). Guards against
+  /// duplicate in-flight requests for the same chat, whichever event triggered
+  /// the fetch.
   final Set<String> _inFlightChatFetches = <String>{};
 
   @override
@@ -162,18 +158,30 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         await _onNewMessage(event);
 
       case MessagesRead():
-        // ⚠️ Inert. `reader_id` had no replacement in the §7.4 payload
-        // revision (see `MessagesRead`'s class doc), so a badge can no longer
-        // be safely cleared from this event — it might be us on another
-        // device, or it might be a peer, and there is no way left to tell.
-        break;
+        _onMessagesRead(event);
 
       case ChatUpdated():
-        _patchRow(event.chatId, (chat) {
-          final updated = _decodeChat(event.chat);
-          if (updated == null) return chat;
-          return ChatRealtimeMerge.applyChatUpdated(chat, updated);
-        });
+        // A delta, not a snapshot (§7.4): the fields it omits are unchanged,
+        // so the row is patched in place rather than rebuilt from a decoded
+        // `ChatDTO`. That also removes the old worry about a broadcast
+        // snapshot's `me`/`unread_count` overwriting per-viewer state — the
+        // delta simply doesn't contain those fields.
+        _patchRow(
+          event.chatId,
+          (chat) => ChatRealtimeMerge.applyChatUpdated(
+            chat,
+            name: event.name,
+            description: event.description,
+            isPublic: event.isPublic,
+            adminOnly: event.adminOnly,
+            slowModeSeconds: event.slowModeSeconds,
+            permissions: event.permissions,
+            reactionsMode: event.reactionsMode == null
+                ? null
+                : ChatReactionsMode.fromWire(event.reactionsMode),
+            allowedReactions: event.allowedReactions,
+          ),
+        );
 
       case ChatCreated():
         await _onChatCreated(event);
@@ -191,11 +199,11 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         // Someone else joined a chat we can see. `member_count` is rendered on
         // the row, so it is adjusted locally rather than refetched.
         //
-        // Note this can also be *us* being added to a brand-new chat without a
-        // `chat_created` (an invite to an existing chat), in which case the row
-        // isn't in the list yet — `_patchRow` no-ops and the chat appears on the
-        // next refresh. Fetching here instead would mean a request for every
-        // join in every group the user belongs to.
+        // If it was *us* being added to an existing chat (an invite, with no
+        // `chat_created` to go with it) the row isn't in the list yet, so the
+        // count adjustment no-ops and the chat is fetched instead — that case
+        // is worth one request, unlike every other member joining every group
+        // the user belongs to.
         _mutate(
           (s) => s.copyWith(
             items: ChatRealtimeMerge.adjustMemberCount(
@@ -209,18 +217,20 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         );
 
       case MemberLeft():
-        break;
+        _onMembershipChange(event.chatId, event.userId, removed: true);
+
       case MemberKick():
-        await _refreshMembershipOrDrop(event.chatId);
+        _onMembershipChange(event.chatId, event.targetUserId, removed: true);
 
       case MemberBanned():
-        // Same reasoning as above, plus: the old `ban: false` (unban) case
-        // used to be a deliberate no-op here ("the next refresh brings it
-        // back"). That distinction is gone too — a `member_banned` with no
-        // `ban` flag could be either direction — so this now always
-        // re-fetches and lets the server's answer decide: present and
-        // reachable means still in, access-denied means banned.
-        await _refreshMembershipOrDrop(event.chatId);
+        // A ban hides the chat from the banned user's own `GET /chats/`
+        // entirely, with no marker (§6.3) — so for us it behaves exactly like
+        // a kick, and an unban like a re-join.
+        if (event.ban) {
+          _onMembershipChange(event.chatId, event.targetUserId, removed: true);
+        } else {
+          await _onUnbanned(event.chatId, event.targetUserId);
+        }
 
       // ── Not the list's concern ──
       case MessageEdited():
@@ -263,10 +273,9 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   /// Badge + reordering for an incoming message — the §7.5 path for a chat
   /// that is *not* on screen.
   ///
-  /// [event.message] is a full `MessageDTO` (api-docs §7.4, revised); this
-  /// only reads [MessageEntity.seq]/[MessageEntity.authorId] from it — the
-  /// list still renders no preview body, so there is nothing else here to
-  /// decode it for.
+  /// `payload.message` is a full `MessageDTO` (§7.4); this only reads
+  /// [MessageEntity.seq]/[MessageEntity.authorId] from it — the list renders
+  /// no preview body, so there is nothing else here to decode it for.
   Future<void> _onNewMessage(NewMessage event) async {
     final message = _decodeMessage(event.message);
     if (message == null) return;
@@ -315,25 +324,14 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     }
   }
 
-  ChatEntity? _decodeChat(Map<String, dynamic> raw) {
-    try {
-      return ChatModel.fromJson(raw).toEntity();
-    } catch (error) {
-      Logger.warning('ChatList: bad chat payload: $error');
-      return null;
-    }
-  }
-
   /// Adds a newly created chat to the top of the list (§7.4).
   ///
-  /// Still fetches the chat rather than decoding [event.chat] directly, even
-  /// though that field is now a full `ChatDTO` (api-docs §7.4, revised) rather
-  /// than the old name/type/member-count summary. `me` is what every
-  /// permission check on the row and its screen depends on, and there is no
-  /// documented guarantee that a `ChatDTO` embedded in a broadcast event is
-  /// personalised per recipient — see [ChatCreated]'s class doc. A row built
-  /// from an un-personalised snapshot could render with no membership and
-  /// therefore no rights at all.
+  /// Fetches the chat rather than building a row from the event's delta.
+  /// The delta carries `name`/`chat_type`/`member_count` (§7.4) but none of
+  /// the per-viewer fields — `me`, `unread_count`, `last_read` — and `me` is
+  /// what every permission check on the row and its screen depends on. A row
+  /// built from the delta alone would render with no membership and therefore
+  /// no rights at all.
   Future<void> _onChatCreated(ChatCreated event) async {
     final current = state.value;
     if (current == null) return;
@@ -364,16 +362,86 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     }
   }
 
-  /// The shared reaction to `member_left`/`member_kick`/`member_banned`
-  /// (api-docs §7.4, revised) — see the class doc and
-  /// `ChatDetailController._refreshMembershipOrLeave`, whose reasoning this
-  /// mirrors for the list.
+  /// Applies a `messages_read` event to the unread badge (§7.4).
   ///
-  /// Re-fetches [chatId] and treats an access-denied response as "it was us":
-  /// the row is dropped. Any other outcome patches the row with the fresh
-  /// chat (accurate `member_count`, permissions, etc.) — membership changed
-  /// but we're still in it.
-  Future<void> _refreshMembershipOrDrop(String chatId) async {
+  /// Only **our own** receipts clear a badge — the delta's `reader_id` is what
+  /// makes that decision possible. A peer reading our messages says nothing
+  /// about what *we* have read, and clearing on it would blank the badge of
+  /// every active chat.
+  ///
+  /// Our own receipt, though, is usually us reading on another device (this
+  /// device's own reads come with an open screen, whose controller owns the
+  /// count), and the honest response is to zero the badge here too.
+  void _onMessagesRead(MessagesRead event) {
+    final myUserId = ref.read(authProvider).value?.id;
+    if (myUserId == null || event.readerId != myUserId) return;
+
+    _patchRow(event.chatId, (chat) => chat.copyWith(unreadCount: 0));
+  }
+
+  /// Applies `member_left` / `member_kick` / `member_banned(ban: true)` now
+  /// that each names the affected member (§7.4).
+  ///
+  /// The identity is what removes the request this used to need: if the member
+  /// is **us**, the chat is gone from our list — the next `GET /chats/` won't
+  /// return it and tapping it would 403 — so the row is dropped outright.
+  /// Otherwise the roster merely shrank, which is a local count adjustment.
+  ///
+  /// ⚠️ These events reach the affected user directly, outside the chat's
+  /// fan-out (§7.4), so this path must work for a chat we are being removed
+  /// from at the very moment we stop being a member of it.
+  void _onMembershipChange(
+    String chatId,
+    int userId, {
+    required bool removed,
+  }) {
+    final myUserId = ref.read(authProvider).value?.id;
+
+    if (myUserId != null && userId == myUserId && removed) {
+      _mutate(
+        (s) => s.copyWith(
+          items: ChatRealtimeMerge.removeChat(s.items, chatId),
+          nextDate: s.nextDate,
+          nextChatId: s.nextChatId,
+        ),
+      );
+      return;
+    }
+
+    _mutate(
+      (s) => s.copyWith(
+        items: ChatRealtimeMerge.adjustMemberCount(
+          s.items,
+          chatId,
+          removed ? -1 : 1,
+        ),
+        nextDate: s.nextDate,
+        nextChatId: s.nextChatId,
+      ),
+    );
+  }
+
+  /// `member_banned` with `ban: false` (§7.4).
+  ///
+  /// For anyone else this is just a count adjustment. For **us** it is the one
+  /// membership event that has to fetch: while banned, the chat was hidden
+  /// from our `GET /chats/` entirely (§6.3), so there is no local row to
+  /// restore — it has to be fetched back in.
+  Future<void> _onUnbanned(String chatId, int userId) async {
+    final myUserId = ref.read(authProvider).value?.id;
+
+    if (myUserId == null || userId != myUserId) {
+      _onMembershipChange(chatId, userId, removed: false);
+      return;
+    }
+
+    await _refetchRow(chatId);
+  }
+
+  /// Re-reads one chat and folds it back into the list, adding it if it isn't
+  /// there. Dropping the row on an access-denied answer keeps the list honest
+  /// when the server disagrees with what an event implied.
+  Future<void> _refetchRow(String chatId) async {
     if (!_inFlightChatFetches.add(chatId)) return;
 
     try {
@@ -394,10 +462,27 @@ class ChatListController extends AsyncNotifier<ChatListState> {
             '(${failure.message})',
           );
         }
-      }, (chat) => _patchRow(chatId, (_) => chat));
+      }, (chat) => _upsertRow(chat));
     } finally {
       _inFlightChatFetches.remove(chatId);
     }
+  }
+
+  /// Replaces a row, or inserts it (sorted) when the list doesn't have it —
+  /// which is the case after an unban, since the chat was hidden from
+  /// `GET /chats/` while the ban was in force (§6.3).
+  void _upsertRow(ChatEntity chat) {
+    _mutate((s) {
+      final index = s.items.indexWhere((c) => c.id == chat.id);
+      final items = index >= 0
+          ? ([...s.items]..[index] = chat)
+          : [chat, ...s.items];
+      return s.copyWith(
+        items: ChatRealtimeMerge.sortByActivity(items),
+        nextDate: s.nextDate,
+        nextChatId: s.nextChatId,
+      );
+    });
   }
 
   /// Whether [failure] means "you are not, or no longer, in this chat" —

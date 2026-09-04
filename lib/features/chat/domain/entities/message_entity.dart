@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 /// `MessageDTO.type` / `SendMessageRequest.message_type` (api-docs §6.4).
 ///
@@ -74,6 +75,19 @@ class MessageEntity extends Equatable {
   /// profile. See class doc; `null` for system messages.
   final ChatProfileEntity? profile;
 
+  /// `MessageDTO.reactions` (api-docs §6.4, §6.7.3) — the message's reaction
+  /// chips, **already attached** by the backend in message lists, details,
+  /// `messages/context/` and `ws.history`.
+  ///
+  /// This is what makes reactions renderable straight from the message: there
+  /// is no separate fetch to wire up, and `GET .../reactions/` is needed only
+  /// to page through *who* reacted with a given emoji. Kept current by the
+  /// `reaction_update` WS event, whose snapshot replaces this list wholesale
+  /// (§6.7.6).
+  ///
+  /// Empty — not `null` — for a message nobody has reacted to.
+  final List<ReactionGroupEntity> reactions;
+
   final MessageType type;
 
   /// `null` is legitimate for an attachment-only message (caption omitted).
@@ -112,11 +126,19 @@ class MessageEntity extends Equatable {
     this.replyTo,
     this.forwardedFrom,
     this.profile,
+    this.reactions = const [],
   });
 
   /// Author label for this message, falling back to `User #id` when the
   /// backend attached no profile (see `chatDisplayName`).
   String get authorLabel => chatDisplayName(profile, authorId);
+
+  /// The reaction chips as a summary entity, for the widgets and optimistic
+  /// helpers that operate on one (`addMine`, `applySnapshot`, …).
+  MessageReactionsEntity get reactionSummary =>
+      MessageReactionsEntity.fromGroups(id, reactions);
+
+  bool get hasReactions => reactions.isNotEmpty;
 
   /// True when this message was forwarded from somewhere, regardless of
   /// whether the source is still readable (see the ⚠️ in the class doc).
@@ -158,6 +180,7 @@ class MessageEntity extends Equatable {
     MessageEntity? replyTo,
     MessageEntity? forwardedFrom,
     ChatProfileEntity? profile,
+    List<ReactionGroupEntity>? reactions,
     bool clearContent = false,
   }) {
     return MessageEntity(
@@ -179,6 +202,7 @@ class MessageEntity extends Equatable {
       replyTo: replyTo ?? this.replyTo,
       forwardedFrom: forwardedFrom ?? this.forwardedFrom,
       profile: profile ?? this.profile,
+      reactions: reactions ?? this.reactions,
     );
   }
 
@@ -200,5 +224,6 @@ class MessageEntity extends Equatable {
     replyTo,
     forwardedFrom,
     profile,
+    reactions,
   ];
 }

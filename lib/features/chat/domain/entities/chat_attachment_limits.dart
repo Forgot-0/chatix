@@ -15,7 +15,7 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 ///
 /// | bucket | max size | max per message | extra |
 /// |---|---|---|---|
-/// | image + video | 50 MB each | 10 | — |
+/// | image + video | 50 MB each | 10 (shared counter) | — |
 /// | file | 100 MB | **1** | — |
 /// | voice | 20 MB | **1** | ≤600 s, **exclusive** |
 /// | video_note | 40 MB | **1** | ≤60 s, ≤640 px, **exclusive** |
@@ -72,26 +72,39 @@ abstract final class ChatAttachmentLimits {
   /// note is square, so this is the cap on both sides.
   static const int maxVideoNoteResolutionPx = 640;
 
+  /// The full image list from `chat_config` (api-docs §6.5).
+  ///
+  /// ⚠️ `image/heic` and `image/heif` are included because they are what an
+  /// iPhone camera actually produces by default — omitting them would reject
+  /// most photos taken on iOS before the request left the device.
   static const Set<String> imageMimeTypes = {
     'image/jpeg',
     'image/png',
-    'image/webp',
     'image/gif',
+    'image/webp',
+    'image/heic',
+    'image/heif',
   };
 
   static const Set<String> videoMimeTypes = {
     'video/mp4',
-    'video/quicktime',
     'video/webm',
+    'video/quicktime',
+    'video/x-msvideo',
   };
 
   static const Set<String> fileMimeTypes = {
     'application/pdf',
     'application/zip',
-    'text/plain',
+    // The variant Windows and some browsers report for a .zip; the backend
+    // accepts both, so rejecting it here would refuse a legal upload.
+    'application/x-zip-compressed',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'text/csv',
   };
 
   /// Voice-message MIME types (api-docs §6.5).
@@ -147,11 +160,14 @@ abstract final class ChatAttachmentLimits {
     'jpg',
     'jpeg',
     'png',
-    'webp',
     'gif',
+    'webp',
+    'heic',
+    'heif',
     'mp4',
-    'mov',
     'webm',
+    'mov',
+    'avi',
   ];
 
   /// Extensions of the document bucket only (≤100 MB, **1** per message).
@@ -163,10 +179,12 @@ abstract final class ChatAttachmentLimits {
   static const List<String> fileExtensions = [
     'pdf',
     'zip',
-    'txt',
     'doc',
     'docx',
+    'xls',
     'xlsx',
+    'txt',
+    'csv',
   ];
 
   static bool isAllowedMimeType(String mimeType) =>

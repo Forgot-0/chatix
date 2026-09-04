@@ -3,7 +3,7 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `GET /chats/{chat_id}/` 🔒 (api-docs §6.2) → `ChatDetaiDTO`.
+/// `GET /chats/{chat_id}/` 🔒 (api-docs §6.2) → `ChatDetailDTO`.
 ///
 /// ⚠️ The result carries the full member list but **no** `unread_count`,
 /// `me` or `last_read` — those only exist on the `ChatDTO` from `GET /chats/`.

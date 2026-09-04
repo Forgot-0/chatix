@@ -131,10 +131,19 @@ const Map<String, String> _messages = {
   // ---- §2.7 chats -----------------------------------------------------
   'NOT_CHAT_MEMBER': "You're not a member of this chat.",
   'ALREADY_CHAT_MEMBER': 'That person is already in this chat.',
+  // NOT_FOUND_CHAT, NOT_FOUND_MESSAGE, CHAT_ACCESS_DENIED and
+  // TOO_LONG_CHAT_ROLE_NAME are intentionally absent: the NOT_FOUND_* /
+  // *_ACCESS_DENIED / TOO_LONG_* families in `friendlyMessageForCode` already
+  // phrase them, and an exact entry here would override that fallback.
+  'INVALID_CHAT_ROLE': 'That is not a valid chat role.',
+  // ⚠️ Declared by the backend but never actually raised (§2.7/§6.2) — a
+  // repeat direct chat silently creates a duplicate instead. Kept so the
+  // branch reads correctly if a later build starts enforcing it.
   'DIRECT_CHAT_EXISTS': 'You already have a direct chat with this person.',
   'MESSAGE_TOO_LONG': 'That message is too long. Please shorten it.',
   'INVALID_MESSAGE': "That message can't be sent as written.",
   'SLOW_MODE_LIMIT': 'Slow mode is on — please wait before sending another message.',
+  'SLOW_MODE_OUT_OF_RANGE': 'Slow mode must be between 0 seconds and 24 hours.',
   'ATTACHMENT_LIMIT_EXCEEDED': 'Too many attachments for one message.',
   'ATTACHMENT_NOT_FOUND': "That attachment isn't available any more.",
   'ATTACHMENT_VALIDATION': "That file can't be attached — check its type and size.",
@@ -145,4 +154,19 @@ const Map<String, String> _messages = {
   'NO_ACTIVE_CALL': 'There is no active call in this chat.',
   'LIVEKIT_UNAUTHORIZED': "You can't join this call.",
   'LIVEKIT_ERROR': 'The call service is unavailable right now.',
+
+  // ---- §2.7 chats — reactions (§6.7.4) --------------------------------
+  'INVALID_REACTION': "That emoji can't be used as a reaction.",
+  'REACTION_NOT_ALLOWED': "That reaction isn't allowed in this chat.",
+  'REACTIONS_DISABLED': 'Reactions are turned off in this chat.',
+  // The server's `detail.scope` says whether the user's own limit (3) or the
+  // message's (20 distinct) was hit; the wording covers both without needing
+  // to read it.
+  'TOO_MANY_REACTIONS': 'No more reactions can be added here.',
+
+  // ---- §2.7 chats — WebSocket (§7.3) ----------------------------------
+  // Only ever raised for a `resume` carrying more than 20 cursors, which the
+  // socket service clamps before sending — so this is a client bug, not
+  // something a user can cause. Mapped anyway so it never surfaces raw.
+  'MAX_LIMIT_CURSOR': 'Too many chats were resumed at once.',
 };

@@ -105,6 +105,10 @@ dev_dependencies:
   custom_lint: '>=0.8.0 <0.9.1'
   mocktail: ^1.0.4
   flutter_launcher_icons: ^0.14.4
+  # Only for the WebSocket fakes in test/core/websocket/: implementing
+  # `WebSocketChannel` needs `StreamChannelMixin`. Already present transitively
+  # via web_socket_channel; declared so `depend_on_referenced_packages` passes.
+  stream_channel: ^2.1.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

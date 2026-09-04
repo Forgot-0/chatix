@@ -57,6 +57,8 @@ abstract class ChatRestDataSource {
     bool? adminOnly,
     int? slowModeSeconds,
     Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
   });
 
   Future<Either<Failure, void>> deleteChat(String chatId);
@@ -176,6 +178,14 @@ abstract class ChatRestDataSource {
     String emoji,
   );
 
+  Future<Either<Failure, void>> replaceReactions(
+    String chatId,
+    String messageId,
+    List<String> emojis,
+  );
+
+  Future<Either<Failure, void>> clearReactions(String chatId, String messageId);
+
   Future<Either<Failure, MessageReactionsModel>> fetchReactions(
     String chatId,
     String messageId, {
@@ -282,6 +292,8 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     bool? adminOnly,
     int? slowModeSeconds,
     Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
   }) async {
     // ⚠️ api-docs §6.2: PATCH, not PUT. Only the keys present in the body are
     // touched, so absent named parameters are left out rather than sent as
@@ -296,6 +308,9 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
         'admin_only': ?adminOnly,
         'slow_mode_seconds': ?slowModeSeconds,
         'permissions': ?permissions,
+        // §6.7.5 — chat-level reaction settings live on this same endpoint.
+        'reactions_mode': ?reactionsMode?.wire,
+        'allowed_reactions': ?allowedReactions,
       },
     );
     return result.map(
@@ -676,6 +691,43 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     // Removing a reaction that isn't there is also a 204 no-op (§6.7.2).
     final result = await _apiClient.delete(
       '/chats/$chatId/messages/$messageId/reactions/$encoded/',
+    );
+    return result.map((_) {});
+  }
+
+  @override
+  Future<Either<Failure, void>> replaceReactions(
+    String chatId,
+    String messageId,
+    List<String> emojis,
+  ) async {
+    // ⚠️ Collection-level `PUT`, no emoji in the path — **set semantics**:
+    // this replaces the caller's whole reaction set on the message at once
+    // (`messages.sendReaction`-style, §6.7.2), rather than adding to it like
+    // the per-emoji PUT above. An empty list is the documented way to clear
+    // every reaction, and is *not* short-circuited here: the server treats it
+    // as a real removal, so skipping the call would leave stale reactions.
+    //
+    // The emoji here are a JSON body, so they go out raw — only the path form
+    // needs [encodeEmojiPathSegment].
+    final result = await _apiClient.put(
+      '/chats/$chatId/messages/$messageId/reactions/',
+      data: {'reactions': emojis},
+    );
+    return result.map((_) {});
+  }
+
+  @override
+  Future<Either<Failure, void>> clearReactions(
+    String chatId,
+    String messageId,
+  ) async {
+    // Collection-level `DELETE` — drops **all** of the caller's reactions on
+    // this message in one call (§6.7.1). Equivalent to [replaceReactions] with
+    // an empty list; kept separate because it is the intent the UI expresses
+    // ("clear my reactions") and it sends no body.
+    final result = await _apiClient.delete(
+      '/chats/$chatId/messages/$messageId/reactions/',
     );
     return result.map((_) {});
   }

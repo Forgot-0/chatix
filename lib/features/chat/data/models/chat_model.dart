@@ -36,7 +36,7 @@ extension ReadDetailModelX on ReadDetailModel {
   }
 }
 
-/// `ChatDTO` **and** `ChatDetaiDTO` (api-docs §6.2) in one model.
+/// `ChatDTO` **and** `ChatDetailDTO` (api-docs §6.2) in one model.
 ///
 /// The two DTOs are supersets of a common core; the five fields that differ
 /// ([unreadCount], [me], [lastRead], [lastMessage], [members]) are all
@@ -64,6 +64,16 @@ class ChatModel extends Equatable {
   @JsonKey(defaultValue: <String, bool>{})
   final Map<String, bool> permissions;
 
+  /// `ChatDTO.reactions_mode` (api-docs §6.7.5) — `"all" | "some" | "none"`.
+  /// Kept as the wire string and mapped in [toEntity], like [type].
+  @JsonKey(defaultValue: 'all')
+  final String reactionsMode;
+
+  /// `ChatDTO.allowed_reactions` (api-docs §6.7.5) — emoji whitelist, only
+  /// meaningful while [reactionsMode] is `"some"`.
+  @JsonKey(defaultValue: <String>[])
+  final List<String> allowedReactions;
+
   final int createdBy;
   final int memberCount;
 
@@ -82,7 +92,7 @@ class ChatModel extends Equatable {
   /// `null` both when the endpoint doesn't send it and when the chat is empty.
   final MessageModel? lastMessage;
 
-  /// `ChatDetaiDTO` only. Left `null` (not `[]`) when absent so the entity can
+  /// `ChatDetailDTO` only. Left `null` (not `[]`) when absent so the entity can
   /// distinguish "not sent" from "no members".
   final List<ChatMemberModel>? members;
 
@@ -98,6 +108,8 @@ class ChatModel extends Equatable {
     required this.adminOnly,
     required this.slowModeSeconds,
     required this.permissions,
+    required this.reactionsMode,
+    required this.allowedReactions,
     required this.createdBy,
     required this.memberCount,
     this.unreadCount,
@@ -120,6 +132,8 @@ class ChatModel extends Equatable {
     adminOnly,
     slowModeSeconds,
     permissions,
+    reactionsMode,
+    allowedReactions,
     createdBy,
     memberCount,
     unreadCount,
@@ -151,6 +165,8 @@ extension ChatModelX on ChatModel {
       adminOnly: adminOnly,
       slowModeSeconds: slowModeSeconds,
       permissions: permissions,
+      reactionsMode: ChatReactionsMode.fromWire(reactionsMode),
+      allowedReactions: allowedReactions,
       createdBy: createdBy,
       memberCount: memberCount,
       unreadCount: unreadCount,

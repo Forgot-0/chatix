@@ -155,14 +155,49 @@ bool canModerate(ChatMemberEntity? me, ChatMemberEntity target) {
 
 /// Whether [me] may walk away from [chat] on their own.
 ///
-/// The owner is excluded: `POST /chats/{id}/leave/` would leave the chat
-/// ownerless, and api-docs §6.3 offers no ownership transfer — the owner's
-/// exit is `chat:delete`, which is a different (and much louder) action.
-/// Used to decide whether the chat app-bar shows "Leave" or "Delete".
+/// ⚠️ The test is **`created_by`, not the owner role** (api-docs §6.2):
+/// `Chat.leave()` compares the caller against the chat's `created_by` field
+/// and answers `403 CHAT_ACCESS_DENIED` on a match. Two consequences that a
+/// role-based check gets backwards:
+///
+/// * a creator who has been *demoted* still cannot leave — no endpoint moves
+///   `created_by`, so they are in the chat permanently;
+/// * a member *promoted* to owner who did not create the chat **can** leave.
+///
+/// The creator's only exit is `DELETE /chats/{id}/` (`chat:delete`, §9.1),
+/// which is a different and much louder action. Used to decide whether the
+/// chat app-bar offers "Leave" or "Delete".
 bool canLeaveChat(ChatEntity? chat, ChatMemberEntity? me) {
   if (me == null) return false;
-  return me.role != ChatRole.owner;
+  // No chat loaded: fail closed rather than offer an action the server may
+  // refuse. `me` alone cannot answer this question.
+  if (chat == null) return false;
+  return chat.createdBy != me.userId;
 }
+
+/// Whether [me] may assign [role] to somebody (api-docs §6.3).
+///
+/// The backend requires the target role to sit **strictly below the assigner's
+/// own level**, so this is not covered by holding [ChatPermissions.roleChange]
+/// alone. Lower `ChatRole.id` means *higher* privilege (owner is 1), so
+/// "strictly below" is `role.id > me.role.id`.
+///
+/// The practical consequence worth knowing: an owner cannot grant `owner`, so
+/// **chat ownership cannot be transferred** — there is no endpoint for it at
+/// all. An admin likewise cannot mint another admin. Violations come back as
+/// `403 CHAT_ACCESS_DENIED`, so filtering the role picker with this keeps the
+/// user from choosing an option that is certain to fail.
+bool canAssignChatRole(ChatMemberEntity? me, ChatRole role) {
+  final mine = me?.role;
+  if (mine == null) return false;
+  return role.id > mine.id;
+}
+
+/// The roles [me] may pick from in a role-change or invite UI (§6.3).
+List<ChatRole> assignableChatRoles(ChatMemberEntity? me) => [
+  for (final role in ChatRole.values)
+    if (canAssignChatRole(me, role)) role,
+];
 
 // ---------------------------------------------------------------------------
 // Project — api-docs §9.2

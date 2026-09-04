@@ -40,6 +40,43 @@ enum ChatType {
   }
 }
 
+/// `ChatDTO.reactions_mode` (api-docs §6.7.5) — how much of the reaction
+/// catalog this chat allows.
+///
+/// Set per chat through `PATCH /chats/{chat_id}/` (`chat:update`) and pushed
+/// to clients on the `chat_updated` WS event. It gates reactions *before* the
+/// catalog does: a chat in [none] rejects every emoji with
+/// `403 REACTIONS_DISABLED`, and one in [some] rejects anything outside
+/// [ChatEntity.allowedReactions] with `400 REACTION_NOT_ALLOWED` (§6.7.4).
+///
+/// The UI is expected to enforce the same rule up front — hiding the reaction
+/// affordance entirely in [none], and filtering the picker down to the
+/// whitelist in [some] — because the endpoint is rate-limited to 10/sec and a
+/// rejected tap burns a slot.
+enum ChatReactionsMode {
+  /// The whole curated catalog (~73 emoji) is allowed. Server default.
+  all,
+
+  /// Only the emoji listed in [ChatEntity.allowedReactions].
+  some,
+
+  /// Reactions are switched off for this chat.
+  none;
+
+  String get wire => name;
+
+  static ChatReactionsMode fromWire(String? value) {
+    return ChatReactionsMode.values.firstWhere(
+      (m) => m.name == value,
+      // `reactions_mode` defaults to "all" server-side (§6.7.5); an
+      // unknown/missing value degrades to the same thing. Erring towards
+      // "allowed" is safe here: the backend still rejects a bad emoji, whereas
+      // defaulting to `none` would silently hide a working feature.
+      orElse: () => ChatReactionsMode.all,
+    );
+  }
+}
+
 /// `ReadDetail` — the current user's read cursor in a chat, embedded in
 /// `ChatDTO.last_read` (api-docs §6.2).
 class ReadDetailEntity extends Equatable {
@@ -56,11 +93,6 @@ class ReadDetailEntity extends Equatable {
 }
 
 /// `ChatDTO` **and** `ChatDetailDTO` (api-docs §6.2).
-///
-/// ℹ️ This type used to be called `ChatDetaiDTO` (missing "l") in the backend
-/// and in these docs; the typo has since been fixed server-side, so the
-/// correct spelling is used throughout this file. Only the name changed —
-/// the two responses still differ exactly as they always did.
 ///
 /// Both DTOs are modelled by this one entity because they describe the same
 /// chat and share most of their fields; the difference is which extras the
@@ -105,6 +137,18 @@ class ChatEntity extends Equatable {
   /// → [ChatMemberEntity.permissionsOverrides].
   final Map<String, bool> permissions;
 
+  /// `ChatDTO.reactions_mode` (api-docs §6.7.5). Defaults to
+  /// [ChatReactionsMode.all], matching the backend.
+  final ChatReactionsMode reactionsMode;
+
+  /// `ChatDTO.allowed_reactions` (api-docs §6.7.5) — the emoji whitelist,
+  /// meaningful **only** while [reactionsMode] is [ChatReactionsMode.some].
+  ///
+  /// Empty in the other two modes, which is why [isReactionAllowed] reads the
+  /// mode first: an empty list under [ChatReactionsMode.all] means "no
+  /// restriction", not "nothing allowed".
+  final List<String> allowedReactions;
+
   final int createdBy;
   final int memberCount;
 
@@ -144,6 +188,8 @@ class ChatEntity extends Equatable {
     required this.adminOnly,
     required this.slowModeSeconds,
     required this.permissions,
+    this.reactionsMode = ChatReactionsMode.all,
+    this.allowedReactions = const [],
     required this.createdBy,
     required this.memberCount,
     this.unreadCount,
@@ -152,6 +198,31 @@ class ChatEntity extends Equatable {
     this.lastMessage,
     this.members,
   });
+
+  /// Whether reactions are available in this chat at all (§6.7.5) — the
+  /// check that decides if the reaction button is rendered.
+  bool get reactionsEnabled => reactionsMode != ChatReactionsMode.none;
+
+  /// Whether [emoji] may be used here, per this chat's own settings (§6.7.5).
+  ///
+  /// ⚠️ Chat settings only. It says nothing about the server's curated catalog
+  /// (`400 INVALID_REACTION`, §6.7.4), which this client does not mirror — so
+  /// a `true` here still permits a catalog rejection.
+  bool isReactionAllowed(String emoji) {
+    switch (reactionsMode) {
+      case ChatReactionsMode.none:
+        return false;
+      case ChatReactionsMode.all:
+        return true;
+      case ChatReactionsMode.some:
+        return allowedReactions.contains(emoji);
+    }
+  }
+
+  /// The emoji to offer in the picker, or `null` when the chat imposes no
+  /// whitelist and the full catalog should be shown.
+  List<String>? get reactionWhitelist =>
+      reactionsMode == ChatReactionsMode.some ? allowedReactions : null;
 
   /// The caller's membership, wherever this instance happens to carry it:
   /// [me] for a `ChatDTO`, or the matching entry of [members] for a
@@ -197,6 +268,8 @@ class ChatEntity extends Equatable {
     bool? adminOnly,
     int? slowModeSeconds,
     Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
     int? createdBy,
     int? memberCount,
     int? unreadCount,
@@ -222,6 +295,8 @@ class ChatEntity extends Equatable {
       adminOnly: adminOnly ?? this.adminOnly,
       slowModeSeconds: slowModeSeconds ?? this.slowModeSeconds,
       permissions: permissions ?? this.permissions,
+      reactionsMode: reactionsMode ?? this.reactionsMode,
+      allowedReactions: allowedReactions ?? this.allowedReactions,
       createdBy: createdBy ?? this.createdBy,
       memberCount: memberCount ?? this.memberCount,
       unreadCount: clearUnreadCount ? null : (unreadCount ?? this.unreadCount),
@@ -247,6 +322,8 @@ class ChatEntity extends Equatable {
     adminOnly,
     slowModeSeconds,
     permissions,
+    reactionsMode,
+    allowedReactions,
     createdBy,
     memberCount,
     unreadCount,

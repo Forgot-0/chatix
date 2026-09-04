@@ -11,7 +11,6 @@ import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
-import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -749,7 +748,7 @@ class _MessageList extends ConsumerWidget {
   /// more" affordance.
   ///
   /// The names come from the members already loaded into `ChatDetailState`
-  /// (`ChatDetaiDTO.members`, §6.2) — `ReactionUserDTO` carries only a
+  /// (`ChatDetailDTO.members`, §6.2) — `ReactionUserDTO` carries only a
   /// `user_id`, so anyone not in that list renders as the `User #id`
   /// diagnostic fallback rather than triggering an N+1 `/profiles/{id}/` fan
   /// out per row.
@@ -1332,7 +1331,7 @@ class _ReactionUsersSheet extends ConsumerStatefulWidget {
 }
 
 class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
-  final _users = <ReactionUserEntity>[];
+  final _users = <int>[];
 
   bool _isLoading = true;
   bool _hasNext = false;
@@ -1371,10 +1370,12 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
     });
   }
 
-  /// `ReactionUserDTO` carries only `user_id` (§6.7.3), so the name is looked
-  /// up in the chat's member list. A miss (someone who reacted and then left,
-  /// a member page not loaded) falls back to the same `User #id` diagnostic
-  /// form used everywhere else — see `chatDisplayName`.
+  /// The endpoint returns bare `user_id`s — `MessageReactionsDTO.users` is an
+  /// `int[]`, with no names or avatars (§6.7.3) — so the label is looked up in
+  /// the chat's member list. A miss (someone who reacted and then left, a
+  /// member page not loaded, a member hidden because they are banned — see
+  /// §6.3) falls back to the same `User #id` diagnostic form used everywhere
+  /// else; see `chatDisplayName`.
   String _label(int userId) {
     for (final member in widget.members) {
       if (member.userId == userId) return member.displayLabel;
@@ -1461,14 +1462,15 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
                 );
         }
 
-        final user = _users[index];
+        final userId = _users[index];
         return ListTile(
           leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-          title: Text(_label(user.userId)),
-          // Echoed per row because §6.7.3 sends it per row: with the
-          // single-choice constraint it is also this person's *only* reaction
-          // on the message.
-          trailing: Text(user.emoji, style: theme.textTheme.titleMedium),
+          title: Text(_label(userId)),
+          // The sheet is opened per emoji and the response is filtered by it
+          // (§6.7.3), so every row here reacted with this one. It is *not*
+          // necessarily their only reaction on the message — a user may hold
+          // up to three (§6.7.2) and would appear in several sheets.
+          trailing: Text(widget.emoji, style: theme.textTheme.titleMedium),
         );
       },
     );

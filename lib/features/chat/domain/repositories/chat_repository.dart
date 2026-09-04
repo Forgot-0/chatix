@@ -39,9 +39,12 @@ abstract class ChatRepository {
   /// implementation rejects anything else locally before the request goes
   /// out, instead of waiting for `400 MEMBER_LIMIT_EXCEEDED`.
   ///
-  /// A repeat direct chat fails with `409 DIRECT_CHAT_EXISTS`, whose
-  /// `detail.chat_id` already contains the existing chat's id — callers
-  /// should open that chat rather than surfacing an error.
+  /// ⚠️ **`409 DIRECT_CHAT_EXISTS` does not actually fire** (api-docs §6.2,
+  /// §2.7): the backend declares the code but never raises it, so a second
+  /// `POST` for the same counterpart silently creates a *duplicate* direct
+  /// chat. Deduplication is therefore the client's job — look for an existing
+  /// direct chat with that user before calling this. The error branch is still
+  /// mapped, in case a later backend build starts enforcing it.
   Future<Either<Failure, ChatEntity>> createChat({
     String? name,
     String? description,
@@ -53,7 +56,7 @@ abstract class ChatRepository {
     Map<String, bool>? permissions,
   });
 
-  /// `GET /chats/{chat_id}/` (api-docs §6.2) → `ChatDetaiDTO`: carries the
+  /// `GET /chats/{chat_id}/` (api-docs §6.2) → `ChatDetailDTO`: carries the
   /// full member list but **no** `unread_count`/`me`/`last_read`.
   Future<Either<Failure, ChatEntity>> getChat(String chatId);
 
@@ -63,6 +66,9 @@ abstract class ChatRepository {
   /// omitted fields are left untouched server-side, so callers only send what
   /// changed. Passing `null` means "don't change" — there is no way to null a
   /// field back out through this endpoint.
+  /// [reactionsMode] and [allowedReactions] are the chat-level reaction
+  /// settings of §6.7.5, which live on this same endpoint and require
+  /// `chat:update`. A change to either is broadcast as `chat_updated` (§7.4).
   Future<Either<Failure, ChatEntity>> updateChat(
     String chatId, {
     String? name,
@@ -71,6 +77,8 @@ abstract class ChatRepository {
     bool? adminOnly,
     int? slowModeSeconds,
     Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
   });
 
   /// `DELETE /chats/{chat_id}/` 4/5min → 204 (api-docs §6.2).
@@ -82,6 +90,13 @@ abstract class ChatRepository {
   Future<Either<Failure, void>> joinChat(String chatId);
 
   /// `POST /chats/{chat_id}/leave/` 4/5min → 204 (api-docs §6.2).
+  ///
+  /// ⚠️ **The chat's creator can never leave.** `Chat.leave()` compares the
+  /// caller against `created_by` — the field, not the role — and answers
+  /// `403 CHAT_ACCESS_DENIED`. No endpoint changes `created_by` and demoting
+  /// oneself does not help, so for the creator the only exit is
+  /// [deleteChat]. `canLeaveChat` in `core/rbac/permission_helpers.dart`
+  /// encodes this, so the UI hides the action rather than surfacing the 403.
   Future<Either<Failure, void>> leaveChat(String chatId);
 
   // ────────────────────────── Members (§6.3) ──────────────────────────
@@ -90,7 +105,15 @@ abstract class ChatRepository {
   ///
   /// [limit] may go up to 500 here (not 100 like the other lists).
   /// [includePresence] is what populates [MembersPage.presence]; it is off by
-  /// default because it costs the backend an extra lookup per member.
+  /// default because it costs the backend an extra lookup per member. It
+  /// arrives as a **separate array**, not a flag on each member — join it by
+  /// `user_id` and treat a missing entry as offline (§6.3).
+  ///
+  /// ⚠️ **Banned members are omitted entirely here** — permanently *and*
+  /// temporarily banned users simply do not appear, rather than arriving with
+  /// `is_banned: true` (§6.3). [getChat]'s `ChatDetailDTO.members` applies no
+  /// such filter, so the two endpoints disagree by design; a moderation UI
+  /// that needs to show or unban them must read it from [getChat].
   Future<Either<Failure, MembersPage>> getMembers(
     String chatId, {
     int limit = 50,
@@ -100,6 +123,11 @@ abstract class ChatRepository {
 
   /// `POST /chats/{chat_id}/members/` 30/5min → 204 (api-docs §6.3).
   /// Requires `member:invite`. `409 ALREADY_CHAT_MEMBER` if they're in.
+  ///
+  /// ⚠️ [roleId] must be **strictly below the caller's own role level**
+  /// (§6.3): an owner cannot invite someone as `owner`, an admin cannot invite
+  /// an `owner` or another `admin`. Violations are `403 CHAT_ACCESS_DENIED`;
+  /// an id outside 1..6 is `422 INVALID_CHAT_ROLE`.
   Future<Either<Failure, void>> addMember(
     String chatId,
     int userId, {
@@ -108,6 +136,10 @@ abstract class ChatRepository {
 
   /// `PATCH /chats/{chat_id}/members/{user_id}/role/` → 204 (api-docs §6.3).
   /// Requires `role:change`.
+  ///
+  /// ⚠️ Same strictly-below rule as [addMember] — which means **chat ownership
+  /// cannot be transferred through this endpoint**: an owner may not grant
+  /// `owner`. `403 CHAT_ACCESS_DENIED` / `422 INVALID_CHAT_ROLE`.
   Future<Either<Failure, void>> changeMemberRole(
     String chatId,
     int userId,
@@ -117,10 +149,10 @@ abstract class ChatRepository {
   /// `PATCH /chats/{chat_id}/members/{user_id}/ban/` → 204 (api-docs §6.3).
   /// Requires `member:ban`.
   ///
-  /// [bannedTo] is the ban expiry; omit it for a permanent ban. ⚠️ It is
-  /// serialised as `banned_to` — a typo preserved verbatim in the backend
-  /// schema (api-docs §6.3). The Dart parameter keeps the correct spelling;
-  /// only the wire key is misspelled.
+  /// [bannedTo] is the ban expiry, and it is also how a ban is **lifted**
+  /// (api-docs §6.3): omit it for a permanent ban, pass a future date for a
+  /// temporary one, and pass a date **in the past** to unban. There is no
+  /// separate unban endpoint.
   Future<Either<Failure, void>> banMember(
     String chatId,
     int userId, {
@@ -190,6 +222,13 @@ abstract class ChatRepository {
 
   /// `PATCH /chats/{chat_id}/messages/{message_id}/` (api-docs §6.4).
   /// [content] must be 1..4096 characters — editing to empty is not allowed.
+  ///
+  /// ⚠️ **Author only, and no permission overrides it** (§6.4): the backend
+  /// compares `message.author_id` with the caller and answers
+  /// `403 CHAT_ACCESS_DENIED` otherwise — `message:delete` and `chat:update`
+  /// do *not* grant it. There is no edit window and no revision history; only
+  /// `is_edited` marks that it happened. Contrast [deleteMessage], which
+  /// moderators genuinely can use on other people's messages.
   Future<Either<Failure, MessageEntity>> editMessage(
     String chatId,
     String messageId,
@@ -273,21 +312,34 @@ abstract class ChatRepository {
   );
 
   // ───────────────────────────── Reactions (§6.7) ─────────────────────────────
+  //
+  // ⚠️ Telegram-like **set** semantics (§6.7.2): a user may hold up to
+  // `ReactionLimits.maxPerUserPerMessage` (3) different emoji on one message.
+  // The per-emoji `PUT` below therefore *adds*; it does not replace. Use
+  // [replaceReactions] for whole-set replacement and [clearReactions] to drop
+  // them all.
+  //
+  // Every one of these publishes exactly one `reaction_update` WS event
+  // carrying a full snapshot of the message's groups (§6.7.6) — so after a
+  // successful call there is nothing to re-fetch. Reading is likewise usually
+  // free: `MessageDTO.reactions` already carries the chips (§6.4).
 
   /// `PUT /chats/{chat_id}/messages/{message_id}/reactions/{emoji}/` 🔒 10/sec
   /// → 204 (api-docs §6.7.1).
   ///
-  /// ⚠️ **Set, not add.** One reaction per user per message
-  /// (`UniqueConstraint(message_id, user_id)`, §6.7.2), so calling this while
-  /// another emoji is set *replaces* it: the old counter drops, the new one
-  /// rises and the backend publishes two `reaction_update` events. Calling it
-  /// with the emoji already set is a no-op that still answers 204.
+  /// **Adds** [emoji] to the caller's set on this message. Re-sending one
+  /// already held is a no-op that still answers 204; a fourth distinct emoji
+  /// is `400 TOO_MANY_REACTIONS` with `detail.scope == "user"`.
   ///
-  /// [emoji] is passed raw — URL-encoding it for the path is the data source's
-  /// job, so callers never have to remember it.
+  /// [emoji] is passed raw — percent-encoding it for the path is the data
+  /// source's job, so callers never have to remember it.
   ///
-  /// Failures worth handling: `400 INVALID_REACTION`,
-  /// `400 TOO_MANY_REACTION` (20 distinct emoji per message).
+  /// Failures worth branching on: `400 INVALID_REACTION` (outside the server's
+  /// curated catalog), `400 REACTION_NOT_ALLOWED` (chat is in
+  /// [ChatReactionsMode.some] and this emoji isn't whitelisted),
+  /// `403 REACTIONS_DISABLED` (chat is in [ChatReactionsMode.none]),
+  /// `400 TOO_MANY_REACTIONS` (per-user limit 3, or 20 distinct per message —
+  /// `detail.scope` says which).
   Future<Either<Failure, void>> setReaction(
     String chatId,
     String messageId,
@@ -295,19 +347,52 @@ abstract class ChatRepository {
   );
 
   /// `DELETE .../reactions/{emoji}/` 🔒 10/sec → 204 (api-docs §6.7.1).
-  /// Removing a reaction that isn't there is a no-op, also 204.
+  /// Removes just this one emoji from the caller's set. Removing one that
+  /// isn't there is a no-op, also 204.
   Future<Either<Failure, void>> removeReaction(
     String chatId,
     String messageId,
     String emoji,
   );
 
+  /// `PUT .../reactions/` 🔒 10/sec → 204 (api-docs §6.7.1) — **replaces the
+  /// caller's entire reaction set** on the message with [emojis].
+  ///
+  /// The collection-level counterpart of [setReaction], and the reason both
+  /// exist: a reaction picker that lets the user pick several at once needs one
+  /// atomic call, not N adds and M removes that would each publish their own
+  /// event and could interleave. Passing an empty list clears every reaction —
+  /// exactly what [clearReactions] does, so prefer that when clearing is the
+  /// intent.
+  ///
+  /// At most [ReactionLimits.maxPerUserPerMessage] entries; more is
+  /// `400 TOO_MANY_REACTIONS`.
+  Future<Either<Failure, void>> replaceReactions(
+    String chatId,
+    String messageId,
+    List<String> emojis,
+  );
+
+  /// `DELETE .../reactions/` 🔒 10/sec → 204 (api-docs §6.7.1) — drops **all**
+  /// of the caller's reactions on this message in one call.
+  Future<Either<Failure, void>> clearReactions(String chatId, String messageId);
+
   /// `GET .../reactions/` 🔒 (api-docs §6.7.1) — two modes in one endpoint:
   ///
-  /// * [emoji] `null` → only the chip summary for the message;
+  /// * [emoji] `null` → only the group summary for the message;
   /// * [emoji] set → additionally a page of *who* reacted with it, for the
   ///   long-press sheet, continued with [cursorUserId] from the previous
   ///   response's `next_user_id`.
+  ///
+  /// ⚠️ **Rarely needed for mode 1.** Since §6.7.3 the groups ride along on
+  /// every `MessageDTO` (`MessageEntity.reactions`) in lists, details, context
+  /// and `ws.history`, and `reaction_update` keeps them fresh — so the summary
+  /// is already in hand. Reach for this endpoint for the *who reacted*
+  /// pagination of mode 2, or to re-sync one message after an optimistic
+  /// update failed.
+  ///
+  /// [MessageReactionsEntity.users] comes back as bare `user_id`s, with no
+  /// names or avatars — resolve them against the chat roster.
   Future<Either<Failure, MessageReactionsEntity>> getReactions(
     String chatId,
     String messageId, {

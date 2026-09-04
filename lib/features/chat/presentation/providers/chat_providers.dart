@@ -22,7 +22,9 @@ import 'package:chatix/features/chat/domain/usecases/join_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/kick_member_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/leave_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/clear_reactions_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_reactions_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/replace_reactions_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/remove_reaction_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mute_call_participant_use_case.dart';
@@ -171,4 +173,17 @@ final removeReactionUseCaseProvider = Provider<RemoveReactionUseCase>((ref) {
 
 final getReactionsUseCaseProvider = Provider<GetReactionsUseCase>((ref) {
   return GetReactionsUseCase(ref.watch(chatRepositoryProvider));
+});
+
+/// `PUT .../reactions/` — whole-set replacement (§6.7.1). See
+/// [ReplaceReactionsUseCase] for why this exists alongside the per-emoji form.
+final replaceReactionsUseCaseProvider = Provider<ReplaceReactionsUseCase>((
+  ref,
+) {
+  return ReplaceReactionsUseCase(ref.watch(chatRepositoryProvider));
+});
+
+/// `DELETE .../reactions/` — drop all of the caller's reactions (§6.7.1).
+final clearReactionsUseCaseProvider = Provider<ClearReactionsUseCase>((ref) {
+  return ClearReactionsUseCase(ref.watch(chatRepositoryProvider));
 });

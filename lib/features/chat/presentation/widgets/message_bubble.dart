@@ -48,16 +48,19 @@ class MessageBubble extends StatelessWidget {
 
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
 
-  /// Reaction chips for this message (§6.7). `null` while the summary has not
-  /// been loaded, which renders the same as "no reactions" — an absent row.
+  /// Reaction chips for this message (§6.7). `null` and empty render the same
+  /// way — an absent chip row — so the caller need not distinguish them.
   ///
-  /// Never sourced from [MessageEntity]: `MessageDTO` carries no reactions
-  /// field (§6.4), so this always arrives from the chat controller's separate
-  /// summary map.
+  /// Sourced from [MessageEntity.reactions]: since §6.7.3 `MessageDTO` carries
+  /// its reactions inline (§6.4), so there is no companion fetch and no
+  /// separate summary map to keep in step with the message.
   final MessageReactionsEntity? reactions;
 
-  /// Tap on a chip — sets, replaces or clears the viewer's one reaction. The
-  /// single-choice rule (§6.7.2) lives in the controller, not here.
+  /// Tap on a chip — adds or removes that one emoji from the viewer's set.
+  ///
+  /// ⚠️ Not a single choice: a user may hold up to three different emoji on
+  /// one message (§6.7.2), so this never implies removing another chip. The
+  /// limit and the chat's `reactions_mode` are enforced in the controller.
   final void Function(String emoji)? onToggleReaction;
 
   /// Long-press on a chip — opens the "who reacted" sheet via
@@ -171,7 +174,7 @@ class MessageBubble extends StatelessWidget {
               // the row.
               if (_hasReactions)
                 _ReactionChips(
-                  summaries: reactions!.summaries,
+                  groups: reactions!.groups,
                   onTap: onToggleReaction,
                   onLongPress: onShowReactionUsers,
                 ),
@@ -205,7 +208,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   bool get _hasReactions =>
-      reactions != null && reactions!.summaries.isNotEmpty;
+      reactions != null && reactions!.groups.isNotEmpty;
 
   void _showActions(BuildContext context) {
     showModalBottomSheet<void>(
@@ -463,15 +466,20 @@ class _ReadTicks extends StatelessWidget {
 
 /// The row of reaction chips under a message (§6.7.3).
 ///
-/// One chip per emoji with its **absolute** count. The viewer's own chip is
-/// outlined and tinted — there can be at most one, because a user has exactly
-/// one reaction per message (`UniqueConstraint(message_id, user_id)`, §6.7.2).
+/// One chip per emoji with its **absolute** count, ordered by the backend
+/// (`count DESC, emoji ASC`, §6.7.3).
 ///
-/// Tap toggles/replaces; long-press opens the "who reacted" sheet.
+/// ⚠️ **Several chips can be "mine" at once.** A user may hold up to
+/// `ReactionLimits.maxPerUserPerMessage` (3) different emoji on one message
+/// (§6.7.2), so the outlined/tinted treatment is per chip, not a single
+/// selection — a layout that assumed one highlighted chip would be wrong.
+///
+/// Tap adds or removes that one emoji; long-press opens the "who reacted"
+/// sheet.
 class _ReactionChips extends StatelessWidget {
-  const _ReactionChips({required this.summaries, this.onTap, this.onLongPress});
+  const _ReactionChips({required this.groups, this.onTap, this.onLongPress});
 
-  final List<ReactionSummaryEntity> summaries;
+  final List<ReactionGroupEntity> groups;
   final void Function(String emoji)? onTap;
   final void Function(String emoji)? onLongPress;
 
@@ -486,7 +494,7 @@ class _ReactionChips extends StatelessWidget {
         spacing: 4,
         runSpacing: 4,
         children: [
-          for (final summary in summaries)
+          for (final summary in groups)
             InkWell(
               onTap: onTap == null ? null : () => onTap!(summary.emoji),
               onLongPress: onLongPress == null
@@ -512,8 +520,8 @@ class _ReactionChips extends StatelessWidget {
                     Text(summary.emoji, style: theme.textTheme.bodySmall),
                     const SizedBox(width: 4),
                     Text(
-                      // The count is absolute (§6.7.5) and a chip with count 0
-                      // is removed upstream, so this never renders "0".
+                      // The count is absolute (§6.7.3/§6.7.6) and a chip with
+                      // count 0 is removed upstream, so this never renders "0".
                       '${summary.count}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: summary.reactedByMe

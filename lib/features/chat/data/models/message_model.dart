@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:chatix/features/chat/data/models/attachment_model.dart';
 import 'package:chatix/features/chat/data/models/chat_profile_model.dart';
+import 'package:chatix/features/chat/data/models/reaction_model.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
 part 'message_model.g.dart';
@@ -40,6 +41,18 @@ class MessageModel extends Equatable {
   final MessageModel? replyTo;
   final MessageModel? forwardedFrom;
 
+  /// `MessageDTO.reactions` (api-docs §6.4, §6.7.3) — the reaction chips,
+  /// delivered **inline with the message** in list/detail/context responses
+  /// and in `ws.history`. This is why no companion `GET .../reactions/` pass
+  /// is needed to render them; that endpoint is only for paginating *who*
+  /// reacted (§6.7.3).
+  ///
+  /// Defaulted to `[]` rather than left nullable: a message with no reactions
+  /// and a message whose reactions the endpoint omitted render identically
+  /// (no chip row), so the distinction would buy nothing.
+  @JsonKey(defaultValue: <ReactionGroupModel>[])
+  final List<ReactionGroupModel> reactions;
+
   /// `MessageDTO.profile` (api-docs §6.4) — author's denormalized profile,
   /// nullable (system messages have no author).
   final ChatProfileModel? profile;
@@ -61,6 +74,7 @@ class MessageModel extends Equatable {
     this.replyTo,
     this.forwardedFrom,
     this.profile,
+    required this.reactions,
   });
 
   @override
@@ -81,6 +95,7 @@ class MessageModel extends Equatable {
     replyTo,
     forwardedFrom,
     profile,
+    reactions,
   ];
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
@@ -108,6 +123,7 @@ extension MessageModelX on MessageModel {
       replyTo: replyTo?.toEntity(),
       forwardedFrom: forwardedFrom?.toEntity(),
       profile: profile?.toEntity(),
+      reactions: reactions.map((r) => r.toEntity()).toList(),
     );
   }
 }

@@ -4,62 +4,70 @@ import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 part 'reaction_model.g.dart';
 
-/// `ReactionSummaryDTO` (api-docs §6.7.3).
+/// `ReactionGroupDTO` (api-docs §6.7.3).
 @JsonSerializable(fieldRename: FieldRename.snake)
-class ReactionSummaryModel extends Equatable {
+class ReactionGroupModel extends Equatable {
   final String emoji;
   final int count;
+
+  /// Monotonic group version (§6.7.3) — used downstream to drop out-of-order
+  /// WS snapshots. Defaulted to 0 rather than required so an older backend
+  /// that doesn't send it still parses; a constant version simply means the
+  /// idempotency check never rejects anything, which is the pre-versioning
+  /// behaviour.
+  @JsonKey(defaultValue: 0)
+  final int version;
 
   /// Defaulted to `false` rather than required: the field is always sent by
   /// the endpoint, but a chip that wrongly claims to be *ours* would let the
   /// user "un-react" something they never reacted to, so the safe default is
   /// the one that renders an inert chip.
+  ///
+  /// ⚠️ Always `false` inside a `reaction_update` snapshot (§6.7.6) — that is
+  /// a property of the event, not a parse failure. See
+  /// `MessageReactionsEntity.applySnapshot`.
   @JsonKey(defaultValue: false)
   final bool reactedByMe;
 
-  const ReactionSummaryModel({
+  /// Up to `REACTION_RECENT_USERS_LIMIT` (3) recent reactor ids (§6.7.3).
+  @JsonKey(defaultValue: <int>[])
+  final List<int> recentUserIds;
+
+  const ReactionGroupModel({
     required this.emoji,
     required this.count,
+    required this.version,
     required this.reactedByMe,
+    required this.recentUserIds,
   });
 
   @override
-  List<Object?> get props => [emoji, count, reactedByMe];
+  List<Object?> get props => [
+    emoji,
+    count,
+    version,
+    reactedByMe,
+    recentUserIds,
+  ];
 
-  factory ReactionSummaryModel.fromJson(Map<String, dynamic> json) =>
-      _$ReactionSummaryModelFromJson(json);
+  factory ReactionGroupModel.fromJson(Map<String, dynamic> json) =>
+      _$ReactionGroupModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$ReactionSummaryModelToJson(this);
+  Map<String, dynamic> toJson() => _$ReactionGroupModelToJson(this);
 }
 
-extension ReactionSummaryModelX on ReactionSummaryModel {
-  ReactionSummaryEntity toEntity() => ReactionSummaryEntity(
+extension ReactionGroupModelX on ReactionGroupModel {
+  ReactionGroupEntity toEntity() => ReactionGroupEntity(
     emoji: emoji,
     count: count,
+    version: version,
     reactedByMe: reactedByMe,
+    // Trimmed to the documented cap so a backend that over-sends can't grow
+    // the avatar stack the chip is laid out for.
+    recentUserIds: recentUserIds
+        .take(ReactionLimits.recentUsersLimit)
+        .toList(),
   );
-}
-
-/// `ReactionUserDTO` (api-docs §6.7.3).
-@JsonSerializable(fieldRename: FieldRename.snake)
-class ReactionUserModel extends Equatable {
-  final int userId;
-  final String emoji;
-
-  const ReactionUserModel({required this.userId, required this.emoji});
-
-  @override
-  List<Object?> get props => [userId, emoji];
-
-  factory ReactionUserModel.fromJson(Map<String, dynamic> json) =>
-      _$ReactionUserModelFromJson(json);
-
-  Map<String, dynamic> toJson() => _$ReactionUserModelToJson(this);
-}
-
-extension ReactionUserModelX on ReactionUserModel {
-  ReactionUserEntity toEntity() =>
-      ReactionUserEntity(userId: userId, emoji: emoji);
 }
 
 /// `MessageReactionsDTO` (api-docs §6.7.3) — the response of both modes of
@@ -67,18 +75,19 @@ extension ReactionUserModelX on ReactionUserModel {
 /// them.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MessageReactionsModel extends Equatable {
-  /// ⚠️ A plain string on the wire, not a typed UUID (api-docs §6.7.3).
+  /// ⚠️ A plain string on the wire, not a typed UUID (§6.7.3).
   final String messageId;
 
-  @JsonKey(defaultValue: <ReactionSummaryModel>[])
-  final List<ReactionSummaryModel> summaries;
+  @JsonKey(defaultValue: <ReactionGroupModel>[])
+  final List<ReactionGroupModel> groups;
 
   /// Echo of the `?emoji=` query parameter; `null` in summary-only mode.
   final String? emoji;
 
-  /// Empty unless the request carried `?emoji=`.
-  @JsonKey(defaultValue: <ReactionUserModel>[])
-  final List<ReactionUserModel> users;
+  /// ⚠️ Bare `user_id`s (§6.7.3), not objects. Empty unless the request
+  /// carried `?emoji=`.
+  @JsonKey(defaultValue: <int>[])
+  final List<int> users;
 
   @JsonKey(defaultValue: false)
   final bool hasNext;
@@ -87,7 +96,7 @@ class MessageReactionsModel extends Equatable {
 
   const MessageReactionsModel({
     required this.messageId,
-    required this.summaries,
+    required this.groups,
     required this.emoji,
     required this.users,
     required this.hasNext,
@@ -97,7 +106,7 @@ class MessageReactionsModel extends Equatable {
   @override
   List<Object?> get props => [
     messageId,
-    summaries,
+    groups,
     emoji,
     users,
     hasNext,
@@ -113,12 +122,63 @@ class MessageReactionsModel extends Equatable {
 extension MessageReactionsModelX on MessageReactionsModel {
   MessageReactionsEntity toEntity() => MessageReactionsEntity(
     messageId: messageId,
-    summaries: summaries.map((s) => s.toEntity()).toList(),
+    groups: groups.map((g) => g.toEntity()).toList(),
     emoji: emoji,
-    users: users.map((u) => u.toEntity()).toList(),
+    users: users,
     hasNext: hasNext,
     // Only meaningful while there is a next page; the backend already sends
     // `null` otherwise, but this makes a stale cursor impossible.
     nextUserId: hasNext ? nextUserId : null,
   );
+}
+
+/// `payload.reaction` of the `reaction_update` WS event — `ReactionUpdateWSDTO`
+/// (api-docs §6.7.6).
+///
+/// Modelled as a data-layer DTO rather than a `core/websocket` type for the
+/// same reason `MessageModel` is: the WS parser keeps the block as a raw JSON
+/// map so `core/` need not import `features/chat`, and the feature decodes it
+/// here with the same generated decoder it uses everywhere else.
+///
+/// ⚠️ [groups] is a **complete snapshot**, never a delta, and its
+/// `reacted_by_me` flags are always `false` (§6.7.6) — fold it in through
+/// `MessageReactionsEntity.applySnapshot`, which restores the local flags.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class ReactionUpdateModel extends Equatable {
+  final String messageId;
+  final String chatId;
+
+  /// Who caused the change. Compared against the signed-in user id to decide
+  /// whether the snapshot's own-membership beats the local optimistic flags —
+  /// see `applySnapshot`.
+  final int actorId;
+
+  /// `"add" | "remove" | "replace" | "update"` — see [ReactionAction].
+  final String action;
+
+  @JsonKey(defaultValue: <ReactionGroupModel>[])
+  final List<ReactionGroupModel> groups;
+
+  const ReactionUpdateModel({
+    required this.messageId,
+    required this.chatId,
+    required this.actorId,
+    required this.action,
+    required this.groups,
+  });
+
+  @override
+  List<Object?> get props => [messageId, chatId, actorId, action, groups];
+
+  factory ReactionUpdateModel.fromJson(Map<String, dynamic> json) =>
+      _$ReactionUpdateModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ReactionUpdateModelToJson(this);
+}
+
+extension ReactionUpdateModelX on ReactionUpdateModel {
+  ReactionAction get parsedAction => ReactionAction.fromWire(action);
+
+  List<ReactionGroupEntity> toGroups() =>
+      groups.map((g) => g.toEntity()).toList();
 }

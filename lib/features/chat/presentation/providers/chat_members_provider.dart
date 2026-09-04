@@ -44,7 +44,7 @@ class ChatMembersState extends Equatable {
   /// The caller's own membership — the "me" side of every permission check.
   ///
   /// ⚠️ Resolved from the loaded data, not from `chat.me`: this screen's chat
-  /// comes from `GET /chats/{id}/` (a `ChatDetaiDTO`), which has no `me` field
+  /// comes from `GET /chats/{id}/` (a `ChatDetailDTO`), which has no `me` field
   /// at all — the caller's row lives in `members` (api-docs §6.2). The
   /// paginated [members] list is consulted first because it is the freshest
   /// copy after a role change, then the chat's own embedded roster, which also

@@ -84,6 +84,8 @@ class ChatRepositoryImpl implements ChatRepository {
     bool? adminOnly,
     int? slowModeSeconds,
     Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
   }) async {
     final result = await _remote.updateChat(
       chatId,
@@ -93,6 +95,8 @@ class ChatRepositoryImpl implements ChatRepository {
       adminOnly: adminOnly,
       slowModeSeconds: slowModeSeconds,
       permissions: permissions,
+      reactionsMode: reactionsMode,
+      allowedReactions: allowedReactions,
     );
     return result.map((model) => model.toEntity());
   }
@@ -318,6 +322,19 @@ class ChatRepositoryImpl implements ChatRepository {
     String messageId,
     String emoji,
   ) => _remote.removeReaction(chatId, messageId, emoji);
+
+  @override
+  Future<Either<Failure, void>> replaceReactions(
+    String chatId,
+    String messageId,
+    List<String> emojis,
+  ) => _remote.replaceReactions(chatId, messageId, emojis);
+
+  @override
+  Future<Either<Failure, void>> clearReactions(
+    String chatId,
+    String messageId,
+  ) => _remote.clearReactions(chatId, messageId);
 
   @override
   Future<Either<Failure, MessageReactionsEntity>> getReactions(

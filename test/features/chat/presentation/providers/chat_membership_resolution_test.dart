@@ -10,7 +10,7 @@ import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 /// permission check depends on.
 ///
 /// The subtlety worth a test: `ChatDTO` (list/create/update) carries the
-/// caller's membership in `me`, while `ChatDetaiDTO` — the response of
+/// caller's membership in `me`, while `ChatDetailDTO` — the response of
 /// `GET /chats/{id}/`, which is what the detail and members screens load —
 /// has **no `me` field at all** and puts the caller's row in `members`
 /// (api-docs §6.2). Reading `chat.me` on those screens therefore always
@@ -34,7 +34,7 @@ void main() {
     permissionsOverrides: {},
   );
 
-  /// `ChatDetaiDTO` shape: `members` populated, `me` absent.
+  /// `ChatDetailDTO` shape: `members` populated, `me` absent.
   const tChatDetail = ChatEntity(
     id: 'a3f1c2d4-0000-4000-8000-000000000001',
     seqCounter: 9,

@@ -55,45 +55,37 @@ WSEvent parseWsEvent(Map<String, dynamic> raw) {
       'ws.ping' => _parsePing(raw),
       'ws.error' => _parseError(raw),
 
-      // ── Domain events (§7.4, revised). All of these now share the generic
-      // `MessagePayloadWS { chat, message }` envelope, so one generic decoder
-      // handles them all — see `_parseChatMessageEvent`.
-      'new_message' => _parseChatMessageEvent(raw, 'new_message', NewMessage.new),
-      'message_edited' => _parseChatMessageEvent(raw, 'message_edited', MessageEdited.new),
-      'message_deleted' => _parseChatMessageEvent(raw, 'message_deleted', MessageDeleted.new),
-      'messages_read' => _parseChatMessageEvent(raw, 'messages_read', MessagesRead.new),
+      // ── Domain events (§7.4). Each carries its own `payload.event` delta, so
+      // each gets its own decoder rather than one generic one — the delta is
+      // the whole point of the envelope, and a shared decoder could only hand
+      // consumers an untyped map back.
+      'new_message' => _parseNewMessage(raw),
+      'message_edited' => _parseMessageEdited(raw),
+      'message_deleted' => _parseMessageDeleted(raw),
+      'messages_read' => _parseMessagesRead(raw),
 
-      // Current short alias (api-docs §6.7.5, revised) plus the previous raw
-      // domain-event name, in case an older backend build is still fanning
-      // that one out — see `ReactionUpdated.legacyWireType`.
+      // Current short alias (§6.7.6) plus the raw domain-event name an older
+      // backend build fanned out — see `ReactionUpdated.legacyWireType`.
       ReactionUpdated.wireType ||
-      ReactionUpdated.legacyWireType => _parseChatMessageEvent(
-        raw,
-        ReactionUpdated.wireType,
-        ReactionUpdated.new,
-      ),
+      ReactionUpdated.legacyWireType => _parseReactionUpdated(raw),
 
-      'member_joined' => _parseChatMessageEvent(raw, 'member_joined', MemberJoined.new),
-      'member_left' => _parseChatMessageEvent(raw, 'member_left', MemberLeft.new),
-      'member_kick' => _parseChatMessageEvent(raw, 'member_kick', MemberKick.new),
-      'member_banned' => _parseChatMessageEvent(raw, 'member_banned', MemberBanned.new),
-      'chat_created' => _parseChatMessageEvent(raw, 'chat_created', ChatCreated.new),
-      'chat_updated' => _parseChatMessageEvent(raw, 'chat_updated', ChatUpdated.new),
-
-      // Unaffected by the §7.4 payload revision — its own `AttachmentSuccessPayload`
-      // shape (`user_id`/`chat_id`/`tokens`) is untouched.
-      'attachment_success' => _parseAttachmentSuccess(raw),
-
-      // Not currently defined in the backend's `WSEventType` enum at all
-      // (api-docs §7.4, revised) — see `ChatDeleted`'s class doc. Parsed
-      // defensively in case a future build adds it.
+      'member_joined' => _parseMemberJoined(raw),
+      'member_left' => _parseMemberLeft(raw),
+      'member_kick' => _parseMemberKick(raw),
+      'member_banned' => _parseMemberBanned(raw),
+      'chat_created' => _parseChatCreated(raw),
+      'chat_updated' => _parseChatUpdated(raw),
       'chat_deleted' => _parseChatDeleted(raw),
+
+      // ⚠️ The one domain event that does not use `MessagePayloadWS` — its
+      // payload is a flat `AttachmentSuccessPayload` (§7.4).
+      'attachment_success' => _parseAttachmentSuccess(raw),
 
       // ── Declared in the backend enum but never published (§7.4). Recognised
       // so they don't pollute the unknown-type logs, but intentionally inert.
       _ when WsUnimplementedEvent.types.contains(type) => WsUnimplementedEvent(
         type,
-        chatId: _asString(raw['chat_id']),
+        chatId: _chatIdOf(raw),
         payload: _payloadOf(raw),
       ),
 
@@ -259,65 +251,365 @@ WSEvent _parseError(Map<String, dynamic> raw) {
 }
 
 // ───────────────────────────── Domain events ─────────────────────────────
+//
+// Every decoder below reads the same `MessagePayloadWS` envelope (§7.4):
+//
+//   { type, channel, payload: { event_id, event_name, event, message,
+//                               reaction }, ts }
+//
+// `channel` carries the chat id; `payload.event` carries the delta. Each event
+// type has its own decoder because each has its own delta — that is the point
+// of the envelope. `attachment_success` is the sole exception and is decoded
+// separately at the bottom.
 
-/// Constructor shape shared by every [WSChatMessageEvent] subclass — a
-/// constructor tear-off like `NewMessage.new` matches this directly, so
-/// `_parseChatMessageEvent` can be handed the right one per wire type instead
-/// of duplicating the same decode logic eleven times.
-typedef _ChatMessageEventFactory =
-    WSChatMessageEvent Function({
-      required String chatId,
-      required Map<String, dynamic> chat,
-      required Map<String, dynamic> message,
-      String? eventName,
-      String? eventId,
-      DateTime? ts,
-    });
-
-/// Decodes the generic `MessagePayloadWS { chat, message }` envelope shared by
-/// `new_message`, `message_edited`, `message_deleted`, `messages_read`,
-/// `member_joined`, `member_left`, `member_kick`, `member_banned`,
-/// `chat_created`, `chat_updated` and `reaction_update` (api-docs §7.4,
-/// revised — see [WSChatMessageEvent]'s class doc for why these eleven
-/// converged on one shape).
+/// Envelope fields shared by every domain event, pulled out once.
 ///
-/// Both `chat` and `message` are required. Older, event-specific payloads
-/// could get away with fewer required fields (`messages_read` needed no
-/// `message` at all, conceptually) but the current backend implementation
-/// fetches both unconditionally for anything routed through
-/// `ChatDeliveryRouter`, so a frame missing either is not a smaller version of
-/// this event — it is not this event, and is surfaced as [WsUnknown] rather
-/// than decoded with a fabricated empty map that would crash the first
-/// `ChatModel.fromJson`/`MessageModel.fromJson` call downstream.
-WSEvent _parseChatMessageEvent(
-  Map<String, dynamic> raw,
-  String type,
-  _ChatMessageEventFactory create,
-) {
+/// A record rather than a class: it exists for the length of one decode and
+/// only spares the eleven decoders below from repeating four lookups each.
+({String chatId, String? eventName, String? eventId, DateTime? ts})?
+_envelopeOf(Map<String, dynamic> raw, String type) {
   final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown(type, raw, 'no chat_id');
-
-  final payload = _payloadOf(raw);
-  final chat = payload['chat'];
-  final message = payload['message'];
-
-  if (chat is! Map || message is! Map) {
-    return _unknown(type, raw, 'missing chat/message payload');
+  if (chatId == null) {
+    _unknown(type, raw, 'no channel/chat_id');
+    return null;
   }
 
-  return create(
+  final payload = _payloadOf(raw);
+  return (
     chatId: chatId,
-    chat: chat.cast<String, dynamic>(),
-    message: message.cast<String, dynamic>(),
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
+    // ⚠️ Both live inside `payload`, not on the envelope (§7.4). The top-level
+    // fallback is for older gateway builds that hoisted them, and costs
+    // nothing.
+    eventName: _asString(payload['event_name']) ?? _asString(raw['event_name']),
+    eventId: _asString(payload['event_id']) ?? _asString(raw['event_id']),
     ts: _asDate(raw['ts']),
   );
 }
 
+/// `payload.event` — the per-type delta, or an empty map when absent/mistyped.
+Map<String, dynamic> _deltaOf(Map<String, dynamic> raw) {
+  final event = _payloadOf(raw)['event'];
+  if (event is Map) return event.cast<String, dynamic>();
+  return const {};
+}
+
+/// `payload.message` — the full `MessageDTO`, or `null`.
+///
+/// `null` is the **normal** case: only `new_message` and `message_edited`
+/// carry one (§7.4). Kept as a raw map so `core/` need not import
+/// `features/chat`'s `MessageModel` — see [NewMessage.message].
+Map<String, dynamic>? _messageOf(Map<String, dynamic> raw) {
+  final message = _payloadOf(raw)['message'];
+  if (message is Map) return message.cast<String, dynamic>();
+  return null;
+}
+
+WSEvent _parseNewMessage(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'new_message');
+  if (envelope == null) return WsUnknown(type: 'new_message', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final messageId = _asString(delta['message_id']);
+  if (messageId == null) return _unknown('new_message', raw, 'no message_id');
+
+  // The full DTO is the *point* of this event (§7.4) — a `new_message` without
+  // one cannot be rendered, and fabricating an empty map would only crash the
+  // first `MessageModel.fromJson` downstream.
+  final message = _messageOf(raw);
+  if (message == null) return _unknown('new_message', raw, 'no message');
+
+  return NewMessage(
+    chatId: envelope.chatId,
+    messageId: messageId,
+    seq: _asInt(delta['seq']),
+    senderId: _asInt(delta['sender_id']),
+    messageType: _asString(delta['message_type']),
+    message: message,
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMessageEdited(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'message_edited');
+  if (envelope == null) return WsUnknown(type: 'message_edited', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final messageId = _asString(delta['message_id']);
+  if (messageId == null) {
+    return _unknown('message_edited', raw, 'no message_id');
+  }
+
+  // Same reasoning as `new_message`: the post-edit DTO is what makes this
+  // event actionable without a refetch.
+  final message = _messageOf(raw);
+  if (message == null) return _unknown('message_edited', raw, 'no message');
+
+  return MessageEdited(
+    chatId: envelope.chatId,
+    messageId: messageId,
+    seq: _asInt(delta['seq']),
+    modifiedBy: _asInt(delta['modified_by']),
+    message: message,
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMessageDeleted(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'message_deleted');
+  if (envelope == null) return WsUnknown(type: 'message_deleted', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final messageId = _asString(delta['message_id']);
+  if (messageId == null) {
+    return _unknown('message_deleted', raw, 'no message_id');
+  }
+
+  // ⚠️ No `message` expected here — §7.4 sends `null`, since the row is gone.
+  return MessageDeleted(
+    chatId: envelope.chatId,
+    messageId: messageId,
+    seq: _asInt(delta['seq']),
+    deletedBy: _asInt(delta['deleted_by']),
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMessagesRead(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'messages_read');
+  if (envelope == null) return WsUnknown(type: 'messages_read', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final seq = _asInt(delta['seq']);
+  final readerId = _asInt(delta['reader_id']);
+
+  // Both are load-bearing: without `seq` there is no position to move to, and
+  // without `reader_id` the receipt cannot be attributed — and misattributing
+  // a peer's read as our own would wrongly clear the unread badge.
+  if (seq == null || readerId == null) {
+    return _unknown('messages_read', raw, 'missing seq/reader_id');
+  }
+
+  return MessagesRead(
+    chatId: envelope.chatId,
+    seq: seq,
+    readerId: readerId,
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseReactionUpdated(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, ReactionUpdated.wireType);
+  if (envelope == null) {
+    return WsUnknown(type: ReactionUpdated.wireType, raw: raw);
+  }
+
+  final delta = _deltaOf(raw);
+  final payload = _payloadOf(raw);
+
+  // ⚠️ The snapshot lives in `payload.reaction`, *beside* the delta — not in
+  // `payload.message`, which is null for this event (§6.7.6).
+  final reaction = payload['reaction'];
+  if (reaction is! Map) {
+    return _unknown(ReactionUpdated.wireType, raw, 'no reaction snapshot');
+  }
+  final reactionMap = reaction.cast<String, dynamic>();
+
+  // `event.message_id` is the documented home; the snapshot repeats it, which
+  // is the fallback for a build that only fills one of the two.
+  final messageId =
+      _asString(delta['message_id']) ?? _asString(reactionMap['message_id']);
+  if (messageId == null) {
+    return _unknown(ReactionUpdated.wireType, raw, 'no message_id');
+  }
+
+  return ReactionUpdated(
+    chatId: envelope.chatId,
+    messageId: messageId,
+    actorId: _asInt(delta['actor_id']) ?? _asInt(reactionMap['actor_id']),
+    action: _asString(delta['action']) ?? _asString(reactionMap['action']),
+    reaction: reactionMap,
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMemberJoined(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'member_joined');
+  if (envelope == null) return WsUnknown(type: 'member_joined', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final userId = _asInt(delta['user_id']);
+  if (userId == null) return _unknown('member_joined', raw, 'no user_id');
+
+  return MemberJoined(
+    chatId: envelope.chatId,
+    userId: userId,
+    roleId: _asInt(delta['role_id']),
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMemberLeft(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'member_left');
+  if (envelope == null) return WsUnknown(type: 'member_left', raw: raw);
+
+  final userId = _asInt(_deltaOf(raw)['user_id']);
+  // Essential: "who left" is the only thing separating "drop this chat" from
+  // "decrement a counter" (see `MemberLeft`'s class doc).
+  if (userId == null) return _unknown('member_left', raw, 'no user_id');
+
+  return MemberLeft(
+    chatId: envelope.chatId,
+    userId: userId,
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMemberKick(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'member_kick');
+  if (envelope == null) return WsUnknown(type: 'member_kick', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final targetUserId = _asInt(delta['target_user_id']);
+  if (targetUserId == null) {
+    return _unknown('member_kick', raw, 'no target_user_id');
+  }
+
+  return MemberKick(
+    chatId: envelope.chatId,
+    targetUserId: targetUserId,
+    requesterId: _asInt(delta['requester_id']),
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseMemberBanned(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'member_banned');
+  if (envelope == null) return WsUnknown(type: 'member_banned', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final targetUserId = _asInt(delta['target_user_id']);
+  if (targetUserId == null) {
+    return _unknown('member_banned', raw, 'no target_user_id');
+  }
+
+  return MemberBanned(
+    chatId: envelope.chatId,
+    targetUserId: targetUserId,
+    // ⚠️ Defaults to `true`, not `false`: this event covers both directions
+    // (§7.4), and treating a malformed frame as an *unban* would silently
+    // restore access the server has revoked. Erring towards "banned" is the
+    // safe direction — the next chat fetch corrects it either way.
+    ban: _asBool(delta['ban']) ?? true,
+    requesterId: _asInt(delta['requester_id']),
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseChatCreated(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'chat_created');
+  if (envelope == null) return WsUnknown(type: 'chat_created', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final memberIds = delta['member_ids'];
+
+  return ChatCreated(
+    chatId: envelope.chatId,
+    createdBy: _asInt(delta['created_by']),
+    name: _asString(delta['name']),
+    chatType: _asString(delta['chat_type']),
+    memberIds: memberIds is List
+        ? [
+            for (final id in memberIds)
+              if (_asInt(id) case final int value) value,
+          ]
+        : const [],
+    memberCount: _asInt(delta['member_count']),
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseChatUpdated(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'chat_updated');
+  if (envelope == null) return WsUnknown(type: 'chat_updated', raw: raw);
+
+  final delta = _deltaOf(raw);
+  final permissions = delta['permissions'];
+  final allowed = delta['allowed_reactions'];
+
+  // ⚠️ Every field stays nullable and no default is invented. A `null` here
+  // means "not part of this change" (§6.2 — PATCH cannot null a field out), so
+  // substituting `false`/`0`/`{}` would turn "untouched" into a real edit and
+  // silently reset the chat's settings locally.
+  return ChatUpdated(
+    chatId: envelope.chatId,
+    updatedBy: _asInt(delta['updated_by']),
+    name: _asString(delta['name']),
+    description: _asString(delta['description']),
+    isPublic: _asBool(delta['is_public']),
+    adminOnly: _asBool(delta['admin_only']),
+    slowModeSeconds: _asInt(delta['slow_mode_seconds']),
+    permissions: permissions is Map
+        ? {
+            for (final entry in permissions.entries)
+              if (_asBool(entry.value) case final bool value)
+                '${entry.key}': value,
+          }
+        : null,
+    reactionsMode: _asString(delta['reactions_mode']),
+    allowedReactions: allowed is List
+        ? [
+            for (final emoji in allowed)
+              if (_asString(emoji) case final String value) value,
+          ]
+        : null,
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+WSEvent _parseChatDeleted(Map<String, dynamic> raw) {
+  final envelope = _envelopeOf(raw, 'chat_deleted');
+  if (envelope == null) return WsUnknown(type: 'chat_deleted', raw: raw);
+
+  return ChatDeleted(
+    chatId: envelope.chatId,
+    deletedBy: _asInt(_deltaOf(raw)['deleted_by']),
+    eventName: envelope.eventName,
+    eventId: envelope.eventId,
+    ts: envelope.ts,
+  );
+}
+
+/// ⚠️ The one domain event with a different payload shape (§7.4): a flat
+/// `AttachmentSuccessPayload { user_id, chat_id, tokens }` with no `event`
+/// block — so the fields are read from `payload` directly, and `chat_id` lives
+/// there rather than only in `channel`.
 WSEvent _parseAttachmentSuccess(Map<String, dynamic> raw) {
   final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('attachment_success', raw, 'no chat_id');
+  if (chatId == null) {
+    return _unknown('attachment_success', raw, 'no channel/chat_id');
+  }
 
   final payload = _payloadOf(raw);
   final tokens = payload['tokens'];
@@ -331,21 +623,8 @@ WSEvent _parseAttachmentSuccess(Map<String, dynamic> raw) {
               if (_asString(token) case final String value) value,
           ]
         : const [],
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
-    ts: _asDate(raw['ts']),
-  );
-}
-
-WSEvent _parseChatDeleted(Map<String, dynamic> raw) {
-  final chatId = _chatIdOf(raw);
-  if (chatId == null) return _unknown('chat_deleted', raw, 'no chat_id');
-
-  return ChatDeleted(
-    chatId: chatId,
-    deletedBy: _asInt(_payloadOf(raw)['deleted_by']) ?? 0,
-    eventName: _asString(raw['event_name']),
-    eventId: _asString(raw['event_id']),
+    eventName: _asString(payload['event_name']) ?? _asString(raw['event_name']),
+    eventId: _asString(payload['event_id']) ?? _asString(raw['event_id']),
     ts: _asDate(raw['ts']),
   );
 }
@@ -367,13 +646,22 @@ Map<String, dynamic> _payloadOf(Map<String, dynamic> raw) {
   return const {};
 }
 
-/// Resolves the chat id from the envelope, falling back to `payload.chat_id`.
+/// Resolves the chat id a frame is about.
 ///
-/// §7.4 puts `chat_id` on the envelope but *also* repeats it inside the payload
-/// of most domain events; the two are checked in that order so either shape
-/// works. `null` means neither was present — an unroutable frame.
+/// Three sources, in order, because the protocol genuinely uses three:
+///
+/// * **`channel`** — where domain events carry it (§7.4). The delta never
+///   repeats it, so for those this is the only source.
+/// * **`chat_id`** — where the service frames (`ws.subscribed`,
+///   `ws.unsubscribed`, `ws.history`) carry it.
+/// * **`payload.chat_id`** — `attachment_success`, whose payload is a flat
+///   `AttachmentSuccessPayload` that includes it.
+///
+/// `null` means none was present — an unroutable frame.
 String? _chatIdOf(Map<String, dynamic> raw) {
-  return _asString(raw['chat_id']) ?? _asString(_payloadOf(raw)['chat_id']);
+  return _asString(raw['channel']) ??
+      _asString(raw['chat_id']) ??
+      _asString(_payloadOf(raw)['chat_id']);
 }
 
 String? _asString(Object? value) => value is String ? value : null;

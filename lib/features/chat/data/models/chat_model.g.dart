@@ -34,6 +34,12 @@ ChatModel _$ChatModelFromJson(Map<String, dynamic> json) => ChatModel(
         (k, e) => MapEntry(k, e as bool),
       ) ??
       {},
+  reactionsMode: json['reactions_mode'] as String? ?? 'all',
+  allowedReactions:
+      (json['allowed_reactions'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
   createdBy: (json['created_by'] as num).toInt(),
   memberCount: (json['member_count'] as num).toInt(),
   unreadCount: (json['unread_count'] as num?)?.toInt(),
@@ -63,6 +69,8 @@ Map<String, dynamic> _$ChatModelToJson(ChatModel instance) => <String, dynamic>{
   'admin_only': instance.adminOnly,
   'slow_mode_seconds': instance.slowModeSeconds,
   'permissions': instance.permissions,
+  'reactions_mode': instance.reactionsMode,
+  'allowed_reactions': instance.allowedReactions,
   'created_by': instance.createdBy,
   'member_count': instance.memberCount,
   'unread_count': instance.unreadCount,

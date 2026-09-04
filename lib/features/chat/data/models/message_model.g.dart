@@ -16,7 +16,7 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
   replyToId: json['reply_to_id'] as String?,
   forwardedFromChatId: json['forwarded_from_chat_id'] as String?,
   forwardedFromMessageId: json['forwarded_from_message_id'] as String?,
-  forwardedFromAuthorId: json['forwarded_from_author_id'] as int?,
+  forwardedFromAuthorId: (json['forwarded_from_author_id'] as num?)?.toInt(),
   isEdited: json['is_edited'] as bool,
   createdAt: json['created_at'] as String,
   attachments:
@@ -33,6 +33,11 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
   profile: json['profile'] == null
       ? null
       : ChatProfileModel.fromJson(json['profile'] as Map<String, dynamic>),
+  reactions:
+      (json['reactions'] as List<dynamic>?)
+          ?.map((e) => ReactionGroupModel.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
@@ -52,6 +57,7 @@ Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
       'attachments': instance.attachments,
       'reply_to': instance.replyTo,
       'forwarded_from': instance.forwardedFrom,
+      'reactions': instance.reactions,
       'profile': instance.profile,
     };
 

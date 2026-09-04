@@ -113,6 +113,50 @@ class ChatSocketService {
   /// live sockets would burn the user's 2-connection budget on one device.
   bool _connecting = false;
 
+  // ───────────────────────────── Deduplication ─────────────────────────────
+
+  /// Recently seen `payload.event_id`s, newest last.
+  ///
+  /// Delivery is **at-least-once** (§7.4): the gateway reads from a Redis
+  /// stream and `xautoclaim` re-delivers records a crashed gateway left
+  /// unacknowledged, so the same frame legitimately arrives twice. Without
+  /// this, a redelivered `new_message` would double-post a bubble and a
+  /// redelivered `member_joined` would double-count the roster.
+  ///
+  /// Kept here rather than in each controller for two reasons: the duplicate
+  /// is a *transport* artefact, not a domain event anyone should have to
+  /// reason about; and several controllers watch the same stream, so N
+  /// independent dedup caches would each have to be correct.
+  ///
+  /// A [LinkedHashSet] gives insertion order for eviction and O(1) lookup. It
+  /// is bounded — an unbounded set on a long-lived socket is a slow leak — and
+  /// evicting the oldest is safe: redeliveries follow within seconds, so an
+  /// id old enough to be evicted is old enough not to recur.
+  final Set<String> _seenEventIds = <String>{};
+
+  /// How many event ids to remember. Comfortably more than one `xautoclaim`
+  /// batch, small enough to be free.
+  static const int _seenEventIdsLimit = 512;
+
+  /// Whether [event] has already been delivered, recording it if not.
+  ///
+  /// Events without an `event_id` are never treated as duplicates: no key
+  /// means no way to tell a redelivery from a genuine second event, and
+  /// dropping a real one is far worse than showing a rare duplicate.
+  bool _isDuplicate(WSEvent event) {
+    if (event is! WSDomainEvent) return false;
+
+    final id = event.eventId;
+    if (id == null || id.isEmpty) return false;
+
+    if (!_seenEventIds.add(id)) return true;
+
+    if (_seenEventIds.length > _seenEventIdsLimit) {
+      _seenEventIds.remove(_seenEventIds.first);
+    }
+    return false;
+  }
+
   // ───────────────────────────── Subscriptions ─────────────────────────────
 
   /// Chats the UI currently cares about, in **least-recently-used order**
@@ -305,6 +349,9 @@ class ChatSocketService {
 
     _subscribedChatIds.clear();
     _cursors.clear();
+    // Same reasoning as the cursor map: ids from another account's session
+    // must never suppress a real event after a user switch.
+    _seenEventIds.clear();
 
     await _closeChannel(ws_status.normalClosure);
     _setStatus(ChatSocketStatus.disconnected);
@@ -408,6 +455,17 @@ class ChatSocketService {
   void _onFrame(dynamic frame) {
     final event = parseWsFrame(frame);
 
+    // ⚠️ Before any bookkeeping: a redelivered frame must not advance cursors
+    // either, or a duplicate `new_message` would move `last_seq` twice and the
+    // next `resume` would skip a message.
+    if (_isDuplicate(event)) {
+      Logger.debug(
+        'ChatSocket: dropped duplicate ${event.type} '
+        '(event_id ${(event as WSDomainEvent).eventId})',
+      );
+      return;
+    }
+
     // Protocol bookkeeping happens before publishing, so that a listener
     // reacting to `ws.ready` already sees the correct heartbeat values and a
     // listener reacting to `new_message` sees an up-to-date cursor.
@@ -451,35 +509,22 @@ class ChatSocketService {
         // a log line precisely because §7.4 says it should not happen.
         Logger.info('ChatSocket: received unpublished event "${event.type}"');
 
-      case NewMessage():
-        // `event.messageSeq` reads `payload.message.seq` (api-docs §7.4,
-        // revised) — nullable now only if the embedded `MessageDTO` itself was
-        // malformed, which the parser already tolerates rather than dropping
-        // the whole frame.
-        if (event.messageSeq case final int seq) {
-          _advanceCursor(event.chatId, seq);
-        }
-
-      case MessageEdited():
-        if (event.messageSeq case final int seq) {
-          _advanceCursor(event.chatId, seq);
-        }
-
-      case MessageDeleted():
-        if (event.messageSeq case final int seq) {
+      // The three events that name a message carry `payload.event.seq` (§7.4),
+      // which is a genuine delivery position — so each advances the chat's
+      // resume cursor.
+      case WSMessageEvent():
+        if (event.seq case final int seq) {
           _advanceCursor(event.chatId, seq);
         }
 
       // No cursor bookkeeping; forwarded straight to consumers.
       //
-      // `MessagesRead` and `ReactionUpdated` land here for the same reason:
-      // `event.messageSeq` on either one names a message that was merely
-      // *read* or *reacted to* — not necessarily the newest one delivered —
-      // so treating it as a delivery position could, in principle, advance the
-      // cursor past messages that were never actually received. The
-      // member/chat-lifecycle events below carry a `message` purely as an
-      // artefact of the shared envelope (api-docs §7.4, revised) and have no
-      // delivery position to speak of at all.
+      // `MessagesRead` is excluded deliberately even though it carries a
+      // `seq`: that seq is how far someone has *read*, which may be far behind
+      // the newest message delivered. Treating it as a delivery position would
+      // move the cursor backwards. `ReactionUpdated` names a message but has
+      // no seq at all — reacting to an old message says nothing about
+      // delivery. The member/chat-lifecycle events have no position either.
       case MessagesRead():
       case ReactionUpdated():
       case MemberJoined():

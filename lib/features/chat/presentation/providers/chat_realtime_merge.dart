@@ -1,17 +1,18 @@
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 /// The **pure** merge rules for folding WebSocket events into local state
 /// (api-docs §7.4/§7.5, §10.5).
 ///
 /// Everything here is a plain function over immutable values: no Riverpod, no
-/// `ref`, no HTTP, no sockets, and — since the §7.4 payload revision — no
-/// `WSEvent` types either. Controllers decode the event's raw `chat`/`message`
-/// JSON (`WSChatMessageEvent`) into `ChatEntity`/`MessageEntity` first, using
-/// the same `ChatModel.fromJson`/`MessageModel.fromJson` REST already relies
-/// on, and hand the decoded entities in here. That keeps this file testable
-/// with plain entities and keeps the "which WS event means what" knowledge in
-/// one place (the controllers), rather than split across two layers.
+/// `ref`, no HTTP, no sockets, and no `WSEvent` types. Controllers unwrap an
+/// event first — decoding `payload.message` with `MessageModel.fromJson` where
+/// there is one (`new_message`, `message_edited`), and passing the
+/// `payload.event` delta's fields through where there isn't — then hand plain
+/// values in here. That keeps this file testable with plain entities and keeps
+/// the "which WS event means what" knowledge in one place (the controllers),
+/// rather than split across two layers.
 ///
 /// ## Why the rules are not inlined into the controllers
 ///
@@ -137,8 +138,8 @@ abstract final class ChatRealtimeMerge {
   /// a chat that is *not* currently on screen.
   ///
   /// Deliberately does **not** need to fetch anything itself: [message] is
-  /// already the full decoded `MessageDTO` from the event (api-docs §7.4,
-  /// revised), and this only reads its [MessageEntity.seq] to advance
+  /// already the full decoded `MessageDTO` from the event (api-docs §7.4),
+  /// and this only reads its [MessageEntity.seq] to advance
   /// [ChatEntity.seqCounter]. The list still never renders the body — a
   /// preview would need `last_message` refreshed too, which is a product
   /// decision left to the caller, not forced here.
@@ -175,49 +176,103 @@ abstract final class ChatRealtimeMerge {
     );
   }
 
-  /// Applies a `chat_updated` event (§7.4).
+  /// Applies a `chat_updated` delta to a locally-held row (§7.4).
   ///
-  /// [updated] is the full new `ChatDTO` decoded from the event's `chat` field
-  /// — [chat] is the locally-held row before the update.
+  /// The event's `payload.event` is exactly the set of settings that changed —
+  /// it mirrors `UpdateChatRequest` (§6.2) plus the reaction settings of
+  /// §6.7.5 — so the parameters here are that delta, one for one, and nothing
+  /// else about the chat is touched.
   ///
-  /// Only the **settings** fields (`name`, `description`, `avatar_s3_key`,
-  /// `is_public`, `admin_only`, `slow_mode_seconds`, `permissions`) are taken
-  /// from [updated]; everything personalised to the viewer
-  /// ([ChatEntity.unreadCount], [ChatEntity.me], [ChatEntity.lastRead],
-  /// [ChatEntity.lastMessage], [ChatEntity.members]) is kept from [chat]
-  /// instead. This is deliberate, not an oversight: `chat_updated`'s embedded
-  /// `ChatDTO` is built once by `ChatDeliveryRouter` and fanned out to every
-  /// recipient of the broadcast (api-docs §7.4, revised), with no documented
-  /// guarantee that fields like `me`/`unread_count` are recomputed per
-  /// recipient. Trusting them here risks silently overwriting a correct,
-  /// personal read cursor with a stranger's (or a default/null) one.
+  /// ⚠️ **`null` means "not part of this change", never "cleared".**
+  /// `PATCH /chats/{chat_id}/` is a true partial update with no way to null a
+  /// field back out (§6.2), so a `null` in the delta can only mean the field
+  /// was left alone — hence `??` throughout. This is the opposite of the rule
+  /// that applied when this event carried a whole `ChatDTO` snapshot, where a
+  /// `null` name had to be assigned to avoid a cleared name sticking on screen.
+  /// With a delta the ambiguity is gone.
   ///
-  /// ⚠️ `name`/`description` being `null` on [updated] is still ambiguous
-  /// between "cleared" and "this snapshot just doesn't carry it" — assigned
-  /// directly (not through `copyWith`'s "null means unchanged" parameters)
-  /// because the alternative would make a genuinely cleared description stick
-  /// around on screen forever.
-  static ChatEntity applyChatUpdated(ChatEntity chat, ChatEntity updated) {
-    return ChatEntity(
-      id: chat.id,
-      seqCounter: chat.seqCounter,
-      lastActivityAt: chat.lastActivityAt,
-      type: chat.type,
-      name: updated.name,
-      description: updated.description,
-      avatarS3Key: updated.avatarS3Key,
-      isPublic: updated.isPublic,
-      adminOnly: updated.adminOnly,
-      slowModeSeconds: updated.slowModeSeconds,
-      permissions: updated.permissions,
-      createdBy: chat.createdBy,
-      memberCount: chat.memberCount,
-      unreadCount: chat.unreadCount,
-      me: chat.me,
-      lastRead: chat.lastRead,
-      lastMessage: chat.lastMessage,
-      members: chat.members,
+  /// Nothing personalised to the viewer ([ChatEntity.unreadCount],
+  /// [ChatEntity.me], [ChatEntity.lastRead], [ChatEntity.lastMessage],
+  /// [ChatEntity.members]) can be affected, because the delta simply does not
+  /// contain those fields — the event is a broadcast and they are per-viewer.
+  static ChatEntity applyChatUpdated(
+    ChatEntity chat, {
+    String? name,
+    String? description,
+    bool? isPublic,
+    bool? adminOnly,
+    int? slowModeSeconds,
+    Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
+  }) {
+    return chat.copyWith(
+      name: name,
+      description: description,
+      isPublic: isPublic,
+      adminOnly: adminOnly,
+      slowModeSeconds: slowModeSeconds,
+      permissions: permissions,
+      reactionsMode: reactionsMode,
+      allowedReactions: allowedReactions,
     );
+  }
+
+  /// Applies a `reaction_update` snapshot to the message it names (§6.7.6).
+  ///
+  /// [groups] is the **complete current set** of reaction groups for
+  /// [messageId], so this replaces rather than accumulates — but it goes
+  /// through [MessageReactionsEntity.applySnapshot] rather than assigning
+  /// directly, for two reasons spelled out there: the broadcast snapshot's
+  /// `reacted_by_me` is always `false` and must not clobber the local flags,
+  /// and a coalesced/at-least-once frame can arrive out of order and is
+  /// rejected per group by `version`.
+  ///
+  /// [actorId] and [myUserId] let the one case that carry-over gets wrong —
+  /// our own reaction made on another device — be resolved from the snapshot.
+  ///
+  /// A no-op when [messageId] isn't loaded: reactions on a message scrolled
+  /// out of the window will be correct when it is fetched, since
+  /// `MessageDTO.reactions` carries them inline (§6.4).
+  static List<MessageEntity> applyReactionSnapshot(
+    List<MessageEntity> messages,
+    String messageId,
+    List<ReactionGroupEntity> groups, {
+    int? actorId,
+    int? myUserId,
+  }) {
+    return [
+      for (final message in messages)
+        if (message.id == messageId)
+          message.copyWith(
+            reactions: message.reactionSummary
+                .applySnapshot(groups, actorId: actorId, myUserId: myUserId)
+                .groups,
+          )
+        else
+          message,
+    ];
+  }
+
+  /// Replaces one message's reaction groups outright — the optimistic path.
+  ///
+  /// Separate from [applyReactionSnapshot] because the two have opposite
+  /// trust models: there the server's snapshot is authoritative about counts
+  /// and the local state is authoritative about "mine"; here the caller has
+  /// just computed both locally (`addMine`/`removeMine`/`replaceMine`) and
+  /// wants them stored verbatim, including the rollback case.
+  static List<MessageEntity> setReactionGroups(
+    List<MessageEntity> messages,
+    String messageId,
+    List<ReactionGroupEntity> groups,
+  ) {
+    return [
+      for (final message in messages)
+        if (message.id == messageId)
+          message.copyWith(reactions: groups)
+        else
+          message,
+    ];
   }
 
   /// Re-orders [chats] by `last_activity_at`, newest first — the order
@@ -253,16 +308,13 @@ abstract final class ChatRealtimeMerge {
     return chats.where((c) => c.id != chatId).toList();
   }
 
-  /// Applies a member-count delta from `member_joined` (§7.4).
+  /// Applies a member-count delta from a membership event (§7.4).
   ///
-  /// ⚠️ No longer used for `member_left`/`member_kick`/`member_banned`: those
-  /// three lost their `user_id`/`target_user_id` fields in the §7.4 payload
-  /// revision, so a consumer can no longer tell locally whether the departing
-  /// member was *us* (drop the whole row) or someone else (just decrement).
-  /// `ChatListController`/`ChatDetailController` now re-fetch the chat for all
-  /// three instead — see `WSChatMessageEvent`'s class doc. `member_joined`
-  /// keeps the cheap local increment because it never needed that identity: a
-  /// join always means "count + 1" regardless of who joined.
+  /// Used for all four — `member_joined` (+1), `member_left`, `member_kick`
+  /// and `member_banned` with `ban: true` (−1) — because each of those carries
+  /// the affected `user_id`/`target_user_id` in its delta, so the controller
+  /// can decide locally whether it was *us* (drop the row entirely) or someone
+  /// else (adjust the count) without a refetch.
   ///
   /// Clamped at zero: a duplicated leave event must not render "-1 members".
   static List<ChatEntity> adjustMemberCount(
@@ -274,7 +326,10 @@ abstract final class ChatRealtimeMerge {
       for (final c in chats)
         if (c.id == chatId)
           c.copyWith(
-            memberCount: (c.memberCount + delta).clamp(0, c.memberCount + 1),
+            // Lower bound only. The old upper bound of `memberCount + 1`
+            // silently swallowed any delta larger than one; the count can only
+            // ever move by ±1 per event, so the meaningful guard is the floor.
+            memberCount: (c.memberCount + delta) < 0 ? 0 : c.memberCount + delta,
           )
         else
           c,
