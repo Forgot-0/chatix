@@ -16,7 +16,7 @@
 - [5. Чаты — REST (`/chats`)](#5-чаты--rest)
 - [6. Чаты — WebSocket (`/chats/ws/`)](#6-чаты--websocket)
 - [7. Уведомления (`/devices`, `/notifications`)](#7-уведомления)
-- [8. Сводка ролей и прав (chat + project + system)](#8-сводка-ролей-и-прав)
+- [8. Сводка ролей и прав (chat + system)](#8-сводка-ролей-и-прав)
 - [9. Гайд по реализации на Flutter](#9-гайд-по-реализации-на-flutter)
 
 ---
@@ -33,7 +33,6 @@
 | 4 | **`POST /auth/login/`** использует `OAuth2PasswordRequestForm` → тело запроса **`application/x-www-form-urlencoded`**, поля называются `username` и `password` (не `email`!). JSON туда слать нельзя, FastAPI вернёт 422. |
 | 5 | **Refresh-токен** никогда не приходит и не уходит в JSON. Сервер кладёт его в **HttpOnly-cookie** `refresh_token` (`Secure=true`, `SameSite=strict`, `Path=/`). `POST /auth/refresh/` читает его из cookie автоматически. Подробности и последствия для мобильного/веб-клиента — в разделе 9. |
 | 6 | **Время жизни access-токена** — `ACCESS_TOKEN_EXPIRE_MINUTES = 5`. Клиенту обязателен агрессивный proactive-refresh или retry-on-401 механизм. Refresh-токен живёт 60 дней. |
-| 7 | **`GET /projects/invites/my/`** физически зарегистрирован в `app/projects/routes/v1/profiles.py`, который подключён с префиксом `/profiles`. Реальный путь — **`GET /api/v1/profiles/invites/my/`**, а не `/projects/invites/my/`. |
 | 8 | **`POST /profiles/` не существует.** Профиль создаётся автоматически бэкендом через Kafka-consumer сразу после `POST /users/register/` (слушает топик `users`). Между регистрацией и появлением профиля возможна небольшая задержка (eventual consistency) — `GET /profiles/{id}/` может на короткое время вернуть 404 сразу после регистрации. |
 | 9 | **Аватар профиля**: `avatars: { "32"\|"64"\|"256"\|"512": { "jpg": url, "webp": url, "avif": url } }` — 4 размера × 3 формата на размер. См. раздел 4.5. |
 | 10 | **Загрузка аватара — presigned PUT**, тем же механизмом, что и вложения чата (раздел 6.5), но валидация типа/размера файла происходит **асинхронно**, уже после подтверждения загрузки — `POST /profiles/avatar/upload_complete/` всегда отвечает `200 OK`, даже если файл в итоге окажется невалидным и аватар не обновится. См. раздел 4.5. |
@@ -80,7 +79,7 @@ Authorization: Bearer <access_token>
 
 ### 1.5 Пагинация (offset/page-based) — `PageResult<T>`
 
-Используется в большинстве списковых эндпоинтов (профили, проекты, позиции, заявки, роли/права/сессии auth, project_roles, уведомления):
+Используется в большинстве списковых эндпоинтов (профили, роли/права/сессии auth, уведомления):
 
 ```ts
 interface PageResult<T> {
@@ -109,7 +108,7 @@ Query-параметры запроса, общие почти для всех �
 
 ### 1.8 UUID и числовые ID
 
-- `user_id`, `project_id`, `notification_id`, `role_id` (система/чат/проект), `permission.id`, `session.id` — целые числа (`int`, некоторые `bigint`).
+- `user_id`, `notification_id`, `role_id` (система/чат/проект), `permission.id`, `session.id` — целые числа (`int`, некоторые `bigint`).
 - `chat_id`, `message_id`, `attachment_id`, `position_id`, `application_id`, `upload_token` — UUID-строки.
 
 ### 1.9 Даты
@@ -209,26 +208,7 @@ interface ErrorResponse {
 
 ⚠️ Оба кода выше возникают **асинхронно**, внутри фоновой задачи обработки аватара — они не приходят как HTTP-ответ ни на `/avatar/presign/`, ни на `/avatar/upload_complete/` (оба всегда отвечают `200`, если запрос сам по себе корректен). См. раздел 4.5.
 
-### 2.6 Коды модуля `projects` (`/projects`, `/positions`, `/applications`, `/project_roles`)
-
-| code | HTTP | detail |
-|---|---|---|
-| `NOT_FOUND_PROJECT` | 404 | `{ "project_id": number }` |
-| `NOT_FOUND_POSITION` | 404 | `{ "position_id": string }` |
-| `NOT_FOUND_MEMBER` | 404 | `{ "member_id": number }` |
-| `ALREADY_MEMBER` | 409 | `{}` |
-| `NOT_PENDING_APPLICATION` | 409 | `{}` — заявка уже обработана |
-| `TOO_LONG_TAG_NAME` | 400 | `{ "tag_name": string }` |
-| `TOO_LONG_NAME` | 400 | `{ "name": string }` |
-| `NOT_VALID_MEMBER_STATUS` | 404 | `{ "status": string, "action": string }` |
-| `NOT_FOUND_PROJECT_ROLE` | 404 | `{ "role_id": number }` |
-| `ROLE_ALREADY_EXISTS` | 409 | `{ "name": string }` |
-| `MAX_PROJECTS_LIMIT_EXCEEDED` | 400 | `{ "owner_id": number, "limit": number }` — лимит 3 проекта на пользователя |
-| `MAX_POSITIONS_PER_PROJECT_LIMIT_EXCEEDED` | 400 | `{ "project_id": number, "limit": number }` — лимит 5 позиций на проект |
-| `ALREADY_EXISTS` | 409 | `{ "slug": string }` — слаг проекта занят |
-| `PROJECT_ACCESS_DENIED` | 403 | `{}` — не хватает прав в проекте |
-
-### 2.7 Коды модуля `chats`
+### 2.6 Коды модуля `chats`
 
 | code | HTTP | detail |
 |---|---|---|
@@ -263,7 +243,7 @@ interface ErrorResponse {
 
 ⚠️ `ATTACHMENT_MEDIA_VALIDATION` (класс `AttachmentMediaValidationError`) в этой таблице **намеренно не указан** — он никогда не долетает до HTTP-ответа: возникает только внутри фонового воркера `ProccessAttachmentsCommandHandler` (см. 6.5), там же перехватывается и сворачивается в `attachment_status: "error"`. Клиенту как код ошибки API не отдаётся.
 
-### 2.8 Коды модуля `notifications`
+### 2.7 Коды модуля `notifications`
 
 | code | HTTP | detail |
 |---|---|---|
@@ -1143,7 +1123,7 @@ gateway), поэтому один и тот же кадр может прийт�
 ```ts
 interface NotificationDTO {
   id: number; user_id: number;
-  type: "system" | "project" | "chat";
+  type: "system" | "chat";
   title: string;
   message: string | null;
   payload: Record<string, unknown>;   // произвольная структура, зависит от type (например для чата может содержать chat_id/message_id — конкретная схема на бэке не типизирована жёстко, обрабатывать defensively)
@@ -1199,28 +1179,7 @@ interface NotificationDTO {
 
 Значения из `chat.permissions` (поле `ChatDTO.permissions`) — это **override-словарь на уровне самого чата** (задаётся при создании/обновлении чата, см. `CreateChatRequest.permissions`/`UpdateChatRequest.permissions`), плюс у каждого участника есть свой `MemberChatDTO.permissions_overrides` — персональный override поверх роли. Итоговое право = роль → override чата → персональный override участника (более специфичный побеждает; конкретный порядок слияния решает `ChatAccessService` на бэкенде).
 
-### 8.2 Роли проекта (`ProjectRolesEnum`) — полная матрица прав
-
-⚠️ `id=3` не существует (пропущен намеренно/по ошибке в сид-данных бэкенда — оставлено как есть).
-
-| Право \ Роль | owner (id=1) | maintainer (id=2) | developer (id=4) | user (id=5) |
-|---|:-:|:-:|:-:|:-:|
-| `member:read` | ✅ | ✅ | ✅ | ✅ |
-| `member:invite` | ✅ | ✅ | ❌ | ❌ |
-| `member:kick` | ✅ | ✅ | ❌ | ❌ |
-| `member:update` | ✅ | ✅ | ❌ | ❌ |
-| `project:read` | ✅ | ✅ | ✅ | ✅ |
-| `project:update` | ✅ | ✅ | ✅ | ❌ |
-| `project:visibility` | ✅ | ✅ | ❌ | ❌ |
-| `project:delete` | ✅ | ❌ | ❌ | ❌ |
-| `position:create` | ✅ | ✅ | ✅ | ❌ |
-| `position:update` | ✅ | ✅ | ✅ | ❌ |
-| `position:delete` | ✅ | ✅ | ❌ | ❌ |
-| `permission:update` | ✅ | ✅ | ❌ | ❌ |
-
-`role_id` по умолчанию для новых участников, приглашённых без явного указания роли, нужно передавать вручную в `InviteMemberRequest.role_id` — автоподстановки по умолчанию на бэкенде не найдено (в отличие от чатов), указывать роль обязательно.
-
-### 8.3 Системные роли (auth) — см. также раздел 3.16
+### 8.2 Системные роли (auth) — см. также раздел 3.16
 
 | Роль | `security_level` | Ключевая особенность |
 |---|---|---|
@@ -1279,7 +1238,6 @@ interface NotificationDTO {
 
 Строить видимость кнопок (пригласить/кикнуть/забанить/удалить чат и т.п.) на основе:
 - Для чата: `MemberChatDTO.permissions_overrides` текущего пользователя, объединённый с матрицей роли (раздел 8.1) и `chat.permissions`.
-- Для проекта: `role.permissions` из `ProjectMemberDTO.role` (раздел 8.2).
 - Для системных админ-функций (управление пользователями/ролями): требуемые права из таблиц разделов 3.10–3.14 — если у пользователя нет системной роли с этими правами, соответствующие экраны/пункты меню не показывать вовсе.
 
 ### 9.7 Чек-лист перед тем, как считать интеграцию готовой
