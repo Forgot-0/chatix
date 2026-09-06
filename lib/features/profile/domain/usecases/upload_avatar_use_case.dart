@@ -10,11 +10,24 @@ import 'package:chatix/features/profile/domain/repositories/profile_repository.d
 /// single call, so screens never have to know it's 3 requests instead of
 /// one:
 ///
-///  1. `presignAvatar` — ask the backend for an upload URL + policy fields.
-///  2. `AvatarUploader.upload` — raw multipart `POST` straight to that URL,
+///  1. `presignAvatar` — ask the backend for a presigned PUT URL and the
+///     `file_key` it assigned.
+///  2. `AvatarUploader.upload` — raw `PUT` of the bytes straight to that URL,
 ///     bypassing the app's authenticated `ApiClient` on purpose (§10.4).
-///  3. `completeAvatarUpload` — tell the backend the upload finished, so it
-///     can kick off resizing into the 4 sizes × 3 formats.
+///  3. `completeAvatarUpload` — hand the `file_key` back so the backend can
+///     queue resizing into the 4 sizes × 3 formats.
+///
+/// ⚠️ **`done` means "queued", not "your avatar changed".** Neither the
+/// presign nor the confirm validates the file: the backend sniffs the real
+/// MIME and checks the size in a background job *after* step 3, and reports
+/// the outcome nowhere (§0.10, §4.5). A rejected image simply never appears.
+/// The caller should re-read `GET /profiles/{id}/` a few times after `done`
+/// and treat an unchanged `avatars` as failure — which is also why the
+/// client-side checks below matter: they are the only feedback a user gets
+/// for the two most common mistakes.
+///
+/// ⚠️ Step 2 must follow step 1 **immediately** — the presigned URL is valid
+/// for 90 seconds (§4.5).
 ///
 /// [execute] returns a `Stream` rather than a single `Future` specifically
 /// so a screen can drive a step indicator (`AsyncValue<AvatarUploadStage>`
@@ -40,9 +53,14 @@ class UploadAvatarUseCase {
   }) async* {
     final size = bytes.length;
 
-    // api-docs §4.5: content_type must start with "image/" (else 400
-    // AVATAR_NOT_TYPE_IMAGE) and size is capped at 5MB (AVATAR_MAX_SIZE) —
-    // both checked client-side first so a bad file never leaves the device.
+    // api-docs §4.5: the backend caps avatars at 5 MB (`AVATAR_MAX_SIZE`) and
+    // requires a real image (`AVATAR_NOT_TYPE_IMAGE`).
+    //
+    // ⚠️ Both are checked **only in the background job**, which surfaces
+    // nothing to the client — so unlike most validation mirrors in this
+    // codebase, these are not just a round-trip optimisation: they are the
+    // only place a user is ever told why their avatar did not apply. Losing
+    // them means an image silently failing with no message at all.
     if (!contentType.startsWith('image/')) {
       yield const Left(InputFailure(message: 'File must be an image'));
       return;
@@ -64,11 +82,7 @@ class UploadAvatarUseCase {
     }
 
     yield const Right(AvatarUploadStage.presigning);
-    final presignResult = await _repository.presignAvatar(
-      filename: filename,
-      size: size,
-      contentType: contentType,
-    );
+    final presignResult = await _repository.presignAvatar(filename: filename);
 
     if (presignResult.isLeft()) {
       yield Left(presignResult.getLeft().toNullable()!);
@@ -79,9 +93,7 @@ class UploadAvatarUseCase {
     yield const Right(AvatarUploadStage.uploading);
     final uploadResult = await _avatarUploader.upload(
       url: presign.url,
-      fields: presign.fields,
       bytes: bytes,
-      filename: filename,
       contentType: contentType,
     );
 
@@ -91,10 +103,11 @@ class UploadAvatarUseCase {
     }
 
     yield const Right(AvatarUploadStage.confirming);
+    // ⚠️ `presign.fileKey`, not the local filename: the backend sanitised the
+    // name when it signed the URL, so the two differ for anything with a
+    // space or a special character in it.
     final completeResult = await _repository.completeAvatarUpload(
-      keyBase: presign.keyBase,
-      size: size,
-      contentType: contentType,
+      fileKey: presign.fileKey,
     );
 
     if (completeResult.isLeft()) {

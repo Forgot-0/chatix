@@ -9,13 +9,8 @@ part of 'avatar_presign_model.dart';
 AvatarPresignModel _$AvatarPresignModelFromJson(Map<String, dynamic> json) =>
     AvatarPresignModel(
       url: json['url'] as String,
-      fields: Map<String, String>.from(json['fields'] as Map),
-      keyBase: json['key_base'] as String,
+      fileKey: json['file_key'] as String,
     );
 
 Map<String, dynamic> _$AvatarPresignModelToJson(AvatarPresignModel instance) =>
-    <String, dynamic>{
-      'url': instance.url,
-      'fields': instance.fields,
-      'key_base': instance.keyBase,
-    };
+    <String, dynamic>{'url': instance.url, 'file_key': instance.fileKey};

@@ -34,36 +34,32 @@ void main() {
   const tFilename = 'avatar.png';
   const tContentType = 'image/png';
 
+  // A presigned PUT, as §4.5 actually returns: the signature lives in the
+  // query string and the server-sanitised key comes back separately. There
+  // are no policy fields — that is a presigned POST, which this backend does
+  // not use.
   const tPresign = AvatarPresignEntity(
-    url: 'https://minio.example.com/avatars',
-    fields: {'key': 'avatars/1/avatar.png', 'policy': 'xyz'},
-    keyBase: 'avatars/1',
+    url:
+        'https://storage.example.com/pending-avatar/1/avatar.png'
+        '?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=90'
+        '&X-Amz-Signature=6b7c201ce0762af7',
+    fileKey: '1/avatar.png',
   );
 
   test('should emit presigning -> uploading -> confirming -> done on full success', () async {
     // Arrange
     when(
-      () => mockProfileRepository.presignAvatar(
-        filename: tFilename,
-        size: tBytes.length,
-        contentType: tContentType,
-      ),
+      () => mockProfileRepository.presignAvatar(filename: tFilename),
     ).thenAnswer((_) async => const Right(tPresign));
     when(
       () => mockAvatarUploader.upload(
         url: tPresign.url,
-        fields: tPresign.fields,
         bytes: tBytes,
-        filename: tFilename,
         contentType: tContentType,
       ),
     ).thenAnswer((_) async => const Right(null));
     when(
-      () => mockProfileRepository.completeAvatarUpload(
-        keyBase: tPresign.keyBase,
-        size: tBytes.length,
-        contentType: tContentType,
-      ),
+      () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
     ).thenAnswer((_) async => const Right(null));
 
     // Act
@@ -81,27 +77,17 @@ void main() {
       ]),
     );
     verify(
-      () => mockProfileRepository.presignAvatar(
-        filename: tFilename,
-        size: tBytes.length,
-        contentType: tContentType,
-      ),
+      () => mockProfileRepository.presignAvatar(filename: tFilename),
     ).called(1);
     verify(
       () => mockAvatarUploader.upload(
         url: tPresign.url,
-        fields: tPresign.fields,
         bytes: tBytes,
-        filename: tFilename,
         contentType: tContentType,
       ),
     ).called(1);
     verify(
-      () => mockProfileRepository.completeAvatarUpload(
-        keyBase: tPresign.keyBase,
-        size: tBytes.length,
-        contentType: tContentType,
-      ),
+      () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
     ).called(1);
   });
 
@@ -116,11 +102,7 @@ void main() {
         status: 400,
       );
       when(
-        () => mockProfileRepository.presignAvatar(
-          filename: tFilename,
-          size: tBytes.length,
-          contentType: tContentType,
-        ),
+        () => mockProfileRepository.presignAvatar(filename: tFilename),
       ).thenAnswer((_) async => const Left(tFailure));
 
       // Act
@@ -137,19 +119,13 @@ void main() {
       );
       verifyNever(
         () => mockAvatarUploader.upload(
-          url: any(named: 'url'),
-          fields: any(named: 'fields'),
-          bytes: any(named: 'bytes'),
-          filename: any(named: 'filename'),
-          contentType: any(named: 'contentType'),
-        ),
+        url: any(named: 'url'),
+        bytes: any(named: 'bytes'),
+        contentType: any(named: 'contentType'),
+      ),
       );
       verifyNever(
-        () => mockProfileRepository.completeAvatarUpload(
-          keyBase: any(named: 'keyBase'),
-          size: any(named: 'size'),
-          contentType: any(named: 'contentType'),
-        ),
+        () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
       );
     },
   );
@@ -158,18 +134,12 @@ void main() {
     // Arrange
     const tFailure = ServerFailure(message: 'Avatar storage rejected the upload', statusCode: 403);
     when(
-      () => mockProfileRepository.presignAvatar(
-        filename: tFilename,
-        size: tBytes.length,
-        contentType: tContentType,
-      ),
+      () => mockProfileRepository.presignAvatar(filename: tFilename),
     ).thenAnswer((_) async => const Right(tPresign));
     when(
       () => mockAvatarUploader.upload(
         url: tPresign.url,
-        fields: tPresign.fields,
         bytes: tBytes,
-        filename: tFilename,
         contentType: tContentType,
       ),
     ).thenAnswer((_) async => const Left(tFailure));
@@ -188,11 +158,7 @@ void main() {
       ]),
     );
     verifyNever(
-      () => mockProfileRepository.completeAvatarUpload(
-        keyBase: any(named: 'keyBase'),
-        size: any(named: 'size'),
-        contentType: any(named: 'contentType'),
-      ),
+      () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
     );
   });
 

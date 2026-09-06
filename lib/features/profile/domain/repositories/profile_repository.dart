@@ -51,19 +51,19 @@ abstract class ProfileRepository {
   /// derives it from the JWT.
   Future<Either<Failure, AvatarPresignEntity>> presignAvatar({
     required String filename,
-    required int size,
-    required String contentType,
   });
 
   /// Step 3 of the avatar upload flow: `POST
   /// /profiles/avatar/upload_complete/` 🔒 (api-docs §4.5). Must be called
-  /// with the `keyBase` from the matching `presignAvatar` response, after
-  /// step 2 (the raw upload to the presigned URL, see `AvatarUploader`) has
+  /// with the `fileKey` from the matching `presignAvatar` response, after
+  /// step 2 (the raw `PUT` to the presigned URL, see `AvatarUploader`) has
   /// already succeeded.
+  ///
+  /// ⚠️ A success here means "queued", not "accepted": validation runs in the
+  /// background and reports nothing (§0.10, §4.5). Re-read the profile and
+  /// compare `avatars` to find out whether it actually worked.
   Future<Either<Failure, void>> completeAvatarUpload({
-    required String keyBase,
-    required int size,
-    required String contentType,
+    required String fileKey,
   });
 
   /// `POST /profiles/{profile_id}/contacts/` 🔒 (api-docs §4.6).

@@ -74,28 +74,16 @@ class ProfileRepositoryImpl implements ProfileRepository {
   @override
   Future<Either<Failure, AvatarPresignEntity>> presignAvatar({
     required String filename,
-    required int size,
-    required String contentType,
   }) async {
-    final result = await _remoteDataSource.presignAvatar(
-      filename: filename,
-      size: size,
-      contentType: contentType,
-    );
+    final result = await _remoteDataSource.presignAvatar(filename: filename);
     return result.map((model) => model.toEntity());
   }
 
   @override
   Future<Either<Failure, void>> completeAvatarUpload({
-    required String keyBase,
-    required int size,
-    required String contentType,
+    required String fileKey,
   }) {
-    return _remoteDataSource.completeAvatarUpload(
-      keyBase: keyBase,
-      size: size,
-      contentType: contentType,
-    );
+    return _remoteDataSource.completeAvatarUpload(fileKey: fileKey);
   }
 
   @override

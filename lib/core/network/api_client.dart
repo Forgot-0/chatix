@@ -1,3 +1,4 @@
+import 'package:chatix/core/network/error_envelope.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -144,25 +145,31 @@ class ApiClient {
     }
 
     final statusCode = response.statusCode ?? 0;
+
+    // ⚠️ Read through `error_envelope.dart`, never with a bare `data is Map`.
+    // This backend omits `Content-Type` on error responses, so Dio hands them
+    // over as raw JSON strings — a direct Map check would collapse every
+    // documented code in §2.3–§2.8 into the generic ServerFailure below. See
+    // that file's library doc.
     final data = response.data;
 
     if (statusCode == 429) {
-      final message = data is Map && data['detail'] != null
-          ? data['detail'].toString()
-          : 'Too Many Requests';
-      return RateLimitFailure(message: message);
+      // §2.2: a 429 does NOT use the envelope — it is a bare
+      // `{"detail": "..."}` from FastAPI's own HTTPException.
+      final detail = decodeResponseBody(data)?['detail'];
+      return RateLimitFailure(
+        message: detail?.toString() ?? 'Too Many Requests',
+      );
     }
 
-    if (data is Map<String, dynamic>) {
-      final error = data['error'];
-      if (error is Map<String, dynamic>) {
-        return ApiFailure(
-          code: error['code'] as String? ?? 'UNKNOWN',
-          message: error['message'] as String? ?? 'Unknown error',
-          detail: error['detail'],
-          status: statusCode,
-        );
-      }
+    final error = readErrorEnvelope(data);
+    if (error != null) {
+      return ApiFailure(
+        code: error['code'] as String? ?? 'UNKNOWN',
+        message: error['message'] as String? ?? 'Unknown error',
+        detail: error['detail'],
+        status: statusCode,
+      );
     }
 
     return ServerFailure(

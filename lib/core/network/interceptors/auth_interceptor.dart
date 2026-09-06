@@ -1,6 +1,7 @@
 import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_path.dart';
+import 'package:chatix/core/network/error_envelope.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:dio/dio.dart';
@@ -199,6 +200,10 @@ class AuthInterceptor extends QueuedInterceptor {
       return code == null || code == 'NOT_AUTHENTICATED';
     }
 
+    // ⚠️ **400, not 401.** api-docs §2.3 gives `EXPIRED_TOKEN` HTTP 400 and
+    // calls it the refresh trigger; 401 is reserved for a request with no
+    // `Authorization` header at all. A client that only refreshes on 401 —
+    // the usual assumption — never refreshes against this backend.
     if (statusCode == 400 && code == 'EXPIRED_TOKEN') {
       return true;
     }
@@ -212,17 +217,16 @@ class AuthInterceptor extends QueuedInterceptor {
     return statusCode == 403 && code == 'INVALID_TOKEN';
   }
 
-  String? _readErrorCode(dynamic data) {
-    if (data is! Map) {
-      return null;
-    }
-    final error = data['error'];
-    if (error is! Map) {
-      return null;
-    }
-    final code = error['code'];
-    return code is String ? code : null;
-  }
+  /// `body.error.code`, via [readErrorCode] (`core/network/error_envelope.dart`).
+  ///
+  /// ⚠️ Delegated rather than inlined because the body is **not always a
+  /// decoded `Map`**: this backend serves its error responses without a
+  /// `Content-Type` header, so Dio leaves them as raw JSON strings. Reading
+  /// them with a plain `data is Map` check — as this method used to — made
+  /// every code unreadable, and `400 EXPIRED_TOKEN` unreadable means
+  /// [_shouldAttemptRefresh] answers `false` and the session never refreshes.
+  /// See that file's library doc for the full mechanism.
+  String? _readErrorCode(dynamic data) => readErrorCode(data);
 
   /// Refreshes once for a burst of requests that all died on the same stale
   /// token.
@@ -257,11 +261,17 @@ class AuthInterceptor extends QueuedInterceptor {
 
   Future<String?> _performRefresh() async {
     try {
-      final response = await _sideChannel.post<Map<String, dynamic>>(
+      // ⚠️ `dynamic`, not `Map<String, dynamic>`: the generic makes dio cast
+      // the body, and the body is only a `Map` when the response carried a
+      // JSON `Content-Type`. This gateway omits that header on some responses
+      // (see `error_envelope.dart`), where the cast would throw — and a throw
+      // here is read as "session over" and signs the user out. Decoding
+      // defensively instead means a stray missing header costs nothing.
+      final response = await _sideChannel.post<dynamic>(
         _refreshPath,
         options: Options(extra: {'skipAuthRefresh': true}),
       );
-      final accessToken = response.data?['access_token'];
+      final accessToken = decodeResponseBody(response.data)?['access_token'];
       if (accessToken is! String || accessToken.isEmpty) {
         return null;
       }

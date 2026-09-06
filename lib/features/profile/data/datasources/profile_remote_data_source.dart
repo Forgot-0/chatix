@@ -46,15 +46,11 @@ abstract class ProfileRemoteDataSource {
   /// `POST /profiles/avatar/presign/` 🔒 (api-docs §4.5 step 1).
   Future<Either<Failure, AvatarPresignModel>> presignAvatar({
     required String filename,
-    required int size,
-    required String contentType,
   });
 
   /// `POST /profiles/avatar/upload_complete/` 🔒 (api-docs §4.5 step 3).
   Future<Either<Failure, void>> completeAvatarUpload({
-    required String keyBase,
-    required int size,
-    required String contentType,
+    required String fileKey,
   });
 
   /// `POST /profiles/{profile_id}/contacts/` 🔒 (api-docs §4.6).
@@ -152,12 +148,15 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<Either<Failure, AvatarPresignModel>> presignAvatar({
     required String filename,
-    required int size,
-    required String contentType,
   }) async {
+    // ⚠️ `filename` and nothing else (§4.5, §10.4). The endpoint performs no
+    // type or size validation at this step — it only sanitises the name and
+    // signs a URL — so a `size`/`content_type` sent here would be ignored,
+    // and relying on them being checked would be a false sense of safety.
+    // The real (asynchronous, silent) validation happens after step 3.
     final result = await _apiClient.post(
       '/profiles/avatar/presign/',
-      data: {'filename': filename, 'size': size, 'content_type': contentType},
+      data: {'filename': filename},
     );
     return result.map(
       (data) => AvatarPresignModel.fromJson(data as Map<String, dynamic>),
@@ -166,16 +165,19 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<Either<Failure, void>> completeAvatarUpload({
-    required String keyBase,
-    required int size,
-    required String contentType,
+    required String fileKey,
   }) async {
     final result = await _apiClient.post(
       '/profiles/avatar/upload_complete/',
-      data: {'key_base': keyBase, 'size': size, 'content_type': contentType},
+      data: {'file_key': fileKey},
     );
-    // api-docs §4.5 step 3: response body is the plain string "OK", not
-    // JSON — nothing in it is needed, only that the call succeeded.
+    // api-docs §4.5 step 3: the body is the plain string "OK", not JSON, and
+    // the endpoint only enqueues a background job.
+    //
+    // ⚠️ A `200` here does **not** mean the avatar was accepted (§0.10): the
+    // real MIME/size validation runs asynchronously afterwards and reports
+    // nothing back. Confirming success means re-reading `GET /profiles/{id}/`
+    // and checking whether `avatars` actually changed.
     return result.map((_) {});
   }
 

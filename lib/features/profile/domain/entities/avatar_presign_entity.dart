@@ -1,24 +1,23 @@
 import 'package:equatable/equatable.dart';
 
-/// `AvatarPresignResponse` (api-docs §4.5, step 1 — `POST
-/// /profiles/avatar/presign/`).
+/// `AvatarPresign` (api-docs §4.5, step 1 — `POST /profiles/avatar/presign/`).
 ///
-/// [fields] are the presigned-POST policy fields (S3/MinIO: `key`,
-/// `policy`, `x-amz-*`...) and must be forwarded into the multipart body of
-/// step 2 exactly as received, alongside the file itself. [keyBase] (format
-/// `"avatars/{user_id}"`) is only needed again for step 3
-/// (`completeAvatarUpload`).
+/// ⚠️ **Presigned PUT, not a POST policy.** There are no form fields to
+/// forward: the signature lives in [url]'s query string
+/// (`X-Amz-Signature`/`X-Amz-Expires`), and step 2 is a plain `PUT` of the raw
+/// bytes to it (§4.5, §10.4).
 class AvatarPresignEntity extends Equatable {
+  /// Presigned PUT URL — valid for **90 seconds only** (§4.5). Use it
+  /// immediately; there is nothing to gain by holding it.
   final String url;
-  final Map<String, String> fields;
-  final String keyBase;
 
-  const AvatarPresignEntity({
-    required this.url,
-    required this.fields,
-    required this.keyBase,
-  });
+  /// The server-assigned S3 key, echoed back in step 3
+  /// (`upload_complete`). Sanitised server-side, so it will not equal the
+  /// filename that was sent.
+  final String fileKey;
+
+  const AvatarPresignEntity({required this.url, required this.fileKey});
 
   @override
-  List<Object?> get props => [url, fields, keyBase];
+  List<Object?> get props => [url, fileKey];
 }
