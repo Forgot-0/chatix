@@ -2,9 +2,6 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `DELETE /chats/{chat_id}/messages/{message_id}/` 🔒 → 204
-/// (api-docs §6.4). Deleting somebody else's message needs `message:delete`
-/// (§9.1).
 class DeleteMessageUseCase {
   final ChatRepository _repository;
 

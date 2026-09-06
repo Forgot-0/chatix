@@ -7,19 +7,6 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
 part 'message_model.g.dart';
 
-/// `MessageDTO` (api-docs §6.4).
-///
-/// ⚠️ This model is **self-referential**: [replyTo] and [forwardedFrom] are
-/// `MessageModel?`. json_serializable handles that fine (it emits a recursive
-/// call to `MessageModel.fromJson`), and so does [toEntity] — the backend
-/// nests only one level, so the recursion terminates on real payloads.
-///
-/// [type] and [createdAt] stay as wire strings and are converted in
-/// [toEntity], matching the rest of the module's model↔entity boundary.
-///
-/// ⚠️ [forwardedFromAuthorId] is an `int?` — api-docs §6.4 types it
-/// `number | null`, like every other user id in the API. It used to be
-/// documented as a `string`, and the model followed; both have been corrected.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MessageModel extends Equatable {
   final String id;
@@ -41,20 +28,9 @@ class MessageModel extends Equatable {
   final MessageModel? replyTo;
   final MessageModel? forwardedFrom;
 
-  /// `MessageDTO.reactions` (api-docs §6.4, §6.7.3) — the reaction chips,
-  /// delivered **inline with the message** in list/detail/context responses
-  /// and in `ws.history`. This is why no companion `GET .../reactions/` pass
-  /// is needed to render them; that endpoint is only for paginating *who*
-  /// reacted (§6.7.3).
-  ///
-  /// Defaulted to `[]` rather than left nullable: a message with no reactions
-  /// and a message whose reactions the endpoint omitted render identically
-  /// (no chip row), so the distinction would buy nothing.
   @JsonKey(defaultValue: <ReactionGroupModel>[])
   final List<ReactionGroupModel> reactions;
 
-  /// `MessageDTO.profile` (api-docs §6.4) — author's denormalized profile,
-  /// nullable (system messages have no author).
   final ChatProfileModel? profile;
 
   const MessageModel({
@@ -128,8 +104,6 @@ extension MessageModelX on MessageModel {
   }
 }
 
-/// `MessagesDTO` (api-docs §6.4) — cursor-paginated message page, shared by
-/// `GET messages/` and `GET messages/context/`.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MessagesModel extends Equatable {
   @JsonKey(defaultValue: <MessageModel>[])

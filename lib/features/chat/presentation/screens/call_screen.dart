@@ -7,14 +7,6 @@ import 'package:chatix/features/chat/presentation/providers/call_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 
-/// The LiveKit call room for one chat (api-docs §6.6).
-///
-/// Joining is an explicit tap rather than something [initState] does, matching
-/// `CallController`: the endpoint allows 10 joins per 5 minutes and joining
-/// opens the microphone, so a rebuild must never trigger it.
-///
-/// Leaving happens on `dispose` too — the room lives in an autoDispose provider
-/// keyed by chat id, so popping this route always ends the call.
 class CallScreen extends ConsumerStatefulWidget {
   const CallScreen({super.key, required this.chatId});
 
@@ -31,8 +23,6 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     final detail = ref.watch(chatDetailProvider(widget.chatId)).value;
     final myUserId = ref.watch(authProvider).value?.id;
 
-    // `call:mute_member` is owner/admin only (§9.1). Resolved from the last
-    // data we hold — UX only, the server enforces it regardless.
     final canMuteOthers = hasChatPermission(
       detail?.chat,
       detail?.me,
@@ -219,7 +209,6 @@ class _ParticipantGrid extends StatelessWidget {
         final participant = participants[index];
         return _ParticipantTile(
           participant: participant,
-          // Muting yourself is the local mic button, not a moderation call.
           canMute:
               canMuteOthers &&
               !participant.isLocal &&
@@ -252,8 +241,6 @@ class _ParticipantTile extends StatelessWidget {
         color: const Color(0xFF1C1C1E),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          // A speaking ring is the cheapest way to tell who is talking in an
-          // audio-only call, where every tile is otherwise identical.
           color: participant.isSpeaking
               ? Theme.of(context).colorScheme.primary
               : Colors.transparent,

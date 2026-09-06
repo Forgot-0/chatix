@@ -14,7 +14,6 @@ class LocalizationDemo extends ConsumerWidget {
     final now = DateTime.now();
     final orderDate = DateTime.now().subtract(const Duration(days: 3));
 
-    // Create AppLocalizations instance for formatting
     final l10n = AppLocalizations(currentLocale);
 
     return Scaffold(
@@ -28,7 +27,6 @@ class LocalizationDemo extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Current language info
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -65,7 +63,6 @@ class LocalizationDemo extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Basic translations
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -90,7 +87,6 @@ class LocalizationDemo extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Parameter substitution
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -133,7 +129,6 @@ class LocalizationDemo extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Formatting
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -185,7 +180,6 @@ class LocalizationDemo extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Mock order details example
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -260,7 +254,6 @@ class LocalizationDemo extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Language selector
               const Card(child: LanguageSelectorWidget()),
 
               const SizedBox(height: 24),
@@ -311,7 +304,6 @@ class LocalizationDemo extends ConsumerWidget {
     );
   }
 
-  /// Get the name of a language from its code
   String _getLocaleName(Locale locale) {
     switch (locale.languageCode) {
       case 'en':

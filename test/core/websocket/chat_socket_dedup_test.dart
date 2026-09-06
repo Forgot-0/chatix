@@ -12,18 +12,6 @@ import 'package:chatix/core/websocket/ws_event.dart';
 
 import '../../helpers/fakes/fake_secure_storage_service.dart';
 
-/// Covers the api-docs §7.4 at-least-once guarantee: the gateway reads from a
-/// Redis stream and `xautoclaim` re-delivers records a crashed gateway left
-/// unacknowledged, so **the same frame legitimately arrives twice**.
-///
-/// `payload.event_id` is the dedup key, and [ChatSocketService] is where it is
-/// applied — before consumers, and before cursor bookkeeping. Without it a
-/// redelivered `new_message` double-posts a bubble, a redelivered
-/// `member_joined` double-counts the roster, and the resume cursor advances
-/// twice for one message.
-///
-/// A fake channel drives the service directly: no server, no timers beyond the
-/// ones the service owns.
 class _FakeWebSocketSink implements WebSocketSink {
   final List<Object?> sent = [];
   final Completer<void> _done = Completer<void>();
@@ -52,11 +40,8 @@ class _FakeWebSocketChannel extends StreamChannelMixin<dynamic>
 
   final StreamController<dynamic> _controller;
 
-  /// Frames the service sent us (`subscribe`, `resume`, `pong`), as raw JSON.
   final _FakeWebSocketSink outbound = _FakeWebSocketSink();
 
-  /// Pushes one server→client frame, as JSON text — the form the real socket
-  /// delivers.
   void emit(Map<String, dynamic> frame) => _controller.add(jsonEncode(frame));
 
   @override
@@ -81,12 +66,8 @@ class _FakeWebSocketChannel extends StreamChannelMixin<dynamic>
 void main() {
   const chatId = '550e8400-e29b-41d4-a716-446655440000';
 
-  // `_buildUri` reads BASE_URL through AppConstants, which throws if dotenv was
-  // never loaded. The URL is irrelevant here — the channel is faked — so an
-  // in-memory value is enough.
   setUpAll(() => dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com'));
 
-  /// A `new_message` frame in the §7.4 envelope.
   Map<String, dynamic> newMessage({required String? eventId, int seq = 1}) => {
     'type': 'new_message',
     'channel': chatId,
@@ -144,8 +125,6 @@ void main() {
   });
 
   test('a frame with no event_id is never suppressed', () async {
-    // No key means no way to tell a redelivery from a genuine second event,
-    // and dropping a real one is far worse than showing a rare duplicate.
     final received = <WSEvent>[];
     service.events.listen(received.add);
 
@@ -158,8 +137,6 @@ void main() {
   });
 
   test('a duplicate does not advance the resume cursor a second time', () async {
-    // The reason dedup runs *before* bookkeeping: a doubly-advanced cursor
-    // would make the next `resume` skip a message that was never delivered.
     service.subscribe(chatId, lastSeq: 1);
     channel.outbound.sent.clear();
 
@@ -169,16 +146,12 @@ void main() {
       ..emit(frame);
     await Future<void>.delayed(Duration.zero);
 
-    // Re-subscribing without an explicit cursor echoes the service's own
-    // tracked `last_seq` — the value a reconnect would resume from.
     service.subscribe(chatId);
 
     final subscribeFrame = channel.outbound.sent
         .map((raw) => jsonDecode(raw! as String) as Map<String, dynamic>)
         .lastWhere((frame) => frame['op'] == 'subscribe');
 
-    // 5, not 10: the cursor tracks the newest *delivered* seq, and the
-    // duplicate delivered nothing new.
     expect(subscribeFrame['last_seq'], 5);
   });
 
@@ -205,8 +178,6 @@ void main() {
 
     await service.disconnect();
 
-    // A fresh session — a user switch, in practice. An id remembered from the
-    // previous account must not swallow a real event here.
     final next = _FakeWebSocketChannel();
     final reconnected = ChatSocketService(
       secureStorage: FakeSecureStorageService(

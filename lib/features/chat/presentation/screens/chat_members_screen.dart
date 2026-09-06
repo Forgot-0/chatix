@@ -9,20 +9,6 @@ import 'package:chatix/features/chat/presentation/providers/chat_members_provide
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 
-/// `GET /chats/{id}/members/` 🔒 (api-docs §6.3) with the moderation actions
-/// of the same section.
-///
-/// ### Button visibility
-///
-/// Every action is gated by `hasChatPermission`, which resolves the api-docs
-/// §9.1 chain **role baseline → chat-level override → member override**, and by
-/// `canModerate`, which additionally refuses self-targeting and protects the
-/// owner.
-///
-/// The authoritative merge happens on the backend (`ChatAccessService`); this
-/// only decides what to *draw*, from the last data received. So a hidden
-/// button is not a security guarantee and a visible one is not a promise —
-/// hence every action still surfaces the server's error if it comes back 403.
 class ChatMembersScreen extends ConsumerStatefulWidget {
   const ChatMembersScreen({super.key, required this.chatId});
 
@@ -60,9 +46,6 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
   Widget build(BuildContext context) {
     final membersState = ref.watch(chatMembersProvider(widget.chatId));
 
-    // Resolved once, from the last data received, and reused by both the empty
-    // state and the FAB — `membersState.value` survives a background refresh
-    // error, so the button doesn't flicker away on a failed reload.
     final loaded = membersState.value;
     final canInvite =
         loaded != null &&
@@ -113,8 +96,6 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
                         chat: state.chat,
                         me: me,
                         member: member,
-                        // A missing presence entry means "unknown", not
-                        // "offline" (api-docs §6.3).
                         isOnline: state.presence[member.userId],
                       );
                     },
@@ -136,14 +117,6 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
   }
 
   Future<void> _addMember() async {
-    // Existing members are excluded from the search so the only pickable
-    // people are ones who can actually be added — otherwise the reward for
-    // picking a member is a `409 ALREADY_CHAT_MEMBER`.
-    //
-    // ⚠️ Only the members loaded *so far* are excluded: the list is
-    // cursor-paginated (§6.3), so someone on an unfetched page can still be
-    // picked. That's why the 409 is still handled below rather than treated
-    // as impossible.
     final loaded = ref.read(chatMembersProvider(widget.chatId)).value;
     final existingIds =
         loaded?.members.map((member) => member.userId).toSet() ?? const <int>{};
@@ -163,9 +136,6 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          // `TOO_LONG_CHAT_ROLE_NAME` / `ALREADY_CHAT_MEMBER` /
-          // `MEMBER_LIMIT_EXCEEDED` get phrasing that names the real problem
-          // (api-docs §6.3); anything else keeps its own message.
           content: Text(addMemberFailureMessage(failure) ?? failure.message),
         ),
       );
@@ -190,8 +160,6 @@ class _MemberTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // `canModerate` is the shared precondition: never yourself, never the
-    // owner. Each action then needs its own §9.1 permission on top.
     final moderatable = canModerate(me, member);
     final canChangeRole =
         moderatable && hasChatPermission(chat, me, ChatPermissions.roleChange);
@@ -207,10 +175,6 @@ class _MemberTile extends ConsumerWidget {
     return ListTile(
       leading: Stack(
         children: [
-          // Avatar comes from the denormalized MemberChatDTO.profile
-          // (api-docs §6.3) — no per-row /profiles/{id}/ fetch. The presigned
-          // avatar_url is used directly and never cached beyond this screen
-          // (it expires; see ChatProfileEntity.avatarUrl).
           CircleAvatar(
             foregroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl),
             child: const Icon(Icons.person_outline),
@@ -230,12 +194,9 @@ class _MemberTile extends ConsumerWidget {
             ),
         ],
       ),
-      // Falls back to "User #id" only when the backend attached no profile.
       title: Text(member.displayLabel),
       subtitle: Row(
         children: [
-          // An unknown role_id (added to the backend seed after this build)
-          // renders as its raw number rather than a wrong label.
           Text(role?.name ?? 'role ${member.roleId}'),
           if (username != null && username.isNotEmpty) ...[
             const SizedBox(width: 8),
@@ -320,8 +281,6 @@ class _RolePickerDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // `RadioGroup` owns the selected value and the change callback as of
-    // Flutter 3.32; the per-tile `groupValue`/`onChanged` pair is deprecated.
     return RadioGroup<ChatRole>(
       groupValue: current,
       onChanged: (value) => Navigator.of(context).pop(value),
@@ -329,9 +288,6 @@ class _RolePickerDialog extends StatelessWidget {
         title: const Text('Change role'),
         children: [
           for (final role in ChatRole.values)
-            // `direct` (id=4) is assigned automatically to both participants
-            // of a 1:1 chat and is meaningless to set by hand (api-docs §9.1),
-            // so it isn't offered.
             if (role != ChatRole.direct)
               RadioListTile<ChatRole>(value: role, title: Text(role.name)),
         ],
@@ -347,9 +303,6 @@ class _BanRequest {
   final DateTime? bannedTo;
 }
 
-/// ⚠️ Sends `banned_to` — the backend field is literally spelled `banned_to`
-/// (typo preserved server-side, api-docs §6.3); the data source does the
-/// renaming so nothing above it has to know.
 class _BanDialog extends StatefulWidget {
   const _BanDialog();
 
@@ -387,8 +340,6 @@ class _BanDialogState extends State<_BanDialog> {
               Expanded(
                 child: Text(
                   _bannedTo == null
-                      // No date = permanent, which is the backend's behaviour
-                      // when `banned_to` is omitted.
                       ? 'Permanent'
                       : 'Until ${_bannedTo!.toLocal()}',
                 ),
@@ -422,8 +373,6 @@ class _BanDialogState extends State<_BanDialog> {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      // A ban must end in the future — the use case rejects a past date, so
-      // the picker can't offer one.
       firstDate: now.add(const Duration(days: 1)),
       lastDate: now.add(const Duration(days: 365 * 5)),
       initialDate: now.add(const Duration(days: 7)),
@@ -432,13 +381,6 @@ class _BanDialogState extends State<_BanDialog> {
   }
 }
 
-/// Picks one person to add to the chat, by username (`GET /profiles/?username=`,
-/// api-docs §4.2).
-///
-/// Pops the chosen `user_id` — the same `int` the old numeric field returned,
-/// because `POST /chats/{id}/members/` still takes an id (§6.3). Selecting a
-/// result closes the dialog immediately: there is nothing to confirm once a
-/// specific person has been tapped, so there is no "Add" button to press.
 class _AddMemberDialog extends StatelessWidget {
   const _AddMemberDialog({this.excludedUserIds = const {}});
 
@@ -467,10 +409,6 @@ class _AddMemberDialog extends StatelessWidget {
   }
 }
 
-/// Shown when the members page came back empty. Wrapped in a scrollable so
-/// pull-to-refresh still works — a plain `Center` has no overscroll for
-/// `RefreshIndicator` to react to, which would leave the screen with no way
-/// back other than navigating away.
 class _EmptyMembersView extends StatelessWidget {
   const _EmptyMembersView({
     required this.canInvite,

@@ -15,20 +15,6 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
-/// Talks to `/chats/*` (api-docs §6) over **REST** via [ApiClient], which
-/// already maps Dio responses/errors into `Either<Failure, dynamic>`.
-///
-/// This sits beside `ChatRemoteDataSource`, which owns the WebSocket
-/// connection (api-docs §7) — deliberately two classes: the socket is
-/// long-lived, stateful and reconnecting, while these are plain
-/// request/response calls, and mixing them would make either half impossible
-/// to test or fake on its own.
-///
-/// This layer's only job is building the right path/query/body and parsing
-/// JSON into models. No Model→Entity mapping (that's `ChatRepositoryImpl`) and
-/// no business rules (that's `domain/usecases/*`) — with one deliberate
-/// exception documented on [createChat], where an invalid request is cheaper
-/// to reject here than to round-trip.
 abstract class ChatRestDataSource {
   Future<Either<Failure, ListChatsModel>> fetchChats({
     int limit = 50,
@@ -164,8 +150,6 @@ abstract class ChatRestDataSource {
     bool muted,
   );
 
-  // ───────────────────────────── Reactions (§6.7) ─────────────────────────────
-
   Future<Either<Failure, void>> setReaction(
     String chatId,
     String messageId,
@@ -202,8 +186,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
   ChatRestDataSourceImpl(this._apiClient, {Uuid? uuid})
     : _uuid = uuid ?? const Uuid();
 
-  // ─────────────────────────── Chats (§6.2) ───────────────────────────
-
   @override
   Future<Either<Failure, ListChatsModel>> fetchChats({
     int limit = 50,
@@ -214,8 +196,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       '/chats/',
       queryParameters: {
         'limit': limit,
-        // Cursor params are omitted entirely on the first page — sending
-        // explicit nulls makes the backend treat them as provided-but-empty.
         'last_chat_id': ?lastChatId,
         if (lastActivityAt != null)
           'last_activity_at': lastActivityAt.toUtc().toIso8601String(),
@@ -237,14 +217,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     int slowModeSeconds = 0,
     Map<String, bool>? permissions,
   }) async {
-    // ⚠️ Client-side guard, normally a use-case concern (api-docs §6.2): a
-    // direct chat must carry EXACTLY one member id — the other participant,
-    // since the caller is added implicitly. The server answers anything else
-    // with `400 MEMBER_LIMIT_EXCEEDED`, whose name is actively misleading for
-    // the "I sent zero ids" case, so it is rejected here with a message a
-    // human can act on. `CreateChatUseCase` performs the same check earlier
-    // with fuller UX context; this one is the last line of defence for
-    // callers that reach the repository directly.
     if (chatType == ChatType.direct && memberIds.length != 1) {
       return Left(
         InputFailure(
@@ -295,10 +267,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     ChatReactionsMode? reactionsMode,
     List<String>? allowedReactions,
   }) async {
-    // ⚠️ api-docs §6.2: PATCH, not PUT. Only the keys present in the body are
-    // touched, so absent named parameters are left out rather than sent as
-    // null (null on the wire would be read as "no change" anyway, but keeping
-    // the body minimal makes the intent unambiguous).
     final result = await _apiClient.patch(
       '/chats/$chatId/',
       data: {
@@ -308,7 +276,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
         'admin_only': ?adminOnly,
         'slow_mode_seconds': ?slowModeSeconds,
         'permissions': ?permissions,
-        // §6.7.5 — chat-level reaction settings live on this same endpoint.
         'reactions_mode': ?reactionsMode?.wire,
         'allowed_reactions': ?allowedReactions,
       },
@@ -335,8 +302,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     final result = await _apiClient.post('/chats/$chatId/leave/');
     return result.map((_) {});
   }
-
-  // ────────────────────────── Members (§6.3) ──────────────────────────
 
   @override
   Future<Either<Failure, ListMembersModel>> fetchMembers(
@@ -395,10 +360,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       '/chats/$chatId/members/$userId/ban/',
       data: {
         'reason': ?reason,
-        // `BanMemberRequest {reason?, banned_to?}` (api-docs §6.3). Omitted
-        // entirely when null, which the backend reads as a permanent ban —
-        // sending an explicit null would be rejected by the datetime
-        // validator rather than treated as "no expiry".
         if (bannedTo != null) 'banned_to': bannedTo.toUtc().toIso8601String(),
       },
     );
@@ -410,8 +371,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     final result = await _apiClient.delete('/chats/$chatId/members/$userId/');
     return result.map((_) {});
   }
-
-  // ───────────────────────── Messages (§6.4) ──────────────────────────
 
   @override
   Future<Either<Failure, MessagesModel>> fetchMessages(
@@ -455,15 +414,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     List<String>? uploadTokens,
     String? idempotencyKey,
   }) async {
-    // api-docs §6.4: `Idempotency-Key` is optional on the wire but always
-    // sent here — a v4 UUID generated per call when the caller didn't supply
-    // one. Replaying the same key within 24 h returns the cached first
-    // result instead of a duplicate message, which is what makes the
-    // "offline → tap send again on reconnect" retry safe. Callers that
-    // implement such a retry MUST hold on to their key and pass it back in
-    // (see `SendMessageUseCase`); a key minted fresh per attempt provides no
-    // protection at all, which is exactly why generating it here is only a
-    // fallback and not the whole story.
     final key = idempotencyKey ?? _uuid.v4();
 
     final result = await _apiClient.post(
@@ -526,8 +476,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     required String targetChatId,
     String? comment,
   }) async {
-    // ⚠️ The DESTINATION chat is the one in the path (api-docs §6.4); the
-    // source pair travels in the body.
     final result = await _apiClient.post(
       '/chats/$targetChatId/messages/forward/',
       data: {
@@ -550,8 +498,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     return result.map((_) {});
   }
 
-  // ──────────────────────── Attachments (§6.5) ────────────────────────
-
   @override
   Future<Either<Failure, List<AttachmentUploadTicketModel>>>
   requestAttachmentUpload(
@@ -567,15 +513,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
                 'filename': upload.filename,
                 'mime_type': upload.mimeType,
                 'file_size': upload.fileSize,
-                // ⚠️ Sent whenever the caller set one, and MANDATORY for
-                // voice/video_note (api-docs §6.5): with the field absent the
-                // backend derives the type from the MIME, and that derivation
-                // can only produce image/video/file — it will never guess
-                // `voice` or `video_note` on its own, so omitting it here
-                // silently downgrades a voice message to a plain audio file.
-                // Omitted (rather than sent as null) for the other three
-                // types, where the backend's inference is correct and the
-                // field is optional.
                 if (upload.attachmentType != null)
                   'attachment_type': upload.attachmentType!.wire,
               },
@@ -583,8 +520,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
             .toList(),
       },
     );
-    // ⚠️ api-docs §6.5: the 201 body is a BARE ARRAY of tickets, not an
-    // object with a `uploads`/`items` key like every other list in the API.
     return result.map(
       (data) => (data as List<dynamic>)
           .map(
@@ -601,7 +536,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     String chatId,
     List<String> uploadTokens,
   ) async {
-    // Returns 202 with an empty body — queued, not validated (api-docs §6.5).
     final result = await _apiClient.post(
       '/chats/$chatId/attachments/upload-requests/confirm/',
       data: {'upload_tokens': uploadTokens},
@@ -625,8 +559,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     );
   }
 
-  // ─────────────────────────── Calls (§6.6) ───────────────────────────
-
   @override
   Future<Either<Failure, CallTokenModel>> joinCall(String chatId) async {
     final result = await _apiClient.post('/chats/$chatId/calls/join/');
@@ -648,21 +580,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     return result.map((_) {});
   }
 
-  // ───────────────────────────── Reactions (§6.7) ─────────────────────────────
-
-  /// Percent-encodes an emoji for use as a **path** segment (api-docs §6.7.1).
-  ///
-  /// ⚠️ Not optional and not cosmetic: an emoji is multi-byte UTF-8 (👍 is
-  /// `F0 9F 91 8D`), and several common reactions are sequences containing
-  /// ZWJ (`U+200D`) or a variation selector. Interpolated raw, those bytes go
-  /// into the request line unescaped — some proxies reject the request
-  /// outright, and a `#` or `?` inside a longer "emoji" string (the field is
-  /// any 1..32-character string server-side, not strictly an emoji) would
-  /// truncate the path silently.
-  ///
-  /// `Uri.encodeComponent` rather than `encodeFull`, because the latter
-  /// deliberately leaves `#`, `?` and `/` intact — exactly the characters that
-  /// must not survive inside one path segment.
   static String encodeEmojiPathSegment(String emoji) =>
       Uri.encodeComponent(emoji);
 
@@ -673,8 +590,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     String emoji,
   ) async {
     final encoded = encodeEmojiPathSegment(emoji);
-    // 204 with an empty body. Setting the emoji already set is a server-side
-    // no-op that still answers 204 (§6.7.2), so no special-casing here.
     final result = await _apiClient.put(
       '/chats/$chatId/messages/$messageId/reactions/$encoded/',
     );
@@ -688,7 +603,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     String emoji,
   ) async {
     final encoded = encodeEmojiPathSegment(emoji);
-    // Removing a reaction that isn't there is also a 204 no-op (§6.7.2).
     final result = await _apiClient.delete(
       '/chats/$chatId/messages/$messageId/reactions/$encoded/',
     );
@@ -701,15 +615,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     String messageId,
     List<String> emojis,
   ) async {
-    // ⚠️ Collection-level `PUT`, no emoji in the path — **set semantics**:
-    // this replaces the caller's whole reaction set on the message at once
-    // (`messages.sendReaction`-style, §6.7.2), rather than adding to it like
-    // the per-emoji PUT above. An empty list is the documented way to clear
-    // every reaction, and is *not* short-circuited here: the server treats it
-    // as a real removal, so skipping the call would leave stale reactions.
-    //
-    // The emoji here are a JSON body, so they go out raw — only the path form
-    // needs [encodeEmojiPathSegment].
     final result = await _apiClient.put(
       '/chats/$chatId/messages/$messageId/reactions/',
       data: {'reactions': emojis},
@@ -722,10 +627,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     String chatId,
     String messageId,
   ) async {
-    // Collection-level `DELETE` — drops **all** of the caller's reactions on
-    // this message in one call (§6.7.1). Equivalent to [replaceReactions] with
-    // an empty list; kept separate because it is the intent the UI expresses
-    // ("clear my reactions") and it sends no body.
     final result = await _apiClient.delete(
       '/chats/$chatId/messages/$messageId/reactions/',
     );
@@ -744,10 +645,6 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
       '/chats/$chatId/messages/$messageId/reactions/',
       queryParameters: {
         'limit': limit,
-        // ⚠️ Here the emoji is a *query* parameter, so Dio encodes it — it
-        // must NOT be pre-encoded, or the server would receive the literal
-        // "%F0%9F%91%8D" and match no reaction. Only the path form above is
-        // encoded by hand.
         if (emoji?.isNotEmpty == true) 'emoji': emoji,
         ...?cursorUserId != null ? {'cursor_user_id': cursorUserId} : null,
       },

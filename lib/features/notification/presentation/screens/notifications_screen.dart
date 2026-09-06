@@ -8,15 +8,6 @@ import 'package:chatix/features/notification/presentation/providers/notification
 import 'package:chatix/features/notification/presentation/providers/notification_list_provider.dart';
 import 'package:chatix/features/notification/presentation/utils/notification_route_resolver.dart';
 
-/// `GET /notifications/` 🔒 (api-docs §8.2) — the notification inbox.
-///
-/// ⚠️ **Page-based** pagination (api-docs §1.5), unlike the chat list's
-/// cursor scheme (§1.6): there is a real page number and a real total, and
-/// `hasNext` is computed by `PageResult` rather than sent by the server.
-///
-/// Nothing here is realtime. The backend pushes no notification events over
-/// the WebSocket (api-docs §7), so the list is only ever as fresh as the last
-/// open, pull-to-refresh or badge poll.
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -31,9 +22,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    // Opening the inbox is one of the few reliable moments to re-sync the
-    // badge — see NotificationBadgeController for why it can't be event
-    // driven.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) ref.read(notificationBadgeProvider.notifier).refresh();
     });
@@ -48,7 +36,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    // Pre-fetch 200 px early so the next page is usually already there.
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ref.read(notificationListProvider.notifier).loadMore();
@@ -56,9 +43,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _onTapNotification(NotificationEntity notification) async {
-    // Resolve the destination *before* awaiting anything — the entity in
-    // state is replaced by the optimistic read-flag update below, and the
-    // route must not depend on which instance we happen to hold afterwards.
     final route = resolveNotificationRoute(notification);
 
     final failure = await ref
@@ -68,9 +52,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (!mounted) return;
 
     if (failure != null) {
-      // The row has already rolled back by now; tell the user why it
-      // un-greyed itself, then still navigate — failing to mark it read is
-      // no reason to refuse to open what it's about.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(failure.message)),
       );
@@ -109,9 +90,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          // `PATCH /notifications/read_all/` (api-docs §8.4). Disabled when
-          // the badge says there's nothing unread — the call would succeed
-          // and return 0, which is just a wasted request.
           TextButton(
             onPressed: unreadCount == 0 ? null : _onMarkAllAsRead,
             child: const Text('Read all'),
@@ -130,9 +108,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ],
       ),
       body: listState.when(
-        // No leading avatar in the skeleton? There is one — every row has a
-        // circular type icon — and a trailing chevron on the rows that lead
-        // somewhere, so the placeholder mirrors both.
         loading: () => const AppListSkeleton(hasTrailing: true),
         error: (error, _) => AppErrorState(
           error: error,
@@ -141,10 +116,6 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ),
         data: (state) {
           if (state.items.isEmpty) {
-            // "Nothing at all" and "nothing matching this filter" are
-            // different problems: the second one is fixed by changing the
-            // filter, and saying "No notifications yet" while a filter is
-            // active reads as a bug.
             return RefreshIndicator(
               onRefresh: () =>
                   ref.read(notificationListProvider.notifier).refresh(),
@@ -214,8 +185,6 @@ class _NotificationTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      // Unread rows are tinted rather than bolded alone — a weight change is
-      // easy to miss in a list where every title is short.
       tileColor: isUnread ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25) : null,
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.secondaryContainer,
@@ -228,8 +197,6 @@ class _NotificationTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // `message` is nullable (api-docs §8.2) — a title-only
-          // notification renders without an empty gap.
           if (notification.message != null && notification.message!.isNotEmpty)
             Text(notification.message!, maxLines: 2, overflow: TextOverflow.ellipsis),
           Text(_formatTimestamp(notification.createdAt), style: theme.textTheme.bodySmall),
@@ -245,15 +212,11 @@ class _NotificationTile extends StatelessWidget {
     switch (type) {
       case NotificationType.chat:
         return Icons.chat_bubble_outline;
-      case NotificationType.project:
-        return Icons.work_outline;
       case NotificationType.system:
         return Icons.info_outline;
     }
   }
 
-  /// Relative for anything recent, absolute once "3 days ago" stops being
-  /// more useful than a date.
   static String _formatTimestamp(DateTime timestamp) {
     final difference = DateTime.now().difference(timestamp);
     if (difference.inMinutes < 1) return 'Just now';
@@ -265,4 +228,3 @@ class _NotificationTile extends StatelessWidget {
         '${local.month.toString().padLeft(2, '0')}.${local.year}';
   }
 }
-

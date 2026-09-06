@@ -20,8 +20,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Read live by the "repeat password" validator, not just at submit time,
-  // so it can compare against whatever is currently typed in `password`.
   String _currentPassword() =>
       (_formKey.currentState?.fields['password']?.value as String?) ?? '';
 
@@ -111,9 +109,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   FormBuilderTextField(
                     name: 'password',
                     obscureText: !_isPasswordVisible,
-                    // Re-validate the "repeat" field live as this one
-                    // changes, so a stale "passwords do not match" error
-                    // doesn't linger after the person fixes this field.
                     onChanged: (_) => _formKey.currentState?.fields['password_repeat']
                         ?.validate(),
                     decoration: InputDecoration(

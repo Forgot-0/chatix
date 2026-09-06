@@ -1,17 +1,12 @@
-
-/// Base class for all analytics events in the app
 abstract class AnalyticsEvent {
-  /// The name of the event as it will be reported to analytics services
   String get name;
 
-  /// Parameters associated with this event
   Map<String, dynamic> get parameters => {};
 
   @override
   String toString() => 'AnalyticsEvent(name: $name, parameters: $parameters)';
 }
 
-/// An event that tracks screen views
 class ScreenViewEvent extends AnalyticsEvent {
   final String screenName;
   final Map<String, dynamic>? screenParameters;
@@ -28,7 +23,6 @@ class ScreenViewEvent extends AnalyticsEvent {
   };
 }
 
-/// An event that tracks user actions such as button clicks
 class UserActionEvent extends AnalyticsEvent {
   final String action;
   final String? category;
@@ -57,7 +51,6 @@ class UserActionEvent extends AnalyticsEvent {
   };
 }
 
-/// An event that tracks errors or exceptions
 class ErrorEvent extends AnalyticsEvent {
   final String errorType;
   final String message;
@@ -83,7 +76,6 @@ class ErrorEvent extends AnalyticsEvent {
   };
 }
 
-/// An event that tracks performance related metrics
 class PerformanceEvent extends AnalyticsEvent {
   final String metricName;
   final num value;

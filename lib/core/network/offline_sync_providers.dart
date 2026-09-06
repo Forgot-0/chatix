@@ -5,33 +5,25 @@ import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/offline_sync_service.dart';
 import 'package:hive/hive.dart';
 
-/// Provider for connectivity service
 final connectivityProvider = Provider<Connectivity>((ref) {
   return Connectivity();
 });
 
-/// Provider for offline sync Hive box
 final offlineSyncBoxProvider = FutureProvider<Box<String>>((ref) async {
-  // Open the box
   return await Hive.openBox<String>(AppConstants.offlineSyncBox);
 });
 
-/// Provider for conflict resolution strategy
 final conflictResolutionStrategyProvider = Provider<ConflictResolutionStrategy>(
   (ref) {
-    // Use smart merge strategy with field priorities
     return SmartMergeStrategy({
-      'id': false, // Server wins for IDs
-      'createdAt': false, // Server wins for creation timestamps
-      'updatedAt': true, // Client wins for update timestamps
-      // Add more field priorities as needed
+      'id': false,
+      'createdAt': false,
+      'updatedAt': true,
     });
   },
 );
 
-/// Provider for offline sync service
 final offlineSyncServiceProvider = Provider<OfflineSyncService>((ref) {
-  // Wait for the box to be ready
   final boxAsync = ref.watch(offlineSyncBoxProvider);
 
   return boxAsync.when(
@@ -45,10 +37,8 @@ final offlineSyncServiceProvider = Provider<OfflineSyncService>((ref) {
         conflictStrategy: conflictStrategy,
       );
 
-      // Initialize the service
       service.init();
 
-      // Dispose the service when the provider is destroyed
       ref.onDispose(() {
         box.close();
       });
@@ -60,7 +50,6 @@ final offlineSyncServiceProvider = Provider<OfflineSyncService>((ref) {
   );
 });
 
-/// Provider for pending changes
 final pendingChangesProvider = StreamProvider<List<OfflineChange>>((ref) {
   final offlineSyncService = ref.watch(offlineSyncServiceProvider);
 
@@ -69,21 +58,18 @@ final pendingChangesProvider = StreamProvider<List<OfflineChange>>((ref) {
   }
 
   if (offlineSyncService is ErrorOfflineSyncService) {
-    // Return empty list for now, but could handle error state differently
     return const Stream.empty();
   }
 
   return offlineSyncService.syncStatusStream;
 });
 
-/// Provider for online status
 final isOnlineProvider = FutureProvider.autoDispose<bool>((ref) async {
   final connectivity = ref.watch(connectivityProvider);
   final connectivityResult = await connectivity.checkConnectivity();
   return !connectivityResult.contains(ConnectivityResult.none);
 });
 
-/// Loading placeholder for offline sync service
 class LoadingOfflineSyncService implements OfflineSyncService {
   @override
   Future<OfflineChange> queueChange({
@@ -97,7 +83,6 @@ class LoadingOfflineSyncService implements OfflineSyncService {
 
   @override
   Future<void> syncChanges() async {
-    // Do nothing while loading
   }
 
   @override
@@ -115,7 +100,6 @@ class LoadingOfflineSyncService implements OfflineSyncService {
     String changeId,
     Map<String, dynamic> resolvedData,
   ) async {
-    // Do nothing while loading
   }
 
   @override
@@ -128,11 +112,9 @@ class LoadingOfflineSyncService implements OfflineSyncService {
 
   @override
   Future<void> init() async {
-    // Do nothing while loading
   }
 }
 
-/// Error placeholder for offline sync service
 class ErrorOfflineSyncService implements OfflineSyncService {
   final String errorMessage;
 
@@ -150,7 +132,6 @@ class ErrorOfflineSyncService implements OfflineSyncService {
 
   @override
   Future<void> syncChanges() async {
-    // Do nothing in error state
   }
 
   @override
@@ -168,7 +149,6 @@ class ErrorOfflineSyncService implements OfflineSyncService {
     String changeId,
     Map<String, dynamic> resolvedData,
   ) async {
-    // Do nothing in error state
   }
 
   @override
@@ -181,13 +161,10 @@ class ErrorOfflineSyncService implements OfflineSyncService {
 
   @override
   Future<void> init() async {
-    // Do nothing in error state
   }
 }
 
-/// Widget that shows offline status and syncing status
 class OfflineStatusIndicator extends ConsumerWidget {
-  /// Create an offline status indicator
   const OfflineStatusIndicator({super.key});
 
   @override
@@ -281,15 +258,11 @@ class OfflineStatusIndicator extends ConsumerWidget {
   }
 }
 
-/// An icon that rotates continuously
 class RotatingIcon extends StatefulWidget {
-  /// The icon to display
   final IconData icon;
 
-  /// The color of the icon
   final Color color;
 
-  /// Create a rotating icon
   const RotatingIcon({super.key, required this.icon, required this.color});
 
   @override

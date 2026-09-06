@@ -20,15 +20,12 @@ void main() {
   const tPassword = 'Password123!';
 
   test('should call AuthRepository.login and return void on success', () async {
-    // Arrange
     when(
       () => mockAuthRepository.login(username: tUsername, password: tPassword),
     ).thenAnswer((_) async => const Right(null));
 
-    // Act
     final result = await useCase.execute(username: tUsername, password: tPassword);
 
-    // Assert
     expect(result, const Right<Failure, void>(null));
     verify(
       () => mockAuthRepository.login(username: tUsername, password: tPassword),
@@ -36,7 +33,6 @@ void main() {
   });
 
   test('should return the repository Failure when login fails', () async {
-    // Arrange
     const tFailure = ApiFailure(
       code: 'WRONG_LOGIN_DATA',
       message: 'Incorrect username or password',
@@ -47,10 +43,8 @@ void main() {
       () => mockAuthRepository.login(username: tUsername, password: tPassword),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final result = await useCase.execute(username: tUsername, password: tPassword);
 
-    // Assert
     expect(result, const Left(tFailure));
     verify(
       () => mockAuthRepository.login(username: tUsername, password: tPassword),
@@ -58,10 +52,8 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when username is empty', () async {
-    // Act
     final result = await useCase.execute(username: '', password: tPassword);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -70,10 +62,8 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when password is empty', () async {
-    // Act
     final result = await useCase.execute(username: tUsername, password: '');
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),

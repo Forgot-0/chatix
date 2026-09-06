@@ -5,12 +5,10 @@ import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/utils/app_review_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Provider for the InAppReview instance
 final inAppReviewProvider = Provider<InAppReview>((ref) {
   return InAppReview.instance;
 });
 
-/// Provider for the app review service
 final appReviewServiceProvider = Provider<AppReviewService>((ref) {
   final inAppReview = ref.watch(inAppReviewProvider);
   final preferences = ref.watch(sharedPreferencesProvider);
@@ -23,13 +21,11 @@ final appReviewServiceProvider = Provider<AppReviewService>((ref) {
     minActionsBeforeReview: AppConstants.minActionsBeforeReview,
   );
 
-  // Initialize the service
   service.init();
 
   return service;
 });
 
-/// Provider to check if a review should be requested
 final shouldRequestReviewProvider = FutureProvider.autoDispose<bool>((
   ref,
 ) async {
@@ -37,17 +33,13 @@ final shouldRequestReviewProvider = FutureProvider.autoDispose<bool>((
   return await reviewService.shouldRequestReview();
 });
 
-/// Provider for SharedPreferences - should be defined in your main.dart
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferencesProvider not initialized');
 });
 
-/// Smart review prompt that uses feedback before store reviews
 class SmartReviewPrompt extends ConsumerWidget {
-  /// The child widget
   final Widget child;
 
-  /// Create a smart review prompt
   const SmartReviewPrompt({super.key, required this.child});
 
   @override
@@ -66,7 +58,6 @@ class SmartReviewPrompt extends ConsumerWidget {
   Future<void> _showReviewFlow(BuildContext context, WidgetRef ref) async {
     final reviewService = ref.read(appReviewServiceProvider);
 
-    // First, show a dialog to gauge satisfaction
     final shouldContinue =
         await showDialog<bool>(
           context: context,
@@ -91,7 +82,6 @@ class SmartReviewPrompt extends ConsumerWidget {
 
     if (!shouldContinue || !context.mounted) return;
 
-    // Then, show feedback form
     final hasFeedback = await reviewService.showFeedbackForm(
       context: context,
       title: 'Your Feedback Matters',
@@ -99,7 +89,6 @@ class SmartReviewPrompt extends ConsumerWidget {
           'Please share your thoughts about the app. If you\'re enjoying it, a review on the app store would be greatly appreciated!',
     );
 
-    // If user didn't provide feedback, prompt for review directly
     if (!hasFeedback) {
       await reviewService.requestReview();
     }

@@ -50,7 +50,6 @@ void main() {
         '512': {'webp': 'webp512'},
       });
 
-      // 64 isn't available; 256 is the nearest size >= 64.
       expect(profile.bestAvatarUrl(64), 'webp256');
     });
 
@@ -60,8 +59,6 @@ void main() {
         '64': {'webp': 'webp64'},
       });
 
-      // 512 isn't available and nothing is larger; falls back to 64 (the
-      // largest size below 512), not 32.
       expect(profile.bestAvatarUrl(512), 'webp64');
     });
 

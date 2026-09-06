@@ -9,21 +9,6 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
-/// `POST /chats/` 🔒 4/5min (api-docs §6.2).
-///
-/// ⚠️ Rate-limited to **4 creations per 5 minutes**, so everything that can be
-/// validated offline is: a wasted request costs the user a quarter of their
-/// budget. In particular a `direct` chat must carry **exactly one**
-/// `member_ids` entry — the other participant — and anything else is caught
-/// here (and again in `CreateChatUseCase`) instead of coming back as
-/// `400 MEMBER_LIMIT_EXCEEDED`, whose name is actively misleading for the
-/// "I selected nobody" case.
-///
-/// Participants are picked by username through [MultiUserSearchField]
-/// (`GET /profiles/?username=`, §4.2) rather than typed as raw numeric ids.
-/// The request body is unchanged — it still carries `member_ids: int[]`,
-/// derived from [_selectedMembers] — only the way a user finds those ids
-/// moved out of their memory and into a search box.
 class CreateChatScreen extends ConsumerStatefulWidget {
   const CreateChatScreen({super.key});
 
@@ -36,11 +21,6 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
   final _descriptionController = TextEditingController();
   final _slowModeController = TextEditingController(text: '0');
 
-  /// People picked in the search field, in pick order.
-  ///
-  /// The whole profile is kept rather than just the id so the chips can show
-  /// a name and avatar; [_memberIds] projects it back down to what the API
-  /// takes.
   final List<ProfileEntity> _selectedMembers = [];
 
   ChatType _chatType = ChatType.direct;
@@ -57,15 +37,11 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
     super.dispose();
   }
 
-  /// `CreateChatRequest.member_ids` — unchanged on the wire.
   List<int> get _memberIds =>
       _selectedMembers.map((profile) => profile.id).toList();
 
   void _addMember(ProfileEntity profile) {
     setState(() {
-      // A direct chat takes exactly one other participant, so a second pick
-      // replaces the first instead of producing a selection the submit button
-      // would then have to reject.
       if (_chatType == ChatType.direct) {
         _selectedMembers
           ..clear()
@@ -90,8 +66,6 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // All four ChatType values are offered — `supergroup` is a distinct
-          // type from `group` (different member cap), never a synonym.
           SegmentedButton<ChatType>(
             segments: const [
               ButtonSegment(value: ChatType.direct, label: Text('Direct')),
@@ -105,8 +79,6 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
           ),
           const SizedBox(height: 16),
 
-          // A direct chat has no name/description of its own — it is labelled
-          // from the other participant — so those fields are hidden entirely.
           if (!isDirect) ...[
             TextField(
               controller: _nameController,
@@ -198,9 +170,6 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
   Future<void> _submit() async {
     final memberIds = _memberIds;
 
-    // Client-side guard before spending one of only 4 allowed creations
-    // (api-docs §6.2). The use case repeats it; this one is about the message
-    // the user sees, phrased for the case they're actually in.
     if (_chatType == ChatType.direct && memberIds.length != 1) {
       setState(() {
         _error = memberIds.isEmpty
@@ -238,19 +207,12 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
 
     result.match(
       (failure) {
-        // `409 DIRECT_CHAT_EXISTS` carries the existing chat's id in
-        // `detail.chat_id` (api-docs §6.2), so the useful response is to open
-        // that conversation rather than to report an error the user can't fix.
-        // Shared with the profile screen's "Message" button — see
-        // `existingDirectChatId` in create_chat_use_case.dart.
         final existingChatId = existingDirectChatId(failure);
         if (existingChatId != null) {
           ref.read(chatListProvider.notifier).refresh();
           context.pushReplacement(ChatDetailRoute(existingChatId).location);
           return;
         }
-        // `SLOW_MODE_OUT_OF_RANGE` / `MEMBER_LIMIT_EXCEEDED` get a phrasing
-        // that names the real problem; anything else keeps its own message.
         setState(() => _error = chatFailureMessage(failure) ?? failure.message);
       },
       (chat) {

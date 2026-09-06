@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:chatix/core/feature_flags/feature_flag_service.dart';
 
-/// A feature flag service implementation that uses local values
-/// Useful for development, testing or as a fallback
 class LocalFeatureFlagService extends FeatureFlagService {
   final Map<String, dynamic> _values = {};
   final List<VoidCallback> _listeners = [];
@@ -84,7 +82,6 @@ class LocalFeatureFlagService extends FeatureFlagService {
   Future<void> fetchAndActivate() async {
     debugPrint('🚩 Fetching remote configs (simulated)');
 
-    // Simulate a network delay
     await Future.delayed(const Duration(seconds: 1));
 
     debugPrint('🚩 Remote configs fetched and activated');
@@ -112,7 +109,6 @@ class LocalFeatureFlagService extends FeatureFlagService {
     _listeners.remove(listener);
   }
 
-  /// Simulate periodic fetching of remote configs
   void simulatePeriodicFetching({
     Duration interval = const Duration(minutes: 30),
   }) {
@@ -122,28 +118,24 @@ class LocalFeatureFlagService extends FeatureFlagService {
     });
   }
 
-  /// Update a feature flag value (for testing/development)
   void setValue(String key, dynamic value) {
     _values[key] = value;
     debugPrint('🚩 Feature flag updated: $key = $value');
     _notifyListeners();
   }
 
-  /// Override multiple values at once
   void setValues(Map<String, dynamic> values) {
     _values.addAll(values);
     debugPrint('🚩 Feature flags updated: $values');
     _notifyListeners();
   }
 
-  /// Clear all values
   void clearValues() {
     _values.clear();
     debugPrint('🚩 All feature flags cleared');
     _notifyListeners();
   }
 
-  /// Dispose resources
   @override
   void dispose() {
     _simulatedFetchTimer?.cancel();

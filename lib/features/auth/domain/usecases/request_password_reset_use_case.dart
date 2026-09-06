@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 
-/// `POST /auth/password-resets/` (api-docs §3.7). Rate limit: 3/hour.
 class RequestPasswordResetUseCase {
   final AuthRepository _repository;
 

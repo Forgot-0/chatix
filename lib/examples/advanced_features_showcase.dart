@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/accessibility/accessibility_providers.dart';
 import 'package:chatix/core/accessibility/accessibility_widgets.dart';
 import 'package:chatix/core/analytics/analytics_providers.dart';
-// Biometrics demo is imported directly
 import 'package:chatix/examples/biometrics_demo.dart';
 import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 import 'package:chatix/core/images/advanced_image.dart';
@@ -14,14 +13,12 @@ import 'package:chatix/core/logging/logger_provider.dart';
 import 'package:chatix/core/network/offline_sync_providers.dart';
 import 'package:chatix/core/network/offline_sync_service.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
-// Theme handling is managed through feature flags
 import 'package:chatix/core/updates/update_providers.dart';
 import 'package:chatix/core/updates/update_service.dart';
 import 'package:chatix/core/utils/app_review_providers.dart';
 
 import '../core/feature_flags/local_feature_flag_service.dart';
 
-/// A screen that showcases the advanced features of the architecture template
 class AdvancedFeaturesShowcase extends ConsumerStatefulWidget {
   const AdvancedFeaturesShowcase({super.key});
 
@@ -33,7 +30,6 @@ class AdvancedFeaturesShowcase extends ConsumerStatefulWidget {
 class _AdvancedFeaturesShowcaseState
     extends ConsumerState<AdvancedFeaturesShowcase>
     with LoggerStateMixin {
-  // Image effect controls state
   final Map<ImageEffectType, double> _effectsIntensity = {
     ImageEffectType.none: 1.0,
     ImageEffectType.grayscale: 0.0,
@@ -45,16 +41,13 @@ class _AdvancedFeaturesShowcaseState
   @override
   void initState() {
     super.initState();
-    // Log initialization with performance tracking
     logger.timeSync('Screen initialization', () {
-      // Initialize any resources
       logger.i('Advanced features showcase initialized');
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Access feature flags
     final showAnalytics = ref.watch(
       featureFlagProvider('enable_analytics', defaultValue: true),
     );
@@ -65,7 +58,6 @@ class _AdvancedFeaturesShowcaseState
       colorConfigProvider('primary_color', defaultValue: Colors.blue),
     );
 
-    // Access analytics
     final analytics = ref.watch(analyticsProvider);
 
     return Scaffold(
@@ -324,7 +316,6 @@ class _AdvancedFeaturesShowcaseState
             const Text('Advanced image handling:'),
             const SizedBox(height: 16),
 
-            // Top row with placeholders
             Text(
               'Loading placeholders:',
               style: Theme.of(context).textTheme.titleSmall,
@@ -363,7 +354,6 @@ class _AdvancedFeaturesShowcaseState
               ),
             ),
 
-            // Advanced image loading
             const SizedBox(height: 16),
             Text(
               'Advanced image loading:',
@@ -408,7 +398,7 @@ class _AdvancedFeaturesShowcaseState
                   Padding(
                     padding: const EdgeInsets.only(right: 16),
                     child: SvgImage.network(
-                      'https://picsum.photos/200', // Normally this would be an SVG URL
+                      'https://picsum.photos/200',
                       width: 200,
                       height: 200,
                       placeholder: ShimmerPlaceholder(
@@ -420,7 +410,6 @@ class _AdvancedFeaturesShowcaseState
               ),
             ),
 
-            // Effect controls
             const SizedBox(height: 16),
             Text(
               'Image effects:',
@@ -437,7 +426,6 @@ class _AdvancedFeaturesShowcaseState
               ],
             ),
 
-            // Effect intensity slider
             if (_selectedEffect != ImageEffectType.none) ...[
               const SizedBox(height: 8),
               Slider(
@@ -530,7 +518,6 @@ class _AdvancedFeaturesShowcaseState
                 ElevatedButton(
                   onPressed: () {
                     logger.timeSync('Demo operation', () {
-                      // Simulate some work
                       int sum = 0;
                       for (int i = 0; i < 1000000; i++) {
                         sum += i;
@@ -734,7 +721,6 @@ class _AdvancedFeaturesShowcaseState
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.of(context).pop();
-                                  // Open the app store
                                   updateService.openUpdateUrl();
                                 },
                                 child: const Text('Update Now'),

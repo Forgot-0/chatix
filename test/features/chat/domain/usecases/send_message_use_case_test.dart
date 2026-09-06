@@ -70,8 +70,6 @@ void main() {
     test('trims content and drops whitespace-only text to null', () async {
       stubSendMessage();
 
-      // An attachment-only message must send `content: null`, not "   ":
-      // the difference is "no caption" vs. "a caption made of spaces".
       await useCase.execute(
         tChatId,
         content: '   ',
@@ -152,9 +150,6 @@ void main() {
     test(
       'reuses the same key across retries so the send is not duplicated',
       () async {
-        // The "no network → tap send again on reconnect" scenario: the first
-        // attempt fails, the second uses the SAME key, so the backend replays
-        // its cached result instead of creating a second message.
         const key = 'c1d2e3f4-2222-4000-8000-000000000003';
         var attempts = 0;
 
@@ -187,7 +182,6 @@ void main() {
         expect(first.isLeft(), isTrue);
         expect(second.getRight().toNullable(), tMessage);
 
-        // Both calls carried the identical key — that is the whole protection.
         verify(
           () => mockRepository.sendMessage(
             tChatId,
@@ -204,8 +198,6 @@ void main() {
 
   group('client-side validation', () {
     test('rejects a message with neither text nor attachments', () async {
-      // Server answers `400 INVALID_MESSAGE`; catching it here saves a
-      // round-trip and rate-limit budget (10 msg/sec).
       final result = await useCase.execute(tChatId);
 
       expect(result.getLeft().toNullable(), isA<InputFailure>());
@@ -240,8 +232,6 @@ void main() {
 
       final failure = result.getLeft().toNullable();
       expect(failure, isA<InputFailure>());
-      // The message names the actual limit — "too long" alone is useless to
-      // the person who has to shorten it.
       expect(failure!.message, contains('4096'));
       verifyNever(
         () => mockRepository.sendMessage(

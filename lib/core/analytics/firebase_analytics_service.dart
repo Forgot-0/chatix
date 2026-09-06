@@ -2,14 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:chatix/core/analytics/analytics_event.dart';
 import 'package:chatix/core/analytics/analytics_service.dart';
 
-/// Implementation of AnalyticsService using Firebase Analytics
-/// Note: In a real app, you would include the firebase_analytics package
-/// and use the actual Firebase implementation
 class FirebaseAnalyticsService implements AnalyticsService {
   bool _isEnabled = true;
 
-  /// Mock Firebase Analytics instance
-  /// In a real app, this would be a FirebaseAnalytics instance
   final Map<String, dynamic> _userProperties = {};
 
   @override
@@ -25,7 +20,6 @@ class FirebaseAnalyticsService implements AnalyticsService {
     final eventName = event.name.replaceAll(' ', '_');
     final params = event.parameters;
 
-    // Log different event types
     if (event is ScreenViewEvent) {
       debugPrint(
         '📊 Firebase screen view: ${event.screenName}, params: $params',
@@ -41,7 +35,6 @@ class FirebaseAnalyticsService implements AnalyticsService {
         '📊 Firebase performance: ${event.metricName}, value: ${event.value}${event.unit}, params: $params',
       );
     } else {
-      // Generic event
       debugPrint('📊 Firebase log event: $eventName, params: $params');
     }
   }

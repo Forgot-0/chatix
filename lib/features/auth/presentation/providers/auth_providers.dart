@@ -10,9 +10,6 @@ import 'package:chatix/features/auth/domain/usecases/register_use_case.dart';
 import 'package:chatix/features/auth/domain/usecases/request_email_verification_use_case.dart';
 import 'package:chatix/features/auth/domain/usecases/request_password_reset_use_case.dart';
 
-/// Domain-layer DI. `authRepositoryProvider` itself lives next to its
-/// implementation in `auth_repository_impl.dart` (re-exported here isn't
-/// needed — import that file directly where the repository is required).
 final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
   return LoginUseCase(ref.watch(authRepositoryProvider));
 });

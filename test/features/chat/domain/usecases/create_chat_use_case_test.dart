@@ -13,8 +13,6 @@ void main() {
   late MockChatRepository mockRepository;
 
   setUpAll(() {
-    // `any(named: 'chatType')` needs a dummy ChatType to hand around
-    // (mocktail can't synthesise one for a non-nullable enum parameter).
     registerFallbackValue(ChatType.direct);
   });
 
@@ -69,8 +67,6 @@ void main() {
     );
   }
 
-  // The endpoint allows only 4 creations per 5 minutes (api-docs §6.2), so
-  // every rejected request below is a quarter of the user's budget saved.
   group('direct chat requires exactly one member id (api-docs §6.2)', () {
     test('accepts exactly one member id', () async {
       stubCreateChat();
@@ -103,9 +99,6 @@ void main() {
 
       final failure = result.getLeft().toNullable();
       expect(failure, isA<InputFailure>());
-      // The server would answer `400 MEMBER_LIMIT_EXCEEDED` — a code that
-      // points at the wrong problem for an *empty* list, so the local message
-      // must explain the real mistake instead.
       expect(failure!.message.toLowerCase(), contains('exactly one'));
       verifyNeverCalled();
     });
@@ -123,8 +116,6 @@ void main() {
     });
 
     test('defaults to direct, so a bare call is rejected too', () async {
-      // `chat_type` defaults to "direct" server-side, which means an
-      // argument-less create is a direct chat with zero participants.
       final result = await useCase.execute();
 
       expect(result.getLeft().toNullable(), isA<InputFailure>());
@@ -217,10 +208,6 @@ void main() {
     });
 
     test('applies the per-type cap, not one global limit', () async {
-      // `group` caps at 500 while `supergroup` allows a million (api-docs
-      // §6.1). The initial-member cap (100) is the tighter of the two here,
-      // so a 100-member list is the largest a `group` can be created with and
-      // must be accepted rather than rejected by a mistakenly shared limit.
       stubCreateChat();
 
       final result = await useCase.execute(
@@ -245,8 +232,6 @@ void main() {
     });
 
     test('rejects a direct chat that would exceed its 2-member cap', () async {
-      // The per-type cap is what makes `direct` different from every other
-      // type: 2 members total, i.e. the caller plus exactly one other.
       expect(ChatType.direct.maxMembers, 2);
       expect(ChatType.group.maxMembers, 500);
       expect(ChatType.supergroup.maxMembers, 1000000);
@@ -309,8 +294,6 @@ void main() {
       ),
     ).thenAnswer(
       (_) async => const Left(
-        // `409 DIRECT_CHAT_EXISTS` — the existing chat's id travels in
-        // `detail.chat_id` so the UI can just open it (api-docs §6.2).
         ServerFailure(message: 'Direct chat already exists', statusCode: 409),
       ),
     );

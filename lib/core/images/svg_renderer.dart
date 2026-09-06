@@ -6,19 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/storage/cache_manager.dart';
 
-/// Provider for SVG cache
 final svgCacheProvider = Provider<CacheManager<ui.Image>>((ref) {
   return CacheManager<ui.Image>(maxItems: 50);
 });
 
-/// A service that handles SVG rendering
 class SvgRenderer {
   final CacheManager<ui.Image> _cache;
 
-  /// Creates a new SVG renderer with the given cache
   SvgRenderer(this._cache);
 
-  /// Renders an SVG file from assets to a Flutter Image
   Future<ui.Image> renderSvgAsset(
     String assetName, {
     double? width,
@@ -28,36 +24,27 @@ class SvgRenderer {
     BlendMode colorBlendMode = BlendMode.srcIn,
     String? semanticsLabel,
   }) async {
-    // Create a cache key based on the parameters
     final cacheKey =
         '${assetName}_${width}_${height}_${color?.hashCode}_${colorBlendMode.index}';
 
-    // Check if the SVG is already cached
     final cachedImage = _cache.getItem(cacheKey);
     if (cachedImage != null) {
       return cachedImage;
     }
 
-    // For a real implementation, we would use flutter_svg or similar package
-    // This is a debug implementation that loads a PNG placeholder
-
     debugPrint('🖼️ Rendering SVG asset: $assetName');
 
-    // Simulate SVG rendering time
     await Future.delayed(const Duration(milliseconds: 300));
 
-    // Create a simple colored square as a placeholder for the SVG
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final paint = Paint()
       ..color = color ?? Colors.blue
       ..style = PaintingStyle.fill;
 
-    // Determine dimensions
     final size = Size(width ?? 100, height ?? 100);
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
-    // Draw text to indicate this is a debug renderer
     if (kDebugMode) {
       const textStyle = TextStyle(color: Colors.white, fontSize: 14);
       final textSpan = TextSpan(text: 'SVG\nPlaceholder', style: textStyle);
@@ -82,13 +69,11 @@ class SvgRenderer {
       size.height.toInt(),
     );
 
-    // Cache the rendered SVG
     _cache.setItem(cacheKey, image);
 
     return image;
   }
 
-  /// Renders an SVG file from network to a Flutter Image
   Future<ui.Image> renderSvgNetwork(
     String url, {
     double? width,
@@ -99,36 +84,27 @@ class SvgRenderer {
     Map<String, String>? headers,
     String? semanticsLabel,
   }) async {
-    // Create a cache key based on the parameters
     final cacheKey =
         '${url}_${width}_${height}_${color?.hashCode}_${colorBlendMode.index}';
 
-    // Check if the SVG is already cached
     final cachedImage = _cache.getItem(cacheKey);
     if (cachedImage != null) {
       return cachedImage;
     }
 
-    // For a real implementation, we would use flutter_svg or similar package
-    // This is a debug implementation that creates a placeholder
-
     debugPrint('🖼️ Rendering SVG from network: $url');
 
-    // Simulate network loading and SVG rendering time
     await Future.delayed(const Duration(milliseconds: 600));
 
-    // Create a simple colored square as a placeholder for the SVG
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     final paint = Paint()
       ..color = color ?? Colors.green
       ..style = PaintingStyle.fill;
 
-    // Determine dimensions
     final size = Size(width ?? 100, height ?? 100);
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
-    // Draw text to indicate this is a network SVG placeholder
     if (kDebugMode) {
       const textStyle = TextStyle(color: Colors.white, fontSize: 14);
       final textSpan = TextSpan(
@@ -156,20 +132,17 @@ class SvgRenderer {
       size.height.toInt(),
     );
 
-    // Cache the rendered SVG
     _cache.setItem(cacheKey, image);
 
     return image;
   }
 }
 
-/// Provider for the SVG renderer
 final svgRendererProvider = Provider<SvgRenderer>((ref) {
   final cache = ref.watch(svgCacheProvider);
   return SvgRenderer(cache);
 });
 
-/// A widget that renders SVG files
 class SvgImage extends ConsumerWidget {
   final String source;
   final bool isAsset;
@@ -183,7 +156,6 @@ class SvgImage extends ConsumerWidget {
   final Widget? placeholder;
   final Widget? errorWidget;
 
-  /// Creates a widget that displays an SVG image
   const SvgImage({
     super.key,
     required this.source,
@@ -199,7 +171,6 @@ class SvgImage extends ConsumerWidget {
     this.errorWidget,
   });
 
-  /// Creates a widget that displays an SVG image from a network URL
   const SvgImage.network(
     String url, {
     super.key,
@@ -215,7 +186,6 @@ class SvgImage extends ConsumerWidget {
   }) : source = url,
        isAsset = false;
 
-  /// Creates a widget that displays an SVG image from an asset bundle
   const SvgImage.asset(
     String assetName, {
     super.key,

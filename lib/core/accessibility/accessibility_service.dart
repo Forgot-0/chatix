@@ -2,48 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
-/// Interface for accessibility services
 abstract class AccessibilityService {
-  /// Check if screen reader is active
   Future<bool> isScreenReaderActive();
 
-  /// Get current accessibility settings
   AccessibilitySettings getCurrentSettings();
 
-  /// Announce a message for screen reader users
   Future<void> announce(String message);
 
-  /// Initialize the service
   Future<void> init();
 
-  /// Clean up resources when no longer needed
   Future<void> dispose();
 
-  /// Register for accessibility settings changes
   Function registerForSettingsChanges(Function(AccessibilitySettings) callback);
 
-  /// Get semantic label for an element (with localization if possible)
   String getSemanticLabel(String key, Map<String, String>? args);
 }
 
-/// Accessibility settings for the app
 class AccessibilitySettings {
-  /// Whether a screen reader is active (e.g., VoiceOver, TalkBack)
   final bool isScreenReaderActive;
 
-  /// Whether high contrast mode is enabled
   final bool isHighContrastEnabled;
 
-  /// Whether bold text is enabled
   final bool isBoldTextEnabled;
 
-  /// Whether reduce motion is enabled
   final bool isReduceMotionEnabled;
 
-  /// Font scale factor
   final double fontScale;
 
-  /// Create accessibility settings
   const AccessibilitySettings({
     this.isScreenReaderActive = false,
     this.isHighContrastEnabled = false,
@@ -52,7 +37,6 @@ class AccessibilitySettings {
     this.fontScale = 1.0,
   });
 
-  /// Create a copy with fields replaced
   AccessibilitySettings copyWith({
     bool? isScreenReaderActive,
     bool? isHighContrastEnabled,
@@ -72,7 +56,6 @@ class AccessibilitySettings {
   }
 }
 
-/// Flutter implementation of accessibility service
 class FlutterAccessibilityService implements AccessibilityService {
   final FlutterTts _flutterTts = FlutterTts();
   AccessibilitySettings _currentSettings = const AccessibilitySettings();
@@ -80,14 +63,11 @@ class FlutterAccessibilityService implements AccessibilityService {
 
   @override
   Future<void> init() async {
-    // Initialize TTS
     await _flutterTts.setLanguage('en-US');
     await _flutterTts.setSpeechRate(0.5);
 
-    // Listen for semantics changes using SemanticsService
     SemanticsBinding.instance.addSemanticsEnabledListener(_updateSettings);
 
-    // Initial settings update
     _updateSettings();
 
     debugPrint('📱 Accessibility service initialized');
@@ -106,7 +86,6 @@ class FlutterAccessibilityService implements AccessibilityService {
       fontScale: mediaQueryData.textScaler.scale(1.0),
     );
 
-    // Notify all listeners
     for (final listener in _listeners) {
       listener(_currentSettings);
     }
@@ -128,7 +107,6 @@ class FlutterAccessibilityService implements AccessibilityService {
       // ignore: deprecated_member_use
       SemanticsService.announce(message, TextDirection.ltr);
 
-      // Optionally, use TTS for platforms where semantics announce isn't well supported
       try {
         await _flutterTts.speak(message);
       } catch (e) {
@@ -149,14 +127,11 @@ class FlutterAccessibilityService implements AccessibilityService {
   ) {
     _listeners.add(callback);
 
-    // Return function to unregister
     return () => _listeners.remove(callback);
   }
 
   @override
   String getSemanticLabel(String key, Map<String, String>? args) {
-    // In a real app, this would use the localization system
-    // This is a simple implementation for demo purposes
     return key;
   }
 }

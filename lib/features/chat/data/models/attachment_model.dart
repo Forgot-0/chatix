@@ -4,15 +4,6 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 
 part 'attachment_model.g.dart';
 
-/// `AttachmentDTO` (api-docs §6.5).
-///
-/// [attachmentType]/[attachmentStatus] stay raw strings here and become enums
-/// in [toEntity] — the same model↔entity boundary the profile/project models
-/// use for their enum-ish fields, so json_serializable never needs an enum map
-/// and an unrecognised backend value degrades gracefully instead of throwing
-/// mid-parse (see `AttachmentStatus.fromWire`).
-///
-/// [createdAt] is likewise kept as the wire string and parsed in [toEntity].
 @JsonSerializable(fieldRename: FieldRename.snake)
 class AttachmentModel extends Equatable {
   final String id;
@@ -100,8 +91,6 @@ extension AttachmentModelX on AttachmentModel {
   }
 }
 
-/// One element of the step-1 upload-request response (api-docs §6.5).
-/// ⚠️ The endpoint returns a bare JSON array of these, not an object.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class AttachmentUploadTicketModel extends Equatable {
   final String uploadToken;
@@ -141,7 +130,6 @@ extension AttachmentUploadTicketModelX on AttachmentUploadTicketModel {
   }
 }
 
-/// `AttachmentDownloadUrlDTO` (api-docs §6.5).
 @JsonSerializable(fieldRename: FieldRename.snake)
 class AttachmentDownloadUrlModel extends Equatable {
   final String attachmentId;

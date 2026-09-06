@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/updates/update_service.dart';
 
-/// Provider for the update service
 final updateServiceProvider = Provider<UpdateService>((ref) {
   return BasicUpdateService(
     androidPackageName: AppConstants.packageName,
@@ -11,7 +10,6 @@ final updateServiceProvider = Provider<UpdateService>((ref) {
   );
 });
 
-/// Provider for checking if an update is available
 final updateCheckProvider = FutureProvider.autoDispose<UpdateCheckResult>((
   ref,
 ) async {
@@ -20,14 +18,11 @@ final updateCheckProvider = FutureProvider.autoDispose<UpdateCheckResult>((
   return await updateService.checkForUpdates();
 });
 
-/// Provider for the update information
 final updateInfoProvider = FutureProvider.autoDispose<UpdateInfo?>((ref) async {
   final updateService = ref.watch(updateServiceProvider);
   return await updateService.getUpdateInfo();
 });
 
-/// Controller for the update flow
-/// Controller for the update flow
 class UpdateController extends AsyncNotifier<UpdateCheckResult> {
   @override
   Future<UpdateCheckResult> build() async {
@@ -36,7 +31,6 @@ class UpdateController extends AsyncNotifier<UpdateCheckResult> {
     return await updateService.checkForUpdates();
   }
 
-  /// Check for updates
   Future<void> checkForUpdates() async {
     state = const AsyncValue.loading();
 
@@ -49,43 +43,34 @@ class UpdateController extends AsyncNotifier<UpdateCheckResult> {
     }
   }
 
-  /// Prompt the user to update the app
   Future<bool> promptForUpdate({bool force = false}) async {
     final updateService = ref.read(updateServiceProvider);
     return await updateService.promptUpdate(force: force);
   }
 
-  /// Open the update URL
   Future<bool> openUpdateUrl() async {
     final updateService = ref.read(updateServiceProvider);
     return await updateService.openUpdateUrl();
   }
 
-  /// Get information about the available update
   Future<UpdateInfo?> getUpdateInfo() async {
     final updateService = ref.read(updateServiceProvider);
     return await updateService.getUpdateInfo();
   }
 }
 
-/// Provider for the update controller
 final updateControllerProvider =
     AsyncNotifierProvider<UpdateController, UpdateCheckResult>(
       UpdateController.new,
     );
 
-/// Widget that shows an update dialog when an update is available
 class UpdateChecker extends ConsumerWidget {
-  /// The child widget to display
   final Widget child;
 
-  /// Whether to automatically prompt for updates
   final bool autoPrompt;
 
-  /// Whether to force updates (prevent dismissal of critical updates)
   final bool enforceCriticalUpdates;
 
-  /// Create an update checker
   const UpdateChecker({
     super.key,
     required this.child,
@@ -132,15 +117,11 @@ class UpdateChecker extends ConsumerWidget {
   }
 }
 
-/// Dialog that shows information about an available update
 class UpdateDialog extends ConsumerWidget {
-  /// Information about the update
   final UpdateInfo updateInfo;
 
-  /// Whether the update is critical
   final bool isCritical;
 
-  /// Create an update dialog
   const UpdateDialog({
     super.key,
     required this.updateInfo,

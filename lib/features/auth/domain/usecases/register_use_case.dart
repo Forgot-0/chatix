@@ -20,10 +20,6 @@ class RegisterUseCase {
       );
     }
 
-    // Fast local check mirroring the backend's own PASSWORD_MISMATCH rule
-    // (api-docs §3.2) — avoids a wasted round trip. The full password
-    // complexity rule is enforced client-side in the form validators
-    // (flutter_form_builder) so the user gets feedback before submitting.
     if (password != passwordRepeat) {
       return Future.value(
         const Left(InputFailure(message: 'Passwords do not match')),

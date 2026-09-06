@@ -19,7 +19,6 @@ void main() {
   final tBirthday = DateTime(1995, 5, 20);
 
   test('should call ProfileRepository.updateProfile and return void on success', () async {
-    // Arrange
     when(
       () => mockProfileRepository.updateProfile(
         1,
@@ -31,7 +30,6 @@ void main() {
       ),
     ).thenAnswer((_) async => const Right(null));
 
-    // Act
     final result = await useCase.execute(
       1,
       specialization: 'Backend engineer',
@@ -41,7 +39,6 @@ void main() {
       dateBirthday: tBirthday,
     );
 
-    // Assert
     expect(result, const Right<Failure, void>(null));
     verify(
       () => mockProfileRepository.updateProfile(
@@ -56,7 +53,6 @@ void main() {
   });
 
   test('should return the repository Failure when the update fails', () async {
-    // Arrange
     const tFailure = ApiFailure(
       code: 'ACCESS_DENIED',
       message: 'Cannot edit this profile',
@@ -74,18 +70,14 @@ void main() {
       ),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final result = await useCase.execute(1, displayName: 'Jane');
 
-    // Assert
     expect(result, const Left(tFailure));
   });
 
   test('should return InputFailure and never hit the repository for a non-positive profileId', () async {
-    // Act
     final result = await useCase.execute(0, displayName: 'Jane');
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -94,13 +86,10 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when displayName is too long', () async {
-    // Arrange — api-docs §4.4: display_name valid length is ≤ 99 chars.
     final tooLongName = 'a' * 100;
 
-    // Act
     final result = await useCase.execute(1, displayName: tooLongName);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -109,13 +98,10 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when bio is too long', () async {
-    // Arrange — api-docs §4.4: bio valid length is ≤ 1023 chars.
     final tooLongBio = 'a' * 1024;
 
-    // Act
     final result = await useCase.execute(1, bio: tooLongBio);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -124,13 +110,10 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when a skill is too long', () async {
-    // Arrange — api-docs §4.4: each skill must be ≤ 30 chars.
     final tooLongSkill = 'a' * 31;
 
-    // Act
     final result = await useCase.execute(1, skills: ['dart', tooLongSkill]);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -139,7 +122,6 @@ void main() {
   });
 
   test('should allow a displayName exactly at the 99 character limit', () async {
-    // Arrange
     final maxLengthName = 'a' * 99;
     when(
       () => mockProfileRepository.updateProfile(
@@ -152,10 +134,8 @@ void main() {
       ),
     ).thenAnswer((_) async => const Right(null));
 
-    // Act
     final result = await useCase.execute(1, displayName: maxLengthName);
 
-    // Assert
     expect(result, const Right<Failure, void>(null));
   });
 }

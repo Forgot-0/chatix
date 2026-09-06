@@ -32,7 +32,6 @@ void main() {
   const tPage = PageResult<ProfileEntity>(items: [tProfile], total: 1, page: 1, pageSize: 20);
 
   test('should call ProfileRepository.getProfiles and return the page on success', () async {
-    // Arrange
     when(
       () => mockProfileRepository.getProfiles(
         username: any(named: 'username'),
@@ -44,10 +43,8 @@ void main() {
       ),
     ).thenAnswer((_) async => const Right(tPage));
 
-    // Act
     final result = await useCase.execute(username: 'jane');
 
-    // Assert
     expect(result, const Right(tPage));
     verify(
       () => mockProfileRepository.getProfiles(
@@ -62,7 +59,6 @@ void main() {
   });
 
   test('should return the repository Failure when the call fails', () async {
-    // Arrange
     const tFailure = ApiFailure(code: 'UNKNOWN', message: 'Something broke', detail: {}, status: 500);
     when(
       () => mockProfileRepository.getProfiles(
@@ -75,18 +71,14 @@ void main() {
       ),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final result = await useCase.execute();
 
-    // Assert
     expect(result, const Left(tFailure));
   });
 
   test('should return InputFailure and never hit the repository when page is less than 1', () async {
-    // Act
     final result = await useCase.execute(page: 0);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -95,10 +87,8 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when pageSize is 0', () async {
-    // Act
     final result = await useCase.execute(pageSize: 0);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -107,10 +97,8 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when pageSize exceeds 100', () async {
-    // Act
     final result = await useCase.execute(pageSize: 101);
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),

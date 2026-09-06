@@ -6,14 +6,7 @@ import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/features/auth/data/models/user_model.dart';
 
-/// Talks to `/auth/*` and `/users/*` (api-docs §3) via [ApiClient], which
-/// already maps Dio responses/errors into `Either<Failure, dynamic>`
-/// (`ApiFailure`/`RateLimitFailure`/`NetworkFailure`/...). This layer's only
-/// job is building the right request and parsing the JSON payload into a
-/// [UserModel] (or the bare value the endpoint returns) — no persistence,
-/// no business logic. That belongs to [AuthRepositoryImpl].
 abstract class AuthRemoteDataSource {
-  /// `POST /users/register/` (api-docs §3.2).
   Future<Either<Failure, UserModel>> register({
     required String username,
     required String email,
@@ -21,37 +14,27 @@ abstract class AuthRemoteDataSource {
     required String passwordRepeat,
   });
 
-  /// `POST /auth/login/` (api-docs §3.3) — form-urlencoded, not JSON.
-  /// Returns the raw `access_token`; persistence is the repository's job.
   Future<Either<Failure, String>> login({
     required String username,
     required String password,
   });
 
-  /// `POST /auth/logout/` (api-docs §3.5).
   Future<Either<Failure, void>> logout();
 
-  /// `GET /users/me/` (api-docs §3.9).
   Future<Either<Failure, UserModel>> getCurrentUser();
 
-  /// `POST /auth/verifications/email/` (api-docs §3.6).
   Future<Either<Failure, void>> requestEmailVerification({required String email});
 
-  /// `POST /auth/verifications/email/verify/` (api-docs §3.6).
   Future<Either<Failure, void>> confirmEmailVerification({required String token});
 
-  /// `POST /auth/password-resets/` (api-docs §3.7).
   Future<Either<Failure, void>> requestPasswordReset({required String email});
 
-  /// `POST /auth/password-resets/confirm/` (api-docs §3.7).
   Future<Either<Failure, void>> confirmPasswordReset({
     required String token,
     required String password,
     required String passwordRepeat,
   });
 
-  /// `GET /auth/oauth/{provider}/authorize/` or `.../authorize/connect/`
-  /// (api-docs §3.8). Returns the URL to open in a browser/WebView.
   Future<Either<Failure, String>> getOAuthUrl({
     required String provider,
     bool connect = false,
@@ -87,9 +70,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String username,
     required String password,
   }) async {
-    // api-docs §3.3 ⚠️: must be application/x-www-form-urlencoded, NOT
-    // JSON, and NOT multipart (which is what dio's FormData would send).
-    // Passing a plain Map with this content type makes dio urlencode it.
     final result = await _apiClient.post(
       '/auth/login/',
       data: {'username': username, 'password': password},

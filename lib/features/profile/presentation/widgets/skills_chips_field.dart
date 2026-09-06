@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
-/// `flutter_form_builder` doesn't ship a tags/chips input out of the box,
-/// so this wraps a plain [FormBuilderField]`<List<String>>` with a small
-/// custom UI (existing chips + a text box that appends on submit) instead
-/// of pulling in a separate chips-input package.
 class SkillsChipsField extends StatefulWidget {
   final String name;
   final List<String>? initialValue;

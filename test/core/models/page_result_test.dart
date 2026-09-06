@@ -37,8 +37,6 @@ void main() {
         'total': 3,
         'page': 1,
         'page_size': 20,
-        // Server never actually sends these (api-docs §0.3) — fromJson
-        // must not depend on them being present.
       };
 
       final page = PageResult<int>.fromJson(json, (e) => e as int);

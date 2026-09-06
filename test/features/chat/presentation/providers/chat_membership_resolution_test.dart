@@ -6,21 +6,10 @@ import 'package:chatix/features/chat/presentation/providers/chat_detail_provider
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 
-/// Guards the resolution of "who am I in this chat", which every §9.1
-/// permission check depends on.
-///
-/// The subtlety worth a test: `ChatDTO` (list/create/update) carries the
-/// caller's membership in `me`, while `ChatDetailDTO` — the response of
-/// `GET /chats/{id}/`, which is what the detail and members screens load —
-/// has **no `me` field at all** and puts the caller's row in `members`
-/// (api-docs §6.2). Reading `chat.me` on those screens therefore always
-/// yields `null`, and because the permission helpers fail closed that denies
-/// every action: a chat's own owner sees a disabled composer and no
-/// moderation controls, with nothing in the logs to explain it.
 void main() {
   const tOwner = ChatMemberEntity(
     userId: 1,
-    roleId: 1, // owner
+    roleId: 1,
     isMuted: false,
     isBanned: false,
     permissionsOverrides: {},
@@ -28,13 +17,12 @@ void main() {
 
   const tMember = ChatMemberEntity(
     userId: 2,
-    roleId: 5, // member
+    roleId: 5,
     isMuted: false,
     isBanned: false,
     permissionsOverrides: {},
   );
 
-  /// `ChatDetailDTO` shape: `members` populated, `me` absent.
   const tChatDetail = ChatEntity(
     id: 'a3f1c2d4-0000-4000-8000-000000000001',
     seqCounter: 9,
@@ -52,7 +40,6 @@ void main() {
     members: [tOwner, tMember],
   );
 
-  /// `ChatDTO` shape: `me` populated, `members` absent.
   const tChatListEntry = ChatEntity(
     id: 'a3f1c2d4-0000-4000-8000-000000000001',
     seqCounter: 9,
@@ -76,7 +63,6 @@ void main() {
       const state = ChatDetailState(chat: tChatDetail, myUserId: 1);
 
       expect(state.me, tOwner);
-      // The regression this guards: a null `me` silently denies everything.
       expect(canSendMessage(state.chat, state.me), isTrue);
       expect(
         hasChatPermission(state.chat, state.me, ChatPermissions.chatDelete),
@@ -88,7 +74,6 @@ void main() {
       const state = ChatDetailState(chat: tChatDetail, myUserId: 2);
 
       expect(state.me, tMember);
-      // A plain member can post but must not be offered chat deletion.
       expect(canSendMessage(state.chat, state.me), isTrue);
       expect(
         hasChatPermission(state.chat, state.me, ChatPermissions.chatDelete),
@@ -141,12 +126,9 @@ void main() {
     });
 
     test('prefers the freshest members row over the chat roster', () {
-      // The chat still says role_id=1 (owner) while the just-refreshed page
-      // reports the demotion to viewer — the newer row must win, or the UI
-      // keeps offering controls the server now refuses.
       const demoted = ChatMemberEntity(
         userId: 1,
-        roleId: 6, // viewer
+        roleId: 6,
         isMuted: false,
         isBanned: false,
         permissionsOverrides: {},

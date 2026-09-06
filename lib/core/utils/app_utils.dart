@@ -3,23 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class AppUtils {
-  // Network connectivity check
   static Future<bool> hasNetworkConnection() async {
     final connectivityResult = await Connectivity().checkConnectivity();
     return !connectivityResult.contains(ConnectivityResult.none);
   }
 
-  // Date formatting
   static String formatDate(DateTime date, {String format = 'yyyy-MM-dd'}) {
     return DateFormat(format).format(date);
   }
 
-  // Time formatting
   static String formatTime(DateTime time, {String format = 'HH:mm'}) {
     return DateFormat(format).format(time);
   }
 
-  // Date and time formatting
   static String formatDateTime(
     DateTime dateTime, {
     String format = 'yyyy-MM-dd HH:mm',
@@ -27,7 +23,6 @@ class AppUtils {
     return DateFormat(format).format(dateTime);
   }
 
-  // Relative time (e.g., "2 hours ago")
   static String getRelativeTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
@@ -47,7 +42,6 @@ class AppUtils {
     }
   }
 
-  // Show a snackbar
   static void showSnackBar(
     BuildContext context, {
     required String message,
@@ -65,7 +59,6 @@ class AppUtils {
     );
   }
 
-  // Show a toast message
   static void showToast(
     BuildContext context, {
     required String message,
@@ -101,13 +94,11 @@ class AppUtils {
     });
   }
 
-  // Email validation
   static bool isValidEmail(String email) {
     final emailRegExp = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
     return emailRegExp.hasMatch(email);
   }
 
-  // Password validation (at least 8 chars, 1 uppercase, 1 lowercase, 1 number)
   static bool isValidPassword(String password) {
     final passwordRegExp = RegExp(
       r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$',
@@ -115,13 +106,11 @@ class AppUtils {
     return passwordRegExp.hasMatch(password);
   }
 
-  // Phone number validation (simple)
   static bool isValidPhoneNumber(String phoneNumber) {
     final phoneRegExp = RegExp(r'^\+?[0-9]{10,15}$');
     return phoneRegExp.hasMatch(phoneNumber);
   }
 
-  // URL validation
   static bool isValidUrl(String url) {
     final urlRegExp = RegExp(
       r'^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$',
@@ -129,7 +118,6 @@ class AppUtils {
     return urlRegExp.hasMatch(url);
   }
 
-  // Truncate string with ellipsis
   static String truncateString(String text, int maxLength) {
     if (text.length <= maxLength) {
       return text;
@@ -137,7 +125,6 @@ class AppUtils {
     return '${text.substring(0, maxLength)}...';
   }
 
-  // Format file size
   static String formatFileSize(int bytes) {
     if (bytes < 1024) {
       return '$bytes B';
@@ -153,7 +140,6 @@ class AppUtils {
     }
   }
 
-  // Format currency
   static String formatCurrency(
     double amount, {
     String symbol = '\$',

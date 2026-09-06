@@ -7,7 +7,6 @@ import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 
 part 'chat_model.g.dart';
 
-/// `ReadDetail`, embedded as `ChatDTO.last_read` (api-docs §6.2).
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ReadDetailModel extends Equatable {
   final int lastReadMessageSeq;
@@ -36,18 +35,6 @@ extension ReadDetailModelX on ReadDetailModel {
   }
 }
 
-/// `ChatDTO` **and** `ChatDetailDTO` (api-docs §6.2) in one model.
-///
-/// The two DTOs are supersets of a common core; the five fields that differ
-/// ([unreadCount], [me], [lastRead], [lastMessage], [members]) are all
-/// nullable here, so the
-/// same class parses either response and `null` faithfully means "this
-/// endpoint doesn't send it" — see [ChatEntity]'s table. Splitting them into
-/// two models would duplicate 12 identical fields and force two parse paths
-/// for what the backend treats as one resource.
-///
-/// [type] and the datetime fields stay as wire strings, converted in
-/// [toEntity].
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ChatModel extends Equatable {
   final String id;
@@ -64,36 +51,23 @@ class ChatModel extends Equatable {
   @JsonKey(defaultValue: <String, bool>{})
   final Map<String, bool> permissions;
 
-  /// `ChatDTO.reactions_mode` (api-docs §6.7.5) — `"all" | "some" | "none"`.
-  /// Kept as the wire string and mapped in [toEntity], like [type].
   @JsonKey(defaultValue: 'all')
   final String reactionsMode;
 
-  /// `ChatDTO.allowed_reactions` (api-docs §6.7.5) — emoji whitelist, only
-  /// meaningful while [reactionsMode] is `"some"`.
   @JsonKey(defaultValue: <String>[])
   final List<String> allowedReactions;
 
   final int createdBy;
   final int memberCount;
 
-  /// `ChatDTO` only.
   final int? unreadCount;
 
-  /// `ChatDTO` only.
   final ChatMemberModel? me;
 
-  /// `ChatDTO` only.
   final ReadDetailModel? lastRead;
 
-  /// `ChatDTO` only — preview of the newest message for the chat list
-  /// (api-docs §6.2). The same `MessageDTO` shape as everywhere else, so it is
-  /// parsed with the same [MessageModel] rather than a trimmed-down copy.
-  /// `null` both when the endpoint doesn't send it and when the chat is empty.
   final MessageModel? lastMessage;
 
-  /// `ChatDetailDTO` only. Left `null` (not `[]`) when absent so the entity can
-  /// distinguish "not sent" from "no members".
   final List<ChatMemberModel>? members;
 
   const ChatModel({
@@ -180,11 +154,6 @@ extension ChatModelX on ChatModel {
   }
 }
 
-/// `ListChats` (api-docs §6.2) — cursor-paginated chat page.
-///
-/// [nextDate] deliberately stays a `String?`: it is an opaque cursor echoed
-/// straight back as `last_activity_at`, so it must not be round-tripped
-/// through `DateTime` (see [ChatsPage]).
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ListChatsModel extends Equatable {
   final bool hasNext;

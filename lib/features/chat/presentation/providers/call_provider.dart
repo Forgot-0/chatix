@@ -9,14 +9,6 @@ import 'package:chatix/features/chat/data/datasources/call_room_service.dart';
 import 'package:chatix/features/chat/domain/entities/call_token_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 
-/// A participant as the call screen needs them: identity, their audio/video
-/// tracks and whether they are talking.
-///
-/// LiveKit identifies participants by an opaque `identity` string, while the
-/// chat API speaks numeric `user_id` (api-docs §6.3). [userId] is that string
-/// parsed back to an int so a tile can be matched against a chat member — it is
-/// `null` when the identity isn't a plain id, which is why the mute-others
-/// control is hidden for such a tile rather than pointed at a guessed user.
 class CallParticipant extends Equatable {
   final String identity;
   final int? userId;
@@ -51,19 +43,11 @@ class CallParticipant extends Equatable {
   ];
 }
 
-/// Where the call is in its lifecycle.
-///
-/// [connecting] covers **both** network legs — the `POST /calls/join/` request
-/// and the LiveKit handshake — because the user cannot act differently during
-/// either, and splitting them would only add a spinner variant.
 enum CallStage { idle, connecting, connected, disconnected }
 
 class CallState extends Equatable {
   final CallStage stage;
 
-  /// The §6.6 `JoinTokenDTO`. Retained after connecting so the room slug can
-  /// be shown and a reconnect doesn't need a second rate-limited join
-  /// (10 per 5 min).
   final CallTokenEntity? token;
 
   final List<CallParticipant> participants;
@@ -113,18 +97,9 @@ class CallState extends Equatable {
   ];
 }
 
-/// Drives one chat's call: join → connect → roster → leave (api-docs §6.6).
-///
-/// `AsyncNotifier` like every other controller in the feature, but note the
-/// asymmetry: [build] does **not** join. Joining is rate-limited to 10 per
-/// 5 minutes and turns the microphone on, so it must be an explicit user
-/// action ([join]) rather than a side effect of the screen being built —
-/// otherwise a rebuild would silently open a mic.
 class CallController extends AsyncNotifier<CallState> {
   CallController(this._chatId);
 
-  /// The chat whose call this drives. Riverpod 3's manual `family` API hands
-  /// the argument to the constructor (there is no inherited `arg`).
   final String _chatId;
 
   StreamSubscription<void>? _roomSubscription;
@@ -139,7 +114,6 @@ class CallController extends AsyncNotifier<CallState> {
 
   CallRoomService get _service => ref.read(callRoomServiceProvider(_chatId));
 
-  /// `POST /chats/{id}/calls/join/` then `Room.connect`.
   Future<void> join() async {
     final current = state.value ?? const CallState();
     if (current.isBusy || current.isConnected) return;
@@ -233,12 +207,6 @@ class CallController extends AsyncNotifier<CallState> {
     _syncParticipants();
   }
 
-  /// Server-side moderation mute of somebody else (`call:mute_member`, §6.6).
-  ///
-  /// Deliberately does not touch local state: the server mutes the target's
-  /// track, and the resulting `TrackMuted` room event is what updates the
-  /// roster — so the UI reflects what actually happened rather than what we
-  /// asked for.
   Future<Failure?> muteParticipant(int userId, {bool muted = true}) async {
     final result = await ref
         .read(muteCallParticipantUseCaseProvider)
@@ -258,12 +226,6 @@ class CallController extends AsyncNotifier<CallState> {
     _roomSubscription = _service.changes.listen((_) => _syncParticipants());
   }
 
-  /// Rebuilds the roster from the SDK's current room state.
-  ///
-  /// Reading the room on every event (instead of mutating a local list per
-  /// event type) keeps this in sync with LiveKit's own bookkeeping — the SDK is
-  /// the source of truth for who is present and which tracks are live, and
-  /// mirroring it incrementally is how rosters drift.
   void _syncParticipants() {
     final current = state.value;
     if (current == null) return;
@@ -284,8 +246,6 @@ class CallController extends AsyncNotifier<CallState> {
       participants.add(_map(remote, isLocal: false));
     }
 
-    // Local first, then by identity, so tiles don't reshuffle on every
-    // speaking/track event.
     participants.sort((a, b) {
       if (a.isLocal != b.isLocal) return a.isLocal ? -1 : 1;
       return a.identity.compareTo(b.identity);
@@ -307,8 +267,6 @@ class CallController extends AsyncNotifier<CallState> {
     VideoTrack? video;
     for (final publication in participant.videoTrackPublications) {
       final track = publication.track;
-      // Screen share and camera both land here; either is fine to render, but
-      // a muted publication has no live track to paint.
       if (track is VideoTrack && !publication.muted) {
         video = track;
         break;

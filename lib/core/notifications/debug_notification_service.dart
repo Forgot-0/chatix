@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
 
-/// A simple debug implementation of notification service
 class DebugNotificationService implements NotificationService {
   final _notificationStreamController =
       StreamController<NotificationMessage>.broadcast();
@@ -107,12 +106,10 @@ class DebugNotificationService implements NotificationService {
   Stream<NotificationMessage> get notificationTapStream =>
       _notificationTapStreamController.stream;
 
-  /// Simulate a notification tap for testing purposes
   void simulateTap(NotificationMessage notification) {
     _notificationTapStreamController.add(notification);
   }
 
-  /// Dispose resources
   void dispose() {
     _notificationStreamController.close();
     _notificationTapStreamController.close();

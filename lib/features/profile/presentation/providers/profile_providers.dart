@@ -9,10 +9,6 @@ import 'package:chatix/features/profile/domain/usecases/remove_contact_use_case.
 import 'package:chatix/features/profile/domain/usecases/update_profile_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/upload_avatar_use_case.dart';
 
-/// Domain-layer DI. `profileRepositoryProvider` lives next to its
-/// implementation in `profile_repository_impl.dart` (mirrors
-/// `auth_providers.dart`'s convention) — import that file directly where
-/// the repository itself is required.
 final getProfilesUseCaseProvider = Provider<GetProfilesUseCase>((ref) {
   return GetProfilesUseCase(ref.watch(profileRepositoryProvider));
 });

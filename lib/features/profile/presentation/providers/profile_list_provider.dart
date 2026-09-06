@@ -5,9 +5,6 @@ import 'package:chatix/features/profile/presentation/providers/profile_providers
 
 const _pageSize = 20;
 
-/// `GET /profiles/` list state — accumulated [items] across pages (for
-/// infinite scroll) plus enough of the last fetched page and the active
-/// filters to fetch the next page or re-run the same search.
 class ProfileListState extends Equatable {
   final List<ProfileEntity> items;
   final int page;
@@ -51,10 +48,6 @@ class ProfileListState extends Equatable {
   List<Object?> get props => [items, page, hasNext, isLoadingMore, username, displayName, skills, sort];
 }
 
-/// Drives `ProfilesListScreen`: initial load on [build], [search] to
-/// replace the current filters and reset to page 1, [loadMore] to append
-/// the next page (e.g. on scroll-to-bottom), and [refresh] to re-run the
-/// current search from page 1 (e.g. pull-to-refresh).
 class ProfileListController extends AsyncNotifier<ProfileListState> {
   @override
   Future<ProfileListState> build() {

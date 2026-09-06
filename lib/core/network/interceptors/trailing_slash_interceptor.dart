@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import '../api_path.dart';
 
-/// Normalizes relative paths before they leave the client.
 class TrailingSlashInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

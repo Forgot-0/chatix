@@ -4,7 +4,6 @@ import 'package:chatix/core/auth/biometric_providers.dart';
 import 'package:chatix/core/auth/biometric_service.dart';
 import 'package:chatix/core/analytics/analytics_providers.dart';
 
-/// A widget that demonstrates the biometric authentication capabilities
 class BiometricsDemo extends ConsumerWidget {
   const BiometricsDemo({super.key});
 

@@ -20,21 +20,17 @@ void main() {
   const tUser = UserEntity(id: 1, username: 'testuser', email: 'test@example.com');
 
   test('should return UserEntity from GET /users/me/ on success', () async {
-    // Arrange
     when(
       () => mockAuthRepository.getCurrentUser(),
     ).thenAnswer((_) async => const Right(tUser));
 
-    // Act
     final result = await useCase.execute();
 
-    // Assert
     expect(result, const Right(tUser));
     verify(() => mockAuthRepository.getCurrentUser()).called(1);
   });
 
   test('should return the repository Failure when the token is invalid', () async {
-    // Arrange
     const tFailure = ApiFailure(
       code: 'INVALID_TOKEN',
       message: 'Invalid token',
@@ -45,10 +41,8 @@ void main() {
       () => mockAuthRepository.getCurrentUser(),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final result = await useCase.execute();
 
-    // Assert
     expect(result, const Left(tFailure));
   });
 }

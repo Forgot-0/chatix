@@ -7,45 +7,6 @@ import 'package:chatix/core/utils/logger.dart';
 import 'package:dio/dio.dart';
 import 'package:synchronized/synchronized.dart';
 
-/// Attaches access tokens and refreshes them via HttpOnly refresh cookie.
-///
-/// Refresh token never touches Dart storage — only [PersistCookieJar] sends it.
-///
-/// ### Announcing the end of a session
-///
-/// Clearing the stored token is not enough on its own: the rest of the app
-/// (an `AuthController` still holding a `UserEntity`, a shell still drawing
-/// four tabs) has no way to find out. Whenever this interceptor concludes the
-/// session is unrecoverable it therefore also fires [sessionExpiredSignal],
-/// which `AuthController` turns into a signed-out state and the router turns
-/// into a redirect to `/login` — from anywhere, including code paths with no
-/// `BuildContext`. See `core/auth/session_events.dart` for why this is a bus
-/// rather than a direct call.
-///
-/// ### ⚠️ Why [sideChannel] must not be the main [Dio]
-///
-/// This is a [QueuedInterceptor]: dio runs its `onRequest`/`onError` callbacks
-/// one at a time, and the slot is held for as long as the callback's future is
-/// unresolved. [onError] therefore *owns* the queue while it awaits the
-/// refresh.
-///
-/// If the refresh (or the replay of the original request) were issued on the
-/// same [Dio], it would carry this very interceptor. As long as those nested
-/// requests succeed nothing bad shows up — only `onRequest` runs, and dio lets
-/// it through. But the moment one of them **fails**, its `onError` is queued
-/// behind the outer `onError` that is still waiting for it, and the two wait
-/// on each other forever: no timeout fires, the caller's future never
-/// completes, and every later request piles up behind the jammed queue until
-/// the whole app is frozen.
-///
-/// That is precisely the "session expired" path — the case this class exists
-/// to handle — so the deadlock would hit exactly when it hurts most. Both the
-/// `POST /auth/refresh/` and the replay consequently go through
-/// [sideChannel]: a separate [Dio] that shares the base URL and the cookie jar
-/// (the refresh token is an HttpOnly cookie, so the jar is mandatory) but
-/// carries **no** `AuthInterceptor`. See `network_providers.dart`, and
-/// `test/core/network/auth_refresh_flow_test.dart` for the regression tests
-/// that pin all four failure shapes.
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor({
     required Dio sideChannel,
@@ -55,31 +16,15 @@ class AuthInterceptor extends QueuedInterceptor {
        _secureStorage = secureStorage,
        _sessionExpiredSignal = sessionExpiredSignal;
 
-  /// Auth-free [Dio] used for the refresh call and the replay. Never the
-  /// client this interceptor is installed on — see the class doc.
   final Dio _sideChannel;
   final SecureStorageService _secureStorage;
 
-  /// Nullable so the existing tests (and any non-app usage) can construct an
-  /// interceptor without wiring the whole signal; when absent, behaviour is
-  /// exactly what it was before — clear the token, propagate the error.
   final SessionExpiredSignal? _sessionExpiredSignal;
 
   final Lock _refreshLock = Lock();
 
   static const _refreshPath = '/auth/refresh/';
 
-  /// The header and scheme the access token rides in (api-docs §1.2).
-  ///
-  /// Declared once and used by every site that reads or writes the token:
-  /// [onRequest] when attaching it, the replay in [onError] when swapping in
-  /// the fresh one, and [_refreshOrReuse] when comparing the token a request
-  /// went out with against what is in storage now. That comparison is the
-  /// reason these are constants rather than inline literals — it only works
-  /// if the string written by [onRequest] is byte-identical to the one
-  /// rebuilt in [_refreshOrReuse], and a stray `'Bearer'` without the
-  /// trailing space would silently make every sibling look "stale" and
-  /// trigger the redundant-refresh storm this class exists to prevent.
   static const _authHeader = 'Authorization';
   static const _bearerPrefix = 'Bearer ';
 
@@ -108,8 +53,6 @@ class AuthInterceptor extends QueuedInterceptor {
     }
 
     if (_isInvalidToken(err)) {
-      // api-docs §2.3: a `403 INVALID_TOKEN` means the token is structurally
-      // unusable, so there is nothing a refresh could fix.
       await _endSession(SessionExpiredReason.invalidToken);
       handler.next(err);
       return;
@@ -120,18 +63,10 @@ class AuthInterceptor extends QueuedInterceptor {
       return;
     }
 
-    // Two failures live in this block and they must not be conflated: the
-    // refresh dying means the session is over, while the *replay* dying is
-    // just the original request failing for its own reasons. Signing a valid
-    // user out because their `GET /projects/` happened to 500 on the retry
-    // would be a nasty bug, so they are caught separately.
     final String? newToken;
     try {
       newToken = await _refreshOrReuse(err.requestOptions);
     } catch (e, stackTrace) {
-      // A shape `_performRefresh` could not classify: transport error,
-      // malformed body, an unexpected status. Treat as session-over, but never
-      // silently — this is the branch that used to be a bare `catch (_)`.
       Logger.error(
         'AuthInterceptor: token refresh threw for '
         '${err.requestOptions.method} ${err.requestOptions.path}; '
@@ -145,8 +80,6 @@ class AuthInterceptor extends QueuedInterceptor {
     }
 
     if (newToken == null) {
-      // The refresh came back with a terminal answer (dead session, rejected
-      // cookie) — the "session expired mid-use" case.
       Logger.info(
         'AuthInterceptor: refresh rejected, session is over '
         '(${err.requestOptions.path})',
@@ -161,8 +94,6 @@ class AuthInterceptor extends QueuedInterceptor {
       requestOptions.headers[_authHeader] = '$_bearerPrefix$newToken';
       handler.resolve(await _sideChannel.fetch(requestOptions));
     } on DioException catch (e) {
-      // The replay failed on its own merits. The session is fine; hand back
-      // the replay's error, which is more accurate than the stale 401.
       Logger.warning(
         'AuthInterceptor: replay of ${err.requestOptions.method} '
         '${err.requestOptions.path} failed after a successful refresh '
@@ -200,10 +131,6 @@ class AuthInterceptor extends QueuedInterceptor {
       return code == null || code == 'NOT_AUTHENTICATED';
     }
 
-    // ⚠️ **400, not 401.** api-docs §2.3 gives `EXPIRED_TOKEN` HTTP 400 and
-    // calls it the refresh trigger; 401 is reserved for a request with no
-    // `Authorization` header at all. A client that only refreshes on 401 —
-    // the usual assumption — never refreshes against this backend.
     if (statusCode == 400 && code == 'EXPIRED_TOKEN') {
       return true;
     }
@@ -217,30 +144,8 @@ class AuthInterceptor extends QueuedInterceptor {
     return statusCode == 403 && code == 'INVALID_TOKEN';
   }
 
-  /// `body.error.code`, via [readErrorCode] (`core/network/error_envelope.dart`).
-  ///
-  /// ⚠️ Delegated rather than inlined because the body is **not always a
-  /// decoded `Map`**: this backend serves its error responses without a
-  /// `Content-Type` header, so Dio leaves them as raw JSON strings. Reading
-  /// them with a plain `data is Map` check — as this method used to — made
-  /// every code unreadable, and `400 EXPIRED_TOKEN` unreadable means
-  /// [_shouldAttemptRefresh] answers `false` and the session never refreshes.
-  /// See that file's library doc for the full mechanism.
   String? _readErrorCode(dynamic data) => readErrorCode(data);
 
-  /// Refreshes once for a burst of requests that all died on the same stale
-  /// token.
-  ///
-  /// [Lock] alone only makes the refreshes *sequential*, not *singular*: five
-  /// requests that 401 together would each take the lock in turn and each fire
-  /// its own `POST /auth/refresh/`. That is not merely wasteful — backends
-  /// that rotate the refresh cookie on use (§3.4) invalidate it on the first
-  /// call, so refreshes 2..5 come back `NOT_FOUND_OR_INACTIVE_SESSION` and log
-  /// out a user whose session was perfectly healthy a moment ago.
-  ///
-  /// So inside the lock we first re-read storage: if the token there is no
-  /// longer the one this request went out with, a sibling already did the work
-  /// and its result is reused.
   Future<String?> _refreshOrReuse(RequestOptions options) {
     final sentWith = options.headers[_authHeader] as String?;
 
@@ -261,12 +166,6 @@ class AuthInterceptor extends QueuedInterceptor {
 
   Future<String?> _performRefresh() async {
     try {
-      // ⚠️ `dynamic`, not `Map<String, dynamic>`: the generic makes dio cast
-      // the body, and the body is only a `Map` when the response carried a
-      // JSON `Content-Type`. This gateway omits that header on some responses
-      // (see `error_envelope.dart`), where the cast would throw — and a throw
-      // here is read as "session over" and signs the user out. Decoding
-      // defensively instead means a stray missing header costs nothing.
       final response = await _sideChannel.post<dynamic>(
         _refreshPath,
         options: Options(extra: {'skipAuthRefresh': true}),
@@ -305,11 +204,6 @@ class AuthInterceptor extends QueuedInterceptor {
     return false;
   }
 
-  /// Drops the local session and tells the app about it.
-  ///
-  /// Order matters: the token is deleted **before** the signal is emitted, so
-  /// that anything reacting to the signal (`AuthController` re-reading
-  /// storage, a retry) can never observe a session that is half gone.
   Future<void> _endSession(SessionExpiredReason reason) async {
     await _clearSession();
     _sessionExpiredSignal?.notify(reason);

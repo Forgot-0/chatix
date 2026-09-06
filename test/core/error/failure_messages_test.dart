@@ -6,13 +6,6 @@ import 'package:chatix/core/error/failures.dart';
 ApiFailure _api(String code, {String message = 'server-facing text'}) =>
     ApiFailure(code: code, message: message, detail: null, status: 400);
 
-/// The `code → human sentence` layer (api-docs §2.3–§2.8).
-///
-/// The contract being pinned here is the *ordering*: a recognised code is
-/// phrased by us, an unrecognised one falls back to the server's own
-/// `message`, and only a missing/blank message falls through to the caller's
-/// fallback. Getting that backwards turns every unmapped code into a useless
-/// "Something went wrong" and hides information the backend bothered to send.
 void main() {
   group('the codes the UI shows most often', () {
     test('WRONG_LOGIN_DATA', () {
@@ -29,13 +22,6 @@ void main() {
       );
     });
 
-    test('MEMBER_LIMIT_EXCEEDED', () {
-      expect(
-        friendlyFailureMessage(_api('MEMBER_LIMIT_EXCEEDED')),
-        'This project has reached its member limit.',
-      );
-    });
-
     test('MESSAGE_TOO_LONG', () {
       expect(
         friendlyFailureMessage(_api('MESSAGE_TOO_LONG')),
@@ -46,13 +32,8 @@ void main() {
 
   group('prefix/suffix families', () {
     test('every NOT_FOUND_* variant gets one honest sentence', () {
-      // api-docs spells a separate code per entity; enumerating them buys
-      // nothing, and a code added by a future release must still land
-      // somewhere sensible instead of falling through to raw English.
       for (final code in [
         'NOT_FOUND_PROFILE',
-        'NOT_FOUND_PROJECT',
-        'NOT_FOUND_POSITION',
         'NOT_FOUND_CHAT',
         'NOT_FOUND_MESSAGE',
         'NOT_FOUND_SOMETHING_INVENTED_LATER',
@@ -67,9 +48,9 @@ void main() {
 
     test('module-specific *_ACCESS_DENIED codes are covered too', () {
       for (final code in [
-        'PROJECT_ACCESS_DENIED',
         'CHAT_ACCESS_DENIED',
-        'POSITION_ACCESS_DENIED',
+        'MESSAGE_ACCESS_DENIED',
+        'SOMETHING_INVENTED_LATER_ACCESS_DENIED',
       ]) {
         expect(
           friendlyFailureMessage(_api(code)),
@@ -117,8 +98,6 @@ void main() {
 
   group('non-API failures still read like sentences', () {
     test('429 is phrased for a human, not as "Too Many Requests"', () {
-      // api-docs §2.2: the body is a bare `{"detail": ...}`, so there is no
-      // code to map and the raw detail means nothing to a user.
       final message = friendlyFailureMessage(const RateLimitFailure());
       expect(message, contains('Too many attempts'));
       expect(message, isNot(contains('429')));
@@ -138,8 +117,6 @@ void main() {
 
   group('friendlyMessageForCode', () {
     test('returns null for a code it does not recognise', () {
-      // The null is what lets `friendlyFailureMessage` know it should defer
-      // to `ApiFailure.message` instead of overwriting it.
       expect(friendlyMessageForCode('TOTALLY_UNKNOWN'), isNull);
     });
 

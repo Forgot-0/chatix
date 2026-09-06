@@ -2,34 +2,25 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:chatix/core/analytics/analytics_event.dart';
 
-/// Interface for analytics service implementations
 abstract class AnalyticsService {
-  /// Initialize the analytics service
   FutureOr<void> init();
 
-  /// Log an analytics event
   void logEvent(AnalyticsEvent event);
 
-  /// Set user properties for user-scoped analytics
   void setUserProperties({
     required String userId,
     Map<String, dynamic>? properties,
   });
 
-  /// Clear all user properties and identifiers
   void resetUser();
 
-  /// Enable analytics collection
   void enable();
 
-  /// Disable analytics collection
   void disable();
 
-  /// Check if analytics collection is enabled
   bool get isEnabled;
 }
 
-/// A service that logs events to multiple analytics providers
 class CompositeAnalyticsService implements AnalyticsService {
   final List<AnalyticsService> _services;
 
@@ -85,7 +76,6 @@ class CompositeAnalyticsService implements AnalyticsService {
       _services.isNotEmpty ? _services.first.isEnabled : false;
 }
 
-/// A service that logs analytics events to the debug console
 class DebugAnalyticsService implements AnalyticsService {
   bool _enabled = true;
 

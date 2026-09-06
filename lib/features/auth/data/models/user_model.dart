@@ -4,8 +4,6 @@ import 'package:equatable/equatable.dart';
 
 part 'user_model.g.dart';
 
-/// Wire model for `UserResponse` (api-docs §3.2, §3.9): `{id, username, email}`.
-/// Flat and already matches Dart naming 1:1, so no `fieldRename` is needed.
 @JsonSerializable()
 class UserModel extends Equatable {
   final int id;

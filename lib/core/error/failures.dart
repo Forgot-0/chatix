@@ -10,7 +10,6 @@ abstract class Failure extends Equatable {
   List<Object?> get props => [message, statusCode];
 }
 
-// Network failures
 class NetworkFailure extends Failure {
   const NetworkFailure({
     super.message = 'No internet connection',
@@ -25,7 +24,6 @@ class TimeoutFailure extends Failure {
   });
 }
 
-/// Application error envelope (api-docs §2.1).
 class ApiFailure extends Failure {
   final String code;
   final dynamic detail;
@@ -42,7 +40,6 @@ class ApiFailure extends Failure {
   List<Object?> get props => [code, message, detail, status];
 }
 
-/// Rate limit — plain FastAPI body `{ "detail": "..." }` (api-docs §2.2).
 class RateLimitFailure extends Failure {
   const RateLimitFailure({
     super.message = 'Too Many Requests',
@@ -57,7 +54,6 @@ class ServerFailure extends Failure {
   });
 }
 
-// Data failures
 class CacheFailure extends Failure {
   const CacheFailure({super.message = 'Cache failure', super.statusCode});
 }
@@ -66,7 +62,6 @@ class ValidationFailure extends Failure {
   const ValidationFailure({super.message = 'Validation error', super.statusCode});
 }
 
-// Auth failures
 class AuthFailure extends Failure {
   const AuthFailure({super.message = 'Authentication failed', super.statusCode});
 }

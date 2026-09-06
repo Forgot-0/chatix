@@ -4,51 +4,6 @@ import 'package:shimmer/shimmer.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
 
-/// The three states every list in this app can be in, drawn the same way
-/// everywhere.
-///
-/// Before this file each screen invented its own trio: a bare
-/// `CircularProgressIndicator` for loading, a centred `Text('No chats yet')`
-/// for empty, and a hand-rolled `_ErrorView` copy-pasted between features
-/// (there were four near-identical ones). The result was that the same
-/// situation looked different depending on which tab you were in, and the
-/// error text was always `failure.message` — the server's log-facing English
-/// (api-docs §2.1) rather than something a user can act on.
-///
-/// So: [AppListSkeleton] while the first page is in flight, [AppEmptyState]
-/// when the list came back empty, [AppErrorState] when it came back a
-/// [Failure] — the last one running the error through
-/// [friendlyFailureMessage] so `WRONG_LOGIN_DATA` reads as "Incorrect
-/// username or password" instead of whatever the backend logs.
-///
-/// ### Why a skeleton and not a spinner
-///
-/// A spinner says "something is happening"; a skeleton says "a list of rows
-/// is about to appear here, roughly this many, roughly this shape", which
-/// makes the arrival of real content feel like a fill rather than a jump.
-/// `shimmer` is already a dependency (it was pulled in for image
-/// placeholders), so this costs nothing new.
-///
-/// ### First fetch only
-///
-/// These are meant for `AsyncValue.when`'s `loading` branch, which — with
-/// riverpod's default `skipLoadingOnRefresh: true` — is only reached when
-/// there is no previous data to show. A pull-to-refresh therefore keeps the
-/// old rows on screen under the refresh spinner instead of flashing the
-/// skeleton, which is the behaviour we want and the reason none of this
-/// needs an explicit "isFirstLoad" flag.
-///
-/// ### Full-screen vs. inline
-///
-/// [AppListSkeleton]/[AppEmptyState]/[AppErrorState] size themselves to a
-/// viewport (so they stay pull-to-refreshable). For a block *inside* an
-/// already-scrolling parent — a tab's sub-list, the applications section of a
-/// position page — use [AppInlineSkeleton]/[AppInlineEmpty]/[AppInlineError]:
-/// same wording and same message pipeline, intrinsically sized, no scroll
-/// view of their own.
-
-
-/// A shimmering placeholder list shown while the **first** page loads.
 class AppListSkeleton extends StatelessWidget {
   const AppListSkeleton({
     super.key,
@@ -59,18 +14,12 @@ class AppListSkeleton extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(vertical: 8),
   });
 
-  /// Rows to draw. The default fills a phone screen without implying a
-  /// specific page size — the point is the shape, not the count.
   final int itemCount;
 
-  /// Draw a circular avatar placeholder on the left (chats, members,
-  /// profiles) or not (plain text lists).
   final bool hasLeading;
 
-  /// Draw a small block on the right (timestamps, chips, badges).
   final bool hasTrailing;
 
-  /// 1 for a title-only row, 2 for title + subtitle.
   final int lines;
 
   final EdgeInsetsGeometry padding;
@@ -78,9 +27,6 @@ class AppListSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Shimmer needs two colours with enough contrast to read as motion but
-    // not enough to read as content. Derived from the scheme so it works in
-    // both light and dark themes instead of being hard-coded grey.
     final base = theme.colorScheme.surfaceContainerHighest;
     final highlight = Color.alphaBlend(
       theme.colorScheme.surface.withValues(alpha: 0.6),
@@ -90,12 +36,8 @@ class AppListSkeleton extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: base,
       highlightColor: highlight,
-      // The skeleton is decoration, not information: a screen reader should
-      // hear "loading", not seven empty list items.
       child: ExcludeSemantics(
         child: ListView.builder(
-          // Never scrollable: it is a placeholder, and letting the user fling
-          // it makes the swap to real content jarring.
           physics: const NeverScrollableScrollPhysics(),
           padding: padding,
           itemCount: itemCount,
@@ -103,8 +45,6 @@ class AppListSkeleton extends StatelessWidget {
             hasLeading: hasLeading,
             hasTrailing: hasTrailing,
             lines: lines,
-            // Vary the title width per row so the block doesn't read as a
-            // table of identical bars.
             titleWidthFactor: _titleWidths[index % _titleWidths.length],
           ),
         ),
@@ -182,8 +122,6 @@ class _Bone extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        // Shimmer paints its gradient over the child via a mask, so the
-        // colour here only has to be opaque — the gradient supplies the hue.
         color: Colors.white,
         borderRadius: BorderRadius.circular(radius),
       ),
@@ -191,11 +129,6 @@ class _Bone extends StatelessWidget {
   }
 }
 
-/// "There is nothing here (yet)" — and, where possible, what to do about it.
-///
-/// Always scrollable so it can sit inside a [RefreshIndicator]: an empty list
-/// is exactly the state a user is most likely to pull down on, and a
-/// non-scrollable child silently disables that gesture.
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     super.key,
@@ -205,15 +138,12 @@ class AppEmptyState extends StatelessWidget {
     this.action,
   });
 
-  /// One short line: "No chats yet".
   final String title;
 
-  /// Optional second line explaining how the list gets populated.
   final String? message;
 
   final IconData icon;
 
-  /// Optional call to action ("New chat", "Browse projects").
   final Widget? action;
 
   @override
@@ -266,13 +196,6 @@ class AppEmptyState extends StatelessWidget {
   }
 }
 
-/// The failure state for a list or a detail screen.
-///
-/// Takes the **raw error object** rather than a pre-formatted string on
-/// purpose: given the object it can consult
-/// [friendlyMessageForCode]/[friendlyFailureMessage] and turn an api-docs
-/// error code into a sentence, whereas a caller that has already collapsed
-/// the failure to `error.message` has thrown that information away.
 class AppErrorState extends StatelessWidget {
   const AppErrorState({
     super.key,
@@ -282,13 +205,10 @@ class AppErrorState extends StatelessWidget {
     this.retryLabel = 'Retry',
   });
 
-  /// Usually `AsyncValue.error`'s first argument, i.e. a `Failure`.
   final Object? error;
 
-  /// Omitted when there is nothing sensible to retry.
   final VoidCallback? onRetry;
 
-  /// Shown when [error] carries no usable message of its own.
   final String fallbackMessage;
 
   final String retryLabel;
@@ -338,18 +258,6 @@ class AppErrorState extends StatelessWidget {
   }
 }
 
-/// The same failure, drawn for a **section inside** an already-scrolling
-/// parent (a tab body's sub-list, the applications block on a position page).
-///
-/// [AppErrorState] cannot be used there. It sizes itself with a
-/// `LayoutBuilder` + `ConstrainedBox(minHeight: constraints.maxHeight)` so it
-/// can fill a viewport and stay pull-to-refreshable; as a child of a
-/// `ListView` or `Column` the incoming `maxHeight` is `infinity` and that
-/// same code throws. This variant is intrinsically sized and never scrolls,
-/// which is what an embedded block needs.
-///
-/// Same message pipeline (`friendlyFailureMessage`), so a section failure
-/// reads identically to a full-screen one.
 class AppInlineError extends StatelessWidget {
   const AppInlineError({
     super.key,
@@ -393,9 +301,6 @@ class AppInlineError extends StatelessWidget {
   }
 }
 
-/// The empty state for a section inside an already-scrolling parent — the
-/// bounded-height counterpart of [AppEmptyState], for the same reason
-/// [AppInlineError] is the counterpart of [AppErrorState].
 class AppInlineEmpty extends StatelessWidget {
   const AppInlineEmpty({
     super.key,
@@ -431,8 +336,6 @@ class AppInlineEmpty extends StatelessWidget {
   }
 }
 
-/// A skeleton sized for a section rather than a viewport — a few rows, no
-/// scroll view of its own, safe as a child of a `Column`/`ListView`.
 class AppInlineSkeleton extends StatelessWidget {
   const AppInlineSkeleton({
     super.key,
@@ -477,11 +380,6 @@ class AppInlineSkeleton extends StatelessWidget {
   }
 }
 
-/// The trailing spinner row of an infinite-scroll list ("loading page 2").
-///
-/// Distinct from [AppListSkeleton] on purpose: the first fetch replaces the
-/// whole viewport, a subsequent page appends one row — using the skeleton for
-/// both would make an append look like a reload.
 class AppLoadMoreIndicator extends StatelessWidget {
   const AppLoadMoreIndicator({super.key});
 

@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 
-/// `DELETE /profiles/{profile_id}/{provider}/delete/` 🔒 (api-docs §4.6).
 class RemoveContactUseCase {
   final ProfileRepository _repository;
 

@@ -9,11 +9,6 @@ import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.da
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 
-/// Talks to [ProfileRemoteDataSource] and turns its
-/// `Either<Failure, Model>` into `Either<Failure, Entity>`.
-/// No local persistence or
-/// orchestration is needed here (unlike `AuthRepositoryImpl`) — every
-/// profile call is a straight passthrough plus the model→entity mapping.
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource _remoteDataSource;
 
@@ -66,7 +61,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       displayName: displayName,
       bio: bio,
       skills: skills,
-      // api-docs §1.9/§4.3: date_birthday is date-only on the wire.
       dateBirthday: dateBirthday != null ? _formatDate(dateBirthday) : null,
     );
   }

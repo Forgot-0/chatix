@@ -1,29 +1,20 @@
 import 'package:flutter/material.dart';
 
-/// A widget that displays a shimmer effect for image placeholders
 class ShimmerPlaceholder extends StatefulWidget {
-  /// The width of the placeholder
   final double? width;
 
-  /// The height of the placeholder
   final double? height;
 
-  /// The shape of the placeholder
   final BoxShape shape;
 
-  /// Border radius if shape is BoxShape.rectangle
   final BorderRadius? borderRadius;
 
-  /// Base color for the shimmer effect
   final Color baseColor;
 
-  /// Highlight color for the shimmer effect
   final Color highlightColor;
 
-  /// Duration of one shimmer animation cycle
   final Duration duration;
 
-  /// Creates a shimmer placeholder for images with animated loading effect
   const ShimmerPlaceholder({
     super.key,
     this.width,
@@ -93,27 +84,19 @@ class _ShimmerPlaceholderState extends State<ShimmerPlaceholder>
   }
 }
 
-/// A skeleton placeholder for image cards
 class ImageCardSkeleton extends StatelessWidget {
-  /// The width of the card
   final double? width;
 
-  /// The height of the card
   final double? height;
 
-  /// The border radius of the card
   final BorderRadius borderRadius;
 
-  /// Whether to show a title skeleton
   final bool showTitle;
 
-  /// Whether to show a description skeleton
   final bool showDescription;
 
-  /// Whether to show a footer skeleton
   final bool showFooter;
 
-  /// Creates a skeleton placeholder for an image card
   const ImageCardSkeleton({
     super.key,
     this.width,
@@ -198,24 +181,17 @@ class ImageCardSkeleton extends StatelessWidget {
   }
 }
 
-/// A placeholder widget that alternates between cards and circular avatars
 class ImagePlaceholderGrid extends StatelessWidget {
-  /// The number of placeholders in the grid
   final int itemCount;
 
-  /// The number of columns in the grid
   final int crossAxisCount;
 
-  /// The aspect ratio of the grid cells
   final double childAspectRatio;
 
-  /// The spacing between items horizontally
   final double mainAxisSpacing;
 
-  /// The spacing between items vertically
   final double crossAxisSpacing;
 
-  /// Creates a grid of shimmer placeholders
   const ImagePlaceholderGrid({
     super.key,
     this.itemCount = 6,
@@ -238,7 +214,6 @@ class ImagePlaceholderGrid extends StatelessWidget {
       ),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        // Alternate between different placeholder types
         if (index % 3 == 0) {
           return const ShimmerPlaceholder(shape: BoxShape.circle);
         }

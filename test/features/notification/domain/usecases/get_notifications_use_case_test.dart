@@ -54,34 +54,26 @@ void main() {
   }
 
   test('passes the documented defaults through to the repository', () async {
-    // Arrange
     stubGetNotifications();
 
-    // Act
     final result = await useCase.execute();
 
-    // Assert
     expect(result, Right(tPage));
     verify(
       () => mockRepository.getNotifications(
         isRead: null,
         page: 1,
         pageSize: 20,
-        // api-docs §8.2: newest first is the documented default.
         sort: 'created_at:desc',
       ),
     ).called(1);
   });
 
   test('forwards an explicit is_read filter and page', () async {
-    // Arrange
     stubGetNotifications();
 
-    // Act
     await useCase.execute(isRead: false, page: 3, pageSize: 50);
 
-    // Assert — `isRead: false` must reach the repository as `false`, not be
-    // dropped as "falsy/absent"; it is the unread-only filter.
     verify(
       () => mockRepository.getNotifications(
         isRead: false,
@@ -93,7 +85,6 @@ void main() {
   });
 
   test('returns the repository Failure when the call fails', () async {
-    // Arrange
     const tFailure = ApiFailure(
       code: 'UNKNOWN',
       message: 'Something broke',
@@ -109,17 +100,11 @@ void main() {
       ),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final result = await useCase.execute();
 
-    // Assert
     expect(result, const Left<Failure, PageResult<NotificationEntity>>(tFailure));
   });
 
-  // The backend validates `page_size` with `ge=1, le=100` and `page` with
-  // `ge=1` (api-docs §1.5). A 422 from FastAPI's own validator does NOT use
-  // the app's error envelope (api-docs §2.2), so out-of-range input is
-  // corrected here rather than round-tripped.
   group('clamps pagination input to the documented server bounds', () {
     test('caps page_size at 100', () async {
       stubGetNotifications();
@@ -167,9 +152,6 @@ void main() {
     });
   });
 
-  // PageResult's derived flags are computed client-side because the server
-  // does not serialize them (api-docs §1.5) — worth asserting here, since the
-  // list controller's "load more" decision rests entirely on `hasNext`.
   group('page metadata survives the use case unchanged', () {
     test('hasNext is true while later pages remain', () async {
       when(
@@ -193,7 +175,7 @@ void main() {
       final result = await useCase.execute();
 
       final page = result.toNullable()!;
-      expect(page.totalPages, 3); // ceil(45 / 20)
+      expect(page.totalPages, 3);
       expect(page.hasNext, isTrue);
       expect(page.hasPrevious, isFalse);
     });

@@ -7,36 +7,6 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 
-/// Type-ahead person picker over `GET /profiles/?username=` (api-docs §4.2).
-///
-/// Replaces the "type a numeric user id" fields that every place needing a
-/// user used to carry. The backend contract is unchanged — callers still end
-/// up with an `int` id — only the way that id is *found* moved from the
-/// user's memory into a search box.
-///
-/// ### Why the use case directly, and not `profileListProvider`
-///
-/// `profileListProvider` is a single global `AsyncNotifier` backing the
-/// Profiles tab. Calling `.search()` from a dialog would silently rewrite
-/// that screen's list and scroll position behind the user's back, and two
-/// pickers open at once would fight over one state object. This widget owns
-/// throwaway results for one text field, so it holds them locally and calls
-/// [GetProfilesUseCase] itself.
-///
-/// ### ⚠️ `username` filters but never renders
-///
-/// `GET /profiles/` accepts `username` as a query parameter, but `ProfileDTO`
-/// (§4.3) does **not** contain a username field — the account's handle lives
-/// in the users service, not the profiles one. So a search matches on the
-/// handle the user typed while the row can only show `display_name`. Rows are
-/// labelled through [profileLabel], which falls back to `User #id` rather
-/// than showing an `@handle` this client never receives. Rendering the typed
-/// query as if it were the found user's handle would be a guess, and wrong
-/// for every partial match.
-///
-/// Debounced by [debounce] (300 ms) so a typed word costs one request rather
-/// than one per keystroke; an empty field collapses the results and issues no
-/// request at all.
 class UserSearchField extends ConsumerStatefulWidget {
   const UserSearchField({
     super.key,
@@ -47,14 +17,8 @@ class UserSearchField extends ConsumerStatefulWidget {
     this.debounce = const Duration(milliseconds: 300),
   });
 
-  /// Called with the picked profile. The caller takes `profile.id` — the same
-  /// `int` the old numeric field produced.
   final void Function(ProfileEntity profile) onSelected;
 
-  /// Ids to hide from results — already-picked people, existing members, or
-  /// the signed-in user. Filtered client-side: §4.2 has no "exclude" query
-  /// parameter, and the alternative (letting someone pick a duplicate and
-  /// failing later with `409 ALREADY_CHAT_MEMBER`) is worse UX.
   final Set<int> excludedUserIds;
 
   final String labelText;
@@ -73,8 +37,6 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
   bool _isLoading = false;
   String? _error;
 
-  /// Guards against out-of-order responses: a slow request for "an" must not
-  /// overwrite the results of a later, faster "anna".
   int _requestId = 0;
 
   @override
@@ -89,8 +51,6 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
 
     final query = value.trim();
     if (query.isEmpty) {
-      // Collapse rather than list everybody: an empty query would fetch page
-      // one of the entire user base, which is neither useful nor cheap.
       setState(() {
         _results = const [];
         _isLoading = false;
@@ -110,7 +70,6 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
         .read(getProfilesUseCaseProvider)
         .execute(username: query, pageSize: 20);
 
-    // A newer keystroke already started its own request.
     if (!mounted || requestId != _requestId) return;
 
     setState(() {
@@ -135,9 +94,6 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
 
   void _select(ProfileEntity profile) {
     widget.onSelected(profile);
-    // Clearing here (rather than in the caller) keeps the field ready for the
-    // next pick in multi-select mode; single-select callers close the sheet
-    // immediately, so the reset is invisible to them.
     _controller.clear();
     setState(() {
       _results = const [];
@@ -213,8 +169,6 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
     }
 
     if (_results.isEmpty) {
-      // An explicit empty state, not a blank gap: "nothing matched" and
-      // "still typing" must not look the same.
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
@@ -242,8 +196,6 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
     }
 
     return ConstrainedBox(
-      // Bounded so the dropdown can live inside a dialog without pushing the
-      // action buttons off-screen.
       constraints: const BoxConstraints(maxHeight: 280),
       child: Material(
         type: MaterialType.transparency,
@@ -267,23 +219,12 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
   }
 }
 
-/// Human label for a profile in a picker row.
-///
-/// `ProfileDTO` has no username (§4.3), so this is `display_name` or the
-/// `User #id` diagnostic fallback — the same convention `chatDisplayName`
-/// uses on the chat side, spelled once so the two never drift.
 String profileLabel(ProfileEntity profile) {
   final name = profile.displayName?.trim();
   if (name != null && name.isNotEmpty) return name;
   return 'User #${profile.id}';
 }
 
-/// [UserSearchField] plus a chip row of everyone picked so far.
-///
-/// The multi-select form used by chat creation: picking adds a chip and
-/// resets the query, the chips are removable, and an already-picked person
-/// stops appearing in results (via [UserSearchField.excludedUserIds]) so the
-/// same id can't be submitted twice.
 class MultiUserSearchField extends StatelessWidget {
   const MultiUserSearchField({
     super.key,

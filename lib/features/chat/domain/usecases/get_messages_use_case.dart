@@ -3,21 +3,13 @@ import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `GET /chats/{chat_id}/messages/` 🔒 (api-docs §6.4) — newest first,
-/// cursor-paginated by message `seq`.
-///
-/// "Load more" here walks *backwards into history*, which is the opposite
-/// direction from the chat list's pagination — hence [executeOlder] rather
-/// than a generic `nextPage` name.
 class GetMessagesUseCase {
-  /// `limit` cap (api-docs §6.4).
   static const int maxLimit = 100;
 
   final ChatRepository _repository;
 
   GetMessagesUseCase(this._repository);
 
-  /// Newest page — no cursor.
   Future<Either<Failure, MessagesPage>> execute(
     String chatId, {
     int limit = 30,
@@ -31,7 +23,6 @@ class GetMessagesUseCase {
     return _repository.getMessages(chatId, limit: limit);
   }
 
-  /// The page of older messages following [previous].
   Future<Either<Failure, MessagesPage>> executeOlder(
     String chatId,
     MessagesPage previous, {

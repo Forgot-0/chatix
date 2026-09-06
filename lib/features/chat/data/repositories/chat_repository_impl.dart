@@ -17,19 +17,10 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
-/// Maps [ChatRestDataSource] models onto domain entities (api-docs §6).
-///
-/// Deliberately thin: no caching, no request de-duplication and no local
-/// message store. The chat feature's source of truth is the server plus the
-/// WebSocket stream (api-docs §7); a cache added here would have to be
-/// invalidated by socket events and is better introduced together with them
-/// than guessed at now.
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRestDataSource _remote;
 
   ChatRepositoryImpl(this._remote);
-
-  // ─────────────────────────── Chats (§6.2) ───────────────────────────
 
   @override
   Future<Either<Failure, ChatsPage>> getChats({
@@ -113,8 +104,6 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<Either<Failure, void>> leaveChat(String chatId) =>
       _remote.leaveChat(chatId);
 
-  // ────────────────────────── Members (§6.3) ──────────────────────────
-
   @override
   Future<Either<Failure, MembersPage>> getMembers(
     String chatId, {
@@ -156,8 +145,6 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<Either<Failure, void>> kickMember(String chatId, int userId) =>
       _remote.kickMember(chatId, userId);
-
-  // ───────────────────────── Messages (§6.4) ──────────────────────────
 
   @override
   Future<Either<Failure, MessagesPage>> getMessages(
@@ -252,8 +239,6 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<Either<Failure, void>> markRead(String chatId, int messageSeq) =>
       _remote.markRead(chatId, messageSeq);
 
-  // ──────────────────────── Attachments (§6.5) ────────────────────────
-
   @override
   Future<Either<Failure, List<AttachmentUploadTicketEntity>>>
   requestAttachmentUpload(
@@ -288,8 +273,6 @@ class ChatRepositoryImpl implements ChatRepository {
     return result.map((model) => model.toEntity());
   }
 
-  // ─────────────────────────── Calls (§6.6) ───────────────────────────
-
   @override
   Future<Either<Failure, CallTokenEntity>> joinCall(String chatId) async {
     final result = await _remote.joinCall(chatId);
@@ -303,12 +286,6 @@ class ChatRepositoryImpl implements ChatRepository {
     bool muted,
   ) => _remote.muteCallParticipant(chatId, userId, muted);
 
-  // ────────────────────────────── Reactions (§6.7) ──────────────────────────
-
-  /// [emoji] travels raw through this layer on purpose: percent-encoding it
-  /// for the path segment is [ChatRestDataSourceImpl.encodeEmojiPathSegment]'s
-  /// job, so the domain never handles an escaped form it would then have to
-  /// unescape before rendering.
   @override
   Future<Either<Failure, void>> setReaction(
     String chatId,
@@ -354,13 +331,9 @@ class ChatRepositoryImpl implements ChatRepository {
     return result.map((model) => model.toEntity());
   }
 
-  // ────────────────────────────── mapping ─────────────────────────────
-
   ChatsPage _toChatsPage(ListChatsModel model) {
     return ChatsPage(
       chats: model.chats.map<ChatEntity>((chat) => chat.toEntity()).toList(),
-      // Straight from the response — never recomputed from list length
-      // (api-docs §1.6).
       hasNext: model.hasNext,
       nextDate: model.nextDate,
       nextChatId: model.nextChatId,

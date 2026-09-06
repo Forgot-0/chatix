@@ -4,13 +4,6 @@ import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 
 part 'chat_profile_model.g.dart';
 
-/// `ChatProfileDTO` (api-docs §6.3) — denormalized profile snapshot embedded
-/// in `MemberChatDTO.profile` and `MessageDTO.profile`.
-///
-/// Every field except `user_id` is nullable on the wire, so nothing here gets
-/// a `defaultValue`: an absent display name must stay absent rather than
-/// become `''`, otherwise the fallback chain in [ChatProfileEntity.bestName]
-/// can't tell "no name" from "empty name".
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ChatProfileModel extends Equatable {
   final int userId;

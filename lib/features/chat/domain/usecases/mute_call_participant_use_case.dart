@@ -2,8 +2,6 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `POST /chats/{chat_id}/calls/participants/{user_id}/mute/` 🔒 4/5min → 204
-/// (api-docs §6.6). Requires `call:mute_member` — owner/admin only (§9.1).
 class MuteCallParticipantUseCase {
   final ChatRepository _repository;
 

@@ -4,7 +4,6 @@ import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 
 part 'contact_model.g.dart';
 
-/// `ContactDTO` (api-docs §4.3): `{ profile_id, provider, contact }`.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ContactModel extends Equatable {
   final int profileId;

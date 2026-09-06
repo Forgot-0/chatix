@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 
-/// `POST /auth/password-resets/confirm/` (api-docs §3.7).
 class ConfirmPasswordResetUseCase {
   final AuthRepository _repository;
 

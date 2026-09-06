@@ -5,15 +5,6 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 
 part 'profile_model.g.dart';
 
-/// `ProfileDTO` (api-docs §4.3).
-///
-/// [dateBirthday] is intentionally kept as the raw `"YYYY-MM-DD"` wire
-/// string here rather than a `DateTime` — `DateTime.parse` round-trips
-/// through a full ISO-8601 instant, which is more than this field is
-/// (api-docs §1.9: `date_birthday` is a plain `date`, not a `datetime`).
-/// The date-only ↔ `DateTime` conversion happens once, at the model/entity
-/// boundary in [toEntity]/`ProfileRemoteDataSourceImpl`, so the rest of the
-/// app only ever deals with the domain `DateTime?`.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ProfileModel extends Equatable {
   final int id;

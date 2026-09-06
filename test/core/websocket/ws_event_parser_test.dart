@@ -5,26 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/core/websocket/ws_event_parser.dart';
 
-/// Unit tests for the §7.4 frame decoder.
-///
-/// **No socket, no server, no timers** — [parseWsEvent]/[parseWsFrame] are pure
-/// functions, which is the reason they were factored out of
-/// `ChatSocketService`. Everything the protocol can get wrong (a domain event
-/// whose delta is missing its identifying field, the `payload`-less `ws.ping`,
-/// the two meanings of `ws.error`) is decidable from a JSON literal.
-///
-/// Fixtures are written as the docs write them — snake_case, full envelope,
-/// `channel` for domain events and `chat_id` for service frames — so a
-/// mismatch between this file and api-docs §7.4 is visible by eye.
 void main() {
   const chatId = '550e8400-e29b-41d4-a716-446655440000';
 
-  /// The §7.4 domain envelope: `{ type, channel, payload, ts }`, where
-  /// `payload` is a `MessagePayloadWS`.
-  ///
-  /// ⚠️ `event_id`/`event_name` go **inside** `payload`, not on the envelope —
-  /// getting that wrong is exactly the bug this shape is written to catch,
-  /// since `event_id` is the at-least-once dedup key.
   Map<String, dynamic> envelope(
     String type, {
     String? channel = chatId,
@@ -49,9 +32,6 @@ void main() {
     };
   }
 
-  /// A minimal `MessageDTO`. The parser only checks it is a *map* — decoding
-  /// its fields into a `MessageModel` is the feature layer's job, tested
-  /// separately — so the fixture stays minimal rather than a full DTO.
   const messageDto = {'id': 'm1', 'chat_id': chatId, 'seq': 1};
 
   group('envelope (§7.4)', () {
@@ -80,8 +60,6 @@ void main() {
       );
 
       final domain = event as WSDomainEvent;
-      // event_id is the dedup key for at-least-once delivery — reading it from
-      // the wrong level would silently disable deduplication.
       expect(domain.eventId, 'evt-1');
       expect(domain.eventName, 'chats.message.sent');
       expect(domain.ts, DateTime.parse('2026-01-15T10:30:00Z'));
@@ -125,16 +103,11 @@ void main() {
       expect(newMessage.messageId, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
       expect(newMessage.seq, 42);
       expect(newMessage.senderId, 7);
-      // Available without decoding the DTO — what a cheap list preview needs.
       expect(newMessage.messageType, 'voice');
-      // Kept raw: `core/` must not import the feature's MessageModel.
       expect(newMessage.message['content'], 'hello');
     });
 
     test('new_message without a MessageDTO degrades to Unknown', () {
-      // The full DTO is the point of this event (§7.4) — a `new_message`
-      // without one cannot be rendered, and fabricating an empty map would
-      // only crash the first MessageModel.fromJson downstream.
       final event = parseWsEvent(
         envelope('new_message', event: const {'message_id': 'm1', 'seq': 1}),
       );
@@ -166,8 +139,6 @@ void main() {
     });
 
     test('message_deleted needs no MessageDTO — the delta is enough', () {
-      // `payload.message` is null here by design (§7.4): the row is gone, and
-      // re-fetching it would only 404.
       final event = parseWsEvent(
         envelope(
           'message_deleted',
@@ -179,13 +150,10 @@ void main() {
       final deleted = event as MessageDeleted;
       expect(deleted.messageId, 'm1');
       expect(deleted.seq, 42);
-      // May be a moderator rather than the author (`message:delete`, §9.1).
       expect(deleted.deletedBy, 9);
     });
 
     test('the three message events share WSMessageEvent, for cursor work', () {
-      // `ChatSocketService` advances the resume cursor by switching on this
-      // one base type rather than three unrelated classes.
       for (final raw in [
         envelope(
           'new_message',
@@ -243,14 +211,10 @@ void main() {
       expect(event, isA<MessagesRead>());
       final read = event as MessagesRead;
       expect(read.seq, 42);
-      // The identity is what separates "I read this elsewhere" from "a peer
-      // read it" — without it a receipt would clear the wrong badge.
       expect(read.readerId, 7);
     });
 
     test('a receipt missing reader_id degrades to Unknown', () {
-      // Unattributable: applying it would either clear our own unread badge on
-      // a peer's read, or show a double tick we never earned.
       final event = parseWsEvent(
         envelope('messages_read', event: const {'seq': 42}),
       );
@@ -298,13 +262,10 @@ void main() {
       expect(updated.messageId, 'm1');
       expect(updated.actorId, 7);
       expect(updated.action, 'add');
-      // Raw map — decoded by the feature with ReactionUpdateModel.
       expect((updated.reaction['groups'] as List).length, 1);
     });
 
     test('without a reaction block it degrades to Unknown', () {
-      // There is nothing else to apply: `payload.message` is null for this
-      // event, so a frame with no snapshot conveys nothing.
       final event = parseWsEvent(
         envelope('reaction_update', event: const {'message_id': 'm1'}),
       );
@@ -320,8 +281,6 @@ void main() {
     });
 
     test('the legacy raw domain-event name is still recognised', () {
-      // An older backend build fanned this out before CHAT_EVENT_TO_WS_TYPE
-      // gained an entry; recognising it costs nothing and beats WsUnknown.
       final event = parseWsEvent(
         envelope(
           ReactionUpdated.legacyWireType,
@@ -331,7 +290,6 @@ void main() {
       );
 
       expect(event, isA<ReactionUpdated>());
-      // Normalised to the current wire type, so consumers only see one value.
       expect(event.type, ReactionUpdated.wireType);
     });
   });
@@ -348,8 +306,6 @@ void main() {
     });
 
     test('member_left names who left', () {
-      // Also delivered directly to the leaver (§7.4), so the identity is what
-      // decides "drop the chat" vs "decrement the count".
       final event = parseWsEvent(
         envelope('member_left', event: const {'user_id': 7}),
       );
@@ -397,8 +353,6 @@ void main() {
     });
 
     test('a member_banned with no ban flag defaults to banned', () {
-      // Erring towards "banned" is the safe direction: treating a malformed
-      // frame as an unban would restore access the server has revoked.
       final event = parseWsEvent(
         envelope('member_banned', event: const {'target_user_id': 7}),
       );
@@ -456,9 +410,6 @@ void main() {
     });
 
     test('chat_updated leaves absent fields null — "unchanged", not cleared', () {
-      // PATCH /chats/{id}/ cannot null a field out (§6.2), so a missing key can
-      // only mean "untouched". Inventing false/0/{} here would silently reset
-      // the chat's settings locally.
       final event = parseWsEvent(
         envelope('chat_updated', event: const {'name': 'Renamed'}),
       );
@@ -487,7 +438,6 @@ void main() {
 
   group('attachment_success', () {
     test('reads a FLAT payload — it has no event/message block', () {
-      // ⚠️ The one domain event that does not use MessagePayloadWS (§7.4).
       final event = parseWsEvent({
         'type': 'attachment_success',
         'channel': chatId,
@@ -569,8 +519,6 @@ void main() {
     });
 
     test('honours non-default heartbeat values from the server', () {
-      // The service must never hard-code 30/75 — this proves the values are
-      // taken from the frame.
       final event = parseWsEvent({
         'type': 'ws.ready',
         'payload': {
@@ -591,7 +539,6 @@ void main() {
         'payload': {'connection_id': 'c', 'gateway_id': 'g'},
       });
 
-      // A 0 s interval would spin the heartbeat timer; §7.2's defaults are safe.
       expect((event as WsReady).heartbeatInterval, 30);
       expect(event.heartbeatTimeout, 75);
     });
@@ -654,7 +601,6 @@ void main() {
       final history = event as WsHistory;
       expect(history.afterSeq, 40);
       expect(history.messages, hasLength(2));
-      // Unlike new_message, this frame really does carry content (§7.4).
       expect(history.messages.first['content'], 'hi');
       expect(history.hasMore, isTrue);
       expect(history.nextLastSeq, 42);
@@ -692,8 +638,6 @@ void main() {
 
   group('ws.ping / ws.pong', () {
     test('ws.ping reads connection_id from the TOP LEVEL — it has no payload', () {
-      // §7.4's documented shape exception; reaching into `payload` here would
-      // throw on every heartbeat.
       final event = parseWsEvent({
         'type': 'ws.ping',
         'connection_id': 'conn-1',
@@ -714,7 +658,6 @@ void main() {
 
   group('ws.error', () {
     test('BAD_COMMAND becomes WsErrorBadCommand with code and detail', () {
-      // §7.4: code/detail at the top level, no payload wrapper.
       final event = parseWsEvent({
         'type': 'ws.error',
         'code': 'BAD_COMMAND',
@@ -740,8 +683,6 @@ void main() {
     });
 
     test('NOT_CHAT_MEMBER becomes its own type, with ts and no detail', () {
-      // A different class because it demands a different reaction: stop
-      // retrying that chat, rather than "fix the client".
       final event = parseWsEvent({
         'type': 'ws.error',
         'code': 'NOT_CHAT_MEMBER',
@@ -821,8 +762,6 @@ void main() {
 
   group('unknown and malformed frames', () {
     test('an unrecognised type is wrapped, preserving the raw frame', () {
-      // The forward-compatibility guarantee: a newer backend event must not
-      // take the chat down.
       final raw = {
         'type': 'reaction_added',
         'chat_id': chatId,
@@ -833,7 +772,6 @@ void main() {
       expect(event, isA<WsUnknown>());
       final unknown = event as WsUnknown;
       expect(unknown.type, 'reaction_added');
-      // Kept verbatim so a log line is enough to implement it later.
       expect(unknown.raw, raw);
     });
 
@@ -850,8 +788,6 @@ void main() {
     });
 
     test('every documented type decodes without throwing', () {
-      // The hard requirement: the parser runs inside the socket's listen
-      // callback, where one exception ends all live updates for the session.
       const types = [
         'new_message', 'message_edited', 'message_deleted', 'messages_read',
         'member_joined', 'member_left', 'member_kick', 'member_banned',
@@ -861,7 +797,6 @@ void main() {
       ];
 
       for (final type in types) {
-        // Deliberately empty payloads — the worst case a server could send.
         expect(
           () => parseWsEvent({'type': type, 'payload': <String, dynamic>{}}),
           returnsNormally,
@@ -914,7 +849,6 @@ void main() {
     });
 
     test('decodes a UTF-8 binary frame instead of rejecting it', () {
-      // Not part of §7 — defends against a proxy reframing text as binary.
       final bytes = utf8.encode(
         jsonEncode({'type': 'ws.pong', 'payload': <String, dynamic>{}}),
       );

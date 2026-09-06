@@ -23,7 +23,6 @@ void main() {
   const tUser = UserEntity(id: 1, username: tUsername, email: tEmail);
 
   test('should return UserEntity when registration is successful', () async {
-    // Arrange
     when(
       () => mockAuthRepository.register(
         username: tUsername,
@@ -33,7 +32,6 @@ void main() {
       ),
     ).thenAnswer((_) async => const Right(tUser));
 
-    // Act
     final result = await useCase.execute(
       username: tUsername,
       email: tEmail,
@@ -41,7 +39,6 @@ void main() {
       passwordRepeat: tPassword,
     );
 
-    // Assert
     expect(result, const Right(tUser));
     verify(
       () => mockAuthRepository.register(
@@ -54,7 +51,6 @@ void main() {
   });
 
   test('should return the repository Failure when registration fails (e.g. duplicate)', () async {
-    // Arrange
     const tFailure = ApiFailure(
       code: 'DUPLICATE_USER',
       message: 'Username already taken',
@@ -70,7 +66,6 @@ void main() {
       ),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final result = await useCase.execute(
       username: tUsername,
       email: tEmail,
@@ -78,12 +73,10 @@ void main() {
       passwordRepeat: tPassword,
     );
 
-    // Assert
     expect(result, const Left(tFailure));
   });
 
   test('should return InputFailure and never hit the repository when a field is empty', () async {
-    // Act
     final result = await useCase.execute(
       username: '',
       email: tEmail,
@@ -91,7 +84,6 @@ void main() {
       passwordRepeat: tPassword,
     );
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),
@@ -100,7 +92,6 @@ void main() {
   });
 
   test('should return InputFailure and never hit the repository when passwords do not match', () async {
-    // Act
     final result = await useCase.execute(
       username: tUsername,
       email: tEmail,
@@ -108,7 +99,6 @@ void main() {
       passwordRepeat: 'SomethingElse123!',
     );
 
-    // Assert
     result.fold(
       (failure) => expect(failure, isA<InputFailure>()),
       (_) => fail('Should have returned a failure'),

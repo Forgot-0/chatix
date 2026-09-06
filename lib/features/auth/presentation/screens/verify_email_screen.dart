@@ -7,15 +7,6 @@ import 'package:chatix/features/auth/presentation/providers/auth_providers.dart'
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 
-/// api-docs §3.6. Two independent actions on one screen:
-///  - confirm a token the person already has (from the email they got), and
-///  - (re)send that email if they don't have a token yet / it expired.
-///
-/// TODO(deep-link): if the verification email's link is opened directly by
-/// the app (universal/app link with `?token=...`), this screen should read
-/// that query param and pre-fill/auto-submit the token field. Not wired up
-/// yet — out of scope for this pass, see also the OAuth callback TODO in
-/// `oauth_buttons.dart` for the same underlying deep-link-handling gap.
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
 
@@ -73,8 +64,6 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     result.fold(
       (failure) => AppUtils.showSnackBar(
         context,
-        // api-docs §3.6: 3 requests/hour — surface the rate limit clearly
-        // rather than a generic error.
         message: failure is RateLimitFailure
             ? 'Too many attempts — please try again later.'
             : friendlyFailureMessage(failure),

@@ -1,14 +1,5 @@
 import 'package:chatix/core/storage/secure_storage_service.dart';
 
-/// In-memory stand-in for [SecureStorageServiceImpl], for any widget/golden
-/// test whose provider graph reaches [SecureStorageService] (most directly:
-/// `AuthController.build()` reads it on every rebuild). See
-/// [SecureStorageService]'s doc comment for why the real implementation
-/// must never run in a plain `flutter test` VM target.
-///
-/// Seed it via the constructor to simulate "already has a token stored"
-/// (e.g. testing the app-resumes-a-session path), or leave it empty for
-/// the default logged-out state.
 class FakeSecureStorageService implements SecureStorageService {
   FakeSecureStorageService({Map<String, String>? initialValues})
     : _values = {...?initialValues};

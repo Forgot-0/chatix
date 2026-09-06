@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:chatix/core/feature_flags/feature_flag_service.dart';
 
-/// A feature flag service implementation that uses remote configuration
-/// In a real app, this would use Firebase Remote Config or a similar service
 class RemoteFeatureFlagService extends FeatureFlagService {
   final Map<String, dynamic> _defaultValues = {};
   final Map<String, dynamic> _remoteValues = {};
@@ -13,31 +11,24 @@ class RemoteFeatureFlagService extends FeatureFlagService {
 
   @override
   Future<void> init() async {
-    // In a real implementation, this would initialize the Firebase Remote Config
     debugPrint('🚩 RemoteFeatureFlagService initializing...');
 
-    // Simulate remote config initialization delay
     await Future.delayed(const Duration(seconds: 1));
 
-    // Set default fetch timeout
     _setFetchTimeout(const Duration(hours: 12));
 
-    // Set minimum fetch interval
     _setMinimumFetchInterval(const Duration(hours: 1));
 
     _initialized = true;
     debugPrint('🚩 RemoteFeatureFlagService initialized');
 
-    // Fetch initial values
     await fetchAndActivate();
 
-    // Setup periodic fetching in background
     _setupPeriodicFetching();
 
     return;
   }
 
-  /// Set up automatic periodic fetching of remote values
   void _setupPeriodicFetching() {
     _fetchTimer?.cancel();
     _fetchTimer = Timer.periodic(const Duration(hours: 12), (_) {
@@ -45,17 +36,13 @@ class RemoteFeatureFlagService extends FeatureFlagService {
     });
   }
 
-  /// Set the timeout for fetch operations
   void _setFetchTimeout(Duration timeout) {
-    // In a real implementation, this would configure the Firebase Remote Config
     debugPrint(
       '🚩 RemoteFeatureFlagService: Set fetch timeout to ${timeout.inSeconds} seconds',
     );
   }
 
-  /// Set the minimum interval between fetch operations
   void _setMinimumFetchInterval(Duration interval) {
-    // In a real implementation, this would configure the Firebase Remote Config
     debugPrint(
       '🚩 RemoteFeatureFlagService: Set minimum fetch interval to ${interval.inSeconds} seconds',
     );
@@ -177,23 +164,18 @@ class RemoteFeatureFlagService extends FeatureFlagService {
       '🚩 RemoteFeatureFlagService: Fetching remote configurations...',
     );
 
-    // In a real implementation, this would fetch values from Firebase Remote Config
-    // Simulate a network delay
     await Future.delayed(const Duration(seconds: 1));
 
-    // In a real scenario, we would be getting these values from the remote service
-    // Here we just simulate some values for demonstration
     final Map<String, dynamic> fetchedValues = {
       'enable_dark_mode': true,
       'enable_push_notifications': true,
       'enable_analytics': true,
       'enable_biometric_login': true,
       'api_timeout_ms': 20000,
-      'home_screen_layout': 'list', // Changed from default 'grid'
-      'primary_color': '#FF4CAF50', // Changed from default blue
+      'home_screen_layout': 'list',
+      'primary_color': '#FF4CAF50',
     };
 
-    // Update our cached remote values
     _remoteValues.addAll(fetchedValues);
 
     debugPrint('🚩 RemoteFeatureFlagService: Remote configs activated');
@@ -225,7 +207,6 @@ class RemoteFeatureFlagService extends FeatureFlagService {
     }
   }
 
-  /// Dispose resources
   @override
   void dispose() {
     _fetchTimer?.cancel();

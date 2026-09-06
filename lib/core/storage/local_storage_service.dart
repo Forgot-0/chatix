@@ -8,7 +8,6 @@ class LocalStorageService {
 
   LocalStorageService(this._prefs);
 
-  // Save string data
   Future<bool> setString(String key, String value) async {
     try {
       return await _prefs.setString(key, value);
@@ -17,7 +16,6 @@ class LocalStorageService {
     }
   }
 
-  // Get string data
   String? getString(String key) {
     try {
       return _prefs.getString(key);
@@ -26,7 +24,6 @@ class LocalStorageService {
     }
   }
 
-  // Save boolean data
   Future<bool> setBool(String key, bool value) async {
     try {
       return await _prefs.setBool(key, value);
@@ -35,7 +32,6 @@ class LocalStorageService {
     }
   }
 
-  // Get boolean data
   bool? getBool(String key) {
     try {
       return _prefs.getBool(key);
@@ -44,7 +40,6 @@ class LocalStorageService {
     }
   }
 
-  // Save int data
   Future<bool> setInt(String key, int value) async {
     try {
       return await _prefs.setInt(key, value);
@@ -53,7 +48,6 @@ class LocalStorageService {
     }
   }
 
-  // Get int data
   int? getInt(String key) {
     try {
       return _prefs.getInt(key);
@@ -62,7 +56,6 @@ class LocalStorageService {
     }
   }
 
-  // Save double data
   Future<bool> setDouble(String key, double value) async {
     try {
       return await _prefs.setDouble(key, value);
@@ -71,7 +64,6 @@ class LocalStorageService {
     }
   }
 
-  // Get double data
   double? getDouble(String key) {
     try {
       return _prefs.getDouble(key);
@@ -80,7 +72,6 @@ class LocalStorageService {
     }
   }
 
-  // Save list of strings data
   Future<bool> setStringList(String key, List<String> value) async {
     try {
       return await _prefs.setStringList(key, value);
@@ -89,7 +80,6 @@ class LocalStorageService {
     }
   }
 
-  // Get list of strings data
   List<String>? getStringList(String key) {
     try {
       return _prefs.getStringList(key);
@@ -98,7 +88,6 @@ class LocalStorageService {
     }
   }
 
-  // Save object data (converts to JSON string)
   Future<bool> setObject(String key, Object value) async {
     try {
       final String jsonString = json.encode(value);
@@ -108,7 +97,6 @@ class LocalStorageService {
     }
   }
 
-  // Get object data (converts from JSON string)
   dynamic getObject(String key) {
     try {
       final String? jsonString = _prefs.getString(key);
@@ -119,7 +107,6 @@ class LocalStorageService {
     }
   }
 
-  // Check if key exists
   bool hasKey(String key) {
     try {
       return _prefs.containsKey(key);
@@ -128,7 +115,6 @@ class LocalStorageService {
     }
   }
 
-  // Remove data by key
   Future<bool> remove(String key) async {
     try {
       return await _prefs.remove(key);
@@ -137,7 +123,6 @@ class LocalStorageService {
     }
   }
 
-  // Clear all data
   Future<bool> clear() async {
     try {
       return await _prefs.clear();

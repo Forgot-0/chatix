@@ -3,10 +3,7 @@ import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `GET /chats/{chat_id}/members/` 🔒 (api-docs §6.3) — cursor-paginated.
 class GetMembersUseCase {
-  /// ⚠️ 500 here, not the 100 that caps the chat and message lists
-  /// (api-docs §6.3).
   static const int maxLimit = 500;
 
   final ChatRepository _repository;
@@ -33,8 +30,6 @@ class GetMembersUseCase {
     );
   }
 
-  /// Next page, continuing from [previous]. Presence must be requested again
-  /// explicitly — it is per-request, not sticky.
   Future<Either<Failure, MembersPage>> executeNextPage(
     String chatId,
     MembersPage previous, {

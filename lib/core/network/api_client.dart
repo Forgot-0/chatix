@@ -13,7 +13,6 @@ class ApiClient {
 
   ApiClient(this._dio);
 
-  /// Absolute health-check URL outside `/api/v1` (api-docs §1.1).
   String get healthCheckUrl => AppConstants.healthCheckUrl;
 
   Future<Either<Failure, dynamic>> getHealth() async {
@@ -79,11 +78,6 @@ class ApiClient {
     }
   }
 
-  /// Partial update. Distinct from [put] on purpose — the chats module uses
-  /// `PATCH` for chat settings, member roles and bans (api-docs §6.2–§6.4),
-  /// where omitted fields mean "leave unchanged", while `/profiles/` uses a
-  /// full `PUT` (§4.4). Sending one where the other is expected either wipes
-  /// fields or 405s.
   Future<Either<Failure, dynamic>> patch(
     String path, {
     dynamic data,
@@ -146,16 +140,9 @@ class ApiClient {
 
     final statusCode = response.statusCode ?? 0;
 
-    // ⚠️ Read through `error_envelope.dart`, never with a bare `data is Map`.
-    // This backend omits `Content-Type` on error responses, so Dio hands them
-    // over as raw JSON strings — a direct Map check would collapse every
-    // documented code in §2.3–§2.8 into the generic ServerFailure below. See
-    // that file's library doc.
     final data = response.data;
 
     if (statusCode == 429) {
-      // §2.2: a 429 does NOT use the envelope — it is a bare
-      // `{"detail": "..."}` from FastAPI's own HTTPException.
       final detail = decodeResponseBody(data)?['detail'];
       return RateLimitFailure(
         message: detail?.toString() ?? 'Too Many Requests',

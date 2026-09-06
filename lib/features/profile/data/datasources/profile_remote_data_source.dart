@@ -7,14 +7,7 @@ import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/features/profile/data/models/avatar_presign_model.dart';
 import 'package:chatix/features/profile/data/models/profile_model.dart';
 
-/// Talks to `/profiles/*` (api-docs §4) via [ApiClient], which already maps
-/// Dio responses/errors into `Either<Failure, dynamic>`. This layer's only
-/// job is building the right request/path and parsing the JSON payload —
-/// no business logic, no client-side validation (that's
-/// `domain/usecases/*`), no Model→Entity mapping (that's
-/// `ProfileRepositoryImpl`).
 abstract class ProfileRemoteDataSource {
-  /// `GET /profiles/` 🔓 (api-docs §4.2).
   Future<Either<Failure, PageResult<ProfileModel>>> fetchProfiles({
     String? username,
     String? displayName,
@@ -24,16 +17,10 @@ abstract class ProfileRemoteDataSource {
     String? sort,
   });
 
-  /// `GET /profiles/{profile_id}/` 🔓 (api-docs §4.3).
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId);
 
-  /// `GET /profiles/my/` 🔓 (api-docs §4.3).
   Future<Either<Failure, ProfileModel>> fetchMyProfile();
 
-  /// `PUT /profiles/{profile_id}/` 🔒 (api-docs §4.4). Only the
-  /// non-`null` named parameters actually supplied by the caller are put
-  /// on the wire — see the ⚠️ on `ProfileRepository.updateProfile` for why
-  /// that still means the caller must pass every field it wants kept.
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,
@@ -43,24 +30,20 @@ abstract class ProfileRemoteDataSource {
     String? dateBirthday,
   });
 
-  /// `POST /profiles/avatar/presign/` 🔒 (api-docs §4.5 step 1).
   Future<Either<Failure, AvatarPresignModel>> presignAvatar({
     required String filename,
   });
 
-  /// `POST /profiles/avatar/upload_complete/` 🔒 (api-docs §4.5 step 3).
   Future<Either<Failure, void>> completeAvatarUpload({
     required String fileKey,
   });
 
-  /// `POST /profiles/{profile_id}/contacts/` 🔒 (api-docs §4.6).
   Future<Either<Failure, void>> addContact(
     int profileId, {
     required String provider,
     required String contact,
   });
 
-  /// `DELETE /profiles/{profile_id}/{provider}/delete/` 🔒 (api-docs §4.6).
   Future<Either<Failure, void>> removeContact(
     int profileId, {
     required String provider,
@@ -81,11 +64,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     int pageSize = 20,
     String? sort,
   }) async {
-    // GET /profiles/ is public (api-docs §4.2) — no token is added here on
-    // purpose. AuthInterceptor still attaches `Authorization` on top of
-    // this if one happens to be stored, since this path isn't in its
-    // public-path exclusion list, but the endpoint works identically
-    // either way.
     final result = await _apiClient.get(
       '/profiles/',
       queryParameters: {
@@ -131,7 +109,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     List<String>? skills,
     String? dateBirthday,
   }) async {
-    // api-docs §4.4: this is a real PUT, not a PATCH.
     final result = await _apiClient.put(
       '/profiles/$profileId/',
       data: {
@@ -149,11 +126,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<Either<Failure, AvatarPresignModel>> presignAvatar({
     required String filename,
   }) async {
-    // ⚠️ `filename` and nothing else (§4.5, §10.4). The endpoint performs no
-    // type or size validation at this step — it only sanitises the name and
-    // signs a URL — so a `size`/`content_type` sent here would be ignored,
-    // and relying on them being checked would be a false sense of safety.
-    // The real (asynchronous, silent) validation happens after step 3.
     final result = await _apiClient.post(
       '/profiles/avatar/presign/',
       data: {'filename': filename},
@@ -171,13 +143,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       '/profiles/avatar/upload_complete/',
       data: {'file_key': fileKey},
     );
-    // api-docs §4.5 step 3: the body is the plain string "OK", not JSON, and
-    // the endpoint only enqueues a background job.
-    //
-    // ⚠️ A `200` here does **not** mean the avatar was accepted (§0.10): the
-    // real MIME/size validation runs asynchronously afterwards and reports
-    // nothing back. Confirming success means re-reading `GET /profiles/{id}/`
-    // and checking whether `avatars` actually changed.
     return result.map((_) {});
   }
 
@@ -199,8 +164,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     int profileId, {
     required String provider,
   }) async {
-    // api-docs §4.6 ⚠️: NOT /profiles/{id}/contacts/{provider}/ — the
-    // path has no `/contacts/` segment and ends with `/delete/` instead.
     final result = await _apiClient.delete(
       '/profiles/$profileId/$provider/delete/',
     );

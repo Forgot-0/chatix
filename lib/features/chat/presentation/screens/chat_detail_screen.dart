@@ -21,25 +21,8 @@ import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
-/// Which of api-docs §6.5's two attachment buckets the user is picking from.
-/// They can't be combined in one message — see `_pickAttachments`.
 enum _AttachmentSource { media, document }
 
-/// One conversation: history + composer (api-docs §6.4, §6.5, §6.6), kept live
-/// over the WebSocket (§7).
-///
-/// Initial history comes from `GET /chats/{id}/messages/`; after that
-/// `ChatDetailController` subscribes to this chat and merges `new_message` /
-/// `message_edited` / `message_deleted` as they arrive (§7.4). Pull-to-refresh
-/// and scroll-to-top paging still work as before.
-///
-/// The socket's state is surfaced by [_ConnectionBanner] rather than hidden:
-/// when the connection drops, the message list is silently stale, and a chat
-/// that looks live but isn't is worse than one that admits it.
-///
-/// Which composer/action controls are shown is decided by the §9.1 permission
-/// matrix through `canSendMessage` / `canEditMessage` / `canDeleteMessage`.
-/// Those checks are UX only — the backend enforces them regardless.
 class ChatDetailScreen extends ConsumerStatefulWidget {
   const ChatDetailScreen({super.key, required this.chatId});
 
@@ -53,14 +36,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _scrollController = ScrollController();
   final _textController = TextEditingController();
 
-  /// Ids selected in multi-select mode.
-  ///
-  /// Local screen state rather than provider state on purpose: selection is
-  /// pure view concern with no server or socket counterpart, it must vanish
-  /// when the screen is popped, and putting it in `ChatDetailState` would make
-  /// every incoming WS event rebuild through a notifier that has nothing to do
-  /// with it. `null` means the mode is off — distinct from "on with nothing
-  /// selected", which still shows the selection app bar.
   Set<String>? _selectedMessageIds;
 
   bool get _selectionMode => _selectedMessageIds != null;
@@ -80,8 +55,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final selected = _selectedMessageIds;
       if (selected == null) return;
       if (!selected.remove(messageId)) selected.add(messageId);
-      // Emptying the selection keeps the mode on — Telegram does the same, and
-      // auto-exiting would fight a user who is de-selecting to re-pick.
     });
   }
 
@@ -97,19 +70,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     super.dispose();
   }
 
-  /// The "N selected" header that replaces the normal app bar (Telegram's
-  /// selection mode).
-  ///
-  /// Only Forward/Delete are offered: Reply and Edit are single-message
-  /// actions with no meaning for a set, so they are hidden rather than
-  /// disabled.
   PreferredSizeWidget _buildSelectionAppBar(ChatDetailState? state) {
     final selected = _selectedMessageIds ?? const <String>{};
     final canDelete =
         state != null &&
         selected.isNotEmpty &&
-        // Every selected message must be deletable — a partially permitted
-        // batch would fail halfway and is better refused up front.
         selected.every((id) {
           final message = _findMessage(state, id);
           return message != null &&
@@ -145,13 +110,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return null;
   }
 
-  /// Forwards every selected message into one target chat.
-  ///
-  /// ⚠️ Sequential single-message calls on purpose: §6.4 defines no bulk
-  /// forward endpoint, and inventing a client-side "batch" that fans out in
-  /// parallel would only make the per-chat rate limit reject the tail. Ordering
-  /// is preserved oldest-first so the copies land in the target in the order
-  /// they were written.
   Future<void> _forwardSelected() async {
     final state = ref.read(chatDetailProvider(widget.chatId)).value;
     final selected = _selectedMessageIds;
@@ -164,7 +122,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
     if (targetChatId == null || !mounted) return;
 
-    // Oldest first: `state.messages` is newest-first (§6.4).
     final ordered = state.messages
         .where((message) => selected.contains(message.id))
         .toList()
@@ -187,7 +144,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  /// Deletes every selected message, one call each (no bulk endpoint in §6.4).
   Future<void> _deleteSelected() async {
     final state = ref.read(chatDetailProvider(widget.chatId)).value;
     final selected = _selectedMessageIds;
@@ -221,12 +177,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  /// Runs [action] once per item behind a progress dialog, then reports which
-  /// items failed.
-  ///
-  /// Partial failure is the normal case worth designing for here (one message
-  /// too old to delete, a rate limit part-way through), so failures are
-  /// collected and shown rather than swallowed or allowed to abort the rest.
   Future<void> _runBulk({
     required String label,
     required int total,
@@ -276,9 +226,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  /// The list is `reverse: true`, so its *maxScrollExtent* end is the **oldest**
-  /// message — reaching it means "load older history", the opposite direction
-  /// from the chat list's pagination.
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
@@ -325,9 +272,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
           return Column(
             children: [
-              // Above the list, not floating over it: a dropped connection
-              // means everything below is potentially stale, and the banner
-              // reads as a header for that content.
               const _ConnectionBanner(),
               Expanded(
                 child: RefreshIndicator(
@@ -357,8 +301,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               _Composer(
                 controller: _textController,
                 enabled: canSend,
-                // Explains *why* the composer is disabled — "you can't type
-                // here" with no reason is the worst version of this state.
                 disabledReason: _disabledReason(state.chat, me),
                 onAttach: canSend ? _pickAttachments : null,
                 onSend: canSend ? _send : null,
@@ -382,8 +324,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final text = _textController.text.trim();
     final attachments = ref.read(chatAttachmentProvider(widget.chatId)).value;
 
-    // The server rejects a message with neither text nor attachments
-    // (`400 INVALID_MESSAGE`); no point spending a request on it.
     if (text.isEmpty && !(attachments?.isReady ?? false)) return;
 
     _textController.clear();
@@ -392,14 +332,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         .read(chatDetailProvider(widget.chatId).notifier)
         .sendMessage(
           content: text.isEmpty ? null : text,
-          // Tokens confirmed at step 3 can be used immediately — no waiting
-          // for the WS `attachment_success` event (api-docs §6.5).
           uploadTokens: attachments?.uploadTokens ?? const [],
         );
 
-    // Drop these tokens from the session-wide confirmed set once they've been
-    // spent: nothing asks about them again, and leaving them in would make the
-    // set grow for as long as the app runs.
     final spent = attachments?.uploadTokens ?? const <String>[];
     if (spent.isNotEmpty) {
       ref.read(confirmedAttachmentTokensProvider.notifier).release(spent);
@@ -408,13 +343,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     ref.read(chatAttachmentProvider(widget.chatId).notifier).clear();
   }
 
-  /// Asks which of api-docs §6.5's two attachment buckets to pick from.
-  ///
-  /// The choice is unavoidable, not a UI preference: the buckets have
-  /// different caps (media ≤50 MB ×10, documents ≤100 MB ×1) and a message
-  /// **cannot mix them**, because the document bucket permits exactly one
-  /// attachment in total. Offering one combined picker would let the user
-  /// build a selection that is guaranteed to be rejected.
   Future<void> _pickAttachments() async {
     final source = await showModalBottomSheet<_AttachmentSource>(
       context: context,
@@ -459,17 +387,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
     notifier.select(uploads);
 
-    // `select` rejects an invalid batch; only start the three-request upload
-    // once the selection actually passed validation.
     final selection = ref.read(chatAttachmentProvider(widget.chatId)).value;
     if (selection?.hasSelection ?? false) {
       await notifier.upload();
     }
   }
 
-  /// Images/videos through `image_picker` — the media bucket (api-docs §6.5).
-  /// Size/count limits are enforced by `ChatAttachmentController.select`
-  /// before anything is uploaded.
   Future<List<AttachmentUploadRequestEntity>> _pickMedia() async {
     final files = await ImagePicker().pickMultiImage();
 
@@ -487,18 +410,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return uploads;
   }
 
-  /// One document through `file_picker`, restricted at the OS level to the
-  /// extensions matching §6.5's allowed MIME list — `allowMultiple: false`
-  /// because that bucket caps a message at a single attachment.
   Future<List<AttachmentUploadRequestEntity>> _pickDocument() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ChatAttachmentLimits.fileExtensions,
-      // The document bucket caps a message at a single attachment (§6.5).
       allowMultiple: false,
-      // Streaming from a path beats holding a 100 MB buffer; `withData` is
-      // only needed on web, where no path exists. (file_picker 11 defaults
-      // this to false on every platform, so web must opt in explicitly.)
       withData: kIsWeb,
       withReadStream: false,
     );
@@ -509,13 +425,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return [
       AttachmentUploadRequestEntity(
         filename: picked.name,
-        // `file_picker` reports no MIME type, so it is derived from the
-        // extension — which the picker already constrained to the allow-list.
         mimeType: _mimeFromName(picked.name),
         fileSize: picked.size,
-        // ⚠️ On web `PlatformFile.path` is a Blob URL, not a filesystem path —
-        // handing it to the uploader would make it try to open a File that
-        // cannot exist. Web therefore passes bytes only.
         filePath: kIsWeb ? null : picked.path,
         bytes: picked.bytes,
       ),
@@ -525,7 +436,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   static String _mimeFromName(String name) {
     final ext = name.split('.').last.toLowerCase();
     switch (ext) {
-      // Media bucket.
       case 'jpg':
       case 'jpeg':
         return 'image/jpeg';
@@ -541,7 +451,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return 'video/quicktime';
       case 'webm':
         return 'video/webm';
-      // Document bucket (api-docs §6.5).
       case 'pdf':
         return 'application/pdf';
       case 'zip':
@@ -557,17 +466,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return 'application/vnd.openxmlformats-officedocument'
             '.spreadsheetml.sheet';
       default:
-        // Deliberately not guessed: an unknown type is rejected by
-        // `ChatAttachmentLimits.typeOf` with a clear message rather than
-        // uploaded under a wrong Content-Type (which the backend's async
-        // validation would later mark `error`).
         return 'application/octet-stream';
     }
   }
 
-  /// `POST /chats/{id}/calls/join/` (api-docs §6.6) — shows the LiveKit token
-  /// and server URL. Actually joining the room needs the `livekit_client` SDK,
-  /// which is out of scope here.
   Future<void> _joinCall() async {
     final result = await ref
         .read(joinCallUseCaseProvider)
@@ -644,8 +546,6 @@ class _MessageList extends ConsumerWidget {
       );
     }
 
-    // Pending sends sit at index 0.. so they appear at the visual bottom of a
-    // reversed list, i.e. after the newest confirmed message.
     final pendingCount = state.pending.length;
     final total =
         pendingCount + state.messages.length + (state.canLoadMore ? 1 : 0);
@@ -682,17 +582,12 @@ class _MessageList extends ConsumerWidget {
               notifier.toggleReaction(message.id, emoji),
           onShowReactionUsers: (emoji) =>
               _showReactionUsers(context, ref, message.id, emoji),
-          // Ticks only on our own messages, and only in a direct chat — see
-          // `ChatDetailState.isReadByPeer` for why group receipts are not
-          // aggregated.
           showReadTicks: isMine && state.chat?.type == ChatType.direct,
           readByPeer: state.isReadByPeer(message),
           onReply: canSendMessage(state.chat, me)
               ? () => notifier.setReplyTo(message)
               : null,
           onForward: () => _forward(context, ref, message),
-          // Only the author may edit, and there is no permission that grants
-          // editing someone else's message (api-docs §9.1).
           onEdit: canEditMessage(me, message.authorId)
               ? () => _edit(context, ref, message)
               : null,
@@ -737,21 +632,6 @@ class _MessageList extends ConsumerWidget {
         .editMessage(message.id, result);
   }
 
-  /// Long-press on a reaction chip → "who reacted with this emoji"
-  /// (`GET .../reactions/?emoji=`, api-docs §6.7.1).
-  ///
-  /// Opened as a modal sheet rather than resolved inline because the roster is
-  /// **paginated** (`cursor_user_id`, ≤100 per page) and is not part of the
-  /// chip summary the screen already holds: `MessageReactionsEntity.users` is
-  /// only ever populated by the `?emoji=` form of the call, so this is a fresh
-  /// request every time and needs somewhere to show a spinner and a "load
-  /// more" affordance.
-  ///
-  /// The names come from the members already loaded into `ChatDetailState`
-  /// (`ChatDetailDTO.members`, §6.2) — `ReactionUserDTO` carries only a
-  /// `user_id`, so anyone not in that list renders as the `User #id`
-  /// diagnostic fallback rather than triggering an N+1 `/profiles/{id}/` fan
-  /// out per row.
   void _showReactionUsers(
     BuildContext context,
     WidgetRef ref,
@@ -770,9 +650,6 @@ class _MessageList extends ConsumerWidget {
     );
   }
 
-  /// Forwards into another chat. ⚠️ The **destination** goes in the URL while
-  /// the source pair travels in the body (api-docs §6.4) — the use case takes
-  /// only named arguments so the two can't be swapped.
   Future<void> _forward(
     BuildContext context,
     WidgetRef ref,
@@ -804,8 +681,6 @@ class _MessageList extends ConsumerWidget {
     );
   }
 
-  /// Download URLs live 300 s (api-docs §6.5), so one is requested per tap
-  /// rather than cached with the attachment.
   Future<void> _openAttachment(
     BuildContext context,
     WidgetRef ref,
@@ -849,9 +724,6 @@ class _MessageList extends ConsumerWidget {
   }
 }
 
-/// A send that hasn't been acknowledged yet. On failure it offers Retry, which
-/// reuses the original `Idempotency-Key` — that is what makes the retry safe
-/// rather than duplicating the message (api-docs §6.4).
 class _PendingBubble extends ConsumerWidget {
   const _PendingBubble({required this.pending, required this.chatId});
 
@@ -922,25 +794,11 @@ class _PendingBubble extends ConsumerWidget {
   }
 }
 
-/// Live-connection indicator for the chat screen (§5 of the WS integration).
-///
-/// Deliberately asymmetric: a healthy connection renders **nothing**. A
-/// permanent "connected" badge trains users to ignore the spot, which is
-/// exactly where the one message that matters will appear.
-///
-/// `ready` and the very first `connecting` are both silent — during a cold
-/// open the list is showing its own spinner, and a "connecting…" bar on top of
-/// it says nothing new. Only losing an *established* connection, or ending up
-/// with none at all, is worth the user's attention.
 class _ConnectionBanner extends ConsumerWidget {
   const _ConnectionBanner();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // `.value` with a fallback to the service's current status: the status
-    // stream is a broadcast stream and replays nothing, so a screen opened
-    // while already connected would otherwise see `loading` for one frame and
-    // flash a banner that isn't true.
     final status =
         ref.watch(chatSocketStatusProvider).value ??
         ref.read(chatSocketServiceProvider).status;
@@ -948,20 +806,15 @@ class _ConnectionBanner extends ConsumerWidget {
     final theme = Theme.of(context);
 
     final (String message, Color background, bool spinner) = switch (status) {
-      // Live, or cold-starting behind the list's own loading state.
       ChatSocketStatus.ready ||
       ChatSocketStatus.connecting => ('', Colors.transparent, false),
 
-      // Was live and no longer is. Backoff is running and cursors are intact,
-      // so this resolves itself — hence "reconnecting", not an error.
       ChatSocketStatus.reconnecting => (
         'Reconnecting…',
         theme.colorScheme.secondaryContainer,
         true,
       ),
 
-      // No socket and none being sought (signed out, or a 1008 awaiting
-      // re-auth). Pull-to-refresh still works, so say so.
       ChatSocketStatus.disconnected => (
         'Offline — pull to refresh',
         theme.colorScheme.errorContainer,
@@ -969,7 +822,6 @@ class _ConnectionBanner extends ConsumerWidget {
       ),
     };
 
-    // AnimatedSize so the list doesn't jump when the banner appears/vanishes.
     return AnimatedSize(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
@@ -998,8 +850,6 @@ class _ConnectionBanner extends ConsumerWidget {
                   Text(
                     message,
                     style: theme.textTheme.bodySmall,
-                    // Announced to screen readers: the visual cue is small and
-                    // easy to miss, and the state change is meaningful.
                     semanticsLabel: message,
                   ),
                 ],
@@ -1043,13 +893,6 @@ class _ReplyBanner extends StatelessWidget {
   }
 }
 
-/// Progress/error strip for the attachment upload in flight (api-docs §6.5),
-/// including the server-side processing step reported over the socket.
-///
-/// Three states get distinct copy, because they fail differently:
-/// uploading (bytes moving, §6.5 step 2), *processing* (bytes delivered,
-/// backend still validating — `confirm/` returned 202 and we are waiting for
-/// `attachment_success`, §7.4), and ready.
 class _AttachmentBar extends ConsumerWidget {
   const _AttachmentBar({required this.chatId});
 
@@ -1087,14 +930,11 @@ class _AttachmentBar extends ConsumerWidget {
       (sum, upload) => sum + upload.fileSize,
     );
 
-    // Watched (not just read) so the strip rebuilds the moment
-    // `attachment_success` lands for these tokens.
     ref.watch(confirmedAttachmentTokensProvider);
     final confirmed = ref
         .read(confirmedAttachmentTokensProvider.notifier)
         .areReady(state.uploadTokens);
 
-    // Tokens exist but the backend hasn't confirmed them yet.
     final processing = state.uploadTokens.isNotEmpty && !confirmed;
 
     final String status;
@@ -1138,8 +978,6 @@ class _AttachmentBar extends ConsumerWidget {
               padding: const EdgeInsets.only(top: 4),
               child: LinearProgressIndicator(value: state.progress?.fraction),
             )
-          // Indeterminate: the backend gives no progress for the async
-          // validation pass, only a terminal `attachment_success`.
           else if (processing)
             const Padding(
               padding: EdgeInsets.only(top: 4),
@@ -1202,8 +1040,6 @@ class _Composer extends StatelessWidget {
                 controller: controller,
                 minLines: 1,
                 maxLines: 5,
-                // `SendMessageRequest.content` caps at 4096 (api-docs §6.4);
-                // the counter makes the limit visible instead of surprising.
                 maxLength: 4096,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
@@ -1214,26 +1050,6 @@ class _Composer extends StatelessWidget {
                 ),
               ),
             ),
-            // TODO(voice): record a voice message / video note from the
-            // device and upload it as an exclusive attachment.
-            //
-            // Everything below the UI is already in place — `MessageType.voice`
-            // / `MessageType.videoNote`, `AttachmentType.voice` /
-            // `AttachmentType.videoNote`, the size/duration/resolution caps in
-            // `ChatAttachmentLimits`, the exclusivity check in
-            // `UploadChatAttachmentUseCase.validate` and the mandatory
-            // explicit `attachment_type` in `requestAttachmentUpload`
-            // (api-docs §6.4 / §6.5).
-            //
-            // What is missing is purely on-device capture, which needs a
-            // package this project does not depend on yet (mic/camera
-            // permissions, an encoder producing one of the §6.5 MIME types,
-            // and a duration measurement — the backend's ≤600 s / ≤60 s and
-            // ≤640 px limits cannot be derived from a file's size or MIME, so
-            // whatever records the clip has to measure it and refuse up front).
-            // Deliberately left as a disabled affordance rather than a hidden
-            // one: it documents the gap instead of silently pretending the
-            // feature doesn't exist.
             IconButton(
               tooltip: 'Voice messages are not available yet',
               icon: const Icon(Icons.mic_none_outlined),
@@ -1251,7 +1067,6 @@ class _Composer extends StatelessWidget {
   }
 }
 
-/// Asks which chat to forward into, reusing the already-loaded chat list.
 class _ForwardTargetDialog extends ConsumerWidget {
   const _ForwardTargetDialog({required this.excludeChatId});
 
@@ -1297,18 +1112,6 @@ class _ForwardTargetDialog extends ConsumerWidget {
   }
 }
 
-/// "Who reacted with 👍" — one page of `GET .../reactions/?emoji=`
-/// (api-docs §6.7.1/§6.7.3).
-///
-/// Stateful and self-loading rather than provider-backed: this list is
-/// throwaway view data with no place in `ChatDetailState` (which keeps only
-/// the live chip *summary*), it is scoped to a sheet that is discarded on
-/// dismiss, and caching it would only make it go stale the moment the next
-/// `reaction_update` arrives.
-///
-/// ⚠️ Paginated by `cursor_user_id`, not by page number — the next request is
-/// driven by `next_user_id` from the previous response, so this can only ever
-/// move forward (api-docs §1.6).
 class _ReactionUsersSheet extends ConsumerStatefulWidget {
   const _ReactionUsersSheet({
     required this.chatId,
@@ -1321,8 +1124,6 @@ class _ReactionUsersSheet extends ConsumerStatefulWidget {
   final String messageId;
   final String emoji;
 
-  /// Members of this chat, used to put a name against a `user_id`. Possibly
-  /// empty — see the `User #id` fallback in [_label].
   final List<ChatMemberEntity> members;
 
   @override
@@ -1370,12 +1171,6 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
     });
   }
 
-  /// The endpoint returns bare `user_id`s — `MessageReactionsDTO.users` is an
-  /// `int[]`, with no names or avatars (§6.7.3) — so the label is looked up in
-  /// the chat's member list. A miss (someone who reacted and then left, a
-  /// member page not loaded, a member hidden because they are banned — see
-  /// §6.3) falls back to the same `User #id` diagnostic form used everywhere
-  /// else; see `chatDisplayName`.
   String _label(int userId) {
     for (final member in widget.members) {
       if (member.userId == userId) return member.displayLabel;
@@ -1436,8 +1231,6 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
     }
 
     if (_users.isEmpty) {
-      // Reachable: the chip was tapped just as the last reaction was removed
-      // elsewhere. An empty roster is the honest answer, not an error.
       return const Padding(
         padding: EdgeInsets.all(32),
         child: Center(child: Text('Nobody has reacted with this yet')),
@@ -1466,10 +1259,6 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
         return ListTile(
           leading: const CircleAvatar(child: Icon(Icons.person_outline)),
           title: Text(_label(userId)),
-          // The sheet is opened per emoji and the response is filtered by it
-          // (§6.7.3), so every row here reacted with this one. It is *not*
-          // necessarily their only reaction on the message — a user may hold
-          // up to three (§6.7.2) and would appear in several sheets.
           trailing: Text(widget.emoji, style: theme.textTheme.titleMedium),
         );
       },

@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/accessibility/accessibility_providers.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 
-/// Extension methods for accessibility-related Widget functionality
 extension AccessibilityWidgetExtensions on Widget {
-  /// Wraps this widget with a minimum size to ensure it meets touch target size requirements
   Widget withMinimumTouchTargetSize() {
     return SizedBox(
       width: AppConstants.accessibilityTouchTargetMinSize,
@@ -14,17 +12,14 @@ extension AccessibilityWidgetExtensions on Widget {
     );
   }
 
-  /// Adds a semantic label to this widget
   Widget withSemanticLabel(String label) {
     return Semantics(label: label, child: this);
   }
 
-  /// Excludes this widget from semantics if screen reader is active
   Widget excludeFromSemantics() {
     return ExcludeSemantics(child: this);
   }
 
-  /// Increases the touch target size of this widget without affecting layout
   Widget withIncreasedTouchTarget({double minSize = 48.0}) {
     return MouseRegion(
       hitTestBehavior: HitTestBehavior.translucent,
@@ -35,7 +30,6 @@ extension AccessibilityWidgetExtensions on Widget {
     );
   }
 
-  /// Wraps this widget with a tooltip accessible to screen readers
   Widget withAccessibleTooltip(String message) {
     return Tooltip(
       message: message,
@@ -44,7 +38,6 @@ extension AccessibilityWidgetExtensions on Widget {
     );
   }
 
-  /// Makes this widget conditionally accessible based on screen reader state
   Widget conditionallyAccessible(
     bool isAccessible, {
     required String accessibleLabel,
@@ -67,18 +60,13 @@ extension AccessibilityWidgetExtensions on Widget {
   }
 }
 
-/// A button that meets accessibility requirements
 class AccessibleButton extends ConsumerWidget {
-  /// The child widget
   final Widget child;
 
-  /// The button's semantic label
   final String semanticLabel;
 
-  /// The callback when pressed
   final VoidCallback? onPressed;
 
-  /// Create an accessible button
   const AccessibleButton({
     super.key,
     required this.child,
@@ -107,27 +95,19 @@ class AccessibleButton extends ConsumerWidget {
   }
 }
 
-/// A text field that meets accessibility requirements
 class AccessibleTextField extends StatelessWidget {
-  /// The controller for the text field
   final TextEditingController? controller;
 
-  /// The text field's semantic label
   final String semanticLabel;
 
-  /// The hint text
   final String? hintText;
 
-  /// The error text
   final String? errorText;
 
-  /// The callback when the text changes
   final void Function(String)? onChanged;
 
-  /// Whether the field is obscured
   final bool obscureText;
 
-  /// Create an accessible text field
   const AccessibleTextField({
     super.key,
     this.controller,
@@ -160,18 +140,13 @@ class AccessibleTextField extends StatelessWidget {
   }
 }
 
-/// A switch that meets accessibility requirements
 class AccessibleSwitch extends StatelessWidget {
-  /// The switch's semantic label
   final String semanticLabel;
 
-  /// Whether the switch is on
   final bool value;
 
-  /// The callback when the switch is toggled
   final ValueChanged<bool> onChanged;
 
-  /// Create an accessible switch
   const AccessibleSwitch({
     super.key,
     required this.semanticLabel,

@@ -8,35 +8,25 @@ import 'package:chatix/core/images/debug_image_processor.dart';
 import 'package:chatix/core/images/image_processor.dart';
 import 'package:chatix/core/storage/cache_manager.dart';
 
-/// Provider for the image processor
 final imageProcessorProvider = Provider<ImageProcessor>((ref) {
   return DebugImageProcessor();
 });
 
-/// Configuration for advanced image handling
 class AdvancedImageConfig {
-  /// Whether to cache images locally
   final bool enableCaching;
 
-  /// Whether to enable automatic image resizing
   final bool enableAutoResize;
 
-  /// Maximum width for auto-resized images
   final int? maxWidth;
 
-  /// Maximum height for auto-resized images
   final int? maxHeight;
 
-  /// Default quality for JPEG or WebP compression (0-100)
   final int defaultQuality;
 
-  /// Whether to enable blur-up preview thumbnails
   final bool enableBlurUpPreview;
 
-  /// Size of blur-up preview thumbnails
   final int blurUpPreviewSize;
 
-  /// Default image format
   final ImageFormat defaultFormat;
 
   const AdvancedImageConfig({
@@ -51,21 +41,17 @@ class AdvancedImageConfig {
   });
 }
 
-/// Provider for advanced image configuration
 final advancedImageConfigProvider = Provider<AdvancedImageConfig>((ref) {
   return const AdvancedImageConfig();
 });
 
-/// In-memory cache for decoded images
 final imageMemoryCacheProvider = Provider<CacheManager<ui.Image>>((ref) {
   return CacheManager<ui.Image>(maxItems: 100);
 });
 
-/// Provider for image cache keys
 final imageKeyProvider = Provider.family<String, String>((ref, imageUrl) {
   final config = ref.watch(advancedImageConfigProvider);
 
-  // Create a cache key that includes relevant sizing parameters
   String key = imageUrl;
   if (config.enableAutoResize &&
       (config.maxWidth != null || config.maxHeight != null)) {
@@ -75,7 +61,6 @@ final imageKeyProvider = Provider.family<String, String>((ref, imageUrl) {
   return key;
 });
 
-/// Advanced image widget with caching, processing, and placeholder support
 class AdvancedImage extends ConsumerStatefulWidget {
   final String imageUrl;
   final double? width;
@@ -131,19 +116,15 @@ class _AdvancedImageState extends ConsumerState<AdvancedImage> {
     });
 
     try {
-      // In a real implementation, this would handle network images, resizing, etc.
-      // For now, we'll just use a simple NetworkImage
       final imageProvider = NetworkImage(widget.imageUrl);
 
-      // Simulate loading a thumbnail
       if (widget.useThumbnailPreview) {
         _thumbnailProvider = NetworkImage(
           widget.imageUrl,
-        ); // In real app, would be a tiny version
-        setState(() {}); // Refresh to show thumbnail
+        );
+        setState(() {});
       }
 
-      // Simulate image loading delay
       await Future.delayed(const Duration(milliseconds: 800));
 
       setState(() {

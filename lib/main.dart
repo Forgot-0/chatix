@@ -36,7 +36,6 @@ void main() async {
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         cookieJarProvider.overrideWithValue(cookieJar),
 
-        // Override the default locale provider to use our persistent locale
         defaultLocaleProvider.overrideWith(
           (ref) => ref.watch(persistentLocaleProvider),
         ),
@@ -46,8 +45,6 @@ void main() async {
   );
 }
 
-// Provider to manage theme mode
-// Provider to manage theme mode
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() => ThemeMode.system;
@@ -64,23 +61,12 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the router from provider
     final router = ref.watch(routerProvider);
 
-    // Watch the theme mode
     final themeMode = ref.watch(themeModeProvider);
 
-    // Watch the persistent locale
     final locale = ref.watch(persistentLocaleProvider);
 
-    // Binds the chat WebSocket to the session: connects once the user is
-    // authenticated (login *or* cold start with a stored token) and
-    // disconnects on sign-out — see chat_socket_provider.dart.
-    //
-    // Watched here, at the root, rather than on a chat screen: the connection
-    // must outlive any single screen, because unread badges depend on events
-    // for chats that are not currently open. Watching it per screen would
-    // also churn the 2-connection-per-user budget (api-docs §7.2).
     ref.watch(chatSocketLifecycleProvider);
 
     return UpdateChecker(
@@ -95,7 +81,6 @@ class MyApp extends ConsumerWidget {
           routerConfig: router,
           debugShowCheckedModeBanner: false,
 
-          // Localization settings
           locale: locale,
           localizationsDelegates: [
             const AppLocalizationsDelegate(),

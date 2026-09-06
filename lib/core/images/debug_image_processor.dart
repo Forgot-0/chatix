@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:chatix/core/images/image_processor.dart';
 
-/// A debug implementation of ImageProcessor for testing
 class DebugImageProcessor implements ImageProcessor {
   @override
   Future<Uint8List> resize({
@@ -15,9 +14,7 @@ class DebugImageProcessor implements ImageProcessor {
     debugPrint(
       '🖼️ Resizing image to $width x $height (maintainAspectRatio: $maintainAspectRatio)',
     );
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 300));
-    // In a real implementation, this would use a library like image or flutter_image_compress
     return imageData;
   }
 
@@ -27,7 +24,6 @@ class DebugImageProcessor implements ImageProcessor {
     required int quality,
   }) async {
     debugPrint('🖼️ Compressing image with quality: $quality');
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 200));
     return imageData;
   }
@@ -38,7 +34,6 @@ class DebugImageProcessor implements ImageProcessor {
     required Rect cropRect,
   }) async {
     debugPrint('🖼️ Cropping image with rect: $cropRect');
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 150));
     return imageData;
   }
@@ -49,7 +44,6 @@ class DebugImageProcessor implements ImageProcessor {
     required double sigma,
   }) async {
     debugPrint('🖼️ Applying blur with sigma: $sigma');
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 250));
     return imageData;
   }
@@ -57,14 +51,12 @@ class DebugImageProcessor implements ImageProcessor {
   @override
   Future<Uint8List> toGrayscale({required Uint8List imageData}) async {
     debugPrint('🖼️ Converting image to grayscale');
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 200));
     return imageData;
   }
 
   @override
   Future<Size> getImageDimensions(Uint8List imageData) async {
-    // For debug purposes, just return a mock size
     debugPrint('🖼️ Getting image dimensions');
     await Future.delayed(const Duration(milliseconds: 50));
     return const Size(800, 600);
@@ -79,7 +71,6 @@ class DebugImageProcessor implements ImageProcessor {
     debugPrint(
       '🖼️ Converting image to ${format.name} format with quality: $quality',
     );
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 300));
     return imageData;
   }
@@ -93,7 +84,6 @@ class DebugImageProcessor implements ImageProcessor {
     debugPrint(
       '🖼️ Generating thumbnail with max dimension: $maxDimension, quality: $quality',
     );
-    // Simulate processing time
     await Future.delayed(const Duration(milliseconds: 200));
     return imageData;
   }

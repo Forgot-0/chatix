@@ -7,10 +7,6 @@ import 'package:chatix/features/notification/domain/usecases/mark_all_as_read_us
 import 'package:chatix/features/notification/domain/usecases/mark_as_read_use_case.dart';
 import 'package:chatix/features/notification/domain/usecases/register_device_use_case.dart';
 
-/// Domain-layer DI. `notificationRepositoryProvider` lives next to its
-/// implementation in `notification_repository_impl.dart` (mirrors the auth,
-/// profile and chat features' convention) — import that file directly where
-/// the repository itself is required.
 final getNotificationsUseCaseProvider = Provider<GetNotificationsUseCase>((ref) {
   return GetNotificationsUseCase(ref.watch(notificationRepositoryProvider));
 });

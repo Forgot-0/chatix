@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 
-/// `POST /profiles/{profile_id}/contacts/` 🔒 (api-docs §4.6).
 class AddContactUseCase {
   final ProfileRepository _repository;
 

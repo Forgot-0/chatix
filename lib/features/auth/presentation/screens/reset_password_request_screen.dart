@@ -8,8 +8,6 @@ import 'package:chatix/features/auth/presentation/providers/auth_providers.dart'
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
-/// Step 1/2 of password reset — `POST /auth/password-resets/` (api-docs
-/// §3.7). Rate limit: 3/hour.
 class ResetPasswordRequestScreen extends ConsumerStatefulWidget {
   const ResetPasswordRequestScreen({super.key});
 

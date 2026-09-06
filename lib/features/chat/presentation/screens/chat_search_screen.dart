@@ -15,27 +15,6 @@ import 'package:chatix/features/profile/presentation/providers/profile_providers
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 
-/// Telegram's one-box search: conversations and people under a single input.
-///
-/// ### ⚠️ The two halves are not symmetrical, and can't be
-///
-/// * **People** is a real server search — `GET /profiles/?username=`
-///   (api-docs §4.2), paginated, over every registered user.
-/// * **Chats** is a **local filter over what is already in memory**.
-///   `GET /chats/` (§6.2) takes `limit` and a cursor and *no* search
-///   parameter, so there is no server-side chat search to call. Filtering
-///   here runs over `chatListProvider.state.items` — the pages the list
-///   screen has loaded so far.
-///
-/// The practical consequence, and the reason this is spelled out rather than
-/// hidden: a chat that exists but has not been paged in yet **will not be
-/// found**, and neither will a message body — matching is on the chat name
-/// and the `last_message` preview only, because that is all the client holds.
-/// Faking a full-text search over history would need a backend contract that
-/// does not exist.
-///
-/// This is an addition, not a replacement: `ProfilesListScreen` remains the
-/// standalone people directory with its own filters.
 class ChatSearchScreen extends ConsumerStatefulWidget {
   const ChatSearchScreen({super.key});
 
@@ -53,8 +32,6 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
   bool _isLoadingPeople = false;
   String? _peopleError;
 
-  /// Discards out-of-order responses — see [UserSearchField] for the same
-  /// guard.
   int _requestId = 0;
 
   bool _isStartingChat = false;
@@ -81,10 +58,6 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
       return;
     }
 
-    // One debounce for both halves, even though only the people half makes a
-    // request: filtering the chat list on every keystroke is cheap, but
-    // letting the two sections update at different moments makes the screen
-    // look like it is glitching.
     setState(() => _isLoadingPeople = true);
     _debounce = Timer(
       const Duration(milliseconds: 300),
@@ -119,10 +92,6 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
     });
   }
 
-  /// Local, in-memory filter over the loaded pages of `GET /chats/`.
-  ///
-  /// Matches the chat name and the `last_message` preview — the two things a
-  /// row actually displays. Not a history search; see the class doc.
   List<ChatEntity> _matchingChats() {
     if (_query.isEmpty) return const [];
 
@@ -139,9 +108,6 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
     }).toList();
   }
 
-  /// Opens the direct chat with [profile], creating it if it doesn't exist —
-  /// identical semantics to the profile screen's Message button, including
-  /// treating `409 DIRECT_CHAT_EXISTS` as "open that one".
   Future<void> _openDirectChat(ProfileEntity profile) async {
     if (_isStartingChat) return;
     setState(() => _isStartingChat = true);
@@ -182,8 +148,6 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watched, not read, so a chat arriving over the WebSocket while the
-    // search is open re-filters immediately.
     ref.watch(chatListProvider);
 
     final theme = Theme.of(context);
@@ -263,8 +227,6 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
                     child: Text(
-                      // Honest about the limitation rather than letting the
-                      // user conclude the chat isn't there.
                       'Chats are searched among the conversations already '
                       'loaded, by name and last message — not across full '
                       'message history.',

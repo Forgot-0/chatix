@@ -6,28 +6,22 @@ import 'package:chatix/core/auth/debug_biometric_service.dart';
 import 'package:chatix/core/auth/local_biometric_service.dart';
 import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 
-/// Provider for the biometric authentication service
 final biometricServiceProvider = Provider<BiometricService>((ref) {
-  // Check if we're in debug mode or if a feature flag is set
   final useDebugService =
       kDebugMode &&
       ref.watch(
         featureFlagProvider('use_debug_biometrics', defaultValue: false),
       );
 
-  // Create the appropriate service implementation
   final service = useDebugService
       ? DebugBiometricService()
       : LocalBiometricService();
 
-  // Log biometric events to analytics
   final analytics = ref.watch(analyticsProvider);
 
-  // Return a proxy service that logs analytics
   return _AnalyticsBiometricServiceProxy(service, analytics);
 });
 
-/// A proxy service that adds analytics logging to biometric operations
 class _AnalyticsBiometricServiceProxy implements BiometricService {
   final BiometricService _delegate;
   final Analytics _analytics;
@@ -81,13 +75,11 @@ class _AnalyticsBiometricServiceProxy implements BiometricService {
   }
 }
 
-/// Provider to check if biometric authentication is available
 final biometricsAvailableProvider = FutureProvider<bool>((ref) async {
   final service = ref.watch(biometricServiceProvider);
   return await service.isAvailable();
 });
 
-/// Provider to get available biometric types
 final availableBiometricsProvider = FutureProvider<List<BiometricType>>((
   ref,
 ) async {
@@ -95,8 +87,6 @@ final availableBiometricsProvider = FutureProvider<List<BiometricType>>((
   return await service.getAvailableBiometrics();
 });
 
-/// Controller for managing authentication state
-/// State for biometric authentication
 class BiometricAuthState {
   final bool isAuthenticated;
   final BiometricResult? lastResult;
@@ -121,23 +111,18 @@ class BiometricAuthState {
   }
 }
 
-/// Controller for managing authentication state
 class BiometricAuthController extends Notifier<BiometricAuthState> {
   @override
   BiometricAuthState build() {
     return const BiometricAuthState();
   }
 
-  /// Whether the user is currently authenticated
   bool get isAuthenticated => state.isAuthenticated;
 
-  /// The result of the last authentication attempt
   BiometricResult? get lastResult => state.lastResult;
 
-  /// When the user was last authenticated
   DateTime? get lastAuthTime => state.lastAuthTime;
 
-  /// Authenticate the user with biometrics
   Future<BiometricResult> authenticate({
     required String reason,
     AuthReason authReason = AuthReason.appAccess,
@@ -175,7 +160,6 @@ class BiometricAuthController extends Notifier<BiometricAuthState> {
     return result;
   }
 
-  /// Clear the authenticated state
   void logout() {
     final analytics = ref.read(analyticsProvider);
 
@@ -187,7 +171,6 @@ class BiometricAuthController extends Notifier<BiometricAuthState> {
     );
   }
 
-  /// Check if authentication is needed (based on timeout)
   bool isAuthenticationNeeded({Duration? timeout}) {
     if (!state.isAuthenticated) return true;
 
@@ -204,7 +187,6 @@ class BiometricAuthController extends Notifier<BiometricAuthState> {
   }
 }
 
-/// Provider for the biometric auth controller
 final biometricAuthControllerProvider =
     NotifierProvider<BiometricAuthController, BiometricAuthState>(
       BiometricAuthController.new,

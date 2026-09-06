@@ -34,10 +34,6 @@ void main() {
   const tFilename = 'avatar.png';
   const tContentType = 'image/png';
 
-  // A presigned PUT, as §4.5 actually returns: the signature lives in the
-  // query string and the server-sanitised key comes back separately. There
-  // are no policy fields — that is a presigned POST, which this backend does
-  // not use.
   const tPresign = AvatarPresignEntity(
     url:
         'https://storage.example.com/pending-avatar/1/avatar.png'
@@ -47,7 +43,6 @@ void main() {
   );
 
   test('should emit presigning -> uploading -> confirming -> done on full success', () async {
-    // Arrange
     when(
       () => mockProfileRepository.presignAvatar(filename: tFilename),
     ).thenAnswer((_) async => const Right(tPresign));
@@ -62,10 +57,8 @@ void main() {
       () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
     ).thenAnswer((_) async => const Right(null));
 
-    // Act
     final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: tContentType);
 
-    // Assert
     await expectLater(
       stream,
       emitsInOrder([
@@ -94,7 +87,6 @@ void main() {
   test(
     'should emit presigning then the Failure and stop, never calling the uploader, when presign fails',
     () async {
-      // Arrange
       const tFailure = ApiFailure(
         code: 'AVATAR_NOT_TYPE_IMAGE',
         message: 'Not an image',
@@ -105,10 +97,8 @@ void main() {
         () => mockProfileRepository.presignAvatar(filename: tFilename),
       ).thenAnswer((_) async => const Left(tFailure));
 
-      // Act
       final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: tContentType);
 
-      // Assert
       await expectLater(
         stream,
         emitsInOrder([
@@ -131,7 +121,6 @@ void main() {
   );
 
   test('should stop after uploading fails, never calling completeAvatarUpload', () async {
-    // Arrange
     const tFailure = ServerFailure(message: 'Avatar storage rejected the upload', statusCode: 403);
     when(
       () => mockProfileRepository.presignAvatar(filename: tFilename),
@@ -144,10 +133,8 @@ void main() {
       ),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    // Act
     final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: tContentType);
 
-    // Assert
     await expectLater(
       stream,
       emitsInOrder([
@@ -165,10 +152,8 @@ void main() {
   test(
     'should emit a single InputFailure and never call the repository when contentType is not an image',
     () async {
-      // Act
       final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: 'text/plain');
 
-      // Assert
       await expectLater(
         stream,
         emitsInOrder([isA<Left<Failure, AvatarUploadStage>>(), emitsDone]),
@@ -181,17 +166,14 @@ void main() {
   test(
     'should emit a single InputFailure and never call the repository when the file exceeds 5MB',
     () async {
-      // Arrange
       final tooLargeBytes = Uint8List(UploadAvatarUseCase.maxSizeBytes + 1);
 
-      // Act
       final stream = useCase.execute(
         bytes: tooLargeBytes,
         filename: tFilename,
         contentType: tContentType,
       );
 
-      // Assert
       await expectLater(
         stream,
         emitsInOrder([isA<Left<Failure, AvatarUploadStage>>(), emitsDone]),
@@ -202,14 +184,12 @@ void main() {
   );
 
   test('should emit a single InputFailure and never call the repository for an empty file', () async {
-    // Act
     final stream = useCase.execute(
       bytes: Uint8List(0),
       filename: tFilename,
       contentType: tContentType,
     );
 
-    // Assert
     await expectLater(
       stream,
       emitsInOrder([isA<Left<Failure, AvatarUploadStage>>(), emitsDone]),

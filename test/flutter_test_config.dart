@@ -1,25 +1,22 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // Required for FlutterError
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   await loadAppFonts();
 
-  // Custom comparator with 1.5% tolerance for cross-platform consistency
-  // (Handling minor font rendering differences between macOS and Linux CI)
   if (goldenFileComparator is LocalFileComparator) {
     final testUrl = (goldenFileComparator as LocalFileComparator).basedir;
     goldenFileComparator = LocalFileComparatorWithThreshold(
       Uri.parse('$testUrl/test.dart'),
-      0.015, // 1.5% tolerance
+      0.015,
     );
   }
 
   return testMain();
 }
 
-/// A custom golden file comparator that allows for a small difference in pixels
 class LocalFileComparatorWithThreshold extends LocalFileComparator {
   final double threshold;
 

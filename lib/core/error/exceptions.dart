@@ -1,4 +1,3 @@
-// Base Exception
 abstract class AppException implements Exception {
   final String message;
   final String? prefix;
@@ -11,7 +10,6 @@ abstract class AppException implements Exception {
   }
 }
 
-// Network related exceptions
 class NetworkException extends AppException {
   NetworkException({super.message = 'No internet connection'})
     : super(prefix: 'Network Error: ');
@@ -22,7 +20,6 @@ class TimeoutException extends AppException {
     : super(prefix: 'Timeout Error: ');
 }
 
-// API error envelope (api-docs §2.1)
 class ApiException extends AppException {
   final String code;
   final dynamic detail;
@@ -41,7 +38,6 @@ class RateLimitException extends AppException {
     : super(prefix: 'Rate Limit: ');
 }
 
-// Server related exceptions
 class ServerException extends AppException {
   ServerException({super.message = 'Internal server error'})
     : super(prefix: 'Server Error: ');
@@ -72,13 +68,11 @@ class RequestCancelledException extends AppException {
     : super(prefix: 'Request Cancelled: ');
 }
 
-// Cache related exceptions
 class CacheException extends AppException {
   CacheException({super.message = 'Cache error'})
     : super(prefix: 'Cache Error: ');
 }
 
-// Authentication related exceptions
 class AuthenticationException extends AppException {
   AuthenticationException({super.message = 'Authentication failed'})
     : super(prefix: 'Authentication Error: ');

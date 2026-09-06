@@ -5,7 +5,6 @@ import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/l10n/app_localizations_delegate.dart';
 import 'package:chatix/l10n/l10n.dart';
 
-/// A screen that demonstrates how to use the language selector widget
 class LanguageSelectorExample extends ConsumerWidget {
   const LanguageSelectorExample({super.key});
 
@@ -23,7 +22,6 @@ class LanguageSelectorExample extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Introduction card
             Card(
               margin: const EdgeInsets.only(bottom: 24.0),
               child: Padding(
@@ -50,7 +48,6 @@ class LanguageSelectorExample extends ConsumerWidget {
               ),
             ),
 
-            // Translation examples
             Card(
               margin: const EdgeInsets.only(bottom: 24.0),
               child: Padding(
@@ -87,12 +84,10 @@ class LanguageSelectorExample extends ConsumerWidget {
               ),
             ),
 
-            // Language selector
             const Card(child: LanguageSelectorWidget()),
 
             const SizedBox(height: 24),
 
-            // Dialog button
             Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.language),

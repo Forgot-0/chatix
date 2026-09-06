@@ -15,15 +15,6 @@ import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 
-/// Views a profile — the signed-in person's own when [profileId] is `null`,
-/// otherwise whichever profile [profileId] points to. The "Edit" entry
-/// point (app bar action + avatar upload control) only ever shows for the
-/// caller's own profile: there's no system-rights UI yet, so ownership is
-/// the only condition checked here (api-docs §4.4/§4.6).
-///
-/// Someone else's profile instead gets a **Message** button, which is the
-/// shortest path to a direct chat (`POST /chats/`, §6.2) — the same use case
-/// the create-chat form calls, just with the participant already decided.
 class ProfileScreen extends ConsumerStatefulWidget {
   final int? profileId;
 
@@ -34,9 +25,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  /// Guards the Message button while `POST /chats/` is in flight — the
-  /// endpoint allows only 4 creations per 5 minutes (§6.2), so a double tap
-  /// is expensive.
   bool _isStartingChat = false;
 
   @override
@@ -80,10 +68,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: _ProfileContent(profile: profile, canEdit: canEdit),
         ),
       ),
-      // Same condition as `canEdit`, inverted: you cannot message yourself,
-      // and `direct` chats are strictly two-party (§6.2). Hidden entirely
-      // rather than disabled — a greyed-out "Message" on your own profile
-      // would invite the question of how to enable it.
       floatingActionButton: canEdit || currentUserId == null
           ? null
           : FloatingActionButton.extended(
@@ -102,14 +86,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  /// Opens (or creates) the direct chat with [userId] and navigates to it.
-  ///
-  /// ⚠️ `409 DIRECT_CHAT_EXISTS` is the *expected* outcome for the second and
-  /// every later tap — one direct chat per pair is a backend invariant, not an
-  /// error state. It carries the existing chat's id in `detail.chat_id`
-  /// (§6.2), so it navigates to that conversation exactly like a successful
-  /// creation would. The extraction lives in `existingDirectChatId`, shared
-  /// with `create_chat_screen.dart` rather than copied.
   Future<void> _startDirectChat(int userId) async {
     setState(() => _isStartingChat = true);
 
@@ -142,10 +118,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       },
       (chat) {
         ref.read(chatListProvider.notifier).refresh();
-        // `push`, not `pushReplacement`: the profile was a destination in its
-        // own right here (unlike the create-chat form, which exists only to
-        // produce a chat), so backing out of the conversation should return
-        // to it.
         context.push(ChatDetailRoute(chat.id).location);
       },
     );

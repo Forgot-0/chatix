@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/localization/language_selector_widget.dart';
 import 'package:chatix/l10n/l10n.dart';
 
-/// Screen for language selection settings
 class LanguageSettingsScreen extends ConsumerWidget {
   const LanguageSettingsScreen({super.key});
 
@@ -16,7 +15,6 @@ class LanguageSettingsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Language selection description
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: Text(
@@ -25,10 +23,8 @@ class LanguageSettingsScreen extends ConsumerWidget {
               ),
             ),
 
-            // Language selector widget
             const Expanded(child: Card(child: LanguageSelectorWidget())),
 
-            // Language selection explanation
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: Text(

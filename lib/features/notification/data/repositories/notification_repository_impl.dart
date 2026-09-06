@@ -8,14 +8,6 @@ import 'package:chatix/features/notification/data/models/notification_model.dart
 import 'package:chatix/features/notification/domain/entities/notification_entity.dart';
 import 'package:chatix/features/notification/domain/repositories/notification_repository.dart';
 
-/// Maps [NotificationRemoteDataSource] models onto domain entities
-/// (api-docs §8).
-///
-/// Deliberately thin, and deliberately **uncached**: the unread count is the
-/// one number in this feature the user notices being wrong, and with no
-/// realtime channel to invalidate a cache (api-docs §7 sends no notification
-/// events) any local copy would drift silently. Freshness is owned by the
-/// presentation layer's explicit refresh points instead.
 class NotificationRepositoryImpl implements NotificationRepository {
   final NotificationRemoteDataSource _remote;
 
@@ -47,8 +39,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
       pageSize: pageSize,
       sort: sort,
     );
-    // `PageResult.map` keeps the pagination metadata and converts only the
-    // items — the model→entity step for a paginated list.
     return result.map(
       (page) => page.map((NotificationModel model) => model.toEntity()),
     );

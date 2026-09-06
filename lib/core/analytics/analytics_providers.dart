@@ -6,7 +6,6 @@ import 'package:chatix/core/analytics/analytics_service.dart';
 import 'package:chatix/core/analytics/firebase_analytics_service.dart';
 import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 
-/// A debug analytics service for development
 class DebugAnalyticsService implements AnalyticsService {
   bool _isEnabled = true;
 
@@ -55,17 +54,13 @@ class DebugAnalyticsService implements AnalyticsService {
   bool get isEnabled => _isEnabled;
 }
 
-/// Provider for the analytics service
 final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
-  // Check if analytics are enabled via feature flag
   final analyticsEnabled = ref.watch(
     featureFlagProvider('enable_analytics', defaultValue: true),
   );
 
-  // Create an appropriate analytics service implementation
   final services = <AnalyticsService>[];
 
-  // Always add Firebase Analytics in production
   if (!kDebugMode ||
       ref.watch(
         featureFlagProvider('force_firebase_analytics', defaultValue: false),
@@ -73,15 +68,12 @@ final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
     services.add(FirebaseAnalyticsService());
   }
 
-  // Add debug analytics in debug mode
   if (kDebugMode) {
     services.add(DebugAnalyticsService());
   }
 
-  // Create a composite service with all enabled analytics providers
   final service = CompositeAnalyticsService(services);
 
-  // Enable/disable based on user preference
   if (analyticsEnabled) {
     service.enable();
   } else {
@@ -91,26 +83,22 @@ final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
   return service;
 });
 
-/// Provider for accessing the analytics event logger
 final analyticsProvider = Provider<Analytics>((ref) {
   final service = ref.watch(analyticsServiceProvider);
   return Analytics(service);
 });
 
-/// Helper class to log analytics events
 class Analytics {
   final AnalyticsService _service;
 
   Analytics(this._service);
 
-  /// Log a screen view event
   void logScreenView(String screenName, {Map<String, dynamic>? parameters}) {
     _service.logEvent(
       ScreenViewEvent(screenName, screenParameters: parameters),
     );
   }
 
-  /// Log a user action event
   void logUserAction({
     required String action,
     String? category,
@@ -129,7 +117,6 @@ class Analytics {
     );
   }
 
-  /// Log an error event
   void logError({
     required String errorType,
     required String message,
@@ -146,7 +133,6 @@ class Analytics {
     );
   }
 
-  /// Log a performance event
   void logPerformance({
     required String name,
     required num value,
@@ -163,31 +149,25 @@ class Analytics {
     );
   }
 
-  /// Set user properties
   void setUser({required String userId, Map<String, dynamic>? properties}) {
     _service.setUserProperties(userId: userId, properties: properties);
   }
 
-  /// Reset user
   void resetUser() {
     _service.resetUser();
   }
 
-  /// Enable analytics
   void enable() {
     _service.enable();
   }
 
-  /// Disable analytics
   void disable() {
     _service.disable();
   }
 
-  /// Check if analytics is enabled
   bool get isEnabled => _service.isEnabled;
 }
 
-/// A widget that automatically tracks screen views
 class AnalyticsScreenView extends StatefulWidget {
   final String screenName;
   final Map<String, dynamic>? parameters;

@@ -9,18 +9,6 @@ import 'package:chatix/features/auth/data/datasources/auth_remote_data_source.da
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 
-/// Talks to [AuthRemoteDataSource] and turns its `Either<Failure, Model>`
-/// into `Either<Failure, Entity>`, plus the bit of local orchestration
-/// (access-token persistence) the datasource intentionally doesn't do.
-///
-/// No "user data" is cached in [LocalStorageService] the way the old mock
-/// did — the source of truth is always `GET /users/me/` via
-/// [getCurrentUser]. We deliberately also don't add an extra local
-/// "last known user" cache here (api-docs guidance allows one, but it's
-/// optional): [AuthController] already re-validates against the server on
-/// every app start, so the extra cache would only help the very first
-/// frame before that call resolves — not worth the added invalidation
-/// complexity for this pass. Revisit if startup latency becomes an issue.
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureStorageService _secureStorageService;
@@ -57,10 +45,6 @@ class AuthRepositoryImpl implements AuthRepository {
       password: password,
     );
 
-    // Token persistence lives here rather than in the datasource: the
-    // datasource's job is strictly "call the endpoint, parse the body";
-    // deciding what to do with the result (write it to secure storage) is
-    // repository-level orchestration, same place `logout` below clears it.
     return result.fold((failure) async => Left(failure), (accessToken) async {
       await _secureStorageService.write(
         key: AppConstants.accessTokenKey,
@@ -76,11 +60,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
     return result.fold(
       (failure) async {
-        // api-docs §3.5: logout can fail with 400 INVALID_TOKEN if the
-        // refresh session was already gone server-side — in that case
-        // there's nothing left to invalidate, so clear the local token
-        // too. For network/timeout failures we keep it, so the caller can
-        // retry instead of silently losing a still-valid session.
         if (failure is ApiFailure) {
           await _secureStorageService.delete(key: AppConstants.accessTokenKey);
         }

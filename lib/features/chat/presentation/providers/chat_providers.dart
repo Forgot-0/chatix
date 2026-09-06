@@ -31,19 +31,6 @@ import 'package:chatix/features/chat/domain/usecases/mute_call_participant_use_c
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_use_case.dart';
 
-/// Dependency wiring for the chat feature's **REST** half (api-docs §6).
-///
-/// `chatRepositoryProvider` lives next to its implementation
-/// (`data/repositories/chat_repository_impl.dart`) and
-/// `chatRestDataSourceProvider` next to its own, matching how the profile and
-/// project features are wired; this file only assembles the use cases on top.
-///
-/// The WebSocket layer (api-docs §7) brings its own providers for the socket
-/// data source and message stream — deliberately kept separate so that a
-/// screen doing plain history/pagination never instantiates a live connection.
-
-// ─────────────────────────── Chats (§6.2) ───────────────────────────
-
 final getChatsUseCaseProvider = Provider<GetChatsUseCase>((ref) {
   return GetChatsUseCase(ref.watch(chatRepositoryProvider));
 });
@@ -72,8 +59,6 @@ final leaveChatUseCaseProvider = Provider<LeaveChatUseCase>((ref) {
   return LeaveChatUseCase(ref.watch(chatRepositoryProvider));
 });
 
-// ────────────────────────── Members (§6.3) ──────────────────────────
-
 final getMembersUseCaseProvider = Provider<GetMembersUseCase>((ref) {
   return GetMembersUseCase(ref.watch(chatRepositoryProvider));
 });
@@ -95,8 +80,6 @@ final banMemberUseCaseProvider = Provider<BanMemberUseCase>((ref) {
 final kickMemberUseCaseProvider = Provider<KickMemberUseCase>((ref) {
   return KickMemberUseCase(ref.watch(chatRepositoryProvider));
 });
-
-// ───────────────────────── Messages (§6.4) ──────────────────────────
 
 final getMessagesUseCaseProvider = Provider<GetMessagesUseCase>((ref) {
   return GetMessagesUseCase(ref.watch(chatRepositoryProvider));
@@ -132,11 +115,6 @@ final markReadUseCaseProvider = Provider<MarkReadUseCase>((ref) {
   return MarkReadUseCase(ref.watch(chatRepositoryProvider));
 });
 
-// ──────────────────────── Attachments (§6.5) ────────────────────────
-
-/// Drives all three upload requests (and the client-side limit checks) — see
-/// [UploadChatAttachmentUseCase]. Note it needs *two* dependencies: the
-/// repository for steps 1/3 and the bare-Dio uploader for the raw PUT.
 final uploadChatAttachmentUseCaseProvider =
     Provider<UploadChatAttachmentUseCase>((ref) {
       return UploadChatAttachmentUseCase(
@@ -150,8 +128,6 @@ final getAttachmentDownloadUrlUseCaseProvider =
       return GetAttachmentDownloadUrlUseCase(ref.watch(chatRepositoryProvider));
     });
 
-// ─────────────────────────── Calls (§6.6) ───────────────────────────
-
 final joinCallUseCaseProvider = Provider<JoinCallUseCase>((ref) {
   return JoinCallUseCase(ref.watch(chatRepositoryProvider));
 });
@@ -161,7 +137,6 @@ final muteCallParticipantUseCaseProvider = Provider<MuteCallParticipantUseCase>(
     return MuteCallParticipantUseCase(ref.watch(chatRepositoryProvider));
   },
 );
-// ───────────────────────────── Reactions (§6.7) ─────────────────────────────
 
 final setReactionUseCaseProvider = Provider<SetReactionUseCase>((ref) {
   return SetReactionUseCase(ref.watch(chatRepositoryProvider));
@@ -175,15 +150,12 @@ final getReactionsUseCaseProvider = Provider<GetReactionsUseCase>((ref) {
   return GetReactionsUseCase(ref.watch(chatRepositoryProvider));
 });
 
-/// `PUT .../reactions/` — whole-set replacement (§6.7.1). See
-/// [ReplaceReactionsUseCase] for why this exists alongside the per-emoji form.
 final replaceReactionsUseCaseProvider = Provider<ReplaceReactionsUseCase>((
   ref,
 ) {
   return ReplaceReactionsUseCase(ref.watch(chatRepositoryProvider));
 });
 
-/// `DELETE .../reactions/` — drop all of the caller's reactions (§6.7.1).
 final clearReactionsUseCaseProvider = Provider<ClearReactionsUseCase>((ref) {
   return ClearReactionsUseCase(ref.watch(chatRepositoryProvider));
 });

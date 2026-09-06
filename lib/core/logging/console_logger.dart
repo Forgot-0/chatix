@@ -2,24 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:chatix/core/logging/logger.dart';
 
-/// A logger implementation that logs to the debug console
 class ConsoleLogger implements Logger {
-  /// The tag for this logger
   final String _tag;
 
-  /// The minimum log level to display
   LogLevel _logLevel;
 
-  /// Whether to include timestamps in log messages
   final bool _includeTimestamp;
 
-  /// Whether to include the log level in log messages
   final bool _includeLogLevel;
 
-  /// Format for timestamps
   final DateFormat _timestampFormat;
 
-  /// Create a new console logger
   ConsoleLogger({
     String tag = '',
     LogLevel logLevel = LogLevel.info,
@@ -148,35 +141,28 @@ class ConsoleLogger implements Logger {
 
     final buffer = StringBuffer();
 
-    // Add timestamp if requested
     if (_includeTimestamp) {
       final timestamp = _timestampFormat.format(DateTime.now());
       buffer.write('[$timestamp] ');
     }
 
-    // Add log level if requested
     if (_includeLogLevel) {
       final levelStr = _getLevelString(level);
       buffer.write('$levelStr ');
     }
 
-    // Add tag if present
     if (_tag.isNotEmpty) {
       buffer.write('[$_tag] ');
     }
 
-    // Add the message
     buffer.write(message);
 
-    // Add data if present
     if (data != null && data.isNotEmpty) {
       buffer.write(' - ${_formatData(data)}');
     }
 
-    // Print the log message
     debugPrint(buffer.toString());
 
-    // Print error and stack trace if present
     if (error != null) {
       debugPrint('Error: $error');
       final trace = stackTrace ?? StackTrace.current;
@@ -205,7 +191,6 @@ class ConsoleLogger implements Logger {
     );
   }
 
-  /// Convert a log level to a colored string representation
   String _getLevelString(LogLevel level) {
     switch (level) {
       case LogLevel.verbose:
@@ -225,7 +210,6 @@ class ConsoleLogger implements Logger {
     }
   }
 
-  /// Format data map for logging
   String _formatData(Map<String, dynamic> data) {
     return data.entries.map((e) => '${e.key}=${e.value}').join(', ');
   }

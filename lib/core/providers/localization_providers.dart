@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/l10n/l10n.dart';
 
-/// Key for storing selected language code in SharedPreferences
 const _languageCodeKey = 'selected_language_code';
 
-/// Provider for persisting and retrieving the user's locale preference
 final savedLocaleProvider = Provider<Locale>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   final savedLanguageCode = prefs.getString(_languageCodeKey);
@@ -18,7 +16,6 @@ final savedLocaleProvider = Provider<Locale>((ref) {
     return Locale(savedLanguageCode);
   }
 
-  // Default to system locale or English if system locale is not supported
   final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
   if (AppLocalizations.isSupported(systemLocale)) {
     return systemLocale;
@@ -27,14 +24,11 @@ final savedLocaleProvider = Provider<Locale>((ref) {
   return const Locale('en');
 });
 
-/// Provider for initializing and persisting the locale notifier
-/// Provider for initializing and persisting the locale notifier
 final persistentLocaleProvider =
     NotifierProvider<PersistentLocaleNotifier, Locale>(
       PersistentLocaleNotifier.new,
     );
 
-/// Notifier for managing the locale state with persistence
 class PersistentLocaleNotifier extends Notifier<Locale> {
   static const _languageCodeKey = 'selected_language_code';
 
@@ -43,7 +37,6 @@ class PersistentLocaleNotifier extends Notifier<Locale> {
     return ref.watch(savedLocaleProvider);
   }
 
-  /// Set a new locale and persist the choice
   Future<void> setLocale(Locale locale) async {
     if (AppLocalizations.isSupported(locale)) {
       final prefs = ref.read(sharedPreferencesProvider);
@@ -52,7 +45,6 @@ class PersistentLocaleNotifier extends Notifier<Locale> {
     }
   }
 
-  /// Reset to the system locale
   Future<void> resetToSystemLocale() async {
     final prefs = ref.read(sharedPreferencesProvider);
     await prefs.remove(_languageCodeKey);

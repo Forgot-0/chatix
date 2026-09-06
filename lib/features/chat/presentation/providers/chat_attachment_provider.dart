@@ -5,19 +5,12 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 
-/// Composer-side attachment state for one chat.
-///
-/// Holds the picked files, the running upload progress and — once the upload
-/// finishes — the `upload_tokens` that go into `sendMessage` (api-docs §6.5
-/// step 4).
 class ChatAttachmentState extends Equatable {
-  /// What the user picked, already validated against the §6.5 limits.
   final List<AttachmentUploadRequestEntity> selected;
 
   final ChatAttachmentUploadProgress? progress;
   final Failure? failure;
 
-  /// Confirmed tokens, ready to be attached to a message.
   final List<String> uploadTokens;
 
   const ChatAttachmentState({
@@ -54,37 +47,11 @@ class ChatAttachmentState extends Equatable {
   List<Object?> get props => [selected, progress, failure, uploadTokens];
 }
 
-/// Runs the three-request upload for the message being composed.
-///
-/// Kept separate from [ChatDetailController] on purpose: an upload can outlive
-/// several composer edits, must survive a failed `sendMessage` (the tokens stay
-/// valid, so retrying the send must not re-upload 50 MB), and is the only part
-/// of the flow with meaningful progress to report.
-///
-/// An [AsyncNotifier] like every other controller in this feature, so screens
-/// read one uniform `AsyncValue` shape throughout.
-///
-/// ⚠️ The upload deliberately never parks the provider in `AsyncValue.loading`.
-/// Doing so would drop [ChatAttachmentState.selected] and
-/// [ChatAttachmentState.progress] out of `state.value`, so the attachment bar
-/// would blank out exactly while the progress bar is meant to be moving.
-/// Progress is instead carried inside the data state, and
-/// [ChatAttachmentState.isUploading] is the flag to render against.
-///
-/// A failed upload is also kept as *data* (`state.failure`) rather than
-/// `AsyncValue.error`: the picked files must stay on screen so the user can
-/// retry or drop them, which an error state cannot represent.
 class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
   ChatAttachmentController(this._chatId);
 
-  /// The chat this controller is scoped to. Riverpod 3's manual `family` API
-  /// hands the argument to the constructor (there is no inherited `arg`).
   final String _chatId;
 
-  /// Guards against a `clear()` (or a dispose) racing an in-flight upload:
-  /// each run captures the generation it started in and stops writing state
-  /// once it is superseded, so an abandoned batch can't repopulate the bar
-  /// with tokens the user already dismissed.
   int _generation = 0;
 
   @override
@@ -93,12 +60,8 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
     return const ChatAttachmentState();
   }
 
-  /// Current data, or an empty selection while the (synchronous) first build
-  /// hasn't landed yet.
   ChatAttachmentState get _current => state.value ?? const ChatAttachmentState();
 
-  /// Validates a picked selection immediately (api-docs §6.5) so the user
-  /// learns about an oversized file at pick time, not after a long upload.
   void select(List<AttachmentUploadRequestEntity> uploads) {
     _generation++;
     final failure = ref
@@ -118,9 +81,6 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
     state = const AsyncValue.data(ChatAttachmentState());
   }
 
-  /// Runs steps 1–3. On success [ChatAttachmentState.uploadTokens] is filled
-  /// and the caller may send the message right away — no need to wait for the
-  /// WS `attachment_success` event (api-docs §6.5).
   Future<void> upload() async {
     final start = _current;
     if (start.selected.isEmpty || start.isUploading) return;
@@ -135,7 +95,6 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
         .execute(_chatId, start.selected);
 
     await for (final event in stream) {
-      // Superseded by clear()/select() or disposed — stop touching state.
       if (generation != _generation) return;
 
       final current = _current;
@@ -150,8 +109,6 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
       );
       state = AsyncValue.data(next);
 
-      // The use case emits a single Left and closes, but returning here keeps
-      // that contract from being load-bearing.
       if (next.failure != null) return;
     }
   }

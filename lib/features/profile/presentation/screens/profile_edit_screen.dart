@@ -11,9 +11,6 @@ import 'package:chatix/features/profile/presentation/utils/profile_field_validat
 import 'package:chatix/features/profile/presentation/widgets/skills_chips_field.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 
-/// Edits the signed-in person's own profile (api-docs §4.4/§4.6 — there's
-/// no route/way to reach this screen for anyone else's profile, matching
-/// the "no system-rights UI yet" note on `ProfileScreen`).
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
 
@@ -31,10 +28,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     FocusScope.of(context).unfocus();
 
     final values = _formKey.currentState!.value;
-    // ⚠️ PUT overwrites: every field below must reflect the full current
-    // state, not just what changed, per UpdateProfileUseCase's warning —
-    // which is exactly what prefilling every field with the loaded
-    // profile's current value (below, in _EditForm) guarantees.
     final success = await ref
         .read(profileEditProvider.notifier)
         .submit(

@@ -4,22 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 
-/// The typed route layer: does a `Route(...).location` round-trip back into
-/// the *same, correctly typed* id when go_router parses it?
-///
-/// This is the failure the typed classes exist to prevent. `'/projects/$id'`
-/// with a position's UUID in `$id` compiles, matches, and then asks the API
-/// for a project that doesn't exist — a runtime 404 for what is really a type
-/// error. The tests below drive the real path patterns through a real
-/// `GoRouter`, so a pattern and its parser can never quietly disagree.
 void main() {
-  /// Builds a router over the real path constants and records what each
-  /// builder parsed out of the state.
-  ///
-  /// The nesting mirrors the app's table on purpose: `:chatId` and `create`
-  /// are siblings under `/chats`, `positions/:positionId` sits under
-  /// `/projects/:projectId`. Flattening it here would test a different
-  /// matcher than the one that ships.
   ({GoRouter router, List<Object?> parsed}) buildRouter() {
     final parsed = <Object?>[];
 
@@ -50,40 +35,6 @@ void main() {
                 parsed.add(ChatDetailRoute.idFrom(state));
                 return const Placeholder();
               },
-            ),
-          ],
-        ),
-        GoRoute(
-          path: ProjectsRoute.path,
-          builder: (_, _) => const Placeholder(),
-          routes: [
-            GoRoute(
-              path: MyProjectsRoute.path,
-              builder: (_, _) {
-                parsed.add('my-projects');
-                return const Placeholder();
-              },
-            ),
-            GoRoute(
-              path: ProjectDetailRoute.path,
-              builder: (_, state) {
-                parsed.add(ProjectDetailRoute.idFrom(state));
-                return const Placeholder();
-              },
-              routes: [
-                GoRoute(
-                  path: PositionDetailRoute.path,
-                  builder: (_, state) {
-                    final route = PositionDetailRoute.from(state);
-                    parsed.add(
-                      route == null
-                          ? null
-                          : (route.projectId, route.positionId),
-                    );
-                    return const Placeholder();
-                  },
-                ),
-              ],
             ),
           ],
         ),
@@ -123,15 +74,9 @@ void main() {
   }
 
   group('locations are built from the typed constructors', () {
-    test('chat ids stay strings, project and profile ids stay ints', () {
+    test('chat ids stay strings, profile ids stay ints', () {
       expect(const ChatDetailRoute('9f8e-uuid').location, '/chats/9f8e-uuid');
-      expect(const ProjectDetailRoute(42).location, '/projects/42');
       expect(const ProfileDetailRoute(17).location, '/profiles/17');
-      expect(
-        const PositionDetailRoute(projectId: 42, positionId: 'a1b2-uuid')
-            .location,
-        '/projects/42/positions/a1b2-uuid',
-      );
       expect(ChatMembersRoute.locationOf('9f8e'), '/chats/9f8e/members');
       expect(ChatCallRoute.locationOf('9f8e'), '/chats/9f8e/call');
     });
@@ -147,74 +92,13 @@ void main() {
     });
 
     testWidgets('the static "create" child wins over :chatId', (tester) async {
-      // Declaration order must not decide this. If it ever does, "New chat"
-      // silently becomes a request for a chat whose id is "create".
       final parsed = await go(tester, CreateChatRoute.location);
       expect(parsed, ['create-chat']);
     });
 
     testWidgets('the static "search" child wins over :chatId', (tester) async {
-      // Same trap as 'create', and the reason ChatSearchRoute is nested under
-      // /chats rather than declared as a flat top-level route: as siblings of
-      // a dynamic segment, only the static-beats-dynamic rule keeps the
-      // magnifier from opening a chat whose id is literally "search".
       final parsed = await go(tester, ChatSearchRoute.location);
       expect(parsed, ['chat-search']);
-    });
-  });
-
-  group('/projects/:projectId', () {
-    testWidgets('parses the int id', (tester) async {
-      final parsed = await go(tester, const ProjectDetailRoute(42).location);
-      expect(parsed, [42]);
-    });
-
-    testWidgets('a non-numeric id parses to null, not a crash', (
-      tester,
-    ) async {
-      // A stale or hand-typed link. The route builder is expected to show the
-      // "bad link" screen rather than fire a guaranteed-404 request.
-      final parsed = await go(tester, '/projects/not-a-number');
-      expect(parsed, [null]);
-    });
-
-    testWidgets('the static "my" child wins over :projectId', (tester) async {
-      final parsed = await go(tester, MyProjectsRoute.location);
-      expect(parsed, ['my-projects']);
-    });
-  });
-
-  group('/projects/:projectId/positions/:positionId', () {
-    // `PositionDetailRoute` is nested under `ProjectDetailRoute` in the route
-    // table (mirroring `app_router.dart`), and this harness has no
-    // `ShellRoute`/`parentNavigatorKey` to change that. Deep-linking straight
-    // to the position therefore makes go_router build the **whole** matched
-    // page stack, not just the leaf — `/projects/:projectId`'s own builder
-    // also runs (and records its own id into the same `parsed` list) so that
-    // "back" lands on the project page underneath. That's real, intended
-    // go_router behaviour for non-shell nested routes, not something
-    // `PositionDetailRoute.from` got wrong — so these assertions check that
-    // the leaf's parsed value showed up, rather than that it was the *only*
-    // thing recorded.
-    testWidgets('carries both ids, each with its own type', (tester) async {
-      final parsed = await go(
-        tester,
-        const PositionDetailRoute(
-          projectId: 42,
-          positionId: 'a1b2c3-uuid',
-        ).location,
-      );
-      expect(parsed, contains((42, 'a1b2c3-uuid')));
-    });
-
-    testWidgets('a bad project id invalidates the whole pair', (tester) async {
-      final parsed = await go(tester, '/projects/oops/positions/a1b2c3-uuid');
-      // Both the ancestor `ProjectDetailRoute` builder and the leaf
-      // `PositionDetailRoute` builder fail to parse "oops" and each record
-      // `null` — the pair is invalidated at both levels, which is exactly
-      // the "whole pair" the test name refers to.
-      expect(parsed, everyElement(isNull));
-      expect(parsed, isNotEmpty);
     });
   });
 

@@ -6,8 +6,6 @@ import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/l10n/l10n.dart';
 import 'package:intl/intl.dart';
 
-/// Demo screen to showcase localization features
-/// Includes language-specific assets demo
 class LocalizationAssetsDemo extends ConsumerWidget {
   const LocalizationAssetsDemo({super.key});
 
@@ -15,17 +13,14 @@ class LocalizationAssetsDemo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(persistentLocaleProvider);
 
-    // Create AppLocalizations instance for formatting
     final l10n = AppLocalizations(locale);
 
-    // Current date for formatting examples
     final now = DateTime.now();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr('localization_assets_demo')),
         actions: const [
-          // Language popup menu in the app bar
           LanguagePopupMenuButton(),
           SizedBox(width: 8),
         ],
@@ -35,7 +30,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Current locale information
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -61,7 +55,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // Date and number formatting examples
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -97,14 +90,12 @@ class LocalizationAssetsDemo extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // Localized assets examples
             Text(
               context.tr('localized_assets'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
 
-            // Display a note about language-specific assets
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
@@ -130,7 +121,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
 
             const SizedBox(height: 16),
 
-            // Examples of localized assets
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -146,7 +136,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
                     Center(
                       child: Column(
                         children: [
-                          // This would display a localized welcome image
                           const LocalizedImage(
                             imageName: 'welcome.png',
                             width: 240,
@@ -164,7 +153,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
 
                     const SizedBox(height: 24),
 
-                    // Example with a common (non-localized) image
                     Text(
                       context.tr('common_image_example'),
                       style: Theme.of(context).textTheme.titleMedium,
@@ -174,7 +162,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
                     Center(
                       child: Column(
                         children: [
-                          // This would display a common image (not localized)
                           const LocalizedImage(
                             imageName: 'logo.png',
                             useCommonPath: true,
@@ -200,7 +187,6 @@ class LocalizationAssetsDemo extends ConsumerWidget {
     );
   }
 
-  /// Helper to get language name from code
   String getLanguageName(String languageCode) {
     switch (languageCode) {
       case 'en':

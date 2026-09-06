@@ -7,9 +7,6 @@ import 'package:chatix/features/auth/presentation/providers/auth_providers.dart'
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
-/// Step 2/2 of password reset — `POST /auth/password-resets/confirm/`
-/// (api-docs §3.7): token from the email + a new password (same complexity
-/// rule as registration).
 class ResetPasswordConfirmScreen extends ConsumerStatefulWidget {
   const ResetPasswordConfirmScreen({super.key});
 

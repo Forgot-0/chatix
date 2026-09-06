@@ -3,16 +3,11 @@ import 'package:chatix/core/analytics/analytics_providers.dart';
 import 'package:chatix/core/notifications/debug_notification_service.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
 
-/// Provider for the notification service
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  // In a real app, you would use a real notification service implementation
-  // such as FirebaseNotificationService
   final service = DebugNotificationService();
 
-  // Log notification events to analytics
   final analytics = ref.watch(analyticsProvider);
 
-  // Handle notification received events
   service.notificationStream.listen((notification) {
     analytics.logUserAction(
       action: 'notification_received',
@@ -26,7 +21,6 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
     );
   });
 
-  // Handle notification tap events
   service.notificationTapStream.listen((notification) {
     analytics.logUserAction(
       action: 'notification_tapped',
@@ -39,10 +33,8 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
     );
   });
 
-  // Initialize the service
   service.init();
 
-  // Dispose the service when the provider is disposed
   ref.onDispose(() {
     service.dispose();
   });
@@ -50,7 +42,6 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return service;
 });
 
-/// Provider for whether notifications are enabled
 final notificationsEnabledProvider = FutureProvider<bool>((ref) async {
   final service = ref.watch(notificationServiceProvider);
   final status = await service.getPermissionStatus();
@@ -58,16 +49,11 @@ final notificationsEnabledProvider = FutureProvider<bool>((ref) async {
       status == NotificationPermissionStatus.provisional;
 });
 
-/// Controller for handling deep links from notifications
-/// Controller for handling deep links from notifications
 class NotificationDeepLinkHandler extends Notifier<String?> {
   @override
   String? build() {
     final service = ref.watch(notificationServiceProvider);
 
-    // Listen to stream, but we need to be careful not to create side effects in build
-    // Typically in Notifier, we setup subscriptions in build or use a StreamProvider.
-    // Here we'll subscribe and update state.
     final sub = service.notificationTapStream.listen(_handleNotificationTap);
 
     ref.onDispose(sub.cancel);
@@ -75,10 +61,8 @@ class NotificationDeepLinkHandler extends Notifier<String?> {
     return null;
   }
 
-  /// Get the pending deep link, if any
   String? get pendingDeepLink => state;
 
-  /// Clear the pending deep link
   void clearPendingDeepLink() {
     state = null;
   }
@@ -90,7 +74,6 @@ class NotificationDeepLinkHandler extends Notifier<String?> {
   }
 }
 
-/// Provider for the notification deep link handler
 final notificationDeepLinkHandlerProvider =
     NotifierProvider<NotificationDeepLinkHandler, String?>(
       NotificationDeepLinkHandler.new,

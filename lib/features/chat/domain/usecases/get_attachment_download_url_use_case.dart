@@ -3,12 +3,6 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `GET /chats/{chat_id}/messages/{message_id}/attachments/{attachment_id}/
-/// download-url/` 🔒 (api-docs §6.5).
-///
-/// The returned link lives 300 s, so call this at the moment of use (tap to
-/// open/save) and never persist the result alongside the message — a cached
-/// URL will simply 403 later.
 class GetAttachmentDownloadUrlUseCase {
   final ChatRepository _repository;
 

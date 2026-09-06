@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:chatix/core/auth/biometric_service.dart';
 
-/// A debug implementation of BiometricService
 class DebugBiometricService implements BiometricService {
   final bool _isAvailable;
   final List<BiometricType> _availableBiometrics;
 
-  /// Create a debug biometric service with simulated capabilities
   DebugBiometricService({
     bool isAvailable = true,
     List<BiometricType>? availableBiometrics,
@@ -52,10 +50,8 @@ class DebugBiometricService implements BiometricService {
       return BiometricResult.notEnrolled;
     }
 
-    // Simulate authentication delay
     await Future.delayed(const Duration(seconds: 1));
 
-    // For debugging, we'll simulate a successful authentication
     debugPrint('👆 Result: success');
     return BiometricResult.success;
   }

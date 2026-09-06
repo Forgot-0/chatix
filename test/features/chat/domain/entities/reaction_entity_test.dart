@@ -2,15 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
-/// Covers the api-docs §6.7 reaction model — specifically the two things a
-/// naive implementation gets wrong:
-///
-/// 1. **A user holds a set, not one emoji** (§6.7.2, up to 3). Anything that
-///    treats a second reaction as replacing the first is wrong.
-/// 2. **The `reaction_update` snapshot is not personalised** (§6.7.6): every
-///    group's `reacted_by_me` is `false` because one snapshot is broadcast to
-///    the whole chat. Applying it verbatim would clear the viewer's own chips
-///    each time anyone else reacted.
 ReactionGroupEntity chip(
   String emoji, {
   int count = 1,
@@ -65,8 +56,6 @@ void main() {
       ]);
 
       expect(full.canAddMore, isFalse);
-      // Refused rather than silently swapping one out — the server would
-      // answer 400 TOO_MANY_REACTIONS, and the endpoint is 10/sec.
       expect(full.addMine('🎉'), full);
     });
 
@@ -77,7 +66,6 @@ void main() {
 
       expect(after.groups.single.count, 6);
       expect(after.groups.single.reactedByMe, isTrue);
-      // Ours goes to the front of the avatar stack.
       expect(after.groups.single.recentUserIds.first, 7);
     });
 
@@ -125,7 +113,6 @@ void main() {
       final after = before.replaceMine(['🔥', '🎉']);
 
       expect(after.myEmojis, ['🔥', '🎉']);
-      // Someone else's 👍 survives — only *our* contribution was withdrawn.
       expect(after.groups.firstWhere((g) => g.emoji == '👍').count, 1);
     });
 
@@ -149,9 +136,6 @@ void main() {
 
   group('applySnapshot — folding a reaction_update (§6.7.6)', () {
     test('takes the counts but keeps our own flags', () {
-      // The snapshot says reacted_by_me: false for everything, because it is
-      // one broadcast object (§6.7.6). Trusting it would un-highlight our chip
-      // every time a stranger reacted.
       final local = reactions([chip('👍', count: 1, reactedByMe: true)]);
 
       final after = local.applySnapshot([
@@ -173,8 +157,6 @@ void main() {
     });
 
     test('an out-of-order frame is rejected per group by version', () {
-      // Delivery is at-least-once and bursts are coalesced (§7.4/§6.7.6), so
-      // an older snapshot genuinely can arrive after a newer one.
       final local = reactions([chip('👍', count: 10, version: 5)]);
 
       final after = local.applySnapshot([chip('👍', count: 2, version: 3)]);
@@ -191,8 +173,6 @@ void main() {
     });
 
     test('our own action from another device is read off the snapshot', () {
-      // We have no local flag for 🔥 because the reaction was made elsewhere;
-      // the snapshot's recent_user_ids is the only place that says so.
       final local = reactions([chip('👍', count: 1)]);
 
       final after = local.applySnapshot(
@@ -220,8 +200,6 @@ void main() {
     });
 
     test('a truncated recent_user_ids does not un-flag our own chip', () {
-      // recent_user_ids holds only the last 3 reactors (§6.7.3), so our
-      // absence from it proves nothing — the local flag must survive.
       final local = reactions([chip('👍', count: 50, reactedByMe: true)]);
 
       final after = local.applySnapshot(
@@ -261,7 +239,6 @@ void main() {
     });
 
     test('an unknown verb degrades to update rather than dropping the event', () {
-      // The snapshot beside it is still valid and still authoritative.
       expect(ReactionAction.fromWire('exploded'), ReactionAction.update);
       expect(ReactionAction.fromWire(null), ReactionAction.update);
     });

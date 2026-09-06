@@ -4,14 +4,6 @@ import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
 import 'package:fpdart/fpdart.dart';
 
-/// `POST /chats/{target_chat_id}/messages/forward/` 🔒 10/sec
-/// (api-docs §6.4).
-///
-/// ⚠️ Every parameter is named, deliberately: the destination goes in the URL
-/// while the source goes in the body, so a positional call would make
-/// "forward A→B" and "forward B→A" indistinguishable at the call site — and
-/// getting it backwards posts into the wrong conversation, which cannot be
-/// undone by anything short of a delete.
 class ForwardMessageUseCase {
   final ChatRepository _repository;
 

@@ -4,14 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:chatix/core/network/error_envelope.dart';
 
-/// Covers the api-docs §2.1 envelope reader.
-///
-/// The case that matters is the [String] one: Dio only JSON-decodes a body
-/// whose *response* carries a JSON `Content-Type`, and this backend's gateway
-/// omits that header on error responses while sending it on successful ones.
-/// So the identical JSON arrives as a `Map` on a 200 and as a raw `String` on
-/// a 400 — and a reader that only handles `Map` goes blind exactly where the
-/// error codes live.
 void main() {
   const envelope = {
     'error': {
@@ -46,7 +38,6 @@ void main() {
     });
 
     test('returns null — never throws — for bodies that are not JSON', () {
-      // A proxy's HTML error page, an empty body, a bare string, a JSON array.
       for (final body in <Object?>[
         null,
         '',
@@ -72,8 +63,6 @@ void main() {
 
   group('readErrorCode', () {
     test('reads the code from a String body, which is the real wire form', () {
-      // The regression this whole file exists for: this returning null is what
-      // stopped AuthInterceptor from ever refreshing.
       expect(readErrorCode(jsonEncode(envelope)), 'EXPIRED_TOKEN');
     });
 
@@ -82,8 +71,6 @@ void main() {
     });
 
     test('returns null when there is no envelope', () {
-      // §2.2: a 429 is a bare `{"detail": "..."}` with no `error` object, and
-      // a 422 validation body is a list. Neither has a code.
       expect(readErrorCode('{"detail": "Too Many Requests"}'), isNull);
       expect(readErrorCode('{}'), isNull);
       expect(readErrorCode(null), isNull);
@@ -106,8 +93,6 @@ void main() {
     });
 
     test('carries a populated detail through — callers branch on it', () {
-      // e.g. §2.7 SLOW_MODE_LIMIT's `retry_after`, or TOO_MANY_REACTIONS'
-      // `scope`, both of which change what the UI says.
       const body =
           '{"error": {"code": "SLOW_MODE_LIMIT", "message": "Slow mode", '
           '"detail": {"chat_id": "c1", "retry_after": 30}}}';

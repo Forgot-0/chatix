@@ -12,14 +12,6 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
 
-/// Pins the **wire contract** of api-docs §6 — the exact verb, path and body
-/// keys of each call.
-///
-/// These are the details that no other layer can catch: a repository test
-/// mocks this class away, and a use-case test is two layers removed. A typo
-/// in a body key (`bannet_to` for `banned_to`) or a `PUT` where §6.2 demands
-/// `PATCH` still type-checks perfectly, still returns `Right`, and only shows
-/// up against a live backend as a silently ignored field.
 void main() {
   late ChatRestDataSourceImpl dataSource;
   late MockApiClient mockApiClient;
@@ -27,7 +19,6 @@ void main() {
   const tChatId = 'a3f1c2d4-0000-4000-8000-000000000001';
   const tMessageId = 'b4e2d3c5-0000-4000-8000-000000000002';
 
-  /// Minimal `MessageDTO` (§6.4) — enough for `MessageModel.fromJson`.
   final tMessageJson = <String, dynamic>{
     'id': tMessageId,
     'chat_id': tChatId,
@@ -94,7 +85,6 @@ void main() {
     ).thenAnswer((_) async => Right(responseData));
   }
 
-  /// The `data` map handed to the most recent `patch` call.
   Map<String, dynamic> capturedPatchBody() {
     final captured = verify(
       () => mockApiClient.patch(
@@ -132,8 +122,6 @@ void main() {
 
       final body = captured[1] as Map<String, dynamic>;
       expect(body['reason'], 'spam');
-      // The documented key. A misspelling here is accepted by the server and
-      // silently dropped, turning a timed ban into a permanent one.
       expect(body['banned_to'], bannedTo.toIso8601String());
       expect(body.containsKey('bannet_to'), isFalse);
     });
@@ -144,8 +132,6 @@ void main() {
       await dataSource.banMember(tChatId, 99);
 
       final body = capturedPatchBody();
-      // Absent, not null: the backend's datetime validator rejects an explicit
-      // null rather than reading it as "no expiry".
       expect(body.containsKey('banned_to'), isFalse);
       expect(body.containsKey('reason'), isFalse);
     });
@@ -171,7 +157,6 @@ void main() {
       final body = captured[1] as Map<String, dynamic>;
       expect(body, {'name': 'Renamed'});
 
-      // A PUT would either 405 or wipe the omitted settings.
       verifyNever(
         () => mockApiClient.put(
           any(),
@@ -268,7 +253,6 @@ void main() {
       final options = captured[2] as Options;
       final key = options.headers?['Idempotency-Key'] as String?;
       expect(key, isNotNull);
-      // A v4 UUID — the format the backend caches on for 24 h.
       expect(
         RegExp(
           r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
@@ -316,7 +300,6 @@ void main() {
       final keys = captured
           .map((o) => (o as Options).headers?['Idempotency-Key'])
           .toSet();
-      // Two distinct messages must not collapse into one via a shared key.
       expect(keys, hasLength(2));
     });
 
@@ -387,8 +370,6 @@ void main() {
         ),
       ).captured;
 
-      // Swapping these two is the easy mistake, and it "works" — it forwards
-      // the wrong way round into the wrong chat.
       expect(captured[0], '/chats/$tTargetChatId/messages/forward/');
       expect(captured[1], {
         'source_chat_id': tChatId,

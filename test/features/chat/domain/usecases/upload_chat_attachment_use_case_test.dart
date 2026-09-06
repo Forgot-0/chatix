@@ -100,8 +100,6 @@ void main() {
           ChatAttachmentUploadStage.done,
         ]);
 
-        // The tokens on the terminal event are exactly what goes into
-        // `sendMessage(uploadTokens: ...)` — step 4.
         expect(events.last.getRight().toNullable()!.uploadTokens, [
           'token-a',
           'token-b',
@@ -109,8 +107,6 @@ void main() {
 
         verifyInOrder([
           () => mockRepository.requestAttachmentUpload(tChatId, uploads),
-          // ⚠️ Raw PUT with the file's own MIME type — not a multipart POST
-          // (that's the avatar flow, api-docs §4.5).
           () => mockUploader.upload(
             uploadUrl: 'https://minio.example.com/upload/token-a?sig=abc',
             mimeType: 'image/jpeg',
@@ -175,14 +171,10 @@ void main() {
       final events = await useCase.execute(tChatId, uploads).toList();
 
       expect(events.last.getLeft().toNullable()!.statusCode, 403);
-      // Confirming bytes that never landed would leave the message pointing at
-      // an attachment the backend will mark `error`.
       verifyNever(() => mockRepository.confirmAttachmentUpload(any(), any()));
     });
 
     test('aborts when the server returns a ticket/file count mismatch', () async {
-      // Tickets are paired with files **by index**; a short list would upload
-      // file B to file A's URL, so the flow must refuse rather than guess.
       final uploads = [image(filename: 'a.jpg'), image(filename: 'b.jpg')];
       when(
         () => mockRepository.requestAttachmentUpload(tChatId, uploads),
@@ -248,8 +240,6 @@ void main() {
 
       final failure = events.single.getLeft().toNullable();
       expect(failure, isA<InputFailure>());
-      // The message names the offending file — "unsupported type" alone
-      // doesn't tell the user which of 10 files to remove.
       expect(failure!.message, contains('malware.exe'));
       verifyNever(() => mockRepository.requestAttachmentUpload(any(), any()));
     });
@@ -282,8 +272,6 @@ void main() {
     });
 
     test('accepts a document of exactly 100 MB', () {
-      // ⚠️ Documents get a *higher* size cap than media (100 vs 50 MB) but a
-      // far lower count cap (1 vs 10) — the two buckets share nothing.
       expect(
         useCase.validate([
           document(size: ChatAttachmentLimits.maxFileSizeBytes),
@@ -315,8 +303,6 @@ void main() {
     });
 
     test('rejects more than one document', () async {
-      // The document bucket allows exactly 1 per message, which also means a
-      // message can never mix a document with photos.
       final events = await useCase
           .execute(tChatId, [
             document(filename: 'a.pdf'),
@@ -349,8 +335,6 @@ void main() {
     });
 
     test('images and videos share the same 10-item bucket', () {
-      // 6 images + 5 videos = 11 media items → over the media cap even though
-      // neither type alone exceeds it.
       final uploads = [
         ...List.generate(6, (i) => image(filename: 'p$i.jpg')),
         ...List.generate(

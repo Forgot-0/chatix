@@ -6,10 +6,6 @@ import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_list_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 
-/// `GET /profiles/` (api-docs §4.2), the first list screen built on top of
-/// `PageResult`/`ProfileListController` — the intended template for the
-/// other paginated lists (projects, positions, notifications, ...) to
-/// follow.
 class ProfilesListScreen extends ConsumerStatefulWidget {
   const ProfilesListScreen({super.key});
 

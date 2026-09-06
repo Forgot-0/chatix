@@ -4,7 +4,6 @@ import 'package:chatix/features/chat/domain/entities/call_token_entity.dart';
 
 part 'call_token_model.g.dart';
 
-/// `JoinTokenDTO` (api-docs §6.6) — LiveKit access token for the chat's call.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class CallTokenModel extends Equatable {
   final String token;

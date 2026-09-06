@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/logging/console_logger.dart';
 import 'package:chatix/core/logging/logger.dart';
 
-/// Provider for the global logger instance
 final loggerProvider = Provider<Logger>((ref) {
-  // Create a root logger instance
   return ConsoleLogger(
     logLevel: kDebugMode ? LogLevel.debug : LogLevel.info,
     includeTimestamp: true,
@@ -14,15 +12,12 @@ final loggerProvider = Provider<Logger>((ref) {
   );
 });
 
-/// Provider for a logger with a specific tag
 final taggedLoggerProvider = Provider.family<Logger, String>((ref, tag) {
   final rootLogger = ref.watch(loggerProvider);
   return rootLogger.child(tag);
 });
 
-/// Extension methods for performance logging with automatically timed operations
 extension LoggerPerformanceExtension on Logger {
-  /// Run and time a synchronous operation
   T timeSync<T>(
     String operationName,
     T Function() operation, {
@@ -37,7 +32,6 @@ extension LoggerPerformanceExtension on Logger {
     }
   }
 
-  /// Run and time an asynchronous operation
   Future<T> timeAsync<T>(
     String operationName,
     Future<T> Function() operation, {
@@ -53,7 +47,6 @@ extension LoggerPerformanceExtension on Logger {
   }
 }
 
-/// Mixin to add logging capabilities to any class
 mixin LoggerMixin {
   Logger get logger => ConsoleLogger(tag: runtimeType.toString());
 
@@ -120,12 +113,10 @@ mixin LoggerMixin {
   }
 }
 
-/// Widget-specific logger mixin that gets the logger from provider
 mixin WidgetLoggerMixin on ConsumerStatefulWidget {
   String get logTag => runtimeType.toString();
 }
 
-/// State mixin for logging with providers
 mixin LoggerStateMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   late final Logger logger;
 

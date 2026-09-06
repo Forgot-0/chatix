@@ -6,9 +6,7 @@ import 'package:chatix/core/feature_flags/feature_flag_service.dart';
 import 'package:chatix/core/feature_flags/local_feature_flag_service.dart';
 import 'package:chatix/core/feature_flags/remote_feature_flag_service.dart';
 
-/// Key for default feature flags
 const Map<String, dynamic> kDefaultFeatureFlags = {
-  // Feature flags
   'enable_dark_mode': true,
   'enable_push_notifications': true,
   'enable_analytics': true,
@@ -17,35 +15,27 @@ const Map<String, dynamic> kDefaultFeatureFlags = {
   'use_debug_biometrics': false,
   'force_firebase_analytics': false,
 
-  // Feature parameters
   'cache_ttl_seconds': 3600,
   'api_timeout_ms': 30000,
   'max_retry_count': 3,
 
-  // A/B test variants
-  'home_screen_layout': 'grid', // 'grid' or 'list'
+  'home_screen_layout': 'grid',
   'onboarding_screens_count': 3,
 
-  // Design values
   'primary_color': '#FF2196F3',
   'corner_radius': 8.0,
 };
 
-/// Provider for the feature flag service
 final featureFlagServiceProvider = Provider<FeatureFlagService>((ref) {
-  // Use remote feature flags in production, local in debug mode
   final service =
       kDebugMode
           ? LocalFeatureFlagService() as FeatureFlagService
           : RemoteFeatureFlagService();
 
-  // Set default values
   service.setDefaults(kDefaultFeatureFlags);
 
-  // Initialize the service
   service.init();
 
-  // Setup analytics tracking
   final analytics = ref.watch(analyticsProvider);
   service.addListener(() {
     analytics.logUserAction(
@@ -54,16 +44,13 @@ final featureFlagServiceProvider = Provider<FeatureFlagService>((ref) {
     );
   });
 
-  // Dispose the service when the provider is disposed
   ref.onDispose(() {
-    // We know it's LocalFeatureFlagService since we created it above
     service.dispose();
   });
 
   return service;
 });
 
-/// Creates a provider for a specific feature flag
 Provider<bool> createFeatureFlagProvider(
   String flagKey, {
   bool defaultValue = false,
@@ -74,7 +61,6 @@ Provider<bool> createFeatureFlagProvider(
   });
 }
 
-/// Helper to create a provider for a specific feature flag
 Provider<bool> featureFlagProvider(
   String flagKey, {
   bool defaultValue = false,
@@ -85,7 +71,6 @@ Provider<bool> featureFlagProvider(
   });
 }
 
-/// Helper to create a provider for a specific string config value
 Provider<String> stringConfigProvider(
   String key, {
   required String defaultValue,
@@ -96,7 +81,6 @@ Provider<String> stringConfigProvider(
   });
 }
 
-/// Helper to create a provider for a specific int config value
 Provider<int> intConfigProvider(String key, {required int defaultValue}) {
   return Provider<int>((ref) {
     final service = ref.watch(featureFlagServiceProvider);
@@ -104,7 +88,6 @@ Provider<int> intConfigProvider(String key, {required int defaultValue}) {
   });
 }
 
-/// Helper to create a provider for a specific double config value
 Provider<double> doubleConfigProvider(
   String key, {
   required double defaultValue,
@@ -115,7 +98,6 @@ Provider<double> doubleConfigProvider(
   });
 }
 
-/// Helper to create a provider for a specific color config value
 Provider<Color> colorConfigProvider(String key, {required Color defaultValue}) {
   return Provider<Color>((ref) {
     final service = ref.watch(featureFlagServiceProvider);
@@ -123,7 +105,6 @@ Provider<Color> colorConfigProvider(String key, {required Color defaultValue}) {
   });
 }
 
-/// Widget that only shows its child if a feature flag is enabled
 class FeatureFlag extends ConsumerWidget {
   final String featureKey;
   final bool defaultValue;

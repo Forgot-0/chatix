@@ -5,12 +5,6 @@ import 'package:chatix/features/chat/data/models/chat_profile_model.dart';
 
 part 'chat_member_model.g.dart';
 
-/// `MemberChatDTO` (api-docs §6.2, §6.3).
-///
-/// [permissionsOverrides] is defaulted to `{}` rather than being required:
-/// the field is always present in the documented schema, but a member with no
-/// overrides is by far the common case and an absent key must degrade to
-/// "no overrides" (fall back to the role matrix) instead of throwing.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ChatMemberModel extends Equatable {
   final int userId;
@@ -20,8 +14,6 @@ class ChatMemberModel extends Equatable {
   @JsonKey(defaultValue: <String, bool>{})
   final Map<String, bool> permissionsOverrides;
 
-  /// `MemberChatDTO.profile` (api-docs §6.3) — denormalized profile snapshot,
-  /// nullable on the wire and left nullable here.
   final ChatProfileModel? profile;
 
   const ChatMemberModel({
@@ -62,7 +54,6 @@ extension ChatMemberModelX on ChatMemberModel {
   }
 }
 
-/// `MemberPresenceDTO` (api-docs §6.3).
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MemberPresenceModel extends Equatable {
   final int userId;
@@ -84,7 +75,6 @@ extension MemberPresenceModelX on MemberPresenceModel {
       MemberPresenceEntity(userId: userId, isOnline: isOnline);
 }
 
-/// `ListMembers` (api-docs §6.3) — cursor-paginated member page.
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ListMembersModel extends Equatable {
   @JsonKey(defaultValue: <ChatMemberModel>[])
@@ -92,7 +82,6 @@ class ListMembersModel extends Equatable {
   final bool hasNext;
   final int? nextUserId;
 
-  /// Empty unless the request asked for `include_presence=true`.
   @JsonKey(defaultValue: <MemberPresenceModel>[])
   final List<MemberPresenceModel> presence;
 

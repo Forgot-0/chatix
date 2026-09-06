@@ -8,9 +8,6 @@ import 'package:chatix/features/profile/presentation/providers/avatar_upload_pro
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 
-/// Own-profile-only avatar widget: shows the current avatar, a camera
-/// button to replace it, and a step indicator over the 3-step upload flow
-/// (api-docs §4.5) — presigning → uploading → confirming → done.
 class AvatarPickerWidget extends ConsumerWidget {
   final ProfileEntity profile;
 

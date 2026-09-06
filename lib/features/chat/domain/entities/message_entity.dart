@@ -3,12 +3,6 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
-/// `MessageDTO.type` / `SendMessageRequest.message_type` (api-docs §6.4).
-///
-/// [voice] and [videoNote] additionally require the message's single
-/// attachment to have been requested with a matching explicit
-/// `attachment_type` (api-docs §6.5) — the backend cross-checks the two and
-/// will not infer either type from the MIME alone.
 enum MessageType {
   text,
   image,
@@ -18,8 +12,6 @@ enum MessageType {
   forward,
   voice,
 
-  /// ⚠️ `video_note` on the wire — see [wire]; the enum name is camelCase to
-  /// satisfy Dart's naming lint, so the two must be mapped explicitly.
   videoNote;
 
   String get wire => switch (this) {
@@ -29,68 +21,26 @@ enum MessageType {
 
   static MessageType fromWire(String? value) {
     return MessageType.values.firstWhere(
-      // Matched on [wire], not `name`, so `"video_note"` resolves instead of
-      // falling into the default below.
       (t) => t.wire == value,
-      // `SendMessageRequest.message_type` defaults to "text" server-side
-      // (api-docs §6.4); mirror that for unknown/missing values.
       orElse: () => MessageType.text,
     );
   }
 }
 
-/// `MessageDTO` (api-docs §6.4).
-///
-/// [replyTo] and [forwardedFrom] are the same `MessageDTO` shape nested one
-/// level deep, so they are typed as [MessageEntity] here. The backend does
-/// not recurse indefinitely — a reply-to-a-reply arrives with its own
-/// `reply_to` already `null` — so rendering a quoted preview never needs a
-/// depth guard, but it must also not assume the nested object carries its
-/// own nested objects.
-///
-/// ⚠️ The three flat `forwarded_from_*` ids and the nested [forwardedFrom]
-/// object are *both* present on a forward: the ids survive even when the
-/// source message/chat is no longer readable by the caller, in which case
-/// the nested object comes back `null`. Prefer the nested object for
-/// rendering and fall back to the ids for "message unavailable" states.
-///
-/// [profile] is the author's denormalized profile snapshot, attached by the
-/// backend to every `MessageDTO` (api-docs §6.4) — a bubble renders its
-/// author line without a `/profiles/{id}/` lookup. It is `null` for `system`
-/// messages (no author at all) and for authors whose profile is missing, so
-/// render it through `chatDisplayName` rather than dereferencing directly.
 class MessageEntity extends Equatable {
   final String id;
   final String chatId;
 
-  /// Per-chat monotonic sequence number. This — not [createdAt] — is the
-  /// cursor for pagination (`cursor_message_seq`), for `messages/context/`
-  /// (`target_seq`) and for read receipts (`MarkReadRequest.message_seq`).
   final int seq;
 
-  /// `null` for `system` messages, which have no human author.
   final int? authorId;
 
-  /// `MessageDTO.profile` (api-docs §6.4) — the author's denormalized
-  /// profile. See class doc; `null` for system messages.
   final ChatProfileEntity? profile;
 
-  /// `MessageDTO.reactions` (api-docs §6.4, §6.7.3) — the message's reaction
-  /// chips, **already attached** by the backend in message lists, details,
-  /// `messages/context/` and `ws.history`.
-  ///
-  /// This is what makes reactions renderable straight from the message: there
-  /// is no separate fetch to wire up, and `GET .../reactions/` is needed only
-  /// to page through *who* reacted with a given emoji. Kept current by the
-  /// `reaction_update` WS event, whose snapshot replaces this list wholesale
-  /// (§6.7.6).
-  ///
-  /// Empty — not `null` — for a message nobody has reacted to.
   final List<ReactionGroupEntity> reactions;
 
   final MessageType type;
 
-  /// `null` is legitimate for an attachment-only message (caption omitted).
   final String? content;
 
   final String? replyToId;
@@ -103,10 +53,8 @@ class MessageEntity extends Equatable {
   final DateTime createdAt;
   final List<AttachmentEntity> attachments;
 
-  /// The quoted original when this message is a reply (see class doc).
   final MessageEntity? replyTo;
 
-  /// The original when this message is a forward (see class doc).
   final MessageEntity? forwardedFrom;
 
   const MessageEntity({
@@ -129,40 +77,20 @@ class MessageEntity extends Equatable {
     this.reactions = const [],
   });
 
-  /// Author label for this message, falling back to `User #id` when the
-  /// backend attached no profile (see `chatDisplayName`).
   String get authorLabel => chatDisplayName(profile, authorId);
 
-  /// The reaction chips as a summary entity, for the widgets and optimistic
-  /// helpers that operate on one (`addMine`, `applySnapshot`, …).
   MessageReactionsEntity get reactionSummary =>
       MessageReactionsEntity.fromGroups(id, reactions);
 
   bool get hasReactions => reactions.isNotEmpty;
 
-  /// True when this message was forwarded from somewhere, regardless of
-  /// whether the source is still readable (see the ⚠️ in the class doc).
   bool get isForward => forwardedFromMessageId != null || forwardedFrom != null;
 
   bool get isReply => replyToId != null || replyTo != null;
 
-  /// True while any attachment is still being processed by the backend, so
-  /// the bubble should show a spinner instead of a broken thumbnail
-  /// (api-docs §6.5).
   bool get hasPendingAttachments =>
       attachments.any((a) => a.attachmentStatus == AttachmentStatus.pending);
 
-  /// Returns a copy with the given fields replaced.
-  ///
-  /// Added for the realtime layer (api-docs §7): a `message_deleted` event
-  /// carries only `{message_id, seq, deleted_by}`, so rendering the message as
-  /// a tombstone means clearing [content] and [attachments] on the copy the
-  /// screen already holds — there is nothing left to re-fetch, since the
-  /// message is gone server-side.
-  ///
-  /// ⚠️ [content] is cleared through [clearContent], not by passing `null`:
-  /// `null` content is a legitimate value (an attachment-only message with no
-  /// caption), so it cannot double as "leave unchanged".
   MessageEntity copyWith({
     String? id,
     String? chatId,

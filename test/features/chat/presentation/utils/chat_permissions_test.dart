@@ -4,15 +4,6 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 
-/// Covers the api-docs §9.1 permission model: the role matrix itself and the
-/// three-layer merge (role → chat override → member override) the UI uses to
-/// decide which controls to render.
-///
-/// The backend performs the authoritative merge; this mirrors it so a button
-/// is not shown for an action that is guaranteed to 403. Both directions of
-/// override matter — a layer may *revoke* a right the role grants, not only
-/// grant one it denies — which is why presence of the key is what counts, not
-/// truthiness.
 ChatEntity chatWith({
   Map<String, bool> permissions = const {},
   ChatType type = ChatType.group,
@@ -83,8 +74,6 @@ void main() {
     });
 
     test('role_id=4 (direct) may chat:update while member (5) may not', () {
-      // The pair that makes "order roles by power" meaningless: `direct` is
-      // not a weaker `member`, it is a different row of the matrix.
       final chat = chatWith(type: ChatType.direct);
 
       expect(
@@ -120,7 +109,6 @@ void main() {
 
     test('an unknown role_id grants nothing (fail-closed)', () {
       final chat = chatWith();
-      // A role added to the backend seed after this build.
       final unknown = memberWith(roleId: 99);
 
       expect(unknown.role, isNull);
@@ -207,9 +195,7 @@ void main() {
     test('admin_only requires message:send_admin_only, not message:send', () {
       final chat = chatWith(adminOnly: true);
 
-      // A plain member holds `message:send` but not the admin-only variant.
       expect(canSendMessage(chat, memberWith(roleId: 5)), isFalse);
-      // An editor holds both.
       expect(canSendMessage(chat, memberWith(roleId: 3)), isTrue);
       expect(canSendMessage(chat, memberWith(roleId: 2)), isTrue);
     });
@@ -224,7 +210,6 @@ void main() {
     test('only the author may edit, whatever their role', () {
       final me = memberWith(userId: 2, roleId: 1);
       expect(canEditMessage(me, 2), isTrue);
-      // No §9.1 permission grants editing another person's message.
       expect(canEditMessage(me, 3), isFalse);
     });
 

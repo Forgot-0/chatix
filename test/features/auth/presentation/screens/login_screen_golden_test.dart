@@ -10,14 +10,9 @@ void main() {
         devices: [Device.phone, Device.iphone11, Device.tabletPortrait],
       )
       ..addScenario(
-        // No secure-storage seed => no stored token => AuthController.build()
-        // resolves straight to "logged out" without ever reaching the
-        // network layer either. Real AuthController runs here, just against
-        // the fake storage from test/helpers — see pump_app.dart for why.
         widget: pumpableApp(
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
-            // Basic theme
             theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
             home: const LoginScreen(),
           ),

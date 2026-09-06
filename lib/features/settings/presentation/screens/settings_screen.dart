@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/l10n/l10n.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
-/// Settings screen with various app configuration options
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -14,7 +13,6 @@ class SettingsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(context.tr('settings'))),
       body: ListView(
         children: [
-          // Language settings
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(context.tr('language')),
@@ -24,31 +22,26 @@ class SettingsScreen extends ConsumerWidget {
 
           const Divider(),
 
-          // Theme settings
           ListTile(
             leading: const Icon(Icons.brightness_6),
             title: Text(context.tr('theme')),
             subtitle: Text(context.tr('change_theme')),
             onTap: () {
-              // Theme settings (to be implemented)
             },
           ),
 
           const Divider(),
 
-          // Other settings...
           ListTile(
             leading: const Icon(Icons.notifications),
             title: Text(context.tr('notifications')),
             subtitle: Text(context.tr('notification_settings')),
             onTap: () {
-              // Notification settings (to be implemented)
             },
           ),
 
           const Divider(),
 
-          // Localization demos
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(context.tr('localization_demo')),

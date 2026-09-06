@@ -4,11 +4,9 @@ import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/l10n/app_localizations_delegate.dart';
 import 'package:chatix/l10n/l10n.dart';
 
-/// A widget that allows the user to select a language from the supported locales
 class LanguageSelectorWidget extends ConsumerWidget {
   const LanguageSelectorWidget({super.key, this.onLanguageSelected});
 
-  /// Optional callback when a language is selected
   final void Function(Locale)? onLanguageSelected;
 
   @override
@@ -66,11 +64,9 @@ class LanguageSelectorWidget extends ConsumerWidget {
   }
 }
 
-/// A dialog that allows the user to select a language
 class LanguageSelectorDialog extends StatelessWidget {
   const LanguageSelectorDialog({super.key});
 
-  /// Show the language selector dialog
   static Future<Locale?> show(BuildContext context) async {
     return showDialog<Locale>(
       context: context,
@@ -103,7 +99,6 @@ class LanguageSelectorDialog extends StatelessWidget {
   }
 }
 
-/// A popup menu button for selecting a language
 class LanguagePopupMenuButton extends ConsumerWidget {
   const LanguagePopupMenuButton({super.key});
 

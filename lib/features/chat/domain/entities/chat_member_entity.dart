@@ -1,15 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 
-/// Chat member roles (`ChatRolesEnum`, api-docs §9.1). The numeric ids are
-/// backend seed data, so they are pinned explicitly rather than relying on
-/// declaration order.
-///
-/// ⚠️ [direct] (id=4) is **not** a "lesser member" — it is the role both
-/// participants of a 1:1 chat get, and it can `chat:update` (which [member]
-/// cannot) while it cannot `message:delete` (which [editor] can). Ordering
-/// these roles by "power" is therefore meaningless; always resolve concrete
-/// permissions through [ChatRole.permissions] / `hasChatPermission`.
 enum ChatRole {
   owner(1),
   admin(2),
@@ -22,8 +13,6 @@ enum ChatRole {
 
   final int id;
 
-  /// Default `role_id` the backend assigns to invitees of group/supergroup
-  /// chats and the default of `AddMemberRequest.role_id` (api-docs §9.1).
   static const ChatRole defaultForNewMember = ChatRole.member;
 
   static ChatRole? fromId(int? id) {
@@ -31,20 +20,12 @@ enum ChatRole {
     for (final role in ChatRole.values) {
       if (role.id == id) return role;
     }
-    // Unknown ids (a role added to the backend seed after this build) are
-    // reported as null so callers fail closed instead of guessing a role.
     return null;
   }
 
-  /// The role's own row of the api-docs §9.1 matrix. This is only the
-  /// *baseline*; chat-level and member-level overrides are layered on top of
-  /// it by `hasChatPermission`.
   Map<String, bool> get permissions => ChatPermissions.matrix[this]!;
 }
 
-/// Canonical chat-permission keys (api-docs §9.1). Use these constants
-/// instead of hand-typing the strings — one typo in a literal silently
-/// hides a button forever, and the compiler cannot catch it.
 abstract final class ChatPermissions {
   static const String chatDelete = 'chat:delete';
   static const String chatUpdate = 'chat:update';
@@ -77,12 +58,6 @@ abstract final class ChatPermissions {
   static const String callMuteMember = 'call:mute_member';
   static const String callEnd = 'call:end';
 
-  /// The full api-docs §9.1 matrix, transcribed row by row.
-  ///
-  /// Every role maps every key explicitly (no implicit `false` by omission)
-  /// so that a *present* key always means "the role default says this", and
-  /// an absent key means "this permission doesn't exist in our copy of the
-  /// matrix" — a distinction `hasChatPermission` relies on.
   static const Map<ChatRole, Map<String, bool>> matrix = {
     ChatRole.owner: {
       chatDelete: true,
@@ -159,8 +134,6 @@ abstract final class ChatPermissions {
       callMuteMember: false,
       callEnd: false,
     },
-    // ⚠️ `direct` can chat:update and message:pin but NOT message:delete —
-    // see the enum doc; this row is not "member + extras".
     ChatRole.direct: {
       chatDelete: false,
       chatUpdate: true,
@@ -211,7 +184,6 @@ abstract final class ChatPermissions {
       callMuteMember: false,
       callEnd: false,
     },
-    // viewer = channel subscriber: reads everything, sends nothing.
     ChatRole.viewer: {
       chatDelete: false,
       chatUpdate: false,
@@ -240,42 +212,16 @@ abstract final class ChatPermissions {
   };
 }
 
-/// `MemberChatDTO` (api-docs §6.2/§6.3).
-///
-/// The DTO now carries a denormalized [profile] snapshot, so member screens
-/// render a name/avatar straight from this object — no `/profiles/{id}/`
-/// round trip per row (which used to be N+1 requests for a member list).
-///
-/// ⚠️ [profile] is still nullable (deleted user, or a profile not yet
-/// materialized by the Kafka consumer — api-docs §0), so every render path
-/// keeps a `User #id` fallback; see `chatDisplayName`.
-///
-/// ### Why there is no `MemberDetailEntity`
-///
-/// api-docs §6.3 documents a richer `MemberDetailDTO` (adds `is_online` and
-/// a nested `role` object), but **no endpoint this client calls returns it**:
-/// `GET /chats/{id}/members/` responds with `ListMembers`, whose `members`
-/// array is `MemberChatDTO[]`, and online state arrives out-of-band in the
-/// sibling `presence` array (already modelled as [MemberPresenceEntity]).
-/// Adding a `MemberDetailEntity` would be modelling an endpoint that isn't
-/// wired up — so it is deliberately omitted until one returns it.
 class ChatMemberEntity extends Equatable {
   final int userId;
 
-  /// Raw `role_id` as sent by the backend, kept alongside [role] so an id
-  /// that isn't in our copy of §9.1 still round-trips instead of being
-  /// silently coerced to `member`.
   final int roleId;
 
   final bool isMuted;
   final bool isBanned;
 
-  /// Per-member permission override map, layered over the role baseline and
-  /// the chat-level overrides (api-docs §9.1).
   final Map<String, bool> permissionsOverrides;
 
-  /// `MemberChatDTO.profile` — denormalized display data (see class doc).
-  /// `null` when the backend has no profile to attach.
   final ChatProfileEntity? profile;
 
   const ChatMemberEntity({
@@ -287,11 +233,8 @@ class ChatMemberEntity extends Equatable {
     this.profile,
   });
 
-  /// Name to show for this member, falling back to `User #id` (see
-  /// `chatDisplayName`).
   String get displayLabel => chatDisplayName(profile, userId);
 
-  /// `null` when [roleId] isn't one of the six documented roles.
   ChatRole? get role => ChatRole.fromId(roleId);
 
   @override
@@ -305,8 +248,6 @@ class ChatMemberEntity extends Equatable {
   ];
 }
 
-/// `MemberPresenceDTO` (api-docs §6.3) — only populated when the members
-/// request passes `include_presence=true`.
 class MemberPresenceEntity extends Equatable {
   final int userId;
   final bool isOnline;

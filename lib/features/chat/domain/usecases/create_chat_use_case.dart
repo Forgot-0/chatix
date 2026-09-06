@@ -3,22 +3,12 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
-/// `POST /chats/` 🔒 4/5min (api-docs §6.2).
-///
-/// Validates locally what the backend would otherwise reject, because the
-/// endpoint is rate-limited to 4 calls per 5 minutes — a wasted request here
-/// costs the user a quarter of their creation budget, so every check that can
-/// be done offline is done offline.
 class CreateChatUseCase {
-  /// `CreateChatRequest.member_ids` cap (api-docs §6.2). Note this is the
-  /// limit on the *initial* list, not on the chat: bigger chats are filled up
-  /// afterwards via `addMember`.
   static const int maxInitialMembers = 100;
 
   static const int maxNameLength = 255;
   static const int maxDescriptionLength = 1024;
 
-  /// `slow_mode_seconds` range (api-docs §6.2) — 0 to 24 h.
   static const int maxSlowModeSeconds = 86400;
 
   final ChatRepository _repository;
@@ -35,11 +25,6 @@ class CreateChatUseCase {
     int slowModeSeconds = 0,
     Map<String, bool>? permissions,
   }) {
-    // ⚠️ api-docs §6.2: a direct chat must carry EXACTLY one member id — the
-    // person you're messaging; the caller is added implicitly. Both zero and
-    // two-plus produce `400 MEMBER_LIMIT_EXCEEDED`, a code whose name points
-    // at the wrong problem ("limit exceeded" for an *empty* list), so we
-    // never let it get that far and explain the actual mistake instead.
     if (chatType == ChatType.direct && memberIds.length != 1) {
       return _fail(
         memberIds.isEmpty
@@ -51,10 +36,6 @@ class CreateChatUseCase {
       );
     }
 
-    // A group/supergroup/channel without a name is legal on the wire but
-    // renders as an untitled row in every list, so require one: for these
-    // types the name is the only thing identifying the chat, whereas a direct
-    // chat is labelled by the other participant.
     if (chatType != ChatType.direct && (name == null || name.trim().isEmpty)) {
       return _fail('A ${chatType.wire} chat needs a name');
     }
@@ -76,7 +57,6 @@ class CreateChatUseCase {
       );
     }
 
-    // +1 for the creator, who is always a member of the chat they create.
     if (memberIds.length + 1 > chatType.maxMembers) {
       return _fail(
         'A ${chatType.wire} chat holds at most ${chatType.maxMembers} members',
@@ -109,18 +89,6 @@ class CreateChatUseCase {
       Future.value(Left(InputFailure(message: message)));
 }
 
-/// `409 DIRECT_CHAT_EXISTS` → the id of the conversation that already exists,
-/// or `null` for every other failure (api-docs §6.2).
-///
-/// Lives next to the use case rather than inside a screen because **two**
-/// entry points create direct chats — the create-chat form and the "Message"
-/// button on a profile — and both must react the same way: open the existing
-/// conversation instead of reporting an error the user cannot act on.
-///
-/// The id is read defensively: `detail` is typed `dynamic` in the error
-/// envelope (api-docs §2.1) and is a free-form object per code, so a shape
-/// that doesn't match is treated as "not this case" and falls through to the
-/// plain error message rather than throwing inside a failure handler.
 String? existingDirectChatId(Failure failure) {
   if (failure is! ApiFailure) return null;
   if (failure.code != 'DIRECT_CHAT_EXISTS') return null;
@@ -134,19 +102,6 @@ String? existingDirectChatId(Failure failure) {
   return chatId;
 }
 
-/// Turns a chat-creation/update failure into a message that names the actual
-/// problem, for the §6.2/§6.3 codes whose own wording is unhelpful.
-///
-/// Returns `null` when the code isn't one of these, so callers fall back to
-/// `failure.message` untouched.
-///
-/// * `SLOW_MODE_OUT_OF_RANGE` (400) — `detail` is
-///   `{seconds, valid_range: [0, 86400]}`. The bound is echoed from the
-///   response rather than hardcoded, so a backend that widens the range
-///   doesn't leave this text lying.
-/// * `MEMBER_LIMIT_EXCEEDED` (400) — also raised for a *direct* chat whose
-///   `member_ids` isn't exactly one, where "limit exceeded" points at the
-///   wrong problem entirely.
 String? chatFailureMessage(Failure failure) {
   if (failure is! ApiFailure) return null;
   final detail = failure.detail;
