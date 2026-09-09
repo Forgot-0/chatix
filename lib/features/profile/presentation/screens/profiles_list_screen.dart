@@ -5,6 +5,7 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_list_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ProfilesListScreen extends ConsumerStatefulWidget {
   const ProfilesListScreen({super.key});
@@ -50,7 +51,7 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
     final listState = ref.watch(profileListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profiles')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).profiles)),
       body: Column(
         children: [
           Padding(
@@ -58,8 +59,8 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
             child: TextField(
               controller: _searchController,
               textInputAction: TextInputAction.search,
-              decoration: const InputDecoration(
-                hintText: 'Search by name',
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context).searchByName,
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
@@ -71,7 +72,9 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
               loading: () => const AppListSkeleton(),
               error: (error, _) => AppErrorState(
                 error: error,
-                fallbackMessage: 'Could not load profiles.',
+                fallbackMessage: AppLocalizations.of(
+                  context,
+                ).profilesLoadFailed,
                 onRetry: () => ref.read(profileListProvider.notifier).refresh(),
               ),
               data: (state) {

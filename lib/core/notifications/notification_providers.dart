@@ -1,10 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/analytics/analytics_providers.dart';
 import 'package:chatix/core/notifications/debug_notification_service.dart';
+import 'package:chatix/core/notifications/firebase_notification_service.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
 
+const bool useDebugNotifications = bool.fromEnvironment(
+  'CHATIX_DEBUG_NOTIFICATIONS',
+);
+
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  final service = DebugNotificationService();
+  final NotificationService service = useDebugNotifications
+      ? DebugNotificationService()
+      : FirebaseNotificationService();
 
   final analytics = ref.watch(analyticsProvider);
 
@@ -36,7 +43,7 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   service.init();
 
   ref.onDispose(() {
-    service.dispose();
+    if (service is DebugNotificationService) service.dispose();
   });
 
   return service;

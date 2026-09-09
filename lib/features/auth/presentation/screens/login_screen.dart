@@ -8,6 +8,7 @@ import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/features/auth/presentation/widgets/oauth_buttons.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -52,7 +53,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).loginTitle)),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Center(
@@ -85,9 +86,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   FormBuilderTextField(
                     name: 'username',
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email or username',
-                      hintText: 'you@example.com or your username',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).emailOrUsername,
+                      hintText: AppLocalizations.of(
+                        context,
+                      ).emailOrUsernameHint,
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     validator: AuthFieldValidators.loginIdentifier,
@@ -97,8 +100,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     name: 'password',
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
+                      labelText: AppLocalizations.of(context).password,
+                      hintText: AppLocalizations.of(context).passwordHint,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -121,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: () {
                         context.push(ResetPasswordRoute.location);
                       },
-                      child: const Text('Forgot Password?'),
+                      child: Text(AppLocalizations.of(context).forgotPassword),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -141,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Log In'),
+                        : Text(AppLocalizations.of(context).logIn),
                   ),
                   const SizedBox(height: 24),
                   if (oauthSignInEnabled) ...[
@@ -183,7 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () {
                           context.go(RegisterRoute.location);
                         },
-                        child: const Text('Register'),
+                        child: Text(AppLocalizations.of(context).register),
                       ),
                     ],
                   ),

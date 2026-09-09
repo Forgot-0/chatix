@@ -389,5 +389,646 @@
   "backToLatest": "Back to latest messages",
   "@backToLatest": {
     "description": "Returns from a jumped-to history window to the live tail"
+  },
+  "messageRead": "Read",
+  "@messageRead": {
+    "description": "Accessibility label for the double read tick"
+  },
+  "messageSent": "Sent",
+  "@messageSent": {
+    "description": "Accessibility label for the single sent tick"
+  },
+  "dateToday": "Today",
+  "@dateToday": {
+    "description": "Date separator for messages sent today"
+  },
+  "dateYesterday": "Yesterday",
+  "@dateYesterday": {
+    "description": "Date separator for messages sent yesterday"
+  },
+  "unreadMessages": "Unread messages",
+  "@unreadMessages": {
+    "description": "Separator above the first unread message"
+  },
+  "noMessagesYet": "No messages yet",
+  "@noMessagesYet": {
+    "description": "Empty state in a chat with no history"
+  },
+  "editingMessage": "Editing message",
+  "@editingMessage": {
+    "description": "Banner above the composer while editing"
+  },
+  "scrollToBottom": "Jump to the newest messages",
+  "@scrollToBottom": {
+    "description": "Tooltip on the scroll-to-bottom button"
+  },
+  "messageDensity": "Message density",
+  "@messageDensity": {
+    "description": "Settings row for chat density"
+  },
+  "densityCompact": "Compact",
+  "@densityCompact": {
+    "description": "Density option"
+  },
+  "densityCosy": "Cosy",
+  "@densityCosy": {
+    "description": "Density option — the default"
+  },
+  "densitySpacious": "Spacious",
+  "@densitySpacious": {
+    "description": "Density option"
+  },
+  "voiceSlideToCancel": "Slide left to cancel, up to lock",
+  "@voiceSlideToCancel": {
+    "description": "Hint while holding the mic"
+  },
+  "voiceReleaseToCancel": "Release to cancel",
+  "@voiceReleaseToCancel": {
+    "description": "Hint once the finger passed the cancel threshold"
+  },
+  "voiceRecordingLocked": "Recording — tap send when you are done",
+  "@voiceRecordingLocked": {
+    "description": "Hint while recording hands-free"
+  },
+  "voicePermissionDenied": "Microphone access is off",
+  "@voicePermissionDenied": {
+    "description": "Mic permission was refused"
+  },
+  "voiceMessage": "Voice message",
+  "@voiceMessage": {
+    "description": "Label for a voice attachment"
+  },
+  "attach": "Attach",
+  "@attach": {
+    "description": "Tooltip for the attachment button"
+  },
+  "messageHint": "Message",
+  "@messageHint": {
+    "description": "Composer placeholder"
+  },
+  "unknownChat": "Unknown chat",
+  "@unknownChat": {
+    "description": "Invalid chat route"
+  },
+  "unknownProfile": "Unknown profile",
+  "@unknownProfile": {
+    "description": "Invalid profile route"
+  },
+  "goToChats": "Go to chats",
+  "@goToChats": {
+    "description": "Recovery action on an invalid route"
+  },
+  "pageNotFound": "Page not found",
+  "@pageNotFound": {
+    "description": "404 screen title"
+  },
+  "pathDoesNotExist": "{path} does not exist",
+  "@pathDoesNotExist": {
+    "description": "404 detail",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Generic retry action"
+  },
+  "clear": "Clear",
+  "@clear": {
+    "description": "Clears a search field"
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Generic add action"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save action"
+  },
+  "readAll": "Read all",
+  "@readAll": {
+    "description": "Marks every notification read"
+  },
+  "filter": "Filter",
+  "@filter": {
+    "description": "Notification filter menu"
+  },
+  "filterAll": "All",
+  "@filterAll": {
+    "description": "Notification filter: everything"
+  },
+  "filterUnread": "Unread only",
+  "@filterUnread": {
+    "description": "Notification filter"
+  },
+  "filterRead": "Read only",
+  "@filterRead": {
+    "description": "Notification filter"
+  },
+  "showAll": "Show all",
+  "@showAll": {
+    "description": "Clears the notification filter"
+  },
+  "notificationsLoadFailed": "Could not load your notifications.",
+  "@notificationsLoadFailed": {
+    "description": "Notification list error"
+  },
+  "profiles": "People",
+  "@profiles": {
+    "description": "Profile directory title"
+  },
+  "searchByName": "Search by name",
+  "@searchByName": {
+    "description": "Profile search placeholder"
+  },
+  "searchByUsername": "Search by username",
+  "@searchByUsername": {
+    "description": "Member search placeholder"
+  },
+  "profilesLoadFailed": "Could not load profiles.",
+  "@profilesLoadFailed": {
+    "description": "Profile list error"
+  },
+  "signInToViewProfile": "Sign in to view your profile",
+  "@signInToViewProfile": {
+    "description": "Signed-out profile screen"
+  },
+  "signInToEditProfile": "Sign in to edit your profile",
+  "@signInToEditProfile": {
+    "description": "Signed-out profile editor"
+  },
+  "profileAbout": "About",
+  "@profileAbout": {
+    "description": "Profile bio section"
+  },
+  "profileSkills": "Skills",
+  "@profileSkills": {
+    "description": "Profile skills section"
+  },
+  "profileContacts": "Contacts",
+  "@profileContacts": {
+    "description": "Profile contacts section"
+  },
+  "sendMessageAction": "Message",
+  "@sendMessageAction": {
+    "description": "Starts a direct chat from a profile"
+  },
+  "editProfile": "Edit profile",
+  "@editProfile": {
+    "description": "Profile editor title"
+  },
+  "displayName": "Display name",
+  "@displayName": {
+    "description": "Profile field"
+  },
+  "specialization": "Specialization",
+  "@specialization": {
+    "description": "Profile field"
+  },
+  "bio": "Bio",
+  "@bio": {
+    "description": "Profile field"
+  },
+  "dateOfBirth": "Date of birth",
+  "@dateOfBirth": {
+    "description": "Profile field"
+  },
+  "addContact": "Add contact",
+  "@addContact": {
+    "description": "Adds a profile contact"
+  },
+  "contactProvider": "Provider (e.g. telegram)",
+  "@contactProvider": {
+    "description": "Contact provider field"
+  },
+  "contactHandle": "Contact (e.g. @handle)",
+  "@contactHandle": {
+    "description": "Contact value field"
+  },
+  "skillsHint": "Type a skill and press enter",
+  "@skillsHint": {
+    "description": "Skills input hint"
+  },
+  "photoLibraryFailed": "Could not open the photo library",
+  "@photoLibraryFailed": {
+    "description": "Image picker failure"
+  },
+  "chats": "Chats",
+  "@chats": {
+    "description": "Chat list title"
+  },
+  "searchChatsAndPeople": "Search chats and people",
+  "@searchChatsAndPeople": {
+    "description": "Search entry point"
+  },
+  "chatsLoadFailed": "Could not load your chats.",
+  "@chatsLoadFailed": {
+    "description": "Chat list error"
+  },
+  "noChatsYet": "No chats yet",
+  "@noChatsYet": {
+    "description": "Empty chat list title"
+  },
+  "noChatsYetHint": "Start a conversation and it will show up here.",
+  "@noChatsYetHint": {
+    "description": "Empty chat list body"
+  },
+  "newChat": "New chat",
+  "@newChat": {
+    "description": "Creates a chat"
+  },
+  "chatTypeDirect": "Direct",
+  "@chatTypeDirect": {
+    "description": "Chat type option"
+  },
+  "chatTypeGroup": "Group",
+  "@chatTypeGroup": {
+    "description": "Chat type option"
+  },
+  "chatTypeSuper": "Super",
+  "@chatTypeSuper": {
+    "description": "Chat type option (supergroup)"
+  },
+  "chatTypeChannel": "Channel",
+  "@chatTypeChannel": {
+    "description": "Chat type option"
+  },
+  "chatPublicHintCreate": "Anyone can find and join this chat",
+  "@chatPublicHintCreate": {
+    "description": "is_public explanation on create"
+  },
+  "chatSlowModeSecondsField": "Slow mode (seconds)",
+  "@chatSlowModeSecondsField": {
+    "description": "slow_mode_seconds field"
+  },
+  "createChat": "Create chat",
+  "@createChat": {
+    "description": "Submits the create-chat form"
+  },
+  "membersTitle": "Members",
+  "@membersTitle": {
+    "description": "Member list title"
+  },
+  "membersLoadFailed": "Failed to load members",
+  "@membersLoadFailed": {
+    "description": "Member list error"
+  },
+  "addMember": "Add member",
+  "@addMember": {
+    "description": "Invites someone to the chat"
+  },
+  "changeRole": "Change role",
+  "@changeRole": {
+    "description": "Member role action"
+  },
+  "banMember": "Ban",
+  "@banMember": {
+    "description": "Bans a member"
+  },
+  "banMemberTitle": "Ban member",
+  "@banMemberTitle": {
+    "description": "Ban dialog title"
+  },
+  "kickMember": "Remove",
+  "@kickMember": {
+    "description": "Kicks a member"
+  },
+  "banReason": "Reason (optional)",
+  "@banReason": {
+    "description": "Ban reason field"
+  },
+  "banUntil": "Set date",
+  "@banUntil": {
+    "description": "Picks a ban expiry"
+  },
+  "searchPeople": "People",
+  "@searchPeople": {
+    "description": "Search results section"
+  },
+  "noPeopleFound": "No people found",
+  "@noPeopleFound": {
+    "description": "Empty people search"
+  },
+  "callConnecting": "Connecting…",
+  "@callConnecting": {
+    "description": "Call is being established"
+  },
+  "callJoin": "Join call",
+  "@callJoin": {
+    "description": "Joins the LiveKit room"
+  },
+  "callEnded": "Call ended",
+  "@callEnded": {
+    "description": "Call finished"
+  },
+  "callRejoin": "Rejoin",
+  "@callRejoin": {
+    "description": "Rejoins after disconnect"
+  },
+  "callLeave": "Leave",
+  "@callLeave": {
+    "description": "Leaves the call"
+  },
+  "callTitle": "Call",
+  "@callTitle": {
+    "description": "Call screen fallback title"
+  },
+  "selectedCount": "{count} selected",
+  "@selectedCount": {
+    "description": "Selection app bar title",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteMessagesTitle": "Delete {count} messages?",
+  "@deleteMessagesTitle": {
+    "description": "Bulk delete confirmation",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cannotBeUndone": "This cannot be undone.",
+  "@cannotBeUndone": {
+    "description": "Destructive confirmation body"
+  },
+  "chatLoadFailed": "Failed to load chat",
+  "@chatLoadFailed": {
+    "description": "Chat detail error"
+  },
+  "attachMedia": "Photos & videos",
+  "@attachMedia": {
+    "description": "Attachment source"
+  },
+  "attachDocument": "Document",
+  "@attachDocument": {
+    "description": "Attachment source"
+  },
+  "messageForwarded": "Message forwarded",
+  "@messageForwarded": {
+    "description": "Forward success"
+  },
+  "forwardTo": "Forward to",
+  "@forwardTo": {
+    "description": "Forward target picker title"
+  },
+  "noOtherChats": "No other chats",
+  "@noOtherChats": {
+    "description": "Forward picker empty"
+  },
+  "chatsLoadFailedShort": "Could not load chats",
+  "@chatsLoadFailedShort": {
+    "description": "Forward picker error"
+  },
+  "discard": "Discard",
+  "@discard": {
+    "description": "Drops a failed pending message"
+  },
+  "reactedTitle": "Reacted",
+  "@reactedTitle": {
+    "description": "Who-reacted sheet title"
+  },
+  "noReactionsYet": "Nobody has reacted with this yet",
+  "@noReactionsYet": {
+    "description": "Empty who-reacted sheet"
+  },
+  "showMore": "Show more",
+  "@showMore": {
+    "description": "Loads the next page"
+  },
+  "bulkForwarding": "Forwarding",
+  "@bulkForwarding": {
+    "description": "Bulk progress label"
+  },
+  "bulkDeleting": "Deleting",
+  "@bulkDeleting": {
+    "description": "Bulk progress label"
+  },
+  "bulkProgress": "{label} {done} of {total}…",
+  "@bulkProgress": {
+    "description": "Bulk progress body",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkComplete": "{label} complete ({total})",
+  "@bulkComplete": {
+    "description": "Bulk success",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "bulkPartial": "{done} of {total} succeeded — {failed} failed: {reason}",
+  "@bulkPartial": {
+    "description": "Bulk partial failure",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "callTokenUnavailable": "Could not start the call",
+  "@callTokenUnavailable": {
+    "description": "Join call failure"
+  },
+  "loginTitle": "Login",
+  "@loginTitle": {
+    "description": "Login screen title"
+  },
+  "emailOrUsername": "Email or username",
+  "@emailOrUsername": {
+    "description": "Login identifier field"
+  },
+  "emailOrUsernameHint": "you@example.com or your username",
+  "@emailOrUsernameHint": {
+    "description": "Login identifier hint"
+  },
+  "passwordHint": "Enter your password",
+  "@passwordHint": {
+    "description": "Password field hint"
+  },
+  "logIn": "Log In",
+  "@logIn": {
+    "description": "Login submit"
+  },
+  "username": "Username",
+  "@username": {
+    "description": "Register field"
+  },
+  "usernameHint": "4-100 characters",
+  "@usernameHint": {
+    "description": "Username rule"
+  },
+  "emailHint": "Enter your email",
+  "@emailHint": {
+    "description": "Email field hint"
+  },
+  "passwordRule": "8+ chars, upper/lower/digit/special",
+  "@passwordRule": {
+    "description": "Password complexity rule"
+  },
+  "confirmPassword": "Confirm password",
+  "@confirmPassword": {
+    "description": "Register field"
+  },
+  "confirmPasswordHint": "Confirm your password",
+  "@confirmPasswordHint": {
+    "description": "Confirm field hint"
+  },
+  "signInTitle": "Sign in",
+  "@signInTitle": {
+    "description": "OAuth callback title"
+  },
+  "backToSignIn": "Back to sign in",
+  "@backToSignIn": {
+    "description": "OAuth callback action"
+  },
+  "setNewPassword": "Set new password",
+  "@setNewPassword": {
+    "description": "Reset confirm title"
+  },
+  "resetCode": "Reset code",
+  "@resetCode": {
+    "description": "Reset token field"
+  },
+  "newPassword": "New password",
+  "@newPassword": {
+    "description": "Reset field"
+  },
+  "confirmNewPassword": "Confirm new password",
+  "@confirmNewPassword": {
+    "description": "Reset field"
+  },
+  "resetPassword": "Reset password",
+  "@resetPassword": {
+    "description": "Reset submit / title"
+  },
+  "passwordUpdated": "Password updated — please log in.",
+  "@passwordUpdated": {
+    "description": "Reset success"
+  },
+  "sendCode": "Send code",
+  "@sendCode": {
+    "description": "Requests a reset code"
+  },
+  "haveCodeAlready": "I already have a code",
+  "@haveCodeAlready": {
+    "description": "Skips to reset confirm"
+  },
+  "resetCodeSent": "Check your email for a reset code.",
+  "@resetCodeSent": {
+    "description": "Reset request success"
+  },
+  "verifyEmailTitle": "Verify email",
+  "@verifyEmailTitle": {
+    "description": "Email verification title"
+  },
+  "verifyEmailHint": "Paste the token from the email we sent you.",
+  "@verifyEmailHint": {
+    "description": "Verification instructions"
+  },
+  "verificationToken": "Verification token",
+  "@verificationToken": {
+    "description": "Verification field"
+  },
+  "verify": "Verify",
+  "@verify": {
+    "description": "Verification submit"
+  },
+  "resendLimitHint": "We can resend it — up to 3 times per hour.",
+  "@resendLimitHint": {
+    "description": "Resend rate limit"
+  },
+  "resendVerification": "Resend verification email",
+  "@resendVerification": {
+    "description": "Resend action"
+  },
+  "emailVerified": "Email verified",
+  "@emailVerified": {
+    "description": "Verification success"
+  },
+  "verificationSent": "Verification email sent — check your inbox.",
+  "@verificationSent": {
+    "description": "Verification resend success"
+  },
+  "browserOpenFailed": "Could not open the browser for sign-in",
+  "@browserOpenFailed": {
+    "description": "OAuth launch failure"
+  },
+  "continueWith": "Continue with {provider}",
+  "@continueWith": {
+    "description": "OAuth provider button",
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "peopleSearchFailed": "Could not search for people",
+  "@peopleSearchFailed": {
+    "description": "Profile search failure"
+  },
+  "startChatFailed": "Could not start a chat with this person",
+  "@startChatFailed": {
+    "description": "Direct chat creation failure"
+  },
+  "profileLoadFailed": "Could not load this profile",
+  "@profileLoadFailed": {
+    "description": "Single profile failure"
+  },
+  "myProfileLoadFailed": "Could not load your profile",
+  "@myProfileLoadFailed": {
+    "description": "Own profile failure"
+  },
+  "saveChangesFailed": "Could not save changes",
+  "@saveChangesFailed": {
+    "description": "Profile save failure"
+  },
+  "avatarUpdateFailed": "Could not update avatar",
+  "@avatarUpdateFailed": {
+    "description": "Avatar upload failure"
+  },
+  "oauthCancelled": "Sign-in was cancelled",
+  "@oauthCancelled": {
+    "description": "OAuth was aborted by the user"
+  },
+  "oauthCancelledHint": "Nothing was changed. Try again, or use your username and password.",
+  "@oauthCancelledHint": {
+    "description": "OAuth cancel detail"
+  },
+  "oauthFailed": "Could not finish signing in",
+  "@oauthFailed": {
+    "description": "OAuth failed"
+  },
+  "oauthFailedHint": "Sign in with your username and password instead.",
+  "@oauthFailedHint": {
+    "description": "OAuth failure detail"
   }
 }

@@ -10,6 +10,8 @@ import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/router/app_router.dart';
 import 'package:chatix/core/theme/app_theme.dart';
+import 'package:chatix/core/theme/chat_density_provider.dart';
+import 'package:chatix/core/theme/theme_mode_provider.dart';
 import 'package:chatix/core/updates/update_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
@@ -46,17 +48,6 @@ void main() async {
   );
 }
 
-class ThemeModeNotifier extends Notifier<ThemeMode> {
-  @override
-  ThemeMode build() => ThemeMode.system;
-
-  void set(ThemeMode mode) => state = mode;
-}
-
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
-  ThemeModeNotifier.new,
-);
-
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
@@ -65,6 +56,8 @@ class MyApp extends ConsumerWidget {
     final router = ref.watch(routerProvider);
 
     final themeMode = ref.watch(themeModeProvider);
+
+    final density = ref.watch(chatDensityProvider);
 
     final locale = ref.watch(persistentLocaleProvider);
 
@@ -76,8 +69,8 @@ class MyApp extends ConsumerWidget {
       child: AccessibilityWrapper(
         child: MaterialApp.router(
           title: AppConstants.appName,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
+          theme: AppTheme.light(density),
+          darkTheme: AppTheme.dark(density),
           themeMode: themeMode,
           routerConfig: router,
           debugShowCheckedModeBanner: false,

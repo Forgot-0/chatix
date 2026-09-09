@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Voice messages (api-docs §5.5 attachment_type: "voice"). -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Streaming voice/video attachments and presigned uploads. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+ gates notifications behind a runtime grant. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:label="flutter_riverpod_clean_architecture"
         android:name="${applicationName}"

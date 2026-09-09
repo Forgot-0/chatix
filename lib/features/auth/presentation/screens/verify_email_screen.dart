@@ -6,6 +6,7 @@ import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   const VerifyEmailScreen({super.key});
@@ -42,7 +43,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         message: friendlyFailureMessage(failure),
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
-      (_) => AppUtils.showSnackBar(context, message: 'Email verified!'),
+      (_) => AppUtils.showSnackBar(
+        context,
+        message: AppLocalizations.of(context).emailVerified,
+      ),
     );
   }
 
@@ -71,7 +75,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       ),
       (_) => AppUtils.showSnackBar(
         context,
-        message: 'Verification email sent — check your inbox.',
+        message: AppLocalizations.of(context).verificationSent,
       ),
     );
   }
@@ -79,7 +83,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Email')),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).verifyEmailTitle),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(
@@ -91,14 +97,14 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text('Paste the token from the email we sent you.'),
+              Text(AppLocalizations.of(context).verifyEmailHint),
               const SizedBox(height: 16),
               FormBuilder(
                 key: _tokenFormKey,
                 child: FormBuilderTextField(
                   name: 'token',
-                  decoration: const InputDecoration(
-                    labelText: 'Verification token',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).verificationToken,
                     prefixIcon: Icon(Icons.vpn_key_outlined),
                   ),
                   validator: AuthFieldValidators.required,
@@ -113,7 +119,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Verify'),
+                    : Text(AppLocalizations.of(context).verify),
               ),
               const SizedBox(height: 32),
               const Divider(),
@@ -123,15 +129,15 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text('We can resend it — up to 3 times per hour.'),
+              Text(AppLocalizations.of(context).resendLimitHint),
               const SizedBox(height: 16),
               FormBuilder(
                 key: _resendFormKey,
                 child: FormBuilderTextField(
                   name: 'email',
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).email,
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: AuthFieldValidators.email,
@@ -146,7 +152,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Resend verification email'),
+                    : Text(AppLocalizations.of(context).resendVerification),
               ),
             ],
           ),

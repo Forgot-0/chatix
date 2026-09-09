@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class AppListSkeleton extends StatelessWidget {
   const AppListSkeleton({
@@ -286,7 +287,7 @@ class AppInlineError extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context).retry),
             ),
           ],
         ],

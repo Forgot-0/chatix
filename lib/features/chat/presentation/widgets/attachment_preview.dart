@@ -7,14 +7,6 @@ import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart
 import 'package:chatix/features/chat/presentation/providers/attachment_url_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// Inline preview for one image attachment.
-///
-/// Two rules from api-docs §5.5 drive the whole widget:
-/// the presigned `url` dies after 300 seconds, and the file must be cached by
-/// `s3_key` rather than by that URL. So the bytes go into the image cache under
-/// `s3_key` — a refreshed signature hits the same cache entry instead of
-/// re-downloading — and a load failure is treated as an expired link: the URL
-/// provider is invalidated once and a newly minted link is tried.
 class AttachmentImage extends ConsumerStatefulWidget {
   const AttachmentImage({
     super.key,
@@ -34,7 +26,6 @@ class AttachmentImage extends ConsumerStatefulWidget {
 }
 
 class _AttachmentImageState extends ConsumerState<AttachmentImage> {
-  /// One refresh only — a second failure is a real error, not a stale link.
   bool _refreshed = false;
 
   AttachmentRef get _ref => (
@@ -47,8 +38,6 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
   Widget build(BuildContext context) {
     final inline = widget.attachment.url;
 
-    // The link that came with the message is worth one try: on a message that
-    // just arrived it is valid and saves a round-trip.
     if (inline != null && inline.isNotEmpty && !_refreshed) {
       return _image(inline);
     }
@@ -65,14 +54,12 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
       borderRadius: radius,
       child: CachedNetworkImage(
         imageUrl: url,
-        // Stable identity of the file — NOT the signed URL (§5.5).
         cacheKey: widget.attachment.s3Key,
         fit: widget.fit,
         width: double.infinity,
         placeholder: (_, _) => _placeholder(),
         errorWidget: (_, _, _) {
           if (!_refreshed) {
-            // Almost always an expired signature; ask for a new one once.
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted || _refreshed) return;
               setState(() => _refreshed = true);
@@ -127,7 +114,6 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
   }
 }
 
-/// Full-screen viewer with pinch-zoom, opened from a tapped preview.
 class AttachmentViewer extends StatelessWidget {
   const AttachmentViewer({
     super.key,

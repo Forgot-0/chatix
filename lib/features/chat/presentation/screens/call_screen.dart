@@ -6,6 +6,7 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/call_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
   const CallScreen({super.key, required this.chatId});
@@ -40,7 +41,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(detail?.chat?.name ?? 'Call'),
+            Text(detail?.chat?.name ?? AppLocalizations.of(context).callTitle),
             if (state.token != null)
               Text(
                 'Room ${state.token!.slug}',
@@ -127,18 +128,21 @@ class _JoinPrompt extends StatelessWidget {
           const Icon(Icons.call, size: 64, color: Colors.white54),
           const SizedBox(height: 24),
           if (isBusy)
-            const Column(
+            Column(
               children: [
                 CircularProgressIndicator(color: Colors.white),
                 SizedBox(height: 12),
-                Text('Connecting…', style: TextStyle(color: Colors.white70)),
+                Text(
+                  AppLocalizations.of(context).callConnecting,
+                  style: const TextStyle(color: Colors.white70),
+                ),
               ],
             )
           else
             FilledButton.icon(
               onPressed: onJoin,
               icon: const Icon(Icons.call),
-              label: const Text('Join call'),
+              label: Text(AppLocalizations.of(context).callJoin),
             ),
         ],
       ),
@@ -159,12 +163,15 @@ class _CallEnded extends StatelessWidget {
         children: [
           const Icon(Icons.call_end, size: 64, color: Colors.white54),
           const SizedBox(height: 16),
-          const Text('Call ended', style: TextStyle(color: Colors.white70)),
+          Text(
+            AppLocalizations.of(context).callEnded,
+            style: const TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: onRejoin,
             icon: const Icon(Icons.refresh),
-            label: const Text('Rejoin'),
+            label: Text(AppLocalizations.of(context).callRejoin),
           ),
         ],
       ),
@@ -344,7 +351,7 @@ class _CallControls extends StatelessWidget {
           ),
           _ControlButton(
             icon: Icons.call_end,
-            label: 'Leave',
+            label: AppLocalizations.of(context).callLeave,
             background: Colors.redAccent,
             onPressed: onHangUp,
           ),

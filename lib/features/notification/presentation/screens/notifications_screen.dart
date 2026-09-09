@@ -7,6 +7,7 @@ import 'package:chatix/features/notification/domain/entities/notification_entity
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_list_provider.dart';
 import 'package:chatix/features/notification/presentation/utils/notification_route_resolver.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -92,22 +93,31 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(AppLocalizations.of(context).notifications),
         actions: [
           TextButton(
             onPressed: unreadCount == 0 ? null : _onMarkAllAsRead,
-            child: const Text('Read all'),
+            child: Text(AppLocalizations.of(context).readAll),
           ),
           PopupMenuButton<bool?>(
-            tooltip: 'Filter',
-            icon: const Icon(Icons.filter_list),
+            tooltip: AppLocalizations.of(context).filter,
+            icon: Icon(Icons.filter_list),
             onSelected: (value) => ref
                 .read(notificationListProvider.notifier)
                 .setFilter(isRead: value),
-            itemBuilder: (context) => const [
-              PopupMenuItem<bool?>(value: null, child: Text('All')),
-              PopupMenuItem<bool?>(value: false, child: Text('Unread only')),
-              PopupMenuItem<bool?>(value: true, child: Text('Read only')),
+            itemBuilder: (context) => [
+              PopupMenuItem<bool?>(
+                value: null,
+                child: Text(AppLocalizations.of(context).filterAll),
+              ),
+              PopupMenuItem<bool?>(
+                value: false,
+                child: Text(AppLocalizations.of(context).filterUnread),
+              ),
+              PopupMenuItem<bool?>(
+                value: true,
+                child: Text(AppLocalizations.of(context).filterRead),
+              ),
             ],
           ),
         ],
@@ -116,7 +126,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         loading: () => const AppListSkeleton(hasTrailing: true),
         error: (error, _) => AppErrorState(
           error: error,
-          fallbackMessage: 'Could not load your notifications.',
+          fallbackMessage: AppLocalizations.of(context).notificationsLoadFailed,
           onRetry: () => ref.read(notificationListProvider.notifier).refresh(),
         ),
         data: (state) {
@@ -146,7 +156,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         onPressed: () => ref
                             .read(notificationListProvider.notifier)
                             .setFilter(),
-                        child: const Text('Show all'),
+                        child: Text(AppLocalizations.of(context).showAll),
                       ),
               ),
             );

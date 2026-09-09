@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 const bool oauthSignInEnabled = false;
 
@@ -39,7 +40,7 @@ class OAuthButtons extends ConsumerWidget {
           if (!context.mounted) return;
           AppUtils.showSnackBar(
             context,
-            message: 'Could not open the browser for sign-in',
+            message: AppLocalizations.of(context).browserOpenFailed,
             backgroundColor: Theme.of(context).colorScheme.error,
           );
         }
@@ -55,7 +56,7 @@ class OAuthButtons extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: _providers.map((provider) {
         return IconButton.outlined(
-          tooltip: 'Continue with ${provider.label}',
+          tooltip: AppLocalizations.of(context).continueWith(provider.label),
           onPressed: () => _openProvider(context, ref, provider.id),
           icon: Icon(provider.icon),
         );

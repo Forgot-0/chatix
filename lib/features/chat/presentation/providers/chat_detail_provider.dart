@@ -31,6 +31,8 @@ class PendingMessage extends Equatable {
   final String? replyToId;
   final List<String> uploadTokens;
 
+  final MessageType? messageType;
+
   final Failure? failure;
 
   const PendingMessage({
@@ -38,6 +40,7 @@ class PendingMessage extends Equatable {
     this.content,
     this.replyToId,
     this.uploadTokens = const [],
+    this.messageType,
     this.failure,
   });
 
@@ -47,6 +50,7 @@ class PendingMessage extends Equatable {
       content: content,
       replyToId: replyToId,
       uploadTokens: uploadTokens,
+      messageType: messageType,
       failure: clearFailure ? null : (failure ?? this.failure),
     );
   }
@@ -57,6 +61,7 @@ class PendingMessage extends Equatable {
     content,
     replyToId,
     uploadTokens,
+    messageType,
     failure,
   ];
 }
@@ -744,6 +749,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   Future<void> sendMessage({
     String? content,
     List<String> uploadTokens = const [],
+    MessageType? messageType,
   }) async {
     final current = state.value;
     if (current == null) return;
@@ -753,6 +759,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       content: content,
       replyToId: current.replyTo?.id,
       uploadTokens: uploadTokens,
+      messageType: messageType,
     );
 
     state = AsyncValue.data(
@@ -809,6 +816,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
           uploadTokens: pending.uploadTokens.isEmpty
               ? null
               : pending.uploadTokens,
+          messageType: pending.messageType,
           idempotencyKey: pending.idempotencyKey,
         );
 

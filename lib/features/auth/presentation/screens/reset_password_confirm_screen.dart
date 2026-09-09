@@ -6,6 +6,7 @@ import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ResetPasswordConfirmScreen extends ConsumerStatefulWidget {
   const ResetPasswordConfirmScreen({super.key});
@@ -53,7 +54,7 @@ class _ResetPasswordConfirmScreenState
       (_) {
         AppUtils.showSnackBar(
           context,
-          message: 'Password updated — please log in.',
+          message: AppLocalizations.of(context).passwordUpdated,
         );
         context.go(LoginRoute.location);
       },
@@ -63,7 +64,7 @@ class _ResetPasswordConfirmScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Set New Password')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).setNewPassword)),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(
@@ -78,8 +79,8 @@ class _ResetPasswordConfirmScreenState
                 const SizedBox(height: 24),
                 FormBuilderTextField(
                   name: 'token',
-                  decoration: const InputDecoration(
-                    labelText: 'Reset code',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).resetCode,
                     prefixIcon: Icon(Icons.vpn_key_outlined),
                   ),
                   validator: AuthFieldValidators.required,
@@ -93,8 +94,8 @@ class _ResetPasswordConfirmScreenState
                       ?.fields['password_repeat']
                       ?.validate(),
                   decoration: InputDecoration(
-                    labelText: 'New password',
-                    hintText: '8+ chars, upper/lower/digit/special',
+                    labelText: AppLocalizations.of(context).newPassword,
+                    hintText: AppLocalizations.of(context).passwordRule,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -114,7 +115,7 @@ class _ResetPasswordConfirmScreenState
                   name: 'password_repeat',
                   obscureText: !_isConfirmPasswordVisible,
                   decoration: InputDecoration(
-                    labelText: 'Confirm new password',
+                    labelText: AppLocalizations.of(context).confirmNewPassword,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -141,7 +142,7 @@ class _ResetPasswordConfirmScreenState
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Reset Password'),
+                      : Text(AppLocalizations.of(context).resetPassword),
                 ),
               ],
             ),

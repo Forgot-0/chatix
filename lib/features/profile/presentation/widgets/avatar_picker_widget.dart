@@ -7,6 +7,7 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/avatar_upload_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class AvatarPickerWidget extends ConsumerWidget {
   final ProfileEntity profile;
@@ -25,7 +26,7 @@ class AvatarPickerWidget extends ConsumerWidget {
       if (context.mounted) {
         AppUtils.showSnackBar(
           context,
-          message: 'Could not open the photo library',
+          message: AppLocalizations.of(context).photoLibraryFailed,
         );
       }
       return;
@@ -87,7 +88,7 @@ class AvatarPickerWidget extends ConsumerWidget {
           context,
           message: friendlyFailureMessage(
             error,
-            fallback: 'Could not update avatar',
+            fallback: AppLocalizations.of(context).avatarUpdateFailed,
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
         );

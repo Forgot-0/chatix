@@ -37,16 +37,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get language => 'Idioma';
 
   @override
-  String get change_language => 'Change application language';
+  String get change_language => 'Cambiar idioma';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Tema';
 
   @override
-  String get change_theme => 'Change application theme';
+  String get change_theme => 'Cambiar tema';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'Notificaciones';
 
   @override
   String get notification_settings => 'Configure notification preferences';
@@ -330,4 +330,464 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get backToLatest => 'Volver a los mensajes recientes';
+
+  @override
+  String get messageRead => 'Leído';
+
+  @override
+  String get messageSent => 'Enviado';
+
+  @override
+  String get dateToday => 'Hoy';
+
+  @override
+  String get dateYesterday => 'Ayer';
+
+  @override
+  String get unreadMessages => 'Mensajes no leídos';
+
+  @override
+  String get noMessagesYet => 'Aún no hay mensajes';
+
+  @override
+  String get editingMessage => 'Editando mensaje';
+
+  @override
+  String get scrollToBottom => 'Ir a los mensajes más recientes';
+
+  @override
+  String get messageDensity => 'Densidad de mensajes';
+
+  @override
+  String get densityCompact => 'Compacta';
+
+  @override
+  String get densityCosy => 'Normal';
+
+  @override
+  String get densitySpacious => 'Amplia';
+
+  @override
+  String get voiceSlideToCancel =>
+      'Desliza a la izquierda para cancelar, arriba para fijar';
+
+  @override
+  String get voiceReleaseToCancel => 'Suelta para cancelar';
+
+  @override
+  String get voiceRecordingLocked => 'Grabando: pulsa enviar cuando termines';
+
+  @override
+  String get voicePermissionDenied => 'El acceso al micrófono está desactivado';
+
+  @override
+  String get voiceMessage => 'Mensaje de voz';
+
+  @override
+  String get attach => 'Adjuntar';
+
+  @override
+  String get messageHint => 'Mensaje';
+
+  @override
+  String get unknownChat => 'Chat desconocido';
+
+  @override
+  String get unknownProfile => 'Perfil desconocido';
+
+  @override
+  String get goToChats => 'Ir a los chats';
+
+  @override
+  String get pageNotFound => 'Página no encontrada';
+
+  @override
+  String pathDoesNotExist(String path) {
+    return '$path no existe';
+  }
+
+  @override
+  String get retry => 'Reintentar';
+
+  @override
+  String get clear => 'Borrar';
+
+  @override
+  String get add => 'Añadir';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get readAll => 'Marcar todo';
+
+  @override
+  String get filter => 'Filtrar';
+
+  @override
+  String get filterAll => 'Todas';
+
+  @override
+  String get filterUnread => 'Solo no leídas';
+
+  @override
+  String get filterRead => 'Solo leídas';
+
+  @override
+  String get showAll => 'Mostrar todas';
+
+  @override
+  String get notificationsLoadFailed =>
+      'No se pudieron cargar tus notificaciones.';
+
+  @override
+  String get profiles => 'Personas';
+
+  @override
+  String get searchByName => 'Buscar por nombre';
+
+  @override
+  String get searchByUsername => 'Buscar por usuario';
+
+  @override
+  String get profilesLoadFailed => 'No se pudieron cargar los perfiles.';
+
+  @override
+  String get signInToViewProfile => 'Inicia sesión para ver tu perfil';
+
+  @override
+  String get signInToEditProfile => 'Inicia sesión para editar tu perfil';
+
+  @override
+  String get profileAbout => 'Acerca de';
+
+  @override
+  String get profileSkills => 'Habilidades';
+
+  @override
+  String get profileContacts => 'Contactos';
+
+  @override
+  String get sendMessageAction => 'Mensaje';
+
+  @override
+  String get editProfile => 'Editar perfil';
+
+  @override
+  String get displayName => 'Nombre visible';
+
+  @override
+  String get specialization => 'Especialización';
+
+  @override
+  String get bio => 'Biografía';
+
+  @override
+  String get dateOfBirth => 'Fecha de nacimiento';
+
+  @override
+  String get addContact => 'Añadir contacto';
+
+  @override
+  String get contactProvider => 'Proveedor (p. ej. telegram)';
+
+  @override
+  String get contactHandle => 'Contacto (p. ej. @usuario)';
+
+  @override
+  String get skillsHint => 'Escribe una habilidad y pulsa intro';
+
+  @override
+  String get photoLibraryFailed => 'No se pudo abrir la galería';
+
+  @override
+  String get chats => 'Chats';
+
+  @override
+  String get searchChatsAndPeople => 'Buscar chats y personas';
+
+  @override
+  String get chatsLoadFailed => 'No se pudieron cargar tus chats.';
+
+  @override
+  String get noChatsYet => 'Aún no hay chats';
+
+  @override
+  String get noChatsYetHint => 'Inicia una conversación y aparecerá aquí.';
+
+  @override
+  String get newChat => 'Nuevo chat';
+
+  @override
+  String get chatTypeDirect => 'Directo';
+
+  @override
+  String get chatTypeGroup => 'Grupo';
+
+  @override
+  String get chatTypeSuper => 'Súper';
+
+  @override
+  String get chatTypeChannel => 'Canal';
+
+  @override
+  String get chatPublicHintCreate =>
+      'Cualquiera puede encontrar y unirse a este chat';
+
+  @override
+  String get chatSlowModeSecondsField => 'Modo lento (segundos)';
+
+  @override
+  String get createChat => 'Crear chat';
+
+  @override
+  String get membersTitle => 'Miembros';
+
+  @override
+  String get membersLoadFailed => 'No se pudieron cargar los miembros';
+
+  @override
+  String get addMember => 'Añadir miembro';
+
+  @override
+  String get changeRole => 'Cambiar rol';
+
+  @override
+  String get banMember => 'Bloquear';
+
+  @override
+  String get banMemberTitle => 'Bloquear miembro';
+
+  @override
+  String get kickMember => 'Expulsar';
+
+  @override
+  String get banReason => 'Motivo (opcional)';
+
+  @override
+  String get banUntil => 'Elegir fecha';
+
+  @override
+  String get searchPeople => 'Personas';
+
+  @override
+  String get noPeopleFound => 'No se encontraron personas';
+
+  @override
+  String get callConnecting => 'Conectando…';
+
+  @override
+  String get callJoin => 'Unirse a la llamada';
+
+  @override
+  String get callEnded => 'Llamada finalizada';
+
+  @override
+  String get callRejoin => 'Volver a unirse';
+
+  @override
+  String get callLeave => 'Salir';
+
+  @override
+  String get callTitle => 'Llamada';
+
+  @override
+  String selectedCount(int count) {
+    return '$count seleccionados';
+  }
+
+  @override
+  String deleteMessagesTitle(int count) {
+    return '¿Eliminar $count mensajes?';
+  }
+
+  @override
+  String get cannotBeUndone => 'Esta acción no se puede deshacer.';
+
+  @override
+  String get chatLoadFailed => 'No se pudo cargar el chat';
+
+  @override
+  String get attachMedia => 'Fotos y vídeos';
+
+  @override
+  String get attachDocument => 'Documento';
+
+  @override
+  String get messageForwarded => 'Mensaje reenviado';
+
+  @override
+  String get forwardTo => 'Reenviar a';
+
+  @override
+  String get noOtherChats => 'No hay otros chats';
+
+  @override
+  String get chatsLoadFailedShort => 'No se pudieron cargar los chats';
+
+  @override
+  String get discard => 'Descartar';
+
+  @override
+  String get reactedTitle => 'Reaccionaron';
+
+  @override
+  String get noReactionsYet => 'Nadie ha reaccionado con esto todavía';
+
+  @override
+  String get showMore => 'Mostrar más';
+
+  @override
+  String get bulkForwarding => 'Reenviando';
+
+  @override
+  String get bulkDeleting => 'Eliminando';
+
+  @override
+  String bulkProgress(String label, int done, int total) {
+    return '$label $done de $total…';
+  }
+
+  @override
+  String bulkComplete(String label, int total) {
+    return '$label completado ($total)';
+  }
+
+  @override
+  String bulkPartial(int done, int total, int failed, String reason) {
+    return '$done de $total correctos — $failed fallaron: $reason';
+  }
+
+  @override
+  String get callTokenUnavailable => 'No se pudo iniciar la llamada';
+
+  @override
+  String get loginTitle => 'Iniciar sesión';
+
+  @override
+  String get emailOrUsername => 'Correo o usuario';
+
+  @override
+  String get emailOrUsernameHint => 'tu@ejemplo.com o tu usuario';
+
+  @override
+  String get passwordHint => 'Introduce tu contraseña';
+
+  @override
+  String get logIn => 'Entrar';
+
+  @override
+  String get username => 'Usuario';
+
+  @override
+  String get usernameHint => '4-100 caracteres';
+
+  @override
+  String get emailHint => 'Introduce tu correo';
+
+  @override
+  String get passwordRule => '8+ caracteres, mayús./minús./dígito/especial';
+
+  @override
+  String get confirmPassword => 'Confirmar contraseña';
+
+  @override
+  String get confirmPasswordHint => 'Confirma tu contraseña';
+
+  @override
+  String get signInTitle => 'Iniciar sesión';
+
+  @override
+  String get backToSignIn => 'Volver a iniciar sesión';
+
+  @override
+  String get setNewPassword => 'Establecer nueva contraseña';
+
+  @override
+  String get resetCode => 'Código de restablecimiento';
+
+  @override
+  String get newPassword => 'Nueva contraseña';
+
+  @override
+  String get confirmNewPassword => 'Confirmar nueva contraseña';
+
+  @override
+  String get resetPassword => 'Restablecer contraseña';
+
+  @override
+  String get passwordUpdated => 'Contraseña actualizada: inicia sesión.';
+
+  @override
+  String get sendCode => 'Enviar código';
+
+  @override
+  String get haveCodeAlready => 'Ya tengo un código';
+
+  @override
+  String get resetCodeSent => 'Revisa tu correo para el código.';
+
+  @override
+  String get verifyEmailTitle => 'Verificar correo';
+
+  @override
+  String get verifyEmailHint => 'Pega el token del correo que te enviamos.';
+
+  @override
+  String get verificationToken => 'Token de verificación';
+
+  @override
+  String get verify => 'Verificar';
+
+  @override
+  String get resendLimitHint => 'Podemos reenviarlo: hasta 3 veces por hora.';
+
+  @override
+  String get resendVerification => 'Reenviar correo de verificación';
+
+  @override
+  String get emailVerified => 'Correo verificado';
+
+  @override
+  String get verificationSent =>
+      'Correo de verificación enviado: revisa tu bandeja.';
+
+  @override
+  String get browserOpenFailed => 'No se pudo abrir el navegador';
+
+  @override
+  String continueWith(String provider) {
+    return 'Continuar con $provider';
+  }
+
+  @override
+  String get peopleSearchFailed => 'No se pudo buscar personas';
+
+  @override
+  String get startChatFailed => 'No se pudo iniciar un chat con esta persona';
+
+  @override
+  String get profileLoadFailed => 'No se pudo cargar este perfil';
+
+  @override
+  String get myProfileLoadFailed => 'No se pudo cargar tu perfil';
+
+  @override
+  String get saveChangesFailed => 'No se pudieron guardar los cambios';
+
+  @override
+  String get avatarUpdateFailed => 'No se pudo actualizar el avatar';
+
+  @override
+  String get oauthCancelled => 'Se canceló el inicio de sesión';
+
+  @override
+  String get oauthCancelledHint =>
+      'No se cambió nada. Inténtalo de nuevo o usa tu usuario y contraseña.';
+
+  @override
+  String get oauthFailed => 'No se pudo completar el inicio de sesión';
+
+  @override
+  String get oauthFailedHint => 'Inicia sesión con tu usuario y contraseña.';
 }

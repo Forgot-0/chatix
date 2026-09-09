@@ -45,15 +45,16 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   @override
   Widget build(BuildContext context) {
     final listState = ref.watch(chatListProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chats'),
+        title: Text(l10n.chats),
         actions: [
           IconButton(
             onPressed: () => context.push(ChatSearchRoute.location),
             icon: const Icon(Icons.search),
-            tooltip: 'Search chats and people',
+            tooltip: l10n.searchChatsAndPeople,
           ),
         ],
       ),
@@ -61,7 +62,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
         loading: () => const AppListSkeleton(hasTrailing: true),
         error: (error, _) => AppErrorState(
           error: error,
-          fallbackMessage: 'Could not load your chats.',
+          fallbackMessage: l10n.chatsLoadFailed,
           onRetry: () => ref.read(chatListProvider.notifier).refresh(),
         ),
         data: (state) {
@@ -70,12 +71,12 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
               onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
               child: AppEmptyState(
                 icon: Icons.forum_outlined,
-                title: 'No chats yet',
-                message: 'Start a conversation and it will show up here.',
+                title: l10n.noChatsYet,
+                message: l10n.noChatsYetHint,
                 action: FilledButton.icon(
                   onPressed: () => context.push(CreateChatRoute.location),
                   icon: const Icon(Icons.add_comment_outlined),
-                  label: const Text('New chat'),
+                  label: Text(l10n.newChat),
                 ),
               ),
             );
@@ -101,7 +102,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(CreateChatRoute.location),
         icon: const Icon(Icons.add_comment_outlined),
-        label: const Text('New chat'),
+        label: Text(l10n.newChat),
       ),
     );
   }

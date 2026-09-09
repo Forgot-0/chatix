@@ -6,6 +6,7 @@ import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class UserSearchField extends ConsumerStatefulWidget {
   const UserSearchField({
@@ -78,7 +79,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
         (failure) {
           _error = friendlyFailureMessage(
             failure,
-            fallback: 'Could not search for people',
+            fallback: AppLocalizations.of(context).peopleSearchFailed,
           );
           _results = const [];
         },
@@ -122,7 +123,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
             border: const OutlineInputBorder(),
             suffixIcon: hasQuery
                 ? IconButton(
-                    tooltip: 'Clear',
+                    tooltip: AppLocalizations.of(context).clear,
                     icon: const Icon(Icons.close),
                     onPressed: () {
                       _controller.clear();
@@ -161,7 +162,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
             Expanded(child: Text(_error!, style: theme.textTheme.bodySmall)),
             TextButton(
               onPressed: () => _search(_controller.text.trim()),
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context).retry),
             ),
           ],
         ),

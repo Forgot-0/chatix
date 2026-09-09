@@ -7,6 +7,7 @@ import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ResetPasswordRequestScreen extends ConsumerStatefulWidget {
   const ResetPasswordRequestScreen({super.key});
@@ -47,7 +48,7 @@ class _ResetPasswordRequestScreenState
       (_) {
         AppUtils.showSnackBar(
           context,
-          message: 'Check your email for a reset code.',
+          message: AppLocalizations.of(context).resetCodeSent,
         );
         context.push(ResetPasswordConfirmRoute.location);
       },
@@ -57,7 +58,7 @@ class _ResetPasswordRequestScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).resetPassword)),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(
@@ -74,8 +75,8 @@ class _ResetPasswordRequestScreenState
                 FormBuilderTextField(
                   name: 'email',
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).email,
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: AuthFieldValidators.email,
@@ -89,14 +90,14 @@ class _ResetPasswordRequestScreenState
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Send Code'),
+                      : Text(AppLocalizations.of(context).sendCode),
                 ),
                 const SizedBox(height: 16),
                 Center(
                   child: TextButton(
                     onPressed: () =>
                         context.push(ResetPasswordConfirmRoute.location),
-                    child: const Text('I already have a code'),
+                    child: Text(AppLocalizations.of(context).haveCodeAlready),
                   ),
                 ),
               ],

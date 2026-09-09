@@ -1,95 +1,212 @@
 import 'package:flutter/material.dart';
 
-class AppTheme {
-  static ThemeData lightTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.light,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
-      brightness: Brightness.light,
-    ),
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      foregroundColor: Colors.black,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    dividerTheme: const DividerThemeData(thickness: 1),
-  );
+import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/chatix_palette.dart';
 
-  static ThemeData darkTheme = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
-      brightness: Brightness.dark,
-    ),
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      foregroundColor: Colors.white,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
+class AppTheme {
+  static const String fontFamily = 'Manrope';
+
+  static const List<FontFeature> tabularFigures = [
+    FontFeature.tabularFigures(),
+  ];
+
+  static ThemeData lightTheme = light(ChatDensity.cosy);
+  static ThemeData darkTheme = dark(ChatDensity.cosy);
+
+  static ThemeData light(ChatDensity density) =>
+      _build(Brightness.light, density);
+
+  static ThemeData dark(ChatDensity density) =>
+      _build(Brightness.dark, density);
+
+  static ThemeData _build(Brightness brightness, ChatDensity density) {
+    final isDark = brightness == Brightness.dark;
+
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: ChatixPalette.violet,
+          brightness: brightness,
+        ).copyWith(
+          primary: isDark ? const Color(0xFF9E8CFF) : ChatixPalette.violet,
+          secondary: ChatixPalette.mint,
+          error: ChatixPalette.coral,
+          surface: isDark
+              ? ChatixPalette.graphite900
+              : ChatixPalette.graphite50,
+          onSurface: isDark
+              ? ChatixPalette.graphite50
+              : ChatixPalette.graphite900,
+          surfaceContainerLowest: isDark
+              ? ChatixPalette.graphite900
+              : Colors.white,
+          surfaceContainer: isDark
+              ? ChatixPalette.graphite800
+              : ChatixPalette.graphite100,
+          surfaceContainerHigh: isDark
+              ? ChatixPalette.graphite700
+              : ChatixPalette.graphite100,
+          surfaceContainerHighest: isDark
+              ? ChatixPalette.graphite700
+              : ChatixPalette.graphite200,
+          outline: isDark
+              ? ChatixPalette.graphite400
+              : ChatixPalette.graphite400,
+          outlineVariant: isDark
+              ? ChatixPalette.graphite600
+              : ChatixPalette.graphite200,
+        );
+
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      colorScheme: scheme,
+      fontFamily: fontFamily,
+      scaffoldBackgroundColor: scheme.surface,
+    );
+
+    return base.copyWith(
+      extensions: [
+        isDark ? ChatixTheme.dark(density) : ChatixTheme.light(density),
+      ],
+      textTheme: base.textTheme.copyWith(
+        labelSmall: base.textTheme.labelSmall?.copyWith(
+          fontFeatures: tabularFigures,
+        ),
+        labelMedium: base.textTheme.labelMedium?.copyWith(
+          fontFeatures: tabularFigures,
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        scrolledUnderElevation: 0.5,
+        backgroundColor: scheme.surface,
+        foregroundColor: scheme.onSurface,
+        titleTextStyle: base.textTheme.titleMedium?.copyWith(
+          fontFamily: fontFamily,
+          fontWeight: FontWeight.w600,
+          color: scheme.onSurface,
+        ),
       ),
-    ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _SharedAxisTransitionBuilder(),
+          TargetPlatform.iOS: _SharedAxisTransitionBuilder(),
+        },
       ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
       ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    ),
-    cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    dividerTheme: const DividerThemeData(thickness: 1),
-  );
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: scheme.surfaceContainer,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: scheme.surfaceContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      chipTheme: base.chipTheme.copyWith(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        thickness: 1,
+        space: 1,
+        color: scheme.outlineVariant,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surface,
+        indicatorColor: scheme.primary.withValues(alpha: 0.16),
+        elevation: 0,
+      ),
+    );
+  }
+}
+
+class _SharedAxisTransitionBuilder extends PageTransitionsBuilder {
+  const _SharedAxisTransitionBuilder();
+
+  @override
+  Duration get transitionDuration => ChatixTheme.duration;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T>? route,
+    BuildContext? context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: ChatixTheme.curve,
+      reverseCurve: ChatixTheme.curve.flipped,
+    );
+
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.03),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  }
 }

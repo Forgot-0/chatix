@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import '../../../../helpers/pump_app.dart';
 
 void main() {
@@ -13,7 +15,11 @@ void main() {
         widget: pumpableApp(
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
+            // The real app theme and ARB delegates: the screen reads both, so
+            // a golden built on stand-ins would not be the shipped screen.
+            theme: AppTheme.lightTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: const LoginScreen(),
           ),
         ),

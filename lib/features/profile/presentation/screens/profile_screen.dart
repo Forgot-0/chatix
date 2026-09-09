@@ -34,8 +34,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final resolvedProfileId = widget.profileId ?? currentUserId;
 
     if (resolvedProfileId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Sign in to view your profile')),
+      return Scaffold(
+        body: Center(
+          child: Text(AppLocalizations.of(context).signInToViewProfile),
+        ),
       );
     }
 
@@ -46,7 +48,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(l10n.profile),
         actions: [
           if (canEdit) ...[
             IconButton(
@@ -71,7 +73,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         error: (error, _) => _ProfileError(
           message: friendlyFailureMessage(
             error,
-            fallback: 'Could not load this profile',
+            fallback: AppLocalizations.of(context).profileLoadFailed,
           ),
           onRetry: () =>
               ref.invalidate(profileDetailProvider(resolvedProfileId)),
@@ -95,7 +97,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.chat_bubble_outline),
-              label: const Text('Message'),
+              label: Text(l10n.sendMessageAction),
             ),
     );
   }
@@ -124,7 +126,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               chatFailureMessage(failure) ??
                   friendlyFailureMessage(
                     failure,
-                    fallback: 'Could not start a chat with this person',
+                    fallback: AppLocalizations.of(context).startChatFailed,
                   ),
             ),
           ),
@@ -190,13 +192,19 @@ class _ProfileContent extends StatelessWidget {
           ),
         if (profile.bio != null && profile.bio!.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Text('About', style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).profileAbout,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           Text(profile.bio!),
         ],
         if (profile.skills.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Text('Skills', style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).profileSkills,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -208,7 +216,10 @@ class _ProfileContent extends StatelessWidget {
         ],
         if (profile.contacts.isNotEmpty) ...[
           const SizedBox(height: 24),
-          Text('Contacts', style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context).profileContacts,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           ...profile.contacts.map((contact) => _ContactTile(contact: contact)),
         ],
@@ -255,7 +266,10 @@ class _ProfileError extends StatelessWidget {
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Retry')),
+            FilledButton(
+              onPressed: onRetry,
+              child: Text(AppLocalizations.of(context).retry),
+            ),
           ],
         ),
       ),

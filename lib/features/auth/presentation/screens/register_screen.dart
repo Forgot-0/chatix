@@ -7,6 +7,7 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -57,7 +58,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final isLoading = authState.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).register)),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Center(
@@ -89,9 +90,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 32),
                   FormBuilderTextField(
                     name: 'username',
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      hintText: '4-100 characters',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).username,
+                      hintText: AppLocalizations.of(context).usernameHint,
                       prefixIcon: Icon(Icons.person_outline),
                     ),
                     validator: AuthFieldValidators.username,
@@ -100,9 +101,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   FormBuilderTextField(
                     name: 'email',
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).email,
+                      hintText: AppLocalizations.of(context).emailHint,
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: AuthFieldValidators.email,
@@ -116,8 +117,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ?.fields['password_repeat']
                         ?.validate(),
                     decoration: InputDecoration(
-                      labelText: 'Password',
-                      hintText: '8+ chars, upper/lower/digit/special',
+                      labelText: AppLocalizations.of(context).password,
+                      hintText: AppLocalizations.of(context).passwordRule,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -139,8 +140,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     name: 'password_repeat',
                     obscureText: !_isConfirmPasswordVisible,
                     decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      hintText: 'Confirm your password',
+                      labelText: AppLocalizations.of(context).confirmPassword,
+                      hintText: AppLocalizations.of(
+                        context,
+                      ).confirmPasswordHint,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -177,7 +180,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Register'),
+                        : Text(AppLocalizations.of(context).register),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -195,7 +198,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         onPressed: () {
                           context.go(LoginRoute.location);
                         },
-                        child: const Text('Login'),
+                        child: Text(AppLocalizations.of(context).loginTitle),
                       ),
                     ],
                   ),

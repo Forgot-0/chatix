@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/chatix_palette.dart';
+
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
+import 'package:chatix/features/chat/presentation/widgets/video_preview.dart';
+import 'package:chatix/features/chat/presentation/widgets/voice_player.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
@@ -31,6 +36,9 @@ class MessageBubble extends StatelessWidget {
     this.selectionMode = false,
     this.isSelected = false,
     this.onSelectionToggled,
+    this.isFirstInGroup = true,
+    this.isLastInGroup = true,
+    this.showAuthor = false,
   });
 
   final MessageEntity message;
@@ -68,10 +76,17 @@ class MessageBubble extends StatelessWidget {
 
   final bool isHighlighted;
 
+  final bool isFirstInGroup;
+  final bool isLastInGroup;
+
+  final bool showAuthor;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final chatix = ChatixTheme.of(context);
+    final density = chatix.density;
 
     if (message.type == MessageType.system) {
       return Padding(
@@ -86,82 +101,133 @@ class MessageBubble extends StatelessWidget {
       );
     }
 
+    final foreground = isMine
+        ? chatix.outgoingForeground
+        : chatix.incomingForeground;
+    final muted = foreground.withValues(alpha: 0.66);
+
+    final radius = chatix.stackedBorderRadius(
+      isMine: isMine,
+      isFirstInGroup: isFirstInGroup,
+      isLastInGroup: isLastInGroup,
+    );
+
+    final authorColor = ChatixPalette.authorColor(
+      message.authorId,
+      theme.brightness,
+    );
+
+    final content = Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: density.bubblePaddingX,
+        vertical: density.bubblePaddingY,
+      ),
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.78,
+      ),
+      decoration: BoxDecoration(
+        gradient: isMine ? chatix.outgoingGradient : null,
+        color: isMine ? null : chatix.incomingSurface,
+        borderRadius: radius,
+        border: isMine
+            ? null
+            : Border.all(color: chatix.incomingHairline, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showAuthor && !isMine)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                message.authorLabel,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: authorColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          if (message.forwardedFrom != null ||
+              message.forwardedFromMessageId != null)
+            _ForwardHeader(message: message, foreground: muted),
+          if (message.replyTo != null || message.replyToId != null)
+            _ReplyPreview(
+              message: message,
+              onTap: onJumpToOriginal,
+              accent: isMine ? foreground : authorColor,
+              foreground: muted,
+            ),
+          if (message.attachments.isNotEmpty)
+            _AttachmentList(
+              messageId: message.id,
+              attachments: message.attachments,
+              onOpen: onOpenAttachment,
+              foreground: foreground,
+            ),
+          if (message.content != null && message.content!.isNotEmpty)
+            Text(
+              message.content!,
+              style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
+            ),
+          const SizedBox(height: 2),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _formatTime(message.createdAt),
+                style: theme.textTheme.labelSmall?.copyWith(color: muted),
+              ),
+              if (message.isEdited) ...[
+                const SizedBox(width: 4),
+                Text(
+                  AppLocalizations.of(context).messageEdited,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: muted,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+              if (showReadTicks) ...[
+                const SizedBox(width: 4),
+                _ReadTicks(readByPeer: readByPeer, foreground: muted),
+              ],
+            ],
+          ),
+          if (_hasReactions)
+            _ReactionChips(
+              groups: reactions!.groups,
+              onTap: onToggleReaction,
+              onLongPress: onShowReactionUsers,
+              onSurface: isMine,
+            ),
+        ],
+      ),
+    );
+
     final bubble = Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
+        duration: ChatixTheme.duration,
+        curve: ChatixTheme.curve,
+        margin: EdgeInsets.fromLTRB(
+          12,
+          isFirstInGroup ? density.groupGap : density.stackGap,
+          12,
+          0,
+        ),
         decoration: BoxDecoration(
           color: isHighlighted
-              ? scheme.primary.withValues(alpha: 0.12)
+              ? scheme.primary.withValues(alpha: 0.14)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(chatix.bubbleRadius),
         ),
-        child: GestureDetector(
-          onTap: selectionMode ? onSelectionToggled : null,
-          onLongPress: selectionMode ? null : () => _showActions(context),
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-            padding: const EdgeInsets.all(10),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.78,
-            ),
-            decoration: BoxDecoration(
-              color: isMine
-                  ? scheme.primaryContainer
-                  : scheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (message.forwardedFrom != null ||
-                    message.forwardedFromMessageId != null)
-                  _ForwardHeader(message: message),
-                if (message.replyTo != null || message.replyToId != null)
-                  _ReplyPreview(message: message, onTap: onJumpToOriginal),
-                if (message.attachments.isNotEmpty)
-                  _AttachmentList(
-                    messageId: message.id,
-                    attachments: message.attachments,
-                    onOpen: onOpenAttachment,
-                  ),
-                if (message.content != null && message.content!.isNotEmpty)
-                  Text(message.content!, style: theme.textTheme.bodyMedium),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatTime(message.createdAt),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.outline,
-                      ),
-                    ),
-                    if (message.isEdited) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        AppLocalizations.of(context).messageEdited,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: scheme.outline,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                    if (showReadTicks) ...[
-                      const SizedBox(width: 4),
-                      _ReadTicks(readByPeer: readByPeer),
-                    ],
-                  ],
-                ),
-                if (_hasReactions)
-                  _ReactionChips(
-                    groups: reactions!.groups,
-                    onTap: onToggleReaction,
-                    onLongPress: onShowReactionUsers,
-                  ),
-              ],
-            ),
+        child: _SwipeToReply(
+          enabled: !selectionMode && onReply != null,
+          onReply: onReply,
+          child: GestureDetector(
+            onTap: selectionMode ? onSelectionToggled : null,
+            onLongPress: selectionMode ? null : () => _showActions(context),
+            child: content,
           ),
         ),
       ),
@@ -270,9 +336,10 @@ class MessageBubble extends StatelessWidget {
 }
 
 class _ForwardHeader extends StatelessWidget {
-  const _ForwardHeader({required this.message});
+  const _ForwardHeader({required this.message, required this.foreground});
 
   final MessageEntity message;
+  final Color foreground;
 
   @override
   Widget build(BuildContext context) {
@@ -284,15 +351,13 @@ class _ForwardHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.forward, size: 14, color: theme.colorScheme.outline),
+          Icon(Icons.forward, size: 14, color: foreground),
           const SizedBox(width: 4),
           Text(
             origin == null
                 ? 'Forwarded message'
                 : 'Forwarded from ${origin.authorLabel}',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
+            style: theme.textTheme.labelSmall?.copyWith(color: foreground),
           ),
         ],
       ),
@@ -301,9 +366,16 @@ class _ForwardHeader extends StatelessWidget {
 }
 
 class _ReplyPreview extends StatelessWidget {
-  const _ReplyPreview({required this.message, this.onTap});
+  const _ReplyPreview({
+    required this.message,
+    required this.accent,
+    required this.foreground,
+    this.onTap,
+  });
 
   final MessageEntity message;
+  final Color accent;
+  final Color foreground;
   final VoidCallback? onTap;
 
   @override
@@ -318,9 +390,7 @@ class _ReplyPreview extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.only(left: 8),
         decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(color: theme.colorScheme.primary, width: 3),
-          ),
+          border: Border(left: BorderSide(color: accent, width: 3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +402,7 @@ class _ReplyPreview extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.primary,
+                  color: accent,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -340,9 +410,7 @@ class _ReplyPreview extends StatelessWidget {
               original?.content ?? l10n.messageNotFound,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: foreground),
             ),
           ],
         ),
@@ -355,33 +423,68 @@ class _AttachmentList extends StatelessWidget {
   const _AttachmentList({
     required this.messageId,
     required this.attachments,
+    required this.foreground,
     this.onOpen,
   });
 
   final String messageId;
   final List<AttachmentEntity> attachments;
+  final Color foreground;
   final void Function(AttachmentEntity attachment)? onOpen;
 
   @override
   Widget build(BuildContext context) {
+    bool ready(AttachmentEntity a) =>
+        a.attachmentStatus == AttachmentStatus.success;
+
     final images = [
-      for (final attachment in attachments)
-        if (attachment.attachmentType == AttachmentType.image &&
-            attachment.attachmentStatus == AttachmentStatus.success)
-          attachment,
+      for (final a in attachments)
+        if (a.attachmentType == AttachmentType.image && ready(a)) a,
+    ];
+    final playable = [
+      for (final a in attachments)
+        if (ready(a) &&
+            (a.attachmentType == AttachmentType.video ||
+                a.attachmentType == AttachmentType.videoNote ||
+                a.attachmentType == AttachmentType.voice))
+          a,
     ];
     final rest = [
-      for (final attachment in attachments)
-        if (!images.contains(attachment)) attachment,
+      for (final a in attachments)
+        if (!images.contains(a) && !playable.contains(a)) a,
     ];
+
+    final accent = ChatixTheme.of(context).success;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (images.isNotEmpty)
           _ImageGrid(messageId: messageId, images: images, onOpen: onOpen),
+        for (final attachment in playable)
+          switch (attachment.attachmentType) {
+            AttachmentType.voice => VoicePlayer(
+              attachment: attachment,
+              messageId: messageId,
+              foreground: foreground,
+              accent: accent,
+            ),
+            AttachmentType.videoNote => VideoPreview(
+              attachment: attachment,
+              messageId: messageId,
+              isCircular: true,
+            ),
+            _ => GestureDetector(
+              onTap: () => onOpen?.call(attachment),
+              child: VideoPreview(attachment: attachment, messageId: messageId),
+            ),
+          },
         for (final attachment in rest)
-          _AttachmentRow(attachment: attachment, onOpen: onOpen),
+          _AttachmentRow(
+            attachment: attachment,
+            onOpen: onOpen,
+            foreground: foreground,
+          ),
         const SizedBox(height: 4),
       ],
     );
@@ -448,9 +551,14 @@ class _ImageGrid extends StatelessWidget {
 }
 
 class _AttachmentRow extends StatelessWidget {
-  const _AttachmentRow({required this.attachment, this.onOpen});
+  const _AttachmentRow({
+    required this.attachment,
+    required this.foreground,
+    this.onOpen,
+  });
 
   final AttachmentEntity attachment;
+  final Color foreground;
   final void Function(AttachmentEntity attachment)? onOpen;
 
   @override
@@ -486,7 +594,7 @@ class _AttachmentRow extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18),
+            Icon(icon, size: 18, color: foreground),
             const SizedBox(width: 6),
             Flexible(
               child: Column(
@@ -496,15 +604,17 @@ class _AttachmentRow extends StatelessWidget {
                     attachment.originalFilename,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: foreground,
+                    ),
                   ),
                   Text(
                     label,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color:
                           attachment.attachmentStatus == AttachmentStatus.error
-                          ? theme.colorScheme.error
-                          : theme.colorScheme.outline,
+                          ? ChatixTheme.of(context).danger
+                          : foreground.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -518,26 +628,34 @@ class _AttachmentRow extends StatelessWidget {
 }
 
 class _ReadTicks extends StatelessWidget {
-  const _ReadTicks({required this.readByPeer});
+  const _ReadTicks({required this.readByPeer, required this.foreground});
 
   final bool readByPeer;
+  final Color foreground;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Icon(
       readByPeer ? Icons.done_all : Icons.done,
       size: 14,
-      color: readByPeer ? scheme.primary : scheme.outline,
-      semanticLabel: readByPeer ? 'Read' : 'Sent',
+      color: readByPeer ? ChatixTheme.of(context).success : foreground,
+      semanticLabel: readByPeer ? l10n.messageRead : l10n.messageSent,
     );
   }
 }
 
 class _ReactionChips extends StatelessWidget {
-  const _ReactionChips({required this.groups, this.onTap, this.onLongPress});
+  const _ReactionChips({
+    required this.groups,
+    required this.onSurface,
+    this.onTap,
+    this.onLongPress,
+  });
 
   final List<ReactionGroupEntity> groups;
+
+  final bool onSurface;
   final void Function(String emoji)? onTap;
   final void Function(String emoji)? onLongPress;
 
@@ -545,6 +663,12 @@ class _ReactionChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final chatix = ChatixTheme.of(context);
+
+    final selected = onSurface ? Colors.white : scheme.primary;
+    final idle = onSurface
+        ? Colors.white.withValues(alpha: 0.72)
+        : scheme.outline;
 
     return Padding(
       padding: const EdgeInsets.only(top: 6),
@@ -553,45 +677,175 @@ class _ReactionChips extends StatelessWidget {
         runSpacing: 4,
         children: [
           for (final summary in groups)
-            InkWell(
-              onTap: onTap == null ? null : () => onTap!(summary.emoji),
-              onLongPress: onLongPress == null
-                  ? null
-                  : () => onLongPress!(summary.emoji),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: summary.reactedByMe
-                      ? scheme.primary.withValues(alpha: 0.16)
-                      : scheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: summary.reactedByMe
-                        ? scheme.primary
-                        : Colors.transparent,
+            _BloomIn(
+              key: ValueKey(summary.emoji),
+              child: InkWell(
+                onTap: onTap == null ? null : () => onTap!(summary.emoji),
+                onLongPress: onLongPress == null
+                    ? null
+                    : () => onLongPress!(summary.emoji),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(summary.emoji, style: theme.textTheme.bodySmall),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${summary.count}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: summary.reactedByMe
-                            ? scheme.primary
-                            : scheme.outline,
-                        fontWeight: summary.reactedByMe
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
+                  decoration: BoxDecoration(
+                    color: onSurface
+                        ? Colors.white.withValues(
+                            alpha: summary.reactedByMe ? 0.26 : 0.14,
+                          )
+                        : (summary.reactedByMe
+                              ? scheme.primary.withValues(alpha: 0.16)
+                              : chatix.incomingSurface),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: summary.reactedByMe
+                          ? selected
+                          : Colors.transparent,
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(summary.emoji, style: theme.textTheme.bodySmall),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${summary.count}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: summary.reactedByMe ? selected : idle,
+                          fontWeight: summary.reactedByMe
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BloomIn extends StatefulWidget {
+  const _BloomIn({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<_BloomIn> createState() => _BloomInState();
+}
+
+class _BloomInState extends State<_BloomIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _curved;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: ChatixTheme.duration,
+    );
+    _curved = CurvedAnimation(parent: _controller, curve: ChatixTheme.curve);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.6, end: 1).animate(_curved),
+      child: FadeTransition(opacity: _curved, child: widget.child),
+    );
+  }
+}
+
+class _SwipeToReply extends StatefulWidget {
+  const _SwipeToReply({
+    required this.child,
+    required this.enabled,
+    required this.onReply,
+  });
+
+  final Widget child;
+  final bool enabled;
+  final VoidCallback? onReply;
+
+  @override
+  State<_SwipeToReply> createState() => _SwipeToReplyState();
+}
+
+class _SwipeToReplyState extends State<_SwipeToReply> {
+  static const double _maxDrag = 64;
+  static const double _triggerAt = 44;
+
+  double _offset = 0;
+  bool _armed = false;
+
+  void _onUpdate(DragUpdateDetails details) {
+    final next = (_offset + details.delta.dx).clamp(0.0, _maxDrag);
+    if (next == _offset) return;
+
+    final wasArmed = _armed;
+    setState(() {
+      _offset = next;
+      _armed = next >= _triggerAt;
+    });
+
+    if (_armed && !wasArmed) Feedback.forTap(context);
+  }
+
+  void _onEnd(DragEndDetails details) {
+    if (_armed) widget.onReply?.call();
+    setState(() {
+      _offset = 0;
+      _armed = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.enabled) return widget.child;
+
+    final scheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onHorizontalDragUpdate: _onUpdate,
+      onHorizontalDragEnd: _onEnd,
+      onHorizontalDragCancel: () => setState(() {
+        _offset = 0;
+        _armed = false;
+      }),
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          if (_offset > 0)
+            Opacity(
+              opacity: (_offset / _triggerAt).clamp(0.0, 1.0),
+              child: Icon(
+                Icons.reply,
+                size: 20,
+                color: _armed ? scheme.primary : scheme.outline,
+              ),
+            ),
+          AnimatedSlide(
+            offset: Offset(_offset / 100, 0),
+            duration: _offset == 0
+                ? ChatixTheme.duration
+                : ChatixTheme.fastDuration,
+            curve: ChatixTheme.curve,
+            child: widget.child,
+          ),
         ],
       ),
     );

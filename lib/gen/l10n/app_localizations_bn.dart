@@ -36,16 +36,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get language => 'ভাষা';
 
   @override
-  String get change_language => 'Change application language';
+  String get change_language => 'ভাষা পরিবর্তন';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'থিম';
 
   @override
-  String get change_theme => 'Change application theme';
+  String get change_theme => 'থিম পরিবর্তন';
 
   @override
-  String get notifications => 'Notifications';
+  String get notifications => 'বিজ্ঞপ্তি';
 
   @override
   String get notification_settings => 'Configure notification preferences';
@@ -327,4 +327,460 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get backToLatest => 'সাম্প্রতিক বার্তায় ফিরুন';
+
+  @override
+  String get messageRead => 'পঠিত';
+
+  @override
+  String get messageSent => 'পাঠানো';
+
+  @override
+  String get dateToday => 'আজ';
+
+  @override
+  String get dateYesterday => 'গতকাল';
+
+  @override
+  String get unreadMessages => 'অপঠিত বার্তা';
+
+  @override
+  String get noMessagesYet => 'এখনো কোনো বার্তা নেই';
+
+  @override
+  String get editingMessage => 'বার্তা সম্পাদনা';
+
+  @override
+  String get scrollToBottom => 'সাম্প্রতিক বার্তায় যান';
+
+  @override
+  String get messageDensity => 'বার্তার ঘনত্ব';
+
+  @override
+  String get densityCompact => 'সংক্ষিপ্ত';
+
+  @override
+  String get densityCosy => 'স্বাভাবিক';
+
+  @override
+  String get densitySpacious => 'প্রশস্ত';
+
+  @override
+  String get voiceSlideToCancel => 'বাতিলে বামে, লক করতে উপরে সোয়াইপ';
+
+  @override
+  String get voiceReleaseToCancel => 'ছাড়লে বাতিল';
+
+  @override
+  String get voiceRecordingLocked => 'রেকর্ডিং — শেষ হলে পাঠান চাপুন';
+
+  @override
+  String get voicePermissionDenied => 'মাইক্রোফোন অ্যাক্সেস বন্ধ';
+
+  @override
+  String get voiceMessage => 'ভয়েস বার্তা';
+
+  @override
+  String get attach => 'সংযুক্ত করুন';
+
+  @override
+  String get messageHint => 'বার্তা';
+
+  @override
+  String get unknownChat => 'অজানা চ্যাট';
+
+  @override
+  String get unknownProfile => 'অজানা প্রোফাইল';
+
+  @override
+  String get goToChats => 'চ্যাটে যান';
+
+  @override
+  String get pageNotFound => 'পেজ পাওয়া যায়নি';
+
+  @override
+  String pathDoesNotExist(String path) {
+    return '$path নেই';
+  }
+
+  @override
+  String get retry => 'আবার চেষ্টা';
+
+  @override
+  String get clear => 'মুছুন';
+
+  @override
+  String get add => 'যোগ করুন';
+
+  @override
+  String get save => 'সংরক্ষণ';
+
+  @override
+  String get readAll => 'সব পড়া';
+
+  @override
+  String get filter => 'ফিল্টার';
+
+  @override
+  String get filterAll => 'সব';
+
+  @override
+  String get filterUnread => 'শুধু অপঠিত';
+
+  @override
+  String get filterRead => 'শুধু পঠিত';
+
+  @override
+  String get showAll => 'সব দেখান';
+
+  @override
+  String get notificationsLoadFailed => 'বিজ্ঞপ্তি লোড করা যায়নি।';
+
+  @override
+  String get profiles => 'মানুষ';
+
+  @override
+  String get searchByName => 'নাম দিয়ে খুঁজুন';
+
+  @override
+  String get searchByUsername => 'ইউজারনেম দিয়ে খুঁজুন';
+
+  @override
+  String get profilesLoadFailed => 'প্রোফাইল লোড করা যায়নি।';
+
+  @override
+  String get signInToViewProfile => 'প্রোফাইল দেখতে সাইন ইন করুন';
+
+  @override
+  String get signInToEditProfile => 'প্রোফাইল সম্পাদনা করতে সাইন ইন করুন';
+
+  @override
+  String get profileAbout => 'পরিচিতি';
+
+  @override
+  String get profileSkills => 'দক্ষতা';
+
+  @override
+  String get profileContacts => 'যোগাযোগ';
+
+  @override
+  String get sendMessageAction => 'বার্তা';
+
+  @override
+  String get editProfile => 'প্রোফাইল সম্পাদনা';
+
+  @override
+  String get displayName => 'প্রদর্শন নাম';
+
+  @override
+  String get specialization => 'বিশেষত্ব';
+
+  @override
+  String get bio => 'জীবনী';
+
+  @override
+  String get dateOfBirth => 'জন্ম তারিখ';
+
+  @override
+  String get addContact => 'যোগাযোগ যোগ করুন';
+
+  @override
+  String get contactProvider => 'প্রদানকারী (যেমন telegram)';
+
+  @override
+  String get contactHandle => 'যোগাযোগ (যেমন @handle)';
+
+  @override
+  String get skillsHint => 'দক্ষতা লিখে এন্টার চাপুন';
+
+  @override
+  String get photoLibraryFailed => 'ফটো লাইব্রেরি খোলা যায়নি';
+
+  @override
+  String get chats => 'চ্যাট';
+
+  @override
+  String get searchChatsAndPeople => 'চ্যাট ও মানুষ খুঁজুন';
+
+  @override
+  String get chatsLoadFailed => 'চ্যাট লোড করা যায়নি।';
+
+  @override
+  String get noChatsYet => 'এখনো কোনো চ্যাট নেই';
+
+  @override
+  String get noChatsYetHint => 'কথা শুরু করলে এখানে দেখা যাবে।';
+
+  @override
+  String get newChat => 'নতুন চ্যাট';
+
+  @override
+  String get chatTypeDirect => 'সরাসরি';
+
+  @override
+  String get chatTypeGroup => 'গ্রুপ';
+
+  @override
+  String get chatTypeSuper => 'সুপার';
+
+  @override
+  String get chatTypeChannel => 'চ্যানেল';
+
+  @override
+  String get chatPublicHintCreate => 'যে কেউ এই চ্যাট খুঁজে যোগ দিতে পারে';
+
+  @override
+  String get chatSlowModeSecondsField => 'স্লো মোড (সেকেন্ড)';
+
+  @override
+  String get createChat => 'চ্যাট তৈরি করুন';
+
+  @override
+  String get membersTitle => 'সদস্যরা';
+
+  @override
+  String get membersLoadFailed => 'সদস্য লোড করা যায়নি';
+
+  @override
+  String get addMember => 'সদস্য যোগ করুন';
+
+  @override
+  String get changeRole => 'ভূমিকা পরিবর্তন';
+
+  @override
+  String get banMember => 'নিষিদ্ধ';
+
+  @override
+  String get banMemberTitle => 'সদস্য নিষিদ্ধ করুন';
+
+  @override
+  String get kickMember => 'সরান';
+
+  @override
+  String get banReason => 'কারণ (ঐচ্ছিক)';
+
+  @override
+  String get banUntil => 'তারিখ দিন';
+
+  @override
+  String get searchPeople => 'মানুষ';
+
+  @override
+  String get noPeopleFound => 'কাউকে পাওয়া যায়নি';
+
+  @override
+  String get callConnecting => 'সংযোগ হচ্ছে…';
+
+  @override
+  String get callJoin => 'কলে যোগ দিন';
+
+  @override
+  String get callEnded => 'কল শেষ';
+
+  @override
+  String get callRejoin => 'আবার যোগ দিন';
+
+  @override
+  String get callLeave => 'ছাড়ুন';
+
+  @override
+  String get callTitle => 'কল';
+
+  @override
+  String selectedCount(int count) {
+    return '$countটি নির্বাচিত';
+  }
+
+  @override
+  String deleteMessagesTitle(int count) {
+    return '$countটি বার্তা মুছবেন?';
+  }
+
+  @override
+  String get cannotBeUndone => 'এটি ফেরানো যাবে না।';
+
+  @override
+  String get chatLoadFailed => 'চ্যাট লোড করা যায়নি';
+
+  @override
+  String get attachMedia => 'ছবি ও ভিডিও';
+
+  @override
+  String get attachDocument => 'নথি';
+
+  @override
+  String get messageForwarded => 'বার্তা ফরোয়ার্ড হয়েছে';
+
+  @override
+  String get forwardTo => 'কাকে ফরোয়ার্ড';
+
+  @override
+  String get noOtherChats => 'অন্য চ্যাট নেই';
+
+  @override
+  String get chatsLoadFailedShort => 'চ্যাট লোড করা যায়নি';
+
+  @override
+  String get discard => 'বাতিল করুন';
+
+  @override
+  String get reactedTitle => 'প্রতিক্রিয়া';
+
+  @override
+  String get noReactionsYet => 'এখনো কেউ এই প্রতিক্রিয়া দেয়নি';
+
+  @override
+  String get showMore => 'আরও দেখুন';
+
+  @override
+  String get bulkForwarding => 'ফরোয়ার্ড হচ্ছে';
+
+  @override
+  String get bulkDeleting => 'মুছে ফেলা হচ্ছে';
+
+  @override
+  String bulkProgress(String label, int done, int total) {
+    return '$label $done/$total…';
+  }
+
+  @override
+  String bulkComplete(String label, int total) {
+    return '$label সম্পন্ন ($total)';
+  }
+
+  @override
+  String bulkPartial(int done, int total, int failed, String reason) {
+    return '$totalটির মধ্যে $doneটি সফল — $failedটি ব্যর্থ: $reason';
+  }
+
+  @override
+  String get callTokenUnavailable => 'কল শুরু করা যায়নি';
+
+  @override
+  String get loginTitle => 'লগইন';
+
+  @override
+  String get emailOrUsername => 'ইমেইল বা ইউজারনেম';
+
+  @override
+  String get emailOrUsernameHint => 'you@example.com বা ইউজারনেম';
+
+  @override
+  String get passwordHint => 'পাসওয়ার্ড লিখুন';
+
+  @override
+  String get logIn => 'লগ ইন';
+
+  @override
+  String get username => 'ইউজারনেম';
+
+  @override
+  String get usernameHint => '৪-১০০ অক্ষর';
+
+  @override
+  String get emailHint => 'ইমেইল লিখুন';
+
+  @override
+  String get passwordRule => '৮+ অক্ষর, বড়/ছোট/সংখ্যা/বিশেষ';
+
+  @override
+  String get confirmPassword => 'পাসওয়ার্ড নিশ্চিত করুন';
+
+  @override
+  String get confirmPasswordHint => 'পাসওয়ার্ড আবার লিখুন';
+
+  @override
+  String get signInTitle => 'সাইন ইন';
+
+  @override
+  String get backToSignIn => 'সাইন ইনে ফিরুন';
+
+  @override
+  String get setNewPassword => 'নতুন পাসওয়ার্ড দিন';
+
+  @override
+  String get resetCode => 'রিসেট কোড';
+
+  @override
+  String get newPassword => 'নতুন পাসওয়ার্ড';
+
+  @override
+  String get confirmNewPassword => 'নতুন পাসওয়ার্ড নিশ্চিত করুন';
+
+  @override
+  String get resetPassword => 'পাসওয়ার্ড রিসেট';
+
+  @override
+  String get passwordUpdated => 'পাসওয়ার্ড হালনাগাদ হয়েছে — লগইন করুন।';
+
+  @override
+  String get sendCode => 'কোড পাঠান';
+
+  @override
+  String get haveCodeAlready => 'আমার কাছে কোড আছে';
+
+  @override
+  String get resetCodeSent => 'কোডের জন্য ইমেইল দেখুন।';
+
+  @override
+  String get verifyEmailTitle => 'ইমেইল যাচাই';
+
+  @override
+  String get verifyEmailHint => 'পাঠানো ইমেইলের টোকেন পেস্ট করুন।';
+
+  @override
+  String get verificationToken => 'যাচাই টোকেন';
+
+  @override
+  String get verify => 'যাচাই';
+
+  @override
+  String get resendLimitHint => 'আবার পাঠানো যায় — ঘণ্টায় ৩ বার পর্যন্ত।';
+
+  @override
+  String get resendVerification => 'যাচাই ইমেইল আবার পাঠান';
+
+  @override
+  String get emailVerified => 'ইমেইল যাচাই হয়েছে';
+
+  @override
+  String get verificationSent => 'যাচাই ইমেইল পাঠানো হয়েছে — ইনবক্স দেখুন।';
+
+  @override
+  String get browserOpenFailed => 'ব্রাউজার খোলা যায়নি';
+
+  @override
+  String continueWith(String provider) {
+    return '$provider দিয়ে চালিয়ে যান';
+  }
+
+  @override
+  String get peopleSearchFailed => 'মানুষ খোঁজা যায়নি';
+
+  @override
+  String get startChatFailed => 'এই ব্যক্তির সাথে চ্যাট শুরু করা যায়নি';
+
+  @override
+  String get profileLoadFailed => 'এই প্রোফাইল লোড করা যায়নি';
+
+  @override
+  String get myProfileLoadFailed => 'আপনার প্রোফাইল লোড করা যায়নি';
+
+  @override
+  String get saveChangesFailed => 'পরিবর্তন সংরক্ষণ করা যায়নি';
+
+  @override
+  String get avatarUpdateFailed => 'অবতার হালনাগাদ করা যায়নি';
+
+  @override
+  String get oauthCancelled => 'সাইন ইন বাতিল হয়েছে';
+
+  @override
+  String get oauthCancelledHint =>
+      'কিছু বদলায়নি। আবার চেষ্টা করুন বা ইউজারনেম ও পাসওয়ার্ড ব্যবহার করুন।';
+
+  @override
+  String get oauthFailed => 'সাইন ইন সম্পূর্ণ করা যায়নি';
+
+  @override
+  String get oauthFailedHint => 'বরং ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।';
 }

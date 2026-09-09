@@ -1,3 +1,4 @@
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -20,9 +21,15 @@ import 'package:chatix/features/chat/presentation/providers/chat_providers.dart'
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/utils/message_grouping.dart';
 import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
+import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
+import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_wallpaper.dart';
+import 'package:chatix/features/chat/presentation/widgets/voice_record_button.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -56,6 +63,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   String? _pendingScrollTo;
   int _scrollAttempts = 0;
+
+  bool _showScrollToBottom = false;
+
+  MessageEntity? _editing;
 
   static const int _maxScrollAttempts = 12;
 
@@ -100,10 +111,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _stepTowardTarget());
   }
 
+  bool _hasText = false;
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _textController.addListener(_onTextChanged);
 
     _pendingFocusId = widget.focusMessageId;
   }
@@ -141,6 +155,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     super.dispose();
   }
@@ -158,19 +173,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     return AppBar(
       leading: IconButton(
-        tooltip: 'Cancel',
+        tooltip: AppLocalizations.of(context).cancel,
         icon: const Icon(Icons.close),
         onPressed: _clearSelection,
       ),
-      title: Text('${selected.length} selected'),
+      title: Text(AppLocalizations.of(context).selectedCount(selected.length)),
       actions: [
         IconButton(
-          tooltip: 'Forward',
+          tooltip: AppLocalizations.of(context).messageForward,
           icon: const Icon(Icons.forward),
           onPressed: selected.isEmpty ? null : _forwardSelected,
         ),
         IconButton(
-          tooltip: 'Delete',
+          tooltip: AppLocalizations.of(context).messageDelete,
           icon: const Icon(Icons.delete_outline),
           onPressed: canDelete ? _deleteSelected : null,
         ),
@@ -205,7 +220,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     final useCase = ref.read(forwardMessageUseCaseProvider);
     await _runBulk(
-      label: 'Forwarding',
+      label: AppLocalizations.of(context).bulkForwarding,
       total: ordered.length,
       action: (index) async {
         final message = ordered[index];
@@ -227,16 +242,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Delete ${selected.length} messages?'),
-        content: const Text('This cannot be undone.'),
+        title: Text(
+          AppLocalizations.of(
+            dialogContext,
+          ).deleteMessagesTitle(selected.length),
+        ),
+        content: Text(AppLocalizations.of(dialogContext).cannotBeUndone),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(dialogContext).cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(dialogContext).messageDelete),
           ),
         ],
       ),
@@ -246,7 +265,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final ids = selected.toList();
     final notifier = ref.read(chatDetailProvider(widget.chatId).notifier);
     await _runBulk(
-      label: 'Deleting',
+      label: AppLocalizations.of(context).bulkDeleting,
       total: ids.length,
       action: (index) => notifier.deleteMessageReportingFailure(ids[index]),
     );
@@ -303,10 +322,38 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    final position = _scrollController.position;
+
+    if (position.pixels >= position.maxScrollExtent - 200) {
       ref.read(chatDetailProvider(widget.chatId).notifier).loadMore();
     }
+
+    final away = position.pixels > 240;
+    if (away != _showScrollToBottom) {
+      setState(() => _showScrollToBottom = away);
+    }
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: ChatixTheme.duration,
+      curve: ChatixTheme.curve,
+    );
+  }
+
+  void _startEditing(MessageEntity message) {
+    setState(() => _editing = message);
+    _textController.text = message.content ?? '';
+    _textController.selection = TextSelection.collapsed(
+      offset: _textController.text.length,
+    );
+  }
+
+  void _cancelEditing() {
+    setState(() => _editing = null);
+    _textController.clear();
   }
 
   @override
@@ -345,7 +392,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               ),
               actions: [
                 IconButton(
-                  tooltip: 'Call',
+                  tooltip: AppLocalizations.of(context).callTitle,
                   icon: const Icon(Icons.call_outlined),
                   onPressed: detail.value?.chat == null
                       ? null
@@ -354,7 +401,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         ),
                 ),
                 IconButton(
-                  tooltip: 'Members',
+                  tooltip: AppLocalizations.of(context).membersTitle,
                   icon: const Icon(Icons.people_outline),
                   onPressed: () =>
                       context.push(ChatMembersRoute.locationOf(widget.chatId)),
@@ -365,7 +412,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => AppErrorState(
           error: error,
-          fallbackMessage: 'Failed to load chat',
+          fallbackMessage: AppLocalizations.of(context).chatLoadFailed,
           onRetry: () =>
               ref.read(chatDetailProvider(widget.chatId).notifier).refresh(),
         ),
@@ -377,21 +424,41 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             children: [
               const _ConnectionBanner(),
               Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => ref
-                      .read(chatDetailProvider(widget.chatId).notifier)
-                      .refresh(),
-                  child: _MessageList(
-                    state: state,
-                    myUserId: myUserId,
-                    scrollController: _scrollController,
-                    chatId: widget.chatId,
-                    selectionMode: _selectionMode,
-                    selectedIds: _selectedMessageIds ?? const <String>{},
-                    onStartSelection: _startSelection,
-                    onToggleSelected: _toggleSelected,
-                    messageKeys: _messageKeys,
-                  ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: ChatWallpaper(
+                        seed: widget.chatId.hashCode,
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+                    RefreshIndicator(
+                      onRefresh: () => ref
+                          .read(chatDetailProvider(widget.chatId).notifier)
+                          .refresh(),
+                      child: _MessageList(
+                        state: state,
+                        myUserId: myUserId,
+                        scrollController: _scrollController,
+                        chatId: widget.chatId,
+                        selectionMode: _selectionMode,
+                        selectedIds: _selectedMessageIds ?? const <String>{},
+                        onStartSelection: _startSelection,
+                        onToggleSelected: _toggleSelected,
+                        messageKeys: _messageKeys,
+                        onEdit: _startEditing,
+                      ),
+                    ),
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: _ScrollToBottomButton(
+                        visible: _showScrollToBottom,
+                        unreadCount: state.chat?.unreadCount ?? 0,
+                        onPressed: _scrollToBottom,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (state.isViewingHistory)
@@ -400,7 +467,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       .read(chatDetailProvider(widget.chatId).notifier)
                       .returnToLatest(),
                 ),
-              if (state.replyTo != null)
+              if (_editing != null)
+                _EditBanner(message: _editing!, onCancel: _cancelEditing)
+              else if (state.replyTo != null)
                 _ReplyBanner(
                   message: state.replyTo!,
                   onCancel: () => ref
@@ -411,9 +480,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               _Composer(
                 controller: _textController,
                 enabled: canSend,
+                isEditing: _editing != null,
+                hasText: _hasText,
+                isRecording: ref.watch(voiceRecordProvider).isRecording,
                 disabledReason: _disabledReason(state.chat, me),
-                onAttach: canSend ? _pickAttachments : null,
+                onAttach: canSend && _editing == null ? _pickAttachments : null,
                 onSend: canSend ? _send : null,
+                onVoiceRecorded: canSend ? _sendVoice : null,
               ),
             ],
           );
@@ -430,7 +503,64 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return 'You do not have permission to send messages here';
   }
 
+  void _onTextChanged() {
+    final has = _textController.text.trim().isNotEmpty;
+    if (has != _hasText) setState(() => _hasText = has);
+  }
+
+  Future<void> _sendVoice(VoiceRecording recording) async {
+    final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
+
+    notifier.select([
+      AttachmentUploadRequestEntity.voice(
+        filename: recording.path.split('/').last,
+        mimeType: recording.mimeType,
+        fileSize: recording.sizeBytes,
+        filePath: recording.path,
+      ),
+    ]);
+
+    final selection = ref.read(chatAttachmentProvider(widget.chatId)).value;
+    if (selection?.failure != null) return;
+
+    await notifier.upload();
+    if (!mounted) return;
+
+    final uploaded = ref.read(chatAttachmentProvider(widget.chatId)).value;
+    final tokens = uploaded?.uploadTokens ?? const <String>[];
+    if (tokens.isEmpty) return;
+
+    await ref
+        .read(chatDetailProvider(widget.chatId).notifier)
+        .sendMessage(uploadTokens: tokens, messageType: MessageType.voice);
+
+    ref.read(confirmedAttachmentTokensProvider.notifier).release(tokens);
+    notifier.clear();
+  }
+
   Future<void> _send() async {
+    final editing = _editing;
+    if (editing != null) {
+      final text = _textController.text.trim();
+      if (text.isEmpty || text == (editing.content ?? '')) {
+        _cancelEditing();
+        return;
+      }
+
+      _cancelEditing();
+      try {
+        await ref
+            .read(chatDetailProvider(widget.chatId).notifier)
+            .editMessage(editing.id, text);
+      } on Failure catch (failure) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
+      }
+      return;
+    }
+
     final text = _textController.text.trim();
     final attachments = ref.read(chatAttachmentProvider(widget.chatId)).value;
 
@@ -462,7 +592,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Photos & videos'),
+              title: Text(AppLocalizations.of(sheetContext).attachMedia),
               subtitle: Text(
                 'Up to ${ChatAttachmentLimits.maxMediaCount}, '
                 '${ChatAttachmentLimits.formatBytes(ChatAttachmentLimits.maxMediaSizeBytes)} each',
@@ -472,7 +602,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.description_outlined),
-              title: const Text('Document'),
+              title: Text(AppLocalizations.of(sheetContext).attachDocument),
               subtitle: Text(
                 'One file, up to '
                 '${ChatAttachmentLimits.formatBytes(ChatAttachmentLimits.maxFileSizeBytes)}',
@@ -700,6 +830,7 @@ class _MessageList extends ConsumerWidget {
     required this.onStartSelection,
     required this.onToggleSelected,
     required this.messageKeys,
+    required this.onEdit,
   });
 
   final ChatDetailState state;
@@ -712,15 +843,16 @@ class _MessageList extends ConsumerWidget {
   final void Function(String messageId) onStartSelection;
   final void Function(String messageId) onToggleSelected;
   final Map<String, GlobalKey> messageKeys;
+  final void Function(MessageEntity message) onEdit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (state.messages.isEmpty && state.pending.isEmpty) {
       return ListView(
         controller: scrollController,
-        children: const [
-          SizedBox(height: 120),
-          Center(child: Text('No messages yet')),
+        children: [
+          const SizedBox(height: 120),
+          Center(child: Text(AppLocalizations.of(context).noMessagesYet)),
         ],
       );
     }
@@ -749,8 +881,32 @@ class _MessageList extends ConsumerWidget {
         final me = state.me;
         final isMine = myUserId != null && message.authorId == myUserId;
 
-        return MessageBubble(
+        final older = messageIndex + 1 < state.messages.length
+            ? state.messages[messageIndex + 1]
+            : null;
+        final newer = messageIndex > 0
+            ? state.messages[messageIndex - 1]
+            : null;
+
+        final startsGroup = MessageGrouping.startsGroup(older, message);
+        final endsGroup = MessageGrouping.startsGroup(message, newer);
+
+        final showsDate =
+            older == null ||
+            !MessageGrouping.sameDay(older.createdAt, message.createdAt);
+        final showsUnread = MessageGrouping.startsUnread(
+          lastReadSeq: state.chat?.lastRead?.lastReadMessageSeq,
+          older: older,
+          current: message,
+          myUserId: myUserId,
+        );
+
+        final bubble = MessageBubble(
           key: messageKeys.putIfAbsent(message.id, GlobalKey.new),
+          isFirstInGroup: startsGroup,
+          isLastInGroup: endsGroup,
+          showAuthor:
+              startsGroup && !isMine && state.chat?.type != ChatType.direct,
           message: message,
           isMine: isMine,
           selectionMode: selectionMode,
@@ -774,7 +930,7 @@ class _MessageList extends ConsumerWidget {
               : null,
           onForward: () => _forward(context, ref, message),
           onEdit: canEditMessage(me, message.authorId)
-              ? () => _edit(context, ref, message)
+              ? () => onEdit(message)
               : null,
           onDelete: canDeleteMessage(state.chat, me, message.authorId)
               ? () => notifier.deleteMessage(message.id)
@@ -782,39 +938,19 @@ class _MessageList extends ConsumerWidget {
           onOpenAttachment: (attachment) =>
               _openAttachment(context, ref, message, attachment),
         );
+
+        if (!showsDate && !showsUnread) return bubble;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (showsDate) _DateSeparator(date: message.createdAt),
+            if (showsUnread) const _UnreadSeparator(),
+            bubble,
+          ],
+        );
       },
     );
-  }
-
-  Future<void> _edit(
-    BuildContext context,
-    WidgetRef ref,
-    MessageEntity message,
-  ) async {
-    final controller = TextEditingController(text: message.content ?? '');
-    final result = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit message'),
-        content: TextField(controller: controller, maxLines: null),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == null || result.isEmpty) return;
-    await ref
-        .read(chatDetailProvider(chatId).notifier)
-        .editMessage(message.id, result);
   }
 
   void _showReactionUsers(
@@ -860,9 +996,9 @@ class _MessageList extends ConsumerWidget {
       (failure) => ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (_) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Message forwarded'))),
+      (_) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).messageForwarded)),
+      ),
     );
   }
 
@@ -925,6 +1061,124 @@ class _MessageList extends ConsumerWidget {
   }
 }
 
+class _DateSeparator extends StatelessWidget {
+  const _DateSeparator({required this.date});
+
+  final DateTime date;
+
+  static String label(BuildContext context, DateTime value) {
+    final l10n = AppLocalizations.of(context);
+    final local = value.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final that = DateTime(local.year, local.month, local.day);
+
+    final delta = today.difference(that).inDays;
+    if (delta == 0) return l10n.dateToday;
+    if (delta == 1) return l10n.dateYesterday;
+
+    return MaterialLocalizations.of(context).formatMediumDate(local);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.92,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label(context, date),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnreadSeparator extends StatelessWidget {
+  const _UnreadSeparator();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: accent.withValues(alpha: 0.4))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              AppLocalizations.of(context).unreadMessages,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: accent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(child: Divider(color: accent.withValues(alpha: 0.4))),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScrollToBottomButton extends StatelessWidget {
+  const _ScrollToBottomButton({
+    required this.visible,
+    required this.unreadCount,
+    required this.onPressed,
+  });
+
+  final bool visible;
+  final int unreadCount;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AnimatedSlide(
+      duration: ChatixTheme.duration,
+      curve: ChatixTheme.curve,
+      offset: visible ? Offset.zero : const Offset(0, 1.4),
+      child: AnimatedOpacity(
+        duration: ChatixTheme.duration,
+        opacity: visible ? 1 : 0,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 4, bottom: 4),
+          child: Badge(
+            isLabelVisible: unreadCount > 0,
+            label: Text(unreadCount > 99 ? '99+' : '$unreadCount'),
+            child: FloatingActionButton.small(
+              heroTag: null,
+              tooltip: AppLocalizations.of(context).scrollToBottom,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              foregroundColor: theme.colorScheme.onSurface,
+              elevation: 2,
+              onPressed: onPressed,
+              child: const Icon(Icons.arrow_downward),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PendingBubble extends ConsumerWidget {
   const _PendingBubble({required this.pending, required this.chatId});
 
@@ -980,11 +1234,11 @@ class _PendingBubble extends ConsumerWidget {
                   ),
                   TextButton(
                     onPressed: () => notifier.retry(pending),
-                    child: const Text('Retry'),
+                    child: Text(AppLocalizations.of(context).retry),
                   ),
                   TextButton(
                     onPressed: () => notifier.discard(pending),
-                    child: const Text('Discard'),
+                    child: Text(AppLocalizations.of(context).discard),
                   ),
                 ],
               ),
@@ -1082,6 +1336,55 @@ class _ReplyBanner extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: onCancel,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditBanner extends StatelessWidget {
+  const _EditBanner({required this.message, required this.onCancel});
+
+  final MessageEntity message;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      color: theme.colorScheme.surfaceContainerHighest,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.edit_outlined, size: 16, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.editingMessage,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  message.content ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
             ),
           ),
           IconButton(
@@ -1195,13 +1498,21 @@ class _Composer extends StatelessWidget {
     required this.controller,
     required this.enabled,
     required this.disabledReason,
+    required this.hasText,
+    required this.isRecording,
+    this.isEditing = false,
     this.onAttach,
     this.onSend,
+    this.onVoiceRecorded,
   });
 
   final TextEditingController controller;
   final bool enabled;
+  final bool isEditing;
+  final bool hasText;
+  final bool isRecording;
   final String disabledReason;
+  final void Function(VoiceRecording recording)? onVoiceRecorded;
   final VoidCallback? onAttach;
   final Future<void> Function()? onSend;
 
@@ -1226,41 +1537,43 @@ class _Composer extends StatelessWidget {
       );
     }
 
+    final l10n = AppLocalizations.of(context);
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Row(
           children: [
-            IconButton(
-              tooltip: 'Attach',
-              icon: const Icon(Icons.attach_file),
-              onPressed: onAttach,
-            ),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                minLines: 1,
-                maxLines: 5,
-                maxLength: 4096,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  hintText: 'Message',
-                  border: OutlineInputBorder(),
-                  counterText: '',
-                  isDense: true,
-                ),
+            if (!isEditing && !isRecording)
+              IconButton(
+                tooltip: l10n.attach,
+                icon: const Icon(Icons.attach_file),
+                onPressed: onAttach,
               ),
-            ),
-            IconButton(
-              tooltip: 'Voice messages are not available yet',
-              icon: const Icon(Icons.mic_none_outlined),
-              onPressed: null,
+            Expanded(
+              child: isRecording
+                  ? const VoiceRecordingBar()
+                  : TextField(
+                      controller: controller,
+                      minLines: 1,
+                      maxLines: 5,
+                      maxLength: 4096,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: l10n.messageHint,
+                        counterText: '',
+                        isDense: true,
+                      ),
+                    ),
             ),
             const SizedBox(width: 8),
-            IconButton.filled(
-              icon: const Icon(Icons.send),
-              onPressed: onSend == null ? null : () => onSend!(),
-            ),
+            if (!isEditing && onVoiceRecorded != null && !hasText)
+              VoiceRecordButton(onRecorded: onVoiceRecorded!)
+            else
+              IconButton.filled(
+                icon: Icon(isEditing ? Icons.check : Icons.send),
+                onPressed: onSend == null ? null : () => onSend!(),
+              ),
           ],
         ),
       ),
@@ -1278,17 +1591,20 @@ class _ForwardTargetDialog extends ConsumerWidget {
     final chats = ref.watch(chatListProvider);
 
     return AlertDialog(
-      title: const Text('Forward to'),
+      title: Text(AppLocalizations.of(context).forwardTo),
       content: SizedBox(
         width: double.maxFinite,
         child: chats.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => const Text('Could not load chats'),
+          error: (_, _) =>
+              Text(AppLocalizations.of(context).chatsLoadFailedShort),
           data: (state) {
             final targets = state.items
                 .where((chat) => chat.id != excludeChatId)
                 .toList();
-            if (targets.isEmpty) return const Text('No other chats');
+            if (targets.isEmpty) {
+              return Text(AppLocalizations.of(context).noOtherChats);
+            }
 
             final l10n = AppLocalizations.of(context);
             final myUserId = ref.watch(authProvider).value?.id;
@@ -1318,7 +1634,7 @@ class _ForwardTargetDialog extends ConsumerWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
       ],
     );
@@ -1409,7 +1725,10 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
                 children: [
                   Text(widget.emoji, style: theme.textTheme.titleLarge),
                   const SizedBox(width: 8),
-                  Text('Reacted', style: theme.textTheme.titleMedium),
+                  Text(
+                    AppLocalizations.of(context).reactedTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ],
               ),
             ),
@@ -1430,7 +1749,10 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
           children: [
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            TextButton(onPressed: _load, child: const Text('Retry')),
+            TextButton(
+              onPressed: _load,
+              child: Text(AppLocalizations.of(context).retry),
+            ),
           ],
         ),
       );
@@ -1444,9 +1766,9 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
     }
 
     if (_users.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(32),
-        child: Center(child: Text('Nobody has reacted with this yet')),
+        child: Center(child: Text(AppLocalizations.of(context).noReactionsYet)),
       );
     }
 
@@ -1462,7 +1784,7 @@ class _ReactionUsersSheetState extends ConsumerState<_ReactionUsersSheet> {
                   child: Center(
                     child: TextButton(
                       onPressed: _load,
-                      child: const Text('Show more'),
+                      child: Text(AppLocalizations.of(context).showMore),
                     ),
                   ),
                 );

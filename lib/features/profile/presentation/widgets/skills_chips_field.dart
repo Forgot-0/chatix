@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class SkillsChipsField extends StatefulWidget {
   final String name;
@@ -53,7 +54,7 @@ class _SkillsChipsFieldState extends State<SkillsChipsField> {
 
         return InputDecorator(
           decoration: InputDecoration(
-            labelText: 'Skills',
+            labelText: AppLocalizations.of(context).profileSkills,
             border: const OutlineInputBorder(),
             errorText: field.errorText,
           ),
@@ -79,10 +80,10 @@ class _SkillsChipsFieldState extends State<SkillsChipsField> {
                 ),
               TextField(
                 controller: _textController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
                   border: InputBorder.none,
-                  hintText: 'Type a skill and press enter',
+                  hintText: AppLocalizations.of(context).skillsHint,
                 ),
                 onSubmitted: addSkill,
               ),

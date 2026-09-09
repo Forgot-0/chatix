@@ -10,6 +10,7 @@ import 'package:chatix/features/profile/presentation/providers/profile_edit_prov
 import 'package:chatix/features/profile/presentation/utils/profile_field_validators.dart';
 import 'package:chatix/features/profile/presentation/widgets/skills_chips_field.dart';
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -49,8 +50,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final currentUserId = ref.watch(authProvider).value?.id;
 
     if (currentUserId == null) {
-      return const Scaffold(
-        body: Center(child: Text('Sign in to edit your profile')),
+      return Scaffold(
+        body: Center(
+          child: Text(AppLocalizations.of(context).signInToEditProfile),
+        ),
       );
     }
 
@@ -64,7 +67,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           context,
           message: friendlyFailureMessage(
             error,
-            fallback: 'Could not save changes',
+            fallback: AppLocalizations.of(context).saveChangesFailed,
           ),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
@@ -72,14 +75,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit profile')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).editProfile)),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
           child: Text(
             friendlyFailureMessage(
               error,
-              fallback: 'Could not load your profile',
+              fallback: AppLocalizations.of(context).myProfileLoadFailed,
             ),
           ),
         ),
@@ -119,22 +122,26 @@ class _EditForm extends ConsumerWidget {
             FormBuilderTextField(
               name: 'displayName',
               initialValue: profile.displayName,
-              decoration: const InputDecoration(labelText: 'Display name'),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).displayName,
+              ),
               validator: ProfileFieldValidators.displayName,
             ),
             const SizedBox(height: 16),
             FormBuilderTextField(
               name: 'specialization',
               initialValue: profile.specialization,
-              decoration: const InputDecoration(labelText: 'Specialization'),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).specialization,
+              ),
             ),
             const SizedBox(height: 16),
             FormBuilderTextField(
               name: 'bio',
               initialValue: profile.bio,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Bio',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).bio,
                 alignLabelWithHint: true,
               ),
               validator: ProfileFieldValidators.bio,
@@ -144,7 +151,9 @@ class _EditForm extends ConsumerWidget {
               name: 'dateBirthday',
               inputType: InputType.date,
               initialValue: profile.dateBirthday,
-              decoration: const InputDecoration(labelText: 'Date of birth'),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).dateOfBirth,
+              ),
             ),
             const SizedBox(height: 16),
             SkillsChipsField(
@@ -153,13 +162,16 @@ class _EditForm extends ConsumerWidget {
               validator: ProfileFieldValidators.skills,
             ),
             const SizedBox(height: 24),
-            Text('Contacts', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              AppLocalizations.of(context).profileContacts,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             ..._buildContacts(ref),
             TextButton.icon(
               onPressed: () => _showAddContactDialog(context, ref),
               icon: const Icon(Icons.add),
-              label: const Text('Add contact'),
+              label: Text(AppLocalizations.of(context).addContact),
             ),
             const SizedBox(height: 24),
             FilledButton(
@@ -170,7 +182,7 @@ class _EditForm extends ConsumerWidget {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Save'),
+                  : Text(AppLocalizations.of(context).save),
             ),
           ],
         ),
@@ -209,21 +221,21 @@ class _EditForm extends ConsumerWidget {
     final added = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Add contact'),
+        title: Text(AppLocalizations.of(context).addContact),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: providerController,
-              decoration: const InputDecoration(
-                labelText: 'Provider (e.g. telegram)',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).contactProvider,
               ),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: contactController,
-              decoration: const InputDecoration(
-                labelText: 'Contact (e.g. @handle)',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).contactHandle,
               ),
             ),
           ],
@@ -231,11 +243,11 @@ class _EditForm extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Add'),
+            child: Text(AppLocalizations.of(context).add),
           ),
         ],
       ),

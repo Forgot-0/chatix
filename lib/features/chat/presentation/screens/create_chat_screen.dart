@@ -8,6 +8,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_providers.dart'
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class CreateChatScreen extends ConsumerStatefulWidget {
   const CreateChatScreen({super.key});
@@ -62,16 +63,28 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
     final isDirect = _chatType == ChatType.direct;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New chat')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).newChat)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         children: [
           SegmentedButton<ChatType>(
-            segments: const [
-              ButtonSegment(value: ChatType.direct, label: Text('Direct')),
-              ButtonSegment(value: ChatType.group, label: Text('Group')),
-              ButtonSegment(value: ChatType.supergroup, label: Text('Super')),
-              ButtonSegment(value: ChatType.channel, label: Text('Channel')),
+            segments: [
+              ButtonSegment(
+                value: ChatType.direct,
+                label: Text(AppLocalizations.of(context).chatTypeDirect),
+              ),
+              ButtonSegment(
+                value: ChatType.group,
+                label: Text(AppLocalizations.of(context).chatTypeGroup),
+              ),
+              ButtonSegment(
+                value: ChatType.supergroup,
+                label: Text(AppLocalizations.of(context).chatTypeSuper),
+              ),
+              ButtonSegment(
+                value: ChatType.channel,
+                label: Text(AppLocalizations.of(context).chatTypeChannel),
+              ),
             ],
             selected: {_chatType},
             onSelectionChanged: (selection) =>
@@ -83,8 +96,8 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
             TextField(
               controller: _nameController,
               maxLength: CreateChatUseCase.maxNameLength,
-              decoration: const InputDecoration(
-                labelText: 'Name',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).chatName,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -93,8 +106,8 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
               controller: _descriptionController,
               maxLength: CreateChatUseCase.maxDescriptionLength,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Description',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context).chatDescription,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -119,13 +132,13 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
             SwitchListTile(
               value: _isPublic,
               onChanged: (value) => setState(() => _isPublic = value),
-              title: const Text('Public'),
-              subtitle: const Text('Anyone can find and join this chat'),
+              title: Text(AppLocalizations.of(context).chatPublic),
+              subtitle: Text(AppLocalizations.of(context).chatPublicHintCreate),
             ),
             SwitchListTile(
               value: _adminOnly,
               onChanged: (value) => setState(() => _adminOnly = value),
-              title: const Text('Admins only'),
+              title: Text(AppLocalizations.of(context).chatAdminOnly),
               subtitle: const Text(
                 'Only members with message:send_admin_only may post',
               ),
@@ -134,7 +147,9 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
               controller: _slowModeController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: 'Slow mode (seconds)',
+                labelText: AppLocalizations.of(
+                  context,
+                ).chatSlowModeSecondsField,
                 helperText:
                     '0 – ${CreateChatUseCase.maxSlowModeSeconds} (24 hours)',
                 border: const OutlineInputBorder(),
@@ -160,7 +175,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Create chat'),
+                : Text(AppLocalizations.of(context).createChat),
           ),
         ],
       ),

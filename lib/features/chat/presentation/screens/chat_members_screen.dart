@@ -9,6 +9,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_members_provide
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ChatMembersScreen extends ConsumerStatefulWidget {
   const ChatMembersScreen({super.key, required this.chatId});
@@ -53,12 +54,12 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
         hasChatPermission(loaded.chat, loaded.me, ChatPermissions.memberInvite);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Members')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).membersTitle)),
       body: membersState.when(
         loading: () => const AppListSkeleton(),
         error: (error, _) => AppErrorState(
           error: error,
-          fallbackMessage: 'Failed to load members',
+          fallbackMessage: AppLocalizations.of(context).membersLoadFailed,
           onRetry: () =>
               ref.read(chatMembersProvider(widget.chatId).notifier).refresh(),
         ),
@@ -111,7 +112,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
           ? FloatingActionButton.extended(
               onPressed: _addMember,
               icon: const Icon(Icons.person_add_alt),
-              label: const Text('Add member'),
+              label: Text(AppLocalizations.of(context).addMember),
             )
           : null,
     );
@@ -203,14 +204,20 @@ class _MemberTile extends ConsumerWidget {
               onSelected: (value) => _onAction(context, ref, value),
               itemBuilder: (menuContext) => [
                 if (canChangeRole)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'role',
-                    child: Text('Change role'),
+                    child: Text(AppLocalizations.of(context).changeRole),
                   ),
                 if (canBan)
-                  const PopupMenuItem(value: 'ban', child: Text('Ban')),
+                  PopupMenuItem(
+                    value: 'ban',
+                    child: Text(AppLocalizations.of(context).banMember),
+                  ),
                 if (canKick)
-                  const PopupMenuItem(value: 'kick', child: Text('Kick')),
+                  PopupMenuItem(
+                    value: 'kick',
+                    child: Text(AppLocalizations.of(context).kickMember),
+                  ),
               ],
             )
           : null,
@@ -269,7 +276,7 @@ class _RolePickerDialog extends StatelessWidget {
       groupValue: current,
       onChanged: (value) => Navigator.of(context).pop(value),
       child: SimpleDialog(
-        title: const Text('Change role'),
+        title: Text(AppLocalizations.of(context).changeRole),
         children: [
           for (final role in ChatRole.values)
             if (role != ChatRole.direct)
@@ -307,14 +314,14 @@ class _BanDialogState extends State<_BanDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Ban member'),
+      title: Text(AppLocalizations.of(context).banMemberTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: _reasonController,
-            decoration: const InputDecoration(
-              labelText: 'Reason (optional)',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context).banReason,
               border: OutlineInputBorder(),
             ),
           ),
@@ -328,7 +335,10 @@ class _BanDialogState extends State<_BanDialog> {
                       : 'Until ${_bannedTo!.toLocal()}',
                 ),
               ),
-              TextButton(onPressed: _pickDate, child: const Text('Set date')),
+              TextButton(
+                onPressed: _pickDate,
+                child: Text(AppLocalizations.of(context).banUntil),
+              ),
             ],
           ),
         ],
@@ -336,7 +346,7 @@ class _BanDialogState extends State<_BanDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -347,7 +357,7 @@ class _BanDialogState extends State<_BanDialog> {
               bannedTo: _bannedTo,
             ),
           ),
-          child: const Text('Ban'),
+          child: Text(AppLocalizations.of(context).banMember),
         ),
       ],
     );
@@ -373,12 +383,12 @@ class _AddMemberDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add member'),
+      title: Text(AppLocalizations.of(context).addMember),
       content: SizedBox(
         width: double.maxFinite,
         child: UserSearchField(
           autofocus: true,
-          labelText: 'Search by username',
+          labelText: AppLocalizations.of(context).searchByUsername,
           excludedUserIds: excludedUserIds,
           onSelected: (profile) => Navigator.of(context).pop(profile.id),
         ),
@@ -386,7 +396,7 @@ class _AddMemberDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
       ],
     );
@@ -439,7 +449,7 @@ class _EmptyMembersView extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onInvite,
                 icon: const Icon(Icons.person_add_alt),
-                label: const Text('Add member'),
+                label: Text(AppLocalizations.of(context).addMember),
               ),
             ),
           ],

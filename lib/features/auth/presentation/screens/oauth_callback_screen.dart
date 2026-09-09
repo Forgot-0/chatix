@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class OAuthCallbackScreen extends StatelessWidget {
   const OAuthCallbackScreen({super.key, this.error});
@@ -14,7 +15,7 @@ class OAuthCallbackScreen extends StatelessWidget {
     final userCancelled = error == 'access_denied';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).signInTitle)),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -29,17 +30,16 @@ class OAuthCallbackScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 userCancelled
-                    ? 'Sign-in was cancelled'
-                    : "Couldn't finish signing in",
+                    ? AppLocalizations.of(context).oauthCancelled
+                    : AppLocalizations.of(context).oauthFailed,
                 style: theme.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 userCancelled
-                    ? 'Nothing was changed. You can try again or use your username and password.'
-                    : 'Signing in with an external provider is not fully wired up yet. '
-                          'Please use your username and password for now.',
+                    ? AppLocalizations.of(context).oauthCancelledHint
+                    : AppLocalizations.of(context).oauthFailedHint,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -48,7 +48,7 @@ class OAuthCallbackScreen extends StatelessWidget {
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: () => context.go(LoginRoute.location),
-                child: const Text('Back to sign in'),
+                child: Text(AppLocalizations.of(context).backToSignIn),
               ),
             ],
           ),

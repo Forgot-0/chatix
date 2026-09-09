@@ -27,6 +27,7 @@ import 'package:chatix/features/profile/presentation/screens/profile_screen.dart
 import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authListenable = ValueNotifier<AsyncValue<UserEntity?>>(
@@ -84,8 +85,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       final chatId = ChatDetailRoute.idFrom(state);
                       if (chatId == null) {
-                        return const _InvalidRouteScreen(
-                          message: 'Unknown chat',
+                        return _InvalidRouteScreen(
+                          message: AppLocalizations.of(context).unknownChat,
                         );
                       }
                       return ChatDetailScreen(
@@ -101,8 +102,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                         builder: (context, state) {
                           final chatId = ChatDetailRoute.idFrom(state);
                           if (chatId == null) {
-                            return const _InvalidRouteScreen(
-                              message: 'Unknown chat',
+                            return _InvalidRouteScreen(
+                              message: AppLocalizations.of(context).unknownChat,
                             );
                           }
                           return ChatMembersScreen(chatId: chatId);
@@ -115,8 +116,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                         builder: (context, state) {
                           final chatId = ChatDetailRoute.idFrom(state);
                           if (chatId == null) {
-                            return const _InvalidRouteScreen(
-                              message: 'Unknown chat',
+                            return _InvalidRouteScreen(
+                              message: AppLocalizations.of(context).unknownChat,
                             );
                           }
                           return ChatInfoScreen(chatId: chatId);
@@ -129,8 +130,8 @@ final routerProvider = Provider<GoRouter>((ref) {
                         builder: (context, state) {
                           final chatId = ChatDetailRoute.idFrom(state);
                           if (chatId == null) {
-                            return const _InvalidRouteScreen(
-                              message: 'Unknown chat',
+                            return _InvalidRouteScreen(
+                              message: AppLocalizations.of(context).unknownChat,
                             );
                           }
                           return CallScreen(chatId: chatId);
@@ -184,7 +185,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) {
               final profileId = ProfileDetailRoute.idFrom(state);
               if (profileId == null) {
-                return const _InvalidRouteScreen(message: 'Unknown profile');
+                return _InvalidRouteScreen(
+                  message: AppLocalizations.of(context).unknownProfile,
+                );
               }
               return ProfileScreen(profileId: profileId);
             },
@@ -314,7 +317,7 @@ class _InvalidRouteScreen extends StatelessWidget {
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: () => context.go(ChatsRoute.location),
-              child: const Text('Go to chats'),
+              child: Text(AppLocalizations.of(context).goToChats),
             ),
           ],
         ),
@@ -331,7 +334,7 @@ class _NotFoundScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Page not found')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).pageNotFound)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -341,11 +344,11 @@ class _NotFoundScreen extends StatelessWidget {
               style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('${uri.path} does not exist'),
+            Text(AppLocalizations.of(context).pathDoesNotExist(uri.path)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => context.go(ChatsRoute.location),
-              child: const Text('Go to chats'),
+              child: Text(AppLocalizations.of(context).goToChats),
             ),
           ],
         ),

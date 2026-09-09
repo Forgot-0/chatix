@@ -14,6 +14,7 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ChatSearchScreen extends ConsumerStatefulWidget {
   const ChatSearchScreen({super.key});
@@ -80,7 +81,7 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
         (failure) {
           _peopleError = friendlyFailureMessage(
             failure,
-            fallback: 'Could not search for people',
+            fallback: AppLocalizations.of(context).peopleSearchFailed,
           );
           _people = const [];
         },
@@ -133,7 +134,7 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
               chatFailureMessage(failure) ??
                   friendlyFailureMessage(
                     failure,
-                    fallback: 'Could not start a chat with this person',
+                    fallback: AppLocalizations.of(context).startChatFailed,
                   ),
             ),
           ),
@@ -160,15 +161,15 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
           autofocus: true,
           textInputAction: TextInputAction.search,
           onChanged: _onChanged,
-          decoration: const InputDecoration(
-            hintText: 'Search chats and people',
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context).searchChatsAndPeople,
             border: InputBorder.none,
           ),
         ),
         actions: [
           if (_query.isNotEmpty)
             IconButton(
-              tooltip: 'Clear',
+              tooltip: AppLocalizations.of(context).clear,
               icon: const Icon(Icons.close),
               onPressed: () {
                 _controller.clear();
@@ -182,10 +183,16 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
           : ListView(
               children: [
                 if (chats.isNotEmpty) ...[
-                  _SectionHeader(title: 'Chats', theme: theme),
+                  _SectionHeader(
+                    title: AppLocalizations.of(context).chats,
+                    theme: theme,
+                  ),
                   for (final chat in chats) ChatListTile(chat: chat),
                 ],
-                _SectionHeader(title: 'People', theme: theme),
+                _SectionHeader(
+                  title: AppLocalizations.of(context).searchPeople,
+                  theme: theme,
+                ),
                 if (_isLoadingPeople)
                   const Padding(
                     padding: EdgeInsets.all(24),
@@ -200,15 +207,17 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () => _searchPeople(_query),
-                          child: const Text('Retry'),
+                          child: Text(AppLocalizations.of(context).retry),
                         ),
                       ],
                     ),
                   )
                 else if (_people.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: Text('No people found')),
+                    child: Center(
+                      child: Text(AppLocalizations.of(context).noPeopleFound),
+                    ),
                   )
                 else
                   for (final profile in _people)

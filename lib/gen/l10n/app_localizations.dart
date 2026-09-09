@@ -663,6 +663,888 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to latest messages'**
   String get backToLatest;
+
+  /// Accessibility label for the double read tick
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get messageRead;
+
+  /// Accessibility label for the single sent tick
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get messageSent;
+
+  /// Date separator for messages sent today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get dateToday;
+
+  /// Date separator for messages sent yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get dateYesterday;
+
+  /// Separator above the first unread message
+  ///
+  /// In en, this message translates to:
+  /// **'Unread messages'**
+  String get unreadMessages;
+
+  /// Empty state in a chat with no history
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get noMessagesYet;
+
+  /// Banner above the composer while editing
+  ///
+  /// In en, this message translates to:
+  /// **'Editing message'**
+  String get editingMessage;
+
+  /// Tooltip on the scroll-to-bottom button
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to the newest messages'**
+  String get scrollToBottom;
+
+  /// Settings row for chat density
+  ///
+  /// In en, this message translates to:
+  /// **'Message density'**
+  String get messageDensity;
+
+  /// Density option
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get densityCompact;
+
+  /// Density option — the default
+  ///
+  /// In en, this message translates to:
+  /// **'Cosy'**
+  String get densityCosy;
+
+  /// Density option
+  ///
+  /// In en, this message translates to:
+  /// **'Spacious'**
+  String get densitySpacious;
+
+  /// Hint while holding the mic
+  ///
+  /// In en, this message translates to:
+  /// **'Slide left to cancel, up to lock'**
+  String get voiceSlideToCancel;
+
+  /// Hint once the finger passed the cancel threshold
+  ///
+  /// In en, this message translates to:
+  /// **'Release to cancel'**
+  String get voiceReleaseToCancel;
+
+  /// Hint while recording hands-free
+  ///
+  /// In en, this message translates to:
+  /// **'Recording — tap send when you are done'**
+  String get voiceRecordingLocked;
+
+  /// Mic permission was refused
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is off'**
+  String get voicePermissionDenied;
+
+  /// Label for a voice attachment
+  ///
+  /// In en, this message translates to:
+  /// **'Voice message'**
+  String get voiceMessage;
+
+  /// Tooltip for the attachment button
+  ///
+  /// In en, this message translates to:
+  /// **'Attach'**
+  String get attach;
+
+  /// Composer placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get messageHint;
+
+  /// Invalid chat route
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown chat'**
+  String get unknownChat;
+
+  /// Invalid profile route
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown profile'**
+  String get unknownProfile;
+
+  /// Recovery action on an invalid route
+  ///
+  /// In en, this message translates to:
+  /// **'Go to chats'**
+  String get goToChats;
+
+  /// 404 screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Page not found'**
+  String get pageNotFound;
+
+  /// 404 detail
+  ///
+  /// In en, this message translates to:
+  /// **'{path} does not exist'**
+  String pathDoesNotExist(String path);
+
+  /// Generic retry action
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// Clears a search field
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// Generic add action
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// Generic save action
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// Marks every notification read
+  ///
+  /// In en, this message translates to:
+  /// **'Read all'**
+  String get readAll;
+
+  /// Notification filter menu
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filter;
+
+  /// Notification filter: everything
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// Notification filter
+  ///
+  /// In en, this message translates to:
+  /// **'Unread only'**
+  String get filterUnread;
+
+  /// Notification filter
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get filterRead;
+
+  /// Clears the notification filter
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get showAll;
+
+  /// Notification list error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your notifications.'**
+  String get notificationsLoadFailed;
+
+  /// Profile directory title
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get profiles;
+
+  /// Profile search placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name'**
+  String get searchByName;
+
+  /// Member search placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Search by username'**
+  String get searchByUsername;
+
+  /// Profile list error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load profiles.'**
+  String get profilesLoadFailed;
+
+  /// Signed-out profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to view your profile'**
+  String get signInToViewProfile;
+
+  /// Signed-out profile editor
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to edit your profile'**
+  String get signInToEditProfile;
+
+  /// Profile bio section
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get profileAbout;
+
+  /// Profile skills section
+  ///
+  /// In en, this message translates to:
+  /// **'Skills'**
+  String get profileSkills;
+
+  /// Profile contacts section
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get profileContacts;
+
+  /// Starts a direct chat from a profile
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get sendMessageAction;
+
+  /// Profile editor title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit profile'**
+  String get editProfile;
+
+  /// Profile field
+  ///
+  /// In en, this message translates to:
+  /// **'Display name'**
+  String get displayName;
+
+  /// Profile field
+  ///
+  /// In en, this message translates to:
+  /// **'Specialization'**
+  String get specialization;
+
+  /// Profile field
+  ///
+  /// In en, this message translates to:
+  /// **'Bio'**
+  String get bio;
+
+  /// Profile field
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth'**
+  String get dateOfBirth;
+
+  /// Adds a profile contact
+  ///
+  /// In en, this message translates to:
+  /// **'Add contact'**
+  String get addContact;
+
+  /// Contact provider field
+  ///
+  /// In en, this message translates to:
+  /// **'Provider (e.g. telegram)'**
+  String get contactProvider;
+
+  /// Contact value field
+  ///
+  /// In en, this message translates to:
+  /// **'Contact (e.g. @handle)'**
+  String get contactHandle;
+
+  /// Skills input hint
+  ///
+  /// In en, this message translates to:
+  /// **'Type a skill and press enter'**
+  String get skillsHint;
+
+  /// Image picker failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the photo library'**
+  String get photoLibraryFailed;
+
+  /// Chat list title
+  ///
+  /// In en, this message translates to:
+  /// **'Chats'**
+  String get chats;
+
+  /// Search entry point
+  ///
+  /// In en, this message translates to:
+  /// **'Search chats and people'**
+  String get searchChatsAndPeople;
+
+  /// Chat list error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your chats.'**
+  String get chatsLoadFailed;
+
+  /// Empty chat list title
+  ///
+  /// In en, this message translates to:
+  /// **'No chats yet'**
+  String get noChatsYet;
+
+  /// Empty chat list body
+  ///
+  /// In en, this message translates to:
+  /// **'Start a conversation and it will show up here.'**
+  String get noChatsYetHint;
+
+  /// Creates a chat
+  ///
+  /// In en, this message translates to:
+  /// **'New chat'**
+  String get newChat;
+
+  /// Chat type option
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get chatTypeDirect;
+
+  /// Chat type option
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get chatTypeGroup;
+
+  /// Chat type option (supergroup)
+  ///
+  /// In en, this message translates to:
+  /// **'Super'**
+  String get chatTypeSuper;
+
+  /// Chat type option
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get chatTypeChannel;
+
+  /// is_public explanation on create
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone can find and join this chat'**
+  String get chatPublicHintCreate;
+
+  /// slow_mode_seconds field
+  ///
+  /// In en, this message translates to:
+  /// **'Slow mode (seconds)'**
+  String get chatSlowModeSecondsField;
+
+  /// Submits the create-chat form
+  ///
+  /// In en, this message translates to:
+  /// **'Create chat'**
+  String get createChat;
+
+  /// Member list title
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get membersTitle;
+
+  /// Member list error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load members'**
+  String get membersLoadFailed;
+
+  /// Invites someone to the chat
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get addMember;
+
+  /// Member role action
+  ///
+  /// In en, this message translates to:
+  /// **'Change role'**
+  String get changeRole;
+
+  /// Bans a member
+  ///
+  /// In en, this message translates to:
+  /// **'Ban'**
+  String get banMember;
+
+  /// Ban dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Ban member'**
+  String get banMemberTitle;
+
+  /// Kicks a member
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get kickMember;
+
+  /// Ban reason field
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get banReason;
+
+  /// Picks a ban expiry
+  ///
+  /// In en, this message translates to:
+  /// **'Set date'**
+  String get banUntil;
+
+  /// Search results section
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get searchPeople;
+
+  /// Empty people search
+  ///
+  /// In en, this message translates to:
+  /// **'No people found'**
+  String get noPeopleFound;
+
+  /// Call is being established
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get callConnecting;
+
+  /// Joins the LiveKit room
+  ///
+  /// In en, this message translates to:
+  /// **'Join call'**
+  String get callJoin;
+
+  /// Call finished
+  ///
+  /// In en, this message translates to:
+  /// **'Call ended'**
+  String get callEnded;
+
+  /// Rejoins after disconnect
+  ///
+  /// In en, this message translates to:
+  /// **'Rejoin'**
+  String get callRejoin;
+
+  /// Leaves the call
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get callLeave;
+
+  /// Call screen fallback title
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get callTitle;
+
+  /// Selection app bar title
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(int count);
+
+  /// Bulk delete confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {count} messages?'**
+  String deleteMessagesTitle(int count);
+
+  /// Destructive confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get cannotBeUndone;
+
+  /// Chat detail error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load chat'**
+  String get chatLoadFailed;
+
+  /// Attachment source
+  ///
+  /// In en, this message translates to:
+  /// **'Photos & videos'**
+  String get attachMedia;
+
+  /// Attachment source
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get attachDocument;
+
+  /// Forward success
+  ///
+  /// In en, this message translates to:
+  /// **'Message forwarded'**
+  String get messageForwarded;
+
+  /// Forward target picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Forward to'**
+  String get forwardTo;
+
+  /// Forward picker empty
+  ///
+  /// In en, this message translates to:
+  /// **'No other chats'**
+  String get noOtherChats;
+
+  /// Forward picker error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load chats'**
+  String get chatsLoadFailedShort;
+
+  /// Drops a failed pending message
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// Who-reacted sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Reacted'**
+  String get reactedTitle;
+
+  /// Empty who-reacted sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody has reacted with this yet'**
+  String get noReactionsYet;
+
+  /// Loads the next page
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMore;
+
+  /// Bulk progress label
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarding'**
+  String get bulkForwarding;
+
+  /// Bulk progress label
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting'**
+  String get bulkDeleting;
+
+  /// Bulk progress body
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {done} of {total}…'**
+  String bulkProgress(String label, int done, int total);
+
+  /// Bulk success
+  ///
+  /// In en, this message translates to:
+  /// **'{label} complete ({total})'**
+  String bulkComplete(String label, int total);
+
+  /// Bulk partial failure
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} succeeded — {failed} failed: {reason}'**
+  String bulkPartial(int done, int total, int failed, String reason);
+
+  /// Join call failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start the call'**
+  String get callTokenUnavailable;
+
+  /// Login screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get loginTitle;
+
+  /// Login identifier field
+  ///
+  /// In en, this message translates to:
+  /// **'Email or username'**
+  String get emailOrUsername;
+
+  /// Login identifier hint
+  ///
+  /// In en, this message translates to:
+  /// **'you@example.com or your username'**
+  String get emailOrUsernameHint;
+
+  /// Password field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your password'**
+  String get passwordHint;
+
+  /// Login submit
+  ///
+  /// In en, this message translates to:
+  /// **'Log In'**
+  String get logIn;
+
+  /// Register field
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// Username rule
+  ///
+  /// In en, this message translates to:
+  /// **'4-100 characters'**
+  String get usernameHint;
+
+  /// Email field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email'**
+  String get emailHint;
+
+  /// Password complexity rule
+  ///
+  /// In en, this message translates to:
+  /// **'8+ chars, upper/lower/digit/special'**
+  String get passwordRule;
+
+  /// Register field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get confirmPassword;
+
+  /// Confirm field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your password'**
+  String get confirmPasswordHint;
+
+  /// OAuth callback title
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signInTitle;
+
+  /// OAuth callback action
+  ///
+  /// In en, this message translates to:
+  /// **'Back to sign in'**
+  String get backToSignIn;
+
+  /// Reset confirm title
+  ///
+  /// In en, this message translates to:
+  /// **'Set new password'**
+  String get setNewPassword;
+
+  /// Reset token field
+  ///
+  /// In en, this message translates to:
+  /// **'Reset code'**
+  String get resetCode;
+
+  /// Reset field
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get newPassword;
+
+  /// Reset field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm new password'**
+  String get confirmNewPassword;
+
+  /// Reset submit / title
+  ///
+  /// In en, this message translates to:
+  /// **'Reset password'**
+  String get resetPassword;
+
+  /// Reset success
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated — please log in.'**
+  String get passwordUpdated;
+
+  /// Requests a reset code
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get sendCode;
+
+  /// Skips to reset confirm
+  ///
+  /// In en, this message translates to:
+  /// **'I already have a code'**
+  String get haveCodeAlready;
+
+  /// Reset request success
+  ///
+  /// In en, this message translates to:
+  /// **'Check your email for a reset code.'**
+  String get resetCodeSent;
+
+  /// Email verification title
+  ///
+  /// In en, this message translates to:
+  /// **'Verify email'**
+  String get verifyEmailTitle;
+
+  /// Verification instructions
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the token from the email we sent you.'**
+  String get verifyEmailHint;
+
+  /// Verification field
+  ///
+  /// In en, this message translates to:
+  /// **'Verification token'**
+  String get verificationToken;
+
+  /// Verification submit
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
+
+  /// Resend rate limit
+  ///
+  /// In en, this message translates to:
+  /// **'We can resend it — up to 3 times per hour.'**
+  String get resendLimitHint;
+
+  /// Resend action
+  ///
+  /// In en, this message translates to:
+  /// **'Resend verification email'**
+  String get resendVerification;
+
+  /// Verification success
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified'**
+  String get emailVerified;
+
+  /// Verification resend success
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent — check your inbox.'**
+  String get verificationSent;
+
+  /// OAuth launch failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the browser for sign-in'**
+  String get browserOpenFailed;
+
+  /// OAuth provider button
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {provider}'**
+  String continueWith(String provider);
+
+  /// Profile search failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not search for people'**
+  String get peopleSearchFailed;
+
+  /// Direct chat creation failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not start a chat with this person'**
+  String get startChatFailed;
+
+  /// Single profile failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load this profile'**
+  String get profileLoadFailed;
+
+  /// Own profile failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your profile'**
+  String get myProfileLoadFailed;
+
+  /// Profile save failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save changes'**
+  String get saveChangesFailed;
+
+  /// Avatar upload failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update avatar'**
+  String get avatarUpdateFailed;
+
+  /// OAuth was aborted by the user
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in was cancelled'**
+  String get oauthCancelled;
+
+  /// OAuth cancel detail
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was changed. Try again, or use your username and password.'**
+  String get oauthCancelledHint;
+
+  /// OAuth failed
+  ///
+  /// In en, this message translates to:
+  /// **'Could not finish signing in'**
+  String get oauthFailed;
+
+  /// OAuth failure detail
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with your username and password instead.'**
+  String get oauthFailedHint;
 }
 
 class _AppLocalizationsDelegate
