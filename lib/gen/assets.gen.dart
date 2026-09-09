@@ -12,11 +12,20 @@
 class $AssetsFontsGen {
   const $AssetsFontsGen();
 
-  /// File path: assets/fonts/PLACE_FONTS_HERE
-  String get placeFontsHere => 'assets/fonts/PLACE_FONTS_HERE';
+  /// File path: assets/fonts/Manrope-400.ttf
+  String get manrope400 => 'assets/fonts/Manrope-400.ttf';
+
+  /// File path: assets/fonts/Manrope-500.ttf
+  String get manrope500 => 'assets/fonts/Manrope-500.ttf';
+
+  /// File path: assets/fonts/Manrope-600.ttf
+  String get manrope600 => 'assets/fonts/Manrope-600.ttf';
+
+  /// File path: assets/fonts/Manrope-700.ttf
+  String get manrope700 => 'assets/fonts/Manrope-700.ttf';
 
   /// List of all assets
-  List<String> get values => [placeFontsHere];
+  List<String> get values => [manrope400, manrope500, manrope600, manrope700];
 }
 
 class $AssetsImagesGen {

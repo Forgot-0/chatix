@@ -53,13 +53,8 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
 
       ref.invalidate(profileDetailProvider(profileId));
 
-      final ProfileEntity profile;
-      try {
-        profile = await ref.read(profileDetailProvider(profileId).future);
-      } catch (error) {
-        Logger.warning('AvatarUpload: profile poll failed ($error)');
-        continue;
-      }
+      final profile = await _readProfile(profileId);
+      if (profile == null) continue;
 
       if (!_sameAvatars(profile.avatars, before)) return;
     }
@@ -74,6 +69,44 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
       StackTrace.current,
     );
   }
+
+  /// Reads the profile without awaiting `provider.future`.
+  ///
+  /// That future never completes when the provider throws a `Failure` —
+  /// Riverpod only settles it for thrown `Error`s, and a `Failure` is a plain
+  /// Equatable. This loop is wrapped in a retry precisely because the fetch can
+  /// fail (a 404 right after registration is expected, api-docs §4.1), so
+  /// awaiting the future would hang the whole poll instead of retrying.
+  /// The AsyncValue carries the same result and settles either way.
+  Future<ProfileEntity?> _readProfile(int profileId) async {
+    final provider = profileDetailProvider(profileId);
+
+    // Keep the provider alive while it loads; a bare read would let it dispose
+    // between polls and restart from scratch.
+    final subscription = ref.listen(provider, (_, _) {});
+    try {
+      for (var tick = 0; tick < _readTicks; tick++) {
+        final value = ref.read(provider);
+
+        if (value.hasValue) return value.value;
+        if (value.hasError) {
+          Logger.warning('AvatarUpload: profile poll failed (${value.error})');
+          return null;
+        }
+        await Future<void>.delayed(_readTick);
+      }
+    } finally {
+      subscription.close();
+    }
+
+    Logger.warning('AvatarUpload: profile poll timed out');
+    return null;
+  }
+
+  /// Bounded wait for one poll to settle, so a stuck request cannot pin the
+  /// loop past its own [_pollInterval] budget.
+  static const _readTick = Duration(milliseconds: 100);
+  static const _readTicks = 30;
 
   bool _sameAvatars(
     Map<String, Map<String, String>> a,

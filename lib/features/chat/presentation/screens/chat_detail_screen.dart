@@ -205,12 +205,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final selected = _selectedMessageIds;
     if (state == null || selected == null || selected.isEmpty) return;
 
-    final targetChatId = await showDialog<String>(
+    final target = await showDialog<ForwardTarget>(
       context: context,
       builder: (dialogContext) =>
           _ForwardTargetDialog(excludeChatId: widget.chatId),
     );
-    if (targetChatId == null || !mounted) return;
+    if (target == null || !mounted) return;
 
     final ordered = state.messages
         .where((message) => selected.contains(message.id))
@@ -227,7 +227,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         final result = await useCase.execute(
           sourceChatId: message.chatId,
           sourceMessageId: message.id,
-          targetChatId: targetChatId,
+          targetChatId: target.chatId,
+          // The comment rides along with the first message only: repeating it
+          // on every item of a bulk forward would spam the target chat.
+          comment: index == 0 ? target.comment : null,
         );
         return result.match((failure) => failure.message, (_) => null);
       },
@@ -423,6 +426,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           return Column(
             children: [
               const _ConnectionBanner(),
+              if (state.isRealtimeRejected) const _RealtimeRejectedBanner(),
               Expanded(
                 child: Stack(
                   children: [
@@ -976,19 +980,20 @@ class _MessageList extends ConsumerWidget {
     WidgetRef ref,
     MessageEntity message,
   ) async {
-    final targetChatId = await showDialog<String>(
+    final target = await showDialog<ForwardTarget>(
       context: context,
       builder: (dialogContext) =>
           _ForwardTargetDialog(excludeChatId: message.chatId),
     );
-    if (targetChatId == null) return;
+    if (target == null) return;
 
     final result = await ref
         .read(forwardMessageUseCaseProvider)
         .execute(
           sourceChatId: message.chatId,
           sourceMessageId: message.id,
-          targetChatId: targetChatId,
+          targetChatId: target.chatId,
+          comment: target.comment,
         );
 
     if (!context.mounted) return;
@@ -1314,6 +1319,43 @@ class _ConnectionBanner extends ConsumerWidget {
   }
 }
 
+/// The gateway refused our subscribe (`ws.error` / NOT_CHAT_MEMBER, §6.4).
+/// The history already loaded stays readable, but nothing new will arrive, and
+/// silently freezing is worse than saying so.
+class _RealtimeRejectedBanner extends StatelessWidget {
+  const _RealtimeRejectedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      color: theme.colorScheme.errorContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.sync_problem_outlined,
+            size: 14,
+            color: theme.colorScheme.onErrorContainer,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              AppLocalizations.of(context).realtimeRejected,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ReplyBanner extends StatelessWidget {
   const _ReplyBanner({required this.message, required this.onCancel});
 
@@ -1581,52 +1623,111 @@ class _Composer extends StatelessWidget {
   }
 }
 
-class _ForwardTargetDialog extends ConsumerWidget {
+/// What the forward picker hands back: where to send, and the optional comment
+/// the API accepts alongside a forward (api-docs §5.4 `ForwardMessageRequest`).
+class ForwardTarget {
+  const ForwardTarget({required this.chatId, this.comment});
+
+  final String chatId;
+  final String? comment;
+}
+
+class _ForwardTargetDialog extends ConsumerStatefulWidget {
   const _ForwardTargetDialog({required this.excludeChatId});
 
   final String excludeChatId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ForwardTargetDialog> createState() =>
+      _ForwardTargetDialogState();
+}
+
+class _ForwardTargetDialogState extends ConsumerState<_ForwardTargetDialog> {
+  final _commentController = TextEditingController();
+
+  String? _selectedChatId;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final chatId = _selectedChatId;
+    if (chatId == null) return;
+
+    final comment = _commentController.text.trim();
+    Navigator.of(context).pop(
+      ForwardTarget(chatId: chatId, comment: comment.isEmpty ? null : comment),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final chats = ref.watch(chatListProvider);
+    final l10n = AppLocalizations.of(context);
+    final myUserId = ref.watch(authProvider).value?.id;
 
     return AlertDialog(
-      title: Text(AppLocalizations.of(context).forwardTo),
+      title: Text(l10n.forwardTo),
       content: SizedBox(
         width: double.maxFinite,
         child: chats.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) =>
-              Text(AppLocalizations.of(context).chatsLoadFailedShort),
+          error: (_, _) => Text(l10n.chatsLoadFailedShort),
           data: (state) {
             final targets = state.items
-                .where((chat) => chat.id != excludeChatId)
+                .where((chat) => chat.id != widget.excludeChatId)
                 .toList();
-            if (targets.isEmpty) {
-              return Text(AppLocalizations.of(context).noOtherChats);
-            }
+            if (targets.isEmpty) return Text(l10n.noOtherChats);
 
-            final l10n = AppLocalizations.of(context);
-            final myUserId = ref.watch(authProvider).value?.id;
-
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: targets.length,
-              itemBuilder: (context, index) {
-                final chat = targets[index];
-                final peer = chat.peerProfile(myUserId);
-                return ListTile(
-                  leading: peer == null
-                      ? null
-                      : ChatAvatar(
-                          profile: peer,
-                          userId: peer.userId,
-                          radius: 16,
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: targets.length,
+                    itemBuilder: (context, index) {
+                      final chat = targets[index];
+                      final peer = chat.peerProfile(myUserId);
+                      return ListTile(
+                        selected: chat.id == _selectedChatId,
+                        leading: peer == null
+                            ? null
+                            : ChatAvatar(
+                                profile: peer,
+                                userId: peer.userId,
+                                radius: 16,
+                              ),
+                        title: Text(
+                          chatTitleOf(chat, l10n, myUserId: myUserId),
                         ),
-                  title: Text(chatTitleOf(chat, l10n, myUserId: myUserId)),
-                  onTap: () => Navigator.of(context).pop(chat.id),
-                );
-              },
+                        onTap: () => setState(() => _selectedChatId = chat.id),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _commentController,
+                  decoration: InputDecoration(
+                    labelText: l10n.forwardComment,
+                    isDense: true,
+                  ),
+                  maxLength: 4096,
+                  maxLines: 2,
+                  minLines: 1,
+                  buildCounter:
+                      (
+                        _, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
+                ),
+              ],
             );
           },
         ),
@@ -1634,7 +1735,11 @@ class _ForwardTargetDialog extends ConsumerWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(AppLocalizations.of(context).cancel),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _selectedChatId == null ? null : _submit,
+          child: Text(l10n.forwardAction),
         ),
       ],
     );

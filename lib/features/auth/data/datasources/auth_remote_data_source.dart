@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/providers/network_providers.dart';
+import 'package:chatix/features/auth/data/models/session_model.dart';
 import 'package:chatix/features/auth/data/models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
@@ -43,6 +44,8 @@ abstract class AuthRemoteDataSource {
     required String provider,
     bool connect = false,
   });
+
+  Future<Either<Failure, List<SessionModel>>> fetchMySessions();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -161,6 +164,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final result = await _apiClient.get(path);
     return result.map(
       (data) => (data as Map<String, dynamic>)['url'] as String,
+    );
+  }
+
+  @override
+  Future<Either<Failure, List<SessionModel>>> fetchMySessions() async {
+    final result = await _apiClient.get('/users/sessions/');
+    // A BARE ARRAY, not a PageResult — the one list endpoint that skips the
+    // envelope (api-docs §0.16 / §3.12).
+    return result.map(
+      (data) => (data as List<dynamic>)
+          .map((item) => SessionModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/utils/direct_chat_lookup.dart';
 import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
@@ -103,6 +104,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _startDirectChat(int userId) async {
+    // Dedup before creating: the backend never raises DIRECT_CHAT_EXISTS, so a
+    // second create would silently make a duplicate 1:1 chat (api-docs §5.2).
+    final existing = findDirectChatWith(
+      ref.read(chatListProvider).value?.items ?? const [],
+      userId,
+      myUserId: ref.read(authProvider).value?.id,
+    );
+    if (existing != null) {
+      context.push(ChatDetailRoute(existing.id).location);
+      return;
+    }
+
     setState(() => _isStartingChat = true);
 
     final result = await ref

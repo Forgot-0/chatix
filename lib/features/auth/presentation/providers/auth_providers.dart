@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/features/auth/domain/entities/session_entity.dart';
+import 'package:chatix/features/auth/domain/usecases/get_my_sessions_use_case.dart';
 import 'package:chatix/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:chatix/features/auth/domain/usecases/confirm_email_verification_use_case.dart';
 import 'package:chatix/features/auth/domain/usecases/confirm_password_reset_use_case.dart';
@@ -48,4 +50,15 @@ final confirmPasswordResetUseCaseProvider =
 
 final getOAuthUrlUseCaseProvider = Provider<GetOAuthUrlUseCase>((ref) {
   return GetOAuthUrlUseCase(ref.watch(authRepositoryProvider));
+});
+
+final getMySessionsUseCaseProvider = Provider<GetMySessionsUseCase>((ref) {
+  return GetMySessionsUseCase(ref.watch(authRepositoryProvider));
+});
+
+/// The caller's own signed-in devices. Auto-refreshes on invalidate; there is
+/// no realtime channel for sessions.
+final mySessionsProvider = FutureProvider<List<SessionEntity>>((ref) async {
+  final result = await ref.watch(getMySessionsUseCaseProvider).execute();
+  return result.fold((failure) => throw failure, (sessions) => sessions);
 });

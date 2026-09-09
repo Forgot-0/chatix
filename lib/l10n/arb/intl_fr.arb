@@ -217,5 +217,20 @@
   "oauthCancelled": "Connexion annulée",
   "oauthCancelledHint": "Rien n’a changé. Réessayez ou utilisez votre identifiant et mot de passe.",
   "oauthFailed": "Impossible de terminer la connexion",
-  "oauthFailedHint": "Connectez-vous avec votre identifiant et mot de passe."
+  "oauthFailedHint": "Connectez-vous avec votre identifiant et mot de passe.",
+  "realtimeRejected": "Les mises à jour en direct sont désactivées pour cette discussion",
+  "forwardComment": "Ajouter un commentaire (facultatif)",
+  "forwardAction": "Transférer",
+  "banDuration": "Durée",
+  "banForever": "Définitivement",
+  "banUntilDate": "Jusqu'à une date",
+  "banLift": "Lever le bannissement",
+  "banLiftHint": "Envoie une date passée, que le serveur interprète comme un débannissement",
+  "banPickDate": "Choisir une date",
+  "myDevices": "Mes appareils",
+  "devicesLoadFailed": "Impossible de charger vos appareils.",
+  "noDevices": "Aucune session active",
+  "deviceActive": "Active",
+  "deviceInactive": "Déconnectée",
+  "deviceLastActive": "Dernière activité : {date}"
 }

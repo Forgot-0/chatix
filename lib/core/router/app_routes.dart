@@ -33,6 +33,7 @@ abstract final class RouteNames {
 
   static const String settings = 'settings';
   static const String languageSettings = 'languageSettings';
+  static const String sessions = 'sessions';
   static const String localizationAssetsDemo = 'localizationAssetsDemo';
 }
 
@@ -166,6 +167,11 @@ class ProfileDetailRoute {
 abstract final class SettingsRoute {
   static const String path = '/settings';
   static const String location = '/settings';
+}
+
+abstract final class SessionsRoute {
+  static const String path = 'devices';
+  static const String location = '/settings/devices';
 }
 
 abstract final class LanguageSettingsRoute {

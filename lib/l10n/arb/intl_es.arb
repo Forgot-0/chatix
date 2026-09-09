@@ -217,5 +217,20 @@
   "oauthCancelled": "Se canceló el inicio de sesión",
   "oauthCancelledHint": "No se cambió nada. Inténtalo de nuevo o usa tu usuario y contraseña.",
   "oauthFailed": "No se pudo completar el inicio de sesión",
-  "oauthFailedHint": "Inicia sesión con tu usuario y contraseña."
+  "oauthFailedHint": "Inicia sesión con tu usuario y contraseña.",
+  "realtimeRejected": "Las actualizaciones en vivo están desactivadas en este chat",
+  "forwardComment": "Añadir un comentario (opcional)",
+  "forwardAction": "Reenviar",
+  "banDuration": "Duración",
+  "banForever": "Permanentemente",
+  "banUntilDate": "Hasta una fecha",
+  "banLift": "Levantar el bloqueo",
+  "banLiftHint": "Envía una fecha pasada, que el servidor interpreta como desbloqueo",
+  "banPickDate": "Elegir fecha",
+  "myDevices": "Mis dispositivos",
+  "devicesLoadFailed": "No se pudieron cargar tus dispositivos.",
+  "noDevices": "No hay sesiones activas",
+  "deviceActive": "Activa",
+  "deviceInactive": "Sesión cerrada",
+  "deviceLastActive": "Última actividad: {date}"
 }

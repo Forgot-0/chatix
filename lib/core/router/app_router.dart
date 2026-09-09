@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/oauth_callback_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/register_screen.dart';
+import 'package:chatix/features/auth/presentation/screens/sessions_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_confirm_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_request_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
@@ -205,14 +207,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: RouteNames.languageSettings,
             builder: (context, state) => const LanguageSettingsScreen(),
           ),
+          GoRoute(
+            path: SessionsRoute.path,
+            name: RouteNames.sessions,
+            builder: (context, state) => const SessionsScreen(),
+          ),
         ],
       ),
 
-      GoRoute(
-        path: LocalizationAssetsDemoRoute.path,
-        name: RouteNames.localizationAssetsDemo,
-        builder: (context, state) => const LocalizationAssetsDemo(),
-      ),
+      // Demo-only surface from lib/examples. Kept for reference but excluded
+      // from release builds: `kDebugMode` is a compile-time constant, so the
+      // route and everything it pulls in is tree-shaken out of a release.
+      if (kDebugMode)
+        GoRoute(
+          path: LocalizationAssetsDemoRoute.path,
+          name: RouteNames.localizationAssetsDemo,
+          builder: (context, state) => const LocalizationAssetsDemo(),
+        ),
 
       GoRoute(
         path: LoginRoute.path,

@@ -28,6 +28,12 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.go(LanguageSettingsRoute.location),
           ),
 
+          ListTile(
+            leading: const Icon(Icons.devices),
+            title: Text(l10n.myDevices),
+            onTap: () => context.push(SessionsRoute.location),
+          ),
+
           const Divider(),
 
           _SectionLabel(label: l10n.theme),

@@ -1030,5 +1030,70 @@
   "oauthFailedHint": "Sign in with your username and password instead.",
   "@oauthFailedHint": {
     "description": "OAuth failure detail"
+  },
+  "realtimeRejected": "Live updates are off for this chat",
+  "@realtimeRejected": {
+    "description": "ws.error NOT_CHAT_MEMBER banner"
+  },
+  "forwardComment": "Add a comment (optional)",
+  "@forwardComment": {
+    "description": "Forward comment field"
+  },
+  "forwardAction": "Forward",
+  "@forwardAction": {
+    "description": "Confirms the forward"
+  },
+  "banDuration": "How long",
+  "@banDuration": {
+    "description": "Ban duration section"
+  },
+  "banForever": "Permanently",
+  "@banForever": {
+    "description": "banned_to = null"
+  },
+  "banUntilDate": "Until a date",
+  "@banUntilDate": {
+    "description": "banned_to = future"
+  },
+  "banLift": "Lift the ban",
+  "@banLift": {
+    "description": "banned_to = past"
+  },
+  "banLiftHint": "Sends a past date, which the server reads as an unban",
+  "@banLiftHint": {
+    "description": "banned_to past semantics"
+  },
+  "banPickDate": "Pick a date",
+  "@banPickDate": {
+    "description": "Opens the date picker"
+  },
+  "myDevices": "My devices",
+  "@myDevices": {
+    "description": "Sessions screen title"
+  },
+  "devicesLoadFailed": "Could not load your devices.",
+  "@devicesLoadFailed": {
+    "description": "Sessions list error"
+  },
+  "noDevices": "No active sessions",
+  "@noDevices": {
+    "description": "Empty sessions list"
+  },
+  "deviceActive": "Active",
+  "@deviceActive": {
+    "description": "Session is active"
+  },
+  "deviceInactive": "Signed out",
+  "@deviceInactive": {
+    "description": "Session is no longer active"
+  },
+  "deviceLastActive": "Last active {date}",
+  "@deviceLastActive": {
+    "description": "Session last activity",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -301,9 +301,16 @@ class _BanDialog extends StatefulWidget {
   State<_BanDialog> createState() => _BanDialogState();
 }
 
+/// The three shapes `banned_to` can take (api-docs §5.3), spelled out instead
+/// of left for the moderator to infer from a date picker:
+/// null bans forever, a future date bans until then, a past date lifts the ban.
+enum _BanDuration { forever, untilDate, lift }
+
 class _BanDialogState extends State<_BanDialog> {
   final _reasonController = TextEditingController();
-  DateTime? _bannedTo;
+
+  _BanDuration _duration = _BanDuration.forever;
+  DateTime? _until;
 
   @override
   void dispose() {
@@ -311,53 +318,92 @@ class _BanDialogState extends State<_BanDialog> {
     super.dispose();
   }
 
+  DateTime? get _bannedTo => switch (_duration) {
+    _BanDuration.forever => null,
+    _BanDuration.untilDate => _until,
+    // Any past instant reads as an unban server-side.
+    _BanDuration.lift => DateTime.now().subtract(const Duration(days: 1)),
+  };
+
+  bool get _canSubmit => _duration != _BanDuration.untilDate || _until != null;
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
     return AlertDialog(
-      title: Text(AppLocalizations.of(context).banMemberTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _reasonController,
-            decoration: InputDecoration(
-              labelText: AppLocalizations.of(context).banReason,
-              border: OutlineInputBorder(),
+      title: Text(l10n.banMemberTitle),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _reasonController,
+              decoration: InputDecoration(labelText: l10n.banReason),
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _bannedTo == null
-                      ? 'Permanent'
-                      : 'Until ${_bannedTo!.toLocal()}',
-                ),
+            const SizedBox(height: 16),
+            Text(l10n.banDuration, style: theme.textTheme.labelLarge),
+            RadioGroup<_BanDuration>(
+              groupValue: _duration,
+              onChanged: (value) {
+                if (value != null) setState(() => _duration = value);
+              },
+              child: Column(
+                children: [
+                  RadioListTile<_BanDuration>(
+                    value: _BanDuration.forever,
+                    title: Text(l10n.banForever),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  RadioListTile<_BanDuration>(
+                    value: _BanDuration.untilDate,
+                    title: Text(l10n.banUntilDate),
+                    subtitle: _until == null
+                        ? null
+                        : Text(
+                            MaterialLocalizations.of(
+                              context,
+                            ).formatMediumDate(_until!.toLocal()),
+                          ),
+                    secondary: TextButton(
+                      onPressed: _pickDate,
+                      child: Text(l10n.banPickDate),
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  RadioListTile<_BanDuration>(
+                    value: _BanDuration.lift,
+                    title: Text(l10n.banLift),
+                    subtitle: Text(l10n.banLiftHint),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: _pickDate,
-                child: Text(AppLocalizations.of(context).banUntil),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(AppLocalizations.of(context).cancel),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(
-            _BanRequest(
-              reason: _reasonController.text.trim().isEmpty
-                  ? null
-                  : _reasonController.text.trim(),
-              bannedTo: _bannedTo,
-            ),
+          onPressed: _canSubmit
+              ? () => Navigator.of(context).pop(
+                  _BanRequest(
+                    reason: _reasonController.text.trim().isEmpty
+                        ? null
+                        : _reasonController.text.trim(),
+                    bannedTo: _bannedTo,
+                  ),
+                )
+              : null,
+          child: Text(
+            _duration == _BanDuration.lift ? l10n.banLift : l10n.banMember,
           ),
-          child: Text(AppLocalizations.of(context).banMember),
         ),
       ],
     );
@@ -371,7 +417,12 @@ class _BanDialogState extends State<_BanDialog> {
       lastDate: now.add(const Duration(days: 365 * 5)),
       initialDate: now.add(const Duration(days: 7)),
     );
-    if (picked != null) setState(() => _bannedTo = picked);
+    if (picked != null) {
+      setState(() {
+        _until = picked;
+        _duration = _BanDuration.untilDate;
+      });
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/features/auth/domain/entities/session_entity.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 
 abstract class AuthRepository {
@@ -39,4 +40,6 @@ abstract class AuthRepository {
     required String provider,
     bool connect = false,
   });
+
+  Future<Either<Failure, List<SessionEntity>>> getMySessions();
 }

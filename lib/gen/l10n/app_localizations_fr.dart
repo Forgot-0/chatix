@@ -796,4 +796,53 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get oauthFailedHint =>
       'Connectez-vous avec votre identifiant et mot de passe.';
+
+  @override
+  String get realtimeRejected =>
+      'Les mises à jour en direct sont désactivées pour cette discussion';
+
+  @override
+  String get forwardComment => 'Ajouter un commentaire (facultatif)';
+
+  @override
+  String get forwardAction => 'Transférer';
+
+  @override
+  String get banDuration => 'Durée';
+
+  @override
+  String get banForever => 'Définitivement';
+
+  @override
+  String get banUntilDate => 'Jusqu\'à une date';
+
+  @override
+  String get banLift => 'Lever le bannissement';
+
+  @override
+  String get banLiftHint =>
+      'Envoie une date passée, que le serveur interprète comme un débannissement';
+
+  @override
+  String get banPickDate => 'Choisir une date';
+
+  @override
+  String get myDevices => 'Mes appareils';
+
+  @override
+  String get devicesLoadFailed => 'Impossible de charger vos appareils.';
+
+  @override
+  String get noDevices => 'Aucune session active';
+
+  @override
+  String get deviceActive => 'Active';
+
+  @override
+  String get deviceInactive => 'Déconnectée';
+
+  @override
+  String deviceLastActive(String date) {
+    return 'Dernière activité : $date';
+  }
 }

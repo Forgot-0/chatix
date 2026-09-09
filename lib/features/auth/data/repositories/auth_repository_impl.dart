@@ -3,6 +3,8 @@ import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/features/auth/data/models/session_model.dart';
+import 'package:chatix/features/auth/domain/entities/session_entity.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
 import 'package:chatix/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -116,6 +118,14 @@ class AuthRepositoryImpl implements AuthRepository {
     bool connect = false,
   }) {
     return _remoteDataSource.getOAuthUrl(provider: provider, connect: connect);
+  }
+
+  @override
+  Future<Either<Failure, List<SessionEntity>>> getMySessions() async {
+    final result = await _remoteDataSource.fetchMySessions();
+    return result.map(
+      (models) => models.map((model) => model.toEntity()).toList(),
+    );
   }
 }
 

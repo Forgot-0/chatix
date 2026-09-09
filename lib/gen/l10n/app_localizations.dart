@@ -1545,6 +1545,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in with your username and password instead.'**
   String get oauthFailedHint;
+
+  /// ws.error NOT_CHAT_MEMBER banner
+  ///
+  /// In en, this message translates to:
+  /// **'Live updates are off for this chat'**
+  String get realtimeRejected;
+
+  /// Forward comment field
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment (optional)'**
+  String get forwardComment;
+
+  /// Confirms the forward
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get forwardAction;
+
+  /// Ban duration section
+  ///
+  /// In en, this message translates to:
+  /// **'How long'**
+  String get banDuration;
+
+  /// banned_to = null
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently'**
+  String get banForever;
+
+  /// banned_to = future
+  ///
+  /// In en, this message translates to:
+  /// **'Until a date'**
+  String get banUntilDate;
+
+  /// banned_to = past
+  ///
+  /// In en, this message translates to:
+  /// **'Lift the ban'**
+  String get banLift;
+
+  /// banned_to past semantics
+  ///
+  /// In en, this message translates to:
+  /// **'Sends a past date, which the server reads as an unban'**
+  String get banLiftHint;
+
+  /// Opens the date picker
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get banPickDate;
+
+  /// Sessions screen title
+  ///
+  /// In en, this message translates to:
+  /// **'My devices'**
+  String get myDevices;
+
+  /// Sessions list error
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your devices.'**
+  String get devicesLoadFailed;
+
+  /// Empty sessions list
+  ///
+  /// In en, this message translates to:
+  /// **'No active sessions'**
+  String get noDevices;
+
+  /// Session is active
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get deviceActive;
+
+  /// Session is no longer active
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out'**
+  String get deviceInactive;
+
+  /// Session last activity
+  ///
+  /// In en, this message translates to:
+  /// **'Last active {date}'**
+  String deviceLastActive(String date);
 }
 
 class _AppLocalizationsDelegate

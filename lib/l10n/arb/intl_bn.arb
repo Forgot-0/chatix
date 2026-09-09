@@ -217,5 +217,20 @@
   "oauthCancelled": "সাইন ইন বাতিল হয়েছে",
   "oauthCancelledHint": "কিছু বদলায়নি। আবার চেষ্টা করুন বা ইউজারনেম ও পাসওয়ার্ড ব্যবহার করুন।",
   "oauthFailed": "সাইন ইন সম্পূর্ণ করা যায়নি",
-  "oauthFailedHint": "বরং ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
+  "oauthFailedHint": "বরং ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।",
+  "realtimeRejected": "এই চ্যাটে লাইভ আপডেট বন্ধ",
+  "forwardComment": "মন্তব্য যোগ করুন (ঐচ্ছিক)",
+  "forwardAction": "ফরোয়ার্ড",
+  "banDuration": "কতক্ষণ",
+  "banForever": "স্থায়ীভাবে",
+  "banUntilDate": "একটি তারিখ পর্যন্ত",
+  "banLift": "নিষেধাজ্ঞা তুলুন",
+  "banLiftHint": "অতীত তারিখ পাঠায়, সার্ভার একে নিষেধাজ্ঞা প্রত্যাহার হিসেবে পড়ে",
+  "banPickDate": "তারিখ বাছুন",
+  "myDevices": "আমার ডিভাইস",
+  "devicesLoadFailed": "ডিভাইস লোড করা যায়নি।",
+  "noDevices": "কোনো সক্রিয় সেশন নেই",
+  "deviceActive": "সক্রিয়",
+  "deviceInactive": "সাইন আউট",
+  "deviceLastActive": "সর্বশেষ সক্রিয়: {date}"
 }

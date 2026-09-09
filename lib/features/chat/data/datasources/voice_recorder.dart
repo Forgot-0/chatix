@@ -111,7 +111,9 @@ class VoiceRecorderImpl implements VoiceRecorder {
   Future<void> _safeDelete(File file) async {
     try {
       if (file.existsSync()) await file.delete();
-    } on FileSystemException {}
+    } on FileSystemException {
+      // A leftover temp file is not worth failing a send over.
+    }
   }
 }
 

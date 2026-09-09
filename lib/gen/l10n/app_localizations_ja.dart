@@ -778,4 +778,51 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get oauthFailedHint => 'ユーザー名とパスワードでサインインしてください。';
+
+  @override
+  String get realtimeRejected => 'このチャットのライブ更新は無効です';
+
+  @override
+  String get forwardComment => 'コメントを追加（任意）';
+
+  @override
+  String get forwardAction => '転送';
+
+  @override
+  String get banDuration => '期間';
+
+  @override
+  String get banForever => '無期限';
+
+  @override
+  String get banUntilDate => '指定日まで';
+
+  @override
+  String get banLift => 'ブロックを解除';
+
+  @override
+  String get banLiftHint => '過去の日付を送信し、サーバーはこれを解除として扱います';
+
+  @override
+  String get banPickDate => '日付を選択';
+
+  @override
+  String get myDevices => 'マイデバイス';
+
+  @override
+  String get devicesLoadFailed => 'デバイスを読み込めませんでした。';
+
+  @override
+  String get noDevices => 'アクティブなセッションはありません';
+
+  @override
+  String get deviceActive => '有効';
+
+  @override
+  String get deviceInactive => 'サインアウト済み';
+
+  @override
+  String deviceLastActive(String date) {
+    return '最終利用: $date';
+  }
 }

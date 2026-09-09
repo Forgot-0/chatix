@@ -217,5 +217,20 @@
   "oauthCancelled": "サインインがキャンセルされました",
   "oauthCancelledHint": "変更はありません。もう一度試すか、ユーザー名とパスワードをお使いください。",
   "oauthFailed": "サインインを完了できませんでした",
-  "oauthFailedHint": "ユーザー名とパスワードでサインインしてください。"
+  "oauthFailedHint": "ユーザー名とパスワードでサインインしてください。",
+  "realtimeRejected": "このチャットのライブ更新は無効です",
+  "forwardComment": "コメントを追加（任意）",
+  "forwardAction": "転送",
+  "banDuration": "期間",
+  "banForever": "無期限",
+  "banUntilDate": "指定日まで",
+  "banLift": "ブロックを解除",
+  "banLiftHint": "過去の日付を送信し、サーバーはこれを解除として扱います",
+  "banPickDate": "日付を選択",
+  "myDevices": "マイデバイス",
+  "devicesLoadFailed": "デバイスを読み込めませんでした。",
+  "noDevices": "アクティブなセッションはありません",
+  "deviceActive": "有効",
+  "deviceInactive": "サインアウト済み",
+  "deviceLastActive": "最終利用: {date}"
 }

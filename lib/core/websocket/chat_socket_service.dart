@@ -64,6 +64,14 @@ class ChatSocketService {
 
   final List<String> _subscribedChatIds = [];
 
+  /// The chat of the subscribe most recently put on the wire. `ws.error` has no
+  /// channel field, so this is what lets a rejection be attributed to a chat.
+  String? _lastSubscribeTarget;
+
+  /// Set when the connection URL already asked the gateway to subscribe, so
+  /// `_resumeSubscriptions` does not repeat the request (api-docs §6.1).
+  String? _initialSubscribeSent;
+
   final Map<String, int> _cursors = {};
 
   int _heartbeatInterval = 30;
@@ -136,6 +144,7 @@ class ChatSocketService {
       }
 
       final uri = _buildUri(token);
+      _initialSubscribeSent = uri.queryParameters['initial_chat_id'];
       Logger.info('ChatSocket: connecting to ${_redact(uri)}');
 
       final channel = _channelFactory(uri);
@@ -170,6 +179,8 @@ class ChatSocketService {
     _subscribedChatIds.clear();
     _cursors.clear();
     _seenEventIds.clear();
+    _lastSubscribeTarget = null;
+    _initialSubscribeSent = null;
 
     await _closeChannel(ws_status.normalClosure);
     _setStatus(ChatSocketStatus.disconnected);
@@ -186,6 +197,7 @@ class ChatSocketService {
       _cursors[chatId] = max(_cursors[chatId] ?? lastSeq, lastSeq);
     }
 
+    _lastSubscribeTarget = chatId;
     _send({
       'op': 'subscribe',
       'chat_id': chatId,
@@ -263,6 +275,14 @@ class ChatSocketService {
         Logger.warning(
           'ChatSocket: NOT_CHAT_MEMBER (${event.detail ?? "no detail"})',
         );
+        // Attribute it to the subscribe being answered, then stop tracking the
+        // chat: the gateway will not send us its events.
+        final rejected = event.chatId ?? _lastSubscribeTarget;
+        if (rejected != null) _subscribedChatIds.remove(rejected);
+        if (!_eventController.isClosed) {
+          _eventController.add(event.withChatId(rejected));
+        }
+        return;
 
       case WsErrorBadCommand():
         Logger.error('ChatSocket: ${event.code} — ${event.detail}');
@@ -314,15 +334,25 @@ class ChatSocketService {
   }
 
   void _resumeSubscriptions() {
-    if (_subscribedChatIds.isEmpty) return;
+    // The gateway has already subscribed us to this one from the handshake;
+    // asking again would just duplicate the ws.history it is about to send.
+    final alreadySubscribed = _initialSubscribeSent;
+    _initialSubscribeSent = null;
+
+    final pending = [
+      for (final chatId in _subscribedChatIds)
+        if (chatId != alreadySubscribed) chatId,
+    ];
+    if (pending.isEmpty) return;
 
     final cursors = <String, int>{};
-    for (final chatId in _subscribedChatIds) {
+    for (final chatId in pending) {
       if (_cursors[chatId] case final int seq) cursors[chatId] = seq;
     }
 
     if (cursors.isEmpty) {
-      for (final chatId in _subscribedChatIds.take(maxResumeCursors)) {
+      for (final chatId in pending.take(maxResumeCursors)) {
+        _lastSubscribeTarget = chatId;
         _send({'op': 'subscribe', 'chat_id': chatId});
       }
       return;
@@ -454,13 +484,32 @@ class ChatSocketService {
     final httpUri = Uri.parse('${AppConstants.apiBaseUrl}/chats/ws/');
     final wsScheme = httpUri.scheme == 'https' ? 'wss' : 'ws';
 
+    // With `initial_chat_id` + `initial_last_seq` the gateway subscribes for us
+    // right after `ws.ready`, saving a whole round-trip on every reconnect
+    // (api-docs §6.1). Only worth it when there is exactly one chat to resume —
+    // the usual case, since the open chat screen is the only subscriber — and
+    // both parameters have to be sent together or neither.
+    final initial = _initialSubscribeCandidate();
+
     return httpUri.replace(
       scheme: wsScheme,
       queryParameters: {
         'token': token,
         if (deviceId case final String id when id.isNotEmpty) 'device_id': id,
+        if (initial != null) ...{
+          'initial_chat_id': initial.chatId,
+          'initial_last_seq': '${initial.lastSeq}',
+        },
       },
     );
+  }
+
+  ({String chatId, int lastSeq})? _initialSubscribeCandidate() {
+    if (_subscribedChatIds.length != 1) return null;
+    final chatId = _subscribedChatIds.single;
+    final seq = _cursors[chatId];
+    if (seq == null) return null;
+    return (chatId: chatId, lastSeq: seq);
   }
 
   String _redact(Uri uri) {

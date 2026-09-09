@@ -785,4 +785,52 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get oauthFailedHint =>
       'Sign in with your username and password instead.';
+
+  @override
+  String get realtimeRejected => 'Live updates are off for this chat';
+
+  @override
+  String get forwardComment => 'Add a comment (optional)';
+
+  @override
+  String get forwardAction => 'Forward';
+
+  @override
+  String get banDuration => 'How long';
+
+  @override
+  String get banForever => 'Permanently';
+
+  @override
+  String get banUntilDate => 'Until a date';
+
+  @override
+  String get banLift => 'Lift the ban';
+
+  @override
+  String get banLiftHint =>
+      'Sends a past date, which the server reads as an unban';
+
+  @override
+  String get banPickDate => 'Pick a date';
+
+  @override
+  String get myDevices => 'My devices';
+
+  @override
+  String get devicesLoadFailed => 'Could not load your devices.';
+
+  @override
+  String get noDevices => 'No active sessions';
+
+  @override
+  String get deviceActive => 'Active';
+
+  @override
+  String get deviceInactive => 'Signed out';
+
+  @override
+  String deviceLastActive(String date) {
+    return 'Last active $date';
+  }
 }

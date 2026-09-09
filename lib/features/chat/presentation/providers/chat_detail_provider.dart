@@ -89,6 +89,10 @@ class ChatDetailState extends Equatable {
 
   final bool isViewingHistory;
 
+  /// The gateway refused our subscribe: messages already loaded still show, but
+  /// nothing new will arrive until the chat is reopened.
+  final bool isRealtimeRejected;
+
   const ChatDetailState({
     this.chat,
     this.messages = const [],
@@ -102,6 +106,7 @@ class ChatDetailState extends Equatable {
     this.peerReadSeq = const {},
     this.highlightMessageId,
     this.isViewingHistory = false,
+    this.isRealtimeRejected = false,
   });
 
   bool get canLoadMore => hasNext && nextCursor != null;
@@ -143,6 +148,7 @@ class ChatDetailState extends Equatable {
     String? highlightMessageId,
     bool clearHighlight = false,
     bool? isViewingHistory,
+    bool? isRealtimeRejected,
   }) {
     return ChatDetailState(
       chat: chat ?? this.chat,
@@ -159,6 +165,7 @@ class ChatDetailState extends Equatable {
           ? null
           : (highlightMessageId ?? this.highlightMessageId),
       isViewingHistory: isViewingHistory ?? this.isViewingHistory,
+      isRealtimeRejected: isRealtimeRejected ?? this.isRealtimeRejected,
     );
   }
 
@@ -176,6 +183,7 @@ class ChatDetailState extends Equatable {
     peerReadSeq,
     highlightMessageId,
     isViewingHistory,
+    isRealtimeRejected,
   ];
 }
 
@@ -314,12 +322,21 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       case WsReady():
         break;
 
+      case WsErrorNotChatMember():
+        // `ws.error` is the only signal that realtime is off for this chat;
+        // without surfacing it the screen just silently stops updating.
+        if (event.chatId == null || event.chatId == _chatId) {
+          _mutate(
+            (s) =>
+                s.copyWith(isRealtimeRejected: true, nextCursor: s.nextCursor),
+          );
+        }
+
       case WsSubscribed():
       case WsUnsubscribed():
       case WsPing():
       case WsPong():
       case WsErrorBadCommand():
-      case WsErrorNotChatMember():
       case WsAuthInvalid():
       case WsUnimplementedEvent():
       case WsUnknown():

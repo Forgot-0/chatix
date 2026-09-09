@@ -783,4 +783,52 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get oauthFailedHint => 'বরং ইউজারনেম ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।';
+
+  @override
+  String get realtimeRejected => 'এই চ্যাটে লাইভ আপডেট বন্ধ';
+
+  @override
+  String get forwardComment => 'মন্তব্য যোগ করুন (ঐচ্ছিক)';
+
+  @override
+  String get forwardAction => 'ফরোয়ার্ড';
+
+  @override
+  String get banDuration => 'কতক্ষণ';
+
+  @override
+  String get banForever => 'স্থায়ীভাবে';
+
+  @override
+  String get banUntilDate => 'একটি তারিখ পর্যন্ত';
+
+  @override
+  String get banLift => 'নিষেধাজ্ঞা তুলুন';
+
+  @override
+  String get banLiftHint =>
+      'অতীত তারিখ পাঠায়, সার্ভার একে নিষেধাজ্ঞা প্রত্যাহার হিসেবে পড়ে';
+
+  @override
+  String get banPickDate => 'তারিখ বাছুন';
+
+  @override
+  String get myDevices => 'আমার ডিভাইস';
+
+  @override
+  String get devicesLoadFailed => 'ডিভাইস লোড করা যায়নি।';
+
+  @override
+  String get noDevices => 'কোনো সক্রিয় সেশন নেই';
+
+  @override
+  String get deviceActive => 'সক্রিয়';
+
+  @override
+  String get deviceInactive => 'সাইন আউট';
+
+  @override
+  String deviceLastActive(String date) {
+    return 'সর্বশেষ সক্রিয়: $date';
+  }
 }

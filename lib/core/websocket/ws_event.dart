@@ -494,11 +494,25 @@ final class WsErrorNotChatMember extends WSEvent {
 
   final String? detail;
 
-  const WsErrorNotChatMember({required this.code, this.ts, this.detail})
-    : super('ws.error');
+  /// Chat the rejection is about.
+  ///
+  /// `ws.error` carries no channel (api-docs §6.4), so the gateway cannot tell
+  /// us which subscribe was refused. [ChatSocketService] fills this in from the
+  /// subscribe it most recently sent, which is the request being answered.
+  final String? chatId;
+
+  const WsErrorNotChatMember({
+    required this.code,
+    this.ts,
+    this.detail,
+    this.chatId,
+  }) : super('ws.error');
+
+  WsErrorNotChatMember withChatId(String? id) =>
+      WsErrorNotChatMember(code: code, ts: ts, detail: detail, chatId: id);
 
   @override
-  List<Object?> get props => [type, code, ts, detail];
+  List<Object?> get props => [type, code, ts, detail, chatId];
 }
 
 final class WsAuthInvalid extends WSEvent {

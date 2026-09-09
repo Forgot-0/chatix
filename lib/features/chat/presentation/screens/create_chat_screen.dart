@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/utils/direct_chat_lookup.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/core/router/app_routes.dart';
@@ -194,6 +196,20 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
                   '${memberIds.length} were selected — pick Group instead';
       });
       return;
+    }
+
+    if (_chatType == ChatType.direct) {
+      // Dedup before creating: the backend never raises DIRECT_CHAT_EXISTS, so
+      // a second create would silently make a duplicate (api-docs §5.2).
+      final existing = findDirectChatWith(
+        ref.read(chatListProvider).value?.items ?? const [],
+        memberIds.single,
+        myUserId: ref.read(authProvider).value?.id,
+      );
+      if (existing != null) {
+        context.pushReplacement(ChatDetailRoute(existing.id).location);
+        return;
+      }
     }
 
     setState(() {

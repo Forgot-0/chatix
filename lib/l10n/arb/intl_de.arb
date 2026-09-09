@@ -217,5 +217,20 @@
   "oauthCancelled": "Anmeldung abgebrochen",
   "oauthCancelledHint": "Es wurde nichts geändert. Versuche es erneut oder nutze Benutzername und Passwort.",
   "oauthFailed": "Anmeldung konnte nicht abgeschlossen werden",
-  "oauthFailedHint": "Melde dich stattdessen mit Benutzername und Passwort an."
+  "oauthFailedHint": "Melde dich stattdessen mit Benutzername und Passwort an.",
+  "realtimeRejected": "Live-Updates sind für diesen Chat aus",
+  "forwardComment": "Kommentar hinzufügen (optional)",
+  "forwardAction": "Weiterleiten",
+  "banDuration": "Dauer",
+  "banForever": "Dauerhaft",
+  "banUntilDate": "Bis zu einem Datum",
+  "banLift": "Sperre aufheben",
+  "banLiftHint": "Sendet ein vergangenes Datum, das der Server als Entsperrung liest",
+  "banPickDate": "Datum wählen",
+  "myDevices": "Meine Geräte",
+  "devicesLoadFailed": "Geräte konnten nicht geladen werden.",
+  "noDevices": "Keine aktiven Sitzungen",
+  "deviceActive": "Aktiv",
+  "deviceInactive": "Abgemeldet",
+  "deviceLastActive": "Zuletzt aktiv: {date}"
 }
