@@ -30,12 +30,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     FocusScope.of(context).unfocus();
 
     final values = _formKey.currentState!.value;
-    ref.read(authProvider.notifier).register(
-      username: values['username'] as String,
-      email: values['email'] as String,
-      password: values['password'] as String,
-      passwordRepeat: values['password_repeat'] as String,
-    );
+    ref
+        .read(authProvider.notifier)
+        .register(
+          username: values['username'] as String,
+          email: values['email'] as String,
+          password: values['password'] as String,
+          passwordRepeat: values['password_repeat'] as String,
+        );
   }
 
   @override
@@ -109,7 +111,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   FormBuilderTextField(
                     name: 'password',
                     obscureText: !_isPasswordVisible,
-                    onChanged: (_) => _formKey.currentState?.fields['password_repeat']
+                    onChanged: (_) => _formKey
+                        .currentState
+                        ?.fields['password_repeat']
                         ?.validate(),
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -152,7 +156,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         },
                       ),
                     ),
-                    validator: AuthFieldValidators.passwordRepeat(_currentPassword),
+                    validator: AuthFieldValidators.passwordRepeat(
+                      _currentPassword,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
@@ -201,5 +207,4 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ),
     );
   }
-
 }

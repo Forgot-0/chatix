@@ -597,11 +597,9 @@ enum SortOrder { asc, desc }
     );
   }
 
-  Future<void> _createTestFiles() async {
-  }
+  Future<void> _createTestFiles() async {}
 
-  Future<void> _createDocFiles() async {
-  }
+  Future<void> _createDocFiles() async {}
 
   Future<void> _createDir(String path) async {
     final dir = Directory(path);

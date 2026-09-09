@@ -26,21 +26,25 @@ final getCurrentUserUseCaseProvider = Provider<GetCurrentUserUseCase>((ref) {
   return GetCurrentUserUseCase(ref.watch(authRepositoryProvider));
 });
 
-final requestEmailVerificationUseCaseProvider = Provider<RequestEmailVerificationUseCase>((ref) {
-  return RequestEmailVerificationUseCase(ref.watch(authRepositoryProvider));
-});
+final requestEmailVerificationUseCaseProvider =
+    Provider<RequestEmailVerificationUseCase>((ref) {
+      return RequestEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+    });
 
-final confirmEmailVerificationUseCaseProvider = Provider<ConfirmEmailVerificationUseCase>((ref) {
-  return ConfirmEmailVerificationUseCase(ref.watch(authRepositoryProvider));
-});
+final confirmEmailVerificationUseCaseProvider =
+    Provider<ConfirmEmailVerificationUseCase>((ref) {
+      return ConfirmEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+    });
 
-final requestPasswordResetUseCaseProvider = Provider<RequestPasswordResetUseCase>((ref) {
-  return RequestPasswordResetUseCase(ref.watch(authRepositoryProvider));
-});
+final requestPasswordResetUseCaseProvider =
+    Provider<RequestPasswordResetUseCase>((ref) {
+      return RequestPasswordResetUseCase(ref.watch(authRepositoryProvider));
+    });
 
-final confirmPasswordResetUseCaseProvider = Provider<ConfirmPasswordResetUseCase>((ref) {
-  return ConfirmPasswordResetUseCase(ref.watch(authRepositoryProvider));
-});
+final confirmPasswordResetUseCaseProvider =
+    Provider<ConfirmPasswordResetUseCase>((ref) {
+      return ConfirmPasswordResetUseCase(ref.watch(authRepositoryProvider));
+    });
 
 final getOAuthUrlUseCaseProvider = Provider<GetOAuthUrlUseCase>((ref) {
   return GetOAuthUrlUseCase(ref.watch(authRepositoryProvider));

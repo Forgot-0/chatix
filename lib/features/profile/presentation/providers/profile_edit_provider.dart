@@ -16,14 +16,16 @@ class ProfileEditController extends AsyncNotifier<void> {
   }) async {
     state = const AsyncValue.loading();
 
-    final result = await ref.read(updateProfileUseCaseProvider).execute(
-      profileId,
-      specialization: specialization,
-      displayName: displayName,
-      bio: bio,
-      skills: skills,
-      dateBirthday: dateBirthday,
-    );
+    final result = await ref
+        .read(updateProfileUseCaseProvider)
+        .execute(
+          profileId,
+          specialization: specialization,
+          displayName: displayName,
+          bio: bio,
+          skills: skills,
+          dateBirthday: dateBirthday,
+        );
 
     return result.fold(
       (failure) {
@@ -38,7 +40,11 @@ class ProfileEditController extends AsyncNotifier<void> {
     );
   }
 
-  Future<bool> addContact(int profileId, {required String provider, required String contact}) async {
+  Future<bool> addContact(
+    int profileId, {
+    required String provider,
+    required String contact,
+  }) async {
     state = const AsyncValue.loading();
 
     final result = await ref
@@ -61,7 +67,9 @@ class ProfileEditController extends AsyncNotifier<void> {
   Future<bool> removeContact(int profileId, {required String provider}) async {
     state = const AsyncValue.loading();
 
-    final result = await ref.read(removeContactUseCaseProvider).execute(profileId, provider: provider);
+    final result = await ref
+        .read(removeContactUseCaseProvider)
+        .execute(profileId, provider: provider);
 
     return result.fold(
       (failure) {

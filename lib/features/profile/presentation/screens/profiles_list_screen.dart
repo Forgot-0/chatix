@@ -40,7 +40,9 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
   }
 
   void _search(String value) {
-    ref.read(profileListProvider.notifier).search(displayName: value.trim().isEmpty ? null : value.trim());
+    ref
+        .read(profileListProvider.notifier)
+        .search(displayName: value.trim().isEmpty ? null : value.trim());
   }
 
   @override
@@ -93,7 +95,8 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                 }
 
                 return RefreshIndicator(
-                  onRefresh: () => ref.read(profileListProvider.notifier).refresh(),
+                  onRefresh: () =>
+                      ref.read(profileListProvider.notifier).refresh(),
                   child: ListView.builder(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -106,12 +109,15 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                       final profile = state.items[index];
                       return ListTile(
                         leading: ProfileAvatar(profile: profile, radius: 20),
-                        title: Text(profile.displayName ?? 'Profile #${profile.id}'),
+                        title: Text(
+                          profile.displayName ?? 'Profile #${profile.id}',
+                        ),
                         subtitle: profile.specialization != null
                             ? Text(profile.specialization!)
                             : null,
-                        onTap: () =>
-                            context.push(ProfileDetailRoute(profile.id).location),
+                        onTap: () => context.push(
+                          ProfileDetailRoute(profile.id).location,
+                        ),
                       );
                     },
                   ),

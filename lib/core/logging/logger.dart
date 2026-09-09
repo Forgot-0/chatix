@@ -1,18 +1,4 @@
-enum LogLevel {
-  verbose,
-
-  debug,
-
-  info,
-
-  warning,
-
-  error,
-
-  critical,
-
-  performance,
-}
+enum LogLevel { verbose, debug, info, warning, error, critical, performance }
 
 abstract class Logger {
   void v(

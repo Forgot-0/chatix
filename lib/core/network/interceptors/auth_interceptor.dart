@@ -150,7 +150,9 @@ class AuthInterceptor extends QueuedInterceptor {
     final sentWith = options.headers[_authHeader] as String?;
 
     return _refreshLock.synchronized(() async {
-      final stored = await _secureStorage.read(key: AppConstants.accessTokenKey);
+      final stored = await _secureStorage.read(
+        key: AppConstants.accessTokenKey,
+      );
       if (stored != null &&
           stored.isNotEmpty &&
           '$_bearerPrefix$stored' != sentWith) {

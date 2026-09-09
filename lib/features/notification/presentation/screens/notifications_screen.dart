@@ -12,7 +12,8 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
@@ -52,9 +53,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (!mounted) return;
 
     if (failure != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message)));
     }
 
     if (route != null && mounted) {
@@ -63,12 +64,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _onMarkAllAsRead() async {
-    final result = await ref.read(notificationListProvider.notifier).markAllAsRead();
+    final result = await ref
+        .read(notificationListProvider.notifier)
+        .markAllAsRead();
     if (!mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
     result.match(
-      (failure) => messenger.showSnackBar(SnackBar(content: Text(failure.message))),
+      (failure) =>
+          messenger.showSnackBar(SnackBar(content: Text(failure.message))),
       (count) => messenger.showSnackBar(
         SnackBar(
           content: Text(
@@ -97,8 +101,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           PopupMenuButton<bool?>(
             tooltip: 'Filter',
             icon: const Icon(Icons.filter_list),
-            onSelected: (value) =>
-                ref.read(notificationListProvider.notifier).setFilter(isRead: value),
+            onSelected: (value) => ref
+                .read(notificationListProvider.notifier)
+                .setFilter(isRead: value),
             itemBuilder: (context) => const [
               PopupMenuItem<bool?>(value: null, child: Text('All')),
               PopupMenuItem<bool?>(value: false, child: Text('Unread only')),
@@ -148,7 +153,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => ref.read(notificationListProvider.notifier).refresh(),
+            onRefresh: () =>
+                ref.read(notificationListProvider.notifier).refresh(),
             child: ListView.separated(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
@@ -185,21 +191,32 @@ class _NotificationTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      tileColor: isUnread ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25) : null,
+      tileColor: isUnread
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25)
+          : null,
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.secondaryContainer,
         child: Icon(_iconFor(notification.type), size: 20),
       ),
       title: Text(
         notification.title,
-        style: TextStyle(fontWeight: isUnread ? FontWeight.bold : FontWeight.normal),
+        style: TextStyle(
+          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (notification.message != null && notification.message!.isNotEmpty)
-            Text(notification.message!, maxLines: 2, overflow: TextOverflow.ellipsis),
-          Text(_formatTimestamp(notification.createdAt), style: theme.textTheme.bodySmall),
+            Text(
+              notification.message!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          Text(
+            _formatTimestamp(notification.createdAt),
+            style: theme.textTheme.bodySmall,
+          ),
         ],
       ),
       trailing: hasNotificationDestination(notification)

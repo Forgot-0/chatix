@@ -182,8 +182,7 @@ class CallController extends AsyncNotifier<CallState> {
     final target = !current.isMicrophoneEnabled;
     final result = await _service.setMicrophoneEnabled(target);
     result.match(
-      (failure) =>
-          state = AsyncData(current.copyWith(failure: failure)),
+      (failure) => state = AsyncData(current.copyWith(failure: failure)),
       (_) => state = AsyncData(
         current.copyWith(isMicrophoneEnabled: target, clearFailure: true),
       ),
@@ -198,8 +197,7 @@ class CallController extends AsyncNotifier<CallState> {
     final target = !current.isCameraEnabled;
     final result = await _service.setCameraEnabled(target);
     result.match(
-      (failure) =>
-          state = AsyncData(current.copyWith(failure: failure)),
+      (failure) => state = AsyncData(current.copyWith(failure: failure)),
       (_) => state = AsyncData(
         current.copyWith(isCameraEnabled: target, clearFailure: true),
       ),

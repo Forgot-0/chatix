@@ -51,9 +51,9 @@ final chatSocketEventsProvider = StreamProvider<WSEvent>((ref) {
 
 final confirmedAttachmentTokensProvider =
     NotifierProvider<ConfirmedAttachmentTokens, Set<String>>(
-  ConfirmedAttachmentTokens.new,
-  dependencies: [chatSocketServiceProvider],
-);
+      ConfirmedAttachmentTokens.new,
+      dependencies: [chatSocketServiceProvider],
+    );
 
 class ConfirmedAttachmentTokens extends Notifier<Set<String>> {
   StreamSubscription<WSEvent>? _subscription;

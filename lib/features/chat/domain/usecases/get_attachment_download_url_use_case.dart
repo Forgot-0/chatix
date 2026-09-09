@@ -22,7 +22,11 @@ class GetAttachmentDownloadUrlUseCase {
     if (attachmentId.trim().isEmpty) {
       return _fail('Attachment id is required');
     }
-    return _repository.getAttachmentDownloadUrl(chatId, messageId, attachmentId);
+    return _repository.getAttachmentDownloadUrl(
+      chatId,
+      messageId,
+      attachmentId,
+    );
   }
 
   Future<Either<Failure, AttachmentDownloadUrlEntity>> _fail(String message) =>

@@ -30,11 +30,17 @@ class ProfileEntity extends Equatable {
   String? bestAvatarUrl(int preferredSize) {
     if (avatars.isEmpty) return null;
 
-    final availableSizes = avatars.keys.map(int.tryParse).whereType<int>().toList()..sort();
+    final availableSizes =
+        avatars.keys.map(int.tryParse).whereType<int>().toList()..sort();
     if (availableSizes.isEmpty) return null;
 
-    final atLeastPreferred = availableSizes.where((size) => size >= preferredSize);
-    final smallerThanPreferred = availableSizes.where((size) => size < preferredSize).toList().reversed;
+    final atLeastPreferred = availableSizes.where(
+      (size) => size >= preferredSize,
+    );
+    final smallerThanPreferred = availableSizes
+        .where((size) => size < preferredSize)
+        .toList()
+        .reversed;
     final orderedSizes = [...atLeastPreferred, ...smallerThanPreferred];
 
     const formatPriority = ['webp', 'jpg', 'avif'];

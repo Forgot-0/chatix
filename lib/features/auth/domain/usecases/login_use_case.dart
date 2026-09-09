@@ -13,7 +13,9 @@ class LoginUseCase {
   }) {
     if (username.isEmpty || password.isEmpty) {
       return Future.value(
-        const Left(InputFailure(message: 'Username and password cannot be empty')),
+        const Left(
+          InputFailure(message: 'Username and password cannot be empty'),
+        ),
       );
     }
 

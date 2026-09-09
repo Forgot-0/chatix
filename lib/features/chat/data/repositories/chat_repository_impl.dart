@@ -225,12 +225,14 @@ class ChatRepositoryImpl implements ChatRepository {
     required String sourceMessageId,
     required String targetChatId,
     String? comment,
+    String? idempotencyKey,
   }) async {
     final result = await _remote.forwardMessage(
       sourceChatId: sourceChatId,
       sourceMessageId: sourceMessageId,
       targetChatId: targetChatId,
       comment: comment,
+      idempotencyKey: idempotencyKey,
     );
     return result.map((model) => model.toEntity());
   }

@@ -19,9 +19,13 @@ abstract class AuthRepository {
 
   Future<Either<Failure, UserEntity>> getCurrentUser();
 
-  Future<Either<Failure, void>> requestEmailVerification({required String email});
+  Future<Either<Failure, void>> requestEmailVerification({
+    required String email,
+  });
 
-  Future<Either<Failure, void>> confirmEmailVerification({required String token});
+  Future<Either<Failure, void>> confirmEmailVerification({
+    required String token,
+  });
 
   Future<Either<Failure, void>> requestPasswordReset({required String email});
 

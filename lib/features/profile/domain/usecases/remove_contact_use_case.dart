@@ -7,15 +7,22 @@ class RemoveContactUseCase {
 
   RemoveContactUseCase(this._repository);
 
-  Future<Either<Failure, void>> execute(int profileId, {required String provider}) {
+  Future<Either<Failure, void>> execute(
+    int profileId, {
+    required String provider,
+  }) {
     if (profileId <= 0) {
       return Future.value(
-        const Left(InputFailure(message: 'profileId must be a positive number')),
+        const Left(
+          InputFailure(message: 'profileId must be a positive number'),
+        ),
       );
     }
 
     if (provider.isEmpty) {
-      return Future.value(const Left(InputFailure(message: 'Provider cannot be empty')));
+      return Future.value(
+        const Left(InputFailure(message: 'Provider cannot be empty')),
+      );
     }
 
     return _repository.removeContact(profileId, provider: provider);

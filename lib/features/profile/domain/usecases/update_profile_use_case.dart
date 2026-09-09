@@ -21,7 +21,9 @@ class UpdateProfileUseCase {
   }) {
     if (profileId <= 0) {
       return Future.value(
-        const Left(InputFailure(message: 'profileId must be a positive number')),
+        const Left(
+          InputFailure(message: 'profileId must be a positive number'),
+        ),
       );
     }
 
@@ -29,7 +31,8 @@ class UpdateProfileUseCase {
       return Future.value(
         Left(
           InputFailure(
-            message: 'Display name must be $maxDisplayNameLength characters or fewer',
+            message:
+                'Display name must be $maxDisplayNameLength characters or fewer',
           ),
         ),
       );
@@ -37,7 +40,11 @@ class UpdateProfileUseCase {
 
     if (bio != null && bio.length > maxBioLength) {
       return Future.value(
-        Left(InputFailure(message: 'Bio must be $maxBioLength characters or fewer')),
+        Left(
+          InputFailure(
+            message: 'Bio must be $maxBioLength characters or fewer',
+          ),
+        ),
       );
     }
 

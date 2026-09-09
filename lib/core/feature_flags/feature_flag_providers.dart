@@ -27,10 +27,9 @@ const Map<String, dynamic> kDefaultFeatureFlags = {
 };
 
 final featureFlagServiceProvider = Provider<FeatureFlagService>((ref) {
-  final service =
-      kDebugMode
-          ? LocalFeatureFlagService() as FeatureFlagService
-          : RemoteFeatureFlagService();
+  final service = kDebugMode
+      ? LocalFeatureFlagService() as FeatureFlagService
+      : RemoteFeatureFlagService();
 
   service.setDefaults(kDefaultFeatureFlags);
 

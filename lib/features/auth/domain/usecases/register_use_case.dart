@@ -14,7 +14,10 @@ class RegisterUseCase {
     required String password,
     required String passwordRepeat,
   }) {
-    if (username.isEmpty || email.isEmpty || password.isEmpty || passwordRepeat.isEmpty) {
+    if (username.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        passwordRepeat.isEmpty) {
       return Future.value(
         const Left(InputFailure(message: 'All fields are required')),
       );

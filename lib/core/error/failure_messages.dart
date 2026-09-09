@@ -1,6 +1,9 @@
 import 'package:chatix/core/error/failures.dart';
 
-String friendlyFailureMessage(Object? error, {String fallback = 'Something went wrong. Please try again.'}) {
+String friendlyFailureMessage(
+  Object? error, {
+  String fallback = 'Something went wrong. Please try again.',
+}) {
   switch (error) {
     case null:
       return fallback;
@@ -52,7 +55,8 @@ const Map<String, String> _messages = {
   'EXPIRED_TOKEN': 'Your session has expired. Please sign in again.',
   'INVALID_TOKEN': 'Your session is no longer valid. Please sign in again.',
   'TOKEN_IN_BLACKLIST': 'This session was signed out. Please sign in again.',
-  'NOT_FOUND_OR_INACTIVE_SESSION': 'Your session has ended. Please sign in again.',
+  'NOT_FOUND_OR_INACTIVE_SESSION':
+      'Your session has ended. Please sign in again.',
   'ACCESS_DENIED': "You don't have permission to do that.",
   'VALIDATION': 'Some of the details are invalid. Please check and try again.',
 
@@ -62,7 +66,8 @@ const Map<String, String> _messages = {
   'EMAIL_NOT_CONFIRMED': 'Please confirm your email address before signing in.',
   'NOT_EXIST_PROVIDER_OAUTH': 'That sign-in provider is not supported.',
   'OAUTH_STATE_NOT_FOUND': 'The sign-in attempt expired. Please try again.',
-  'LINKED_ANOTHER_USER_OAUTH': 'That account is already linked to another user.',
+  'LINKED_ANOTHER_USER_OAUTH':
+      'That account is already linked to another user.',
 
   'ALREADE_EXIST_PROFILE': 'You already have a profile.',
 
@@ -72,11 +77,13 @@ const Map<String, String> _messages = {
   'DIRECT_CHAT_EXISTS': 'You already have a direct chat with this person.',
   'MESSAGE_TOO_LONG': 'That message is too long. Please shorten it.',
   'INVALID_MESSAGE': "That message can't be sent as written.",
-  'SLOW_MODE_LIMIT': 'Slow mode is on — please wait before sending another message.',
+  'SLOW_MODE_LIMIT':
+      'Slow mode is on — please wait before sending another message.',
   'SLOW_MODE_OUT_OF_RANGE': 'Slow mode must be between 0 seconds and 24 hours.',
   'ATTACHMENT_LIMIT_EXCEEDED': 'Too many attachments for one message.',
   'ATTACHMENT_NOT_FOUND': "That attachment isn't available any more.",
-  'ATTACHMENT_VALIDATION': "That file can't be attached — check its type and size.",
+  'ATTACHMENT_VALIDATION':
+      "That file can't be attached — check its type and size.",
   'EMPTY_ATTACHMENT_UPLOAD_REQUEST': 'Please choose a file to attach.',
   'INVALID_UPLOAD_TOKEN': 'The upload expired. Please attach the file again.',
   'AVATAR_NOT_TYPE_IMAGE': 'An avatar must be an image file.',

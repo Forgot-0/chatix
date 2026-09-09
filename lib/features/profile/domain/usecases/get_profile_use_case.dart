@@ -11,7 +11,9 @@ class GetProfileUseCase {
   Future<Either<Failure, ProfileEntity>> execute(int profileId) {
     if (profileId <= 0) {
       return Future.value(
-        const Left(InputFailure(message: 'profileId must be a positive number')),
+        const Left(
+          InputFailure(message: 'profileId must be a positive number'),
+        ),
       );
     }
 

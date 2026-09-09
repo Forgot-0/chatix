@@ -19,7 +19,8 @@ class ContactModel extends Equatable {
   @override
   List<Object?> get props => [profileId, provider, contact];
 
-  factory ContactModel.fromJson(Map<String, dynamic> json) => _$ContactModelFromJson(json);
+  factory ContactModel.fromJson(Map<String, dynamic> json) =>
+      _$ContactModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$ContactModelToJson(this);
 
@@ -34,6 +35,10 @@ class ContactModel extends Equatable {
 
 extension ContactModelX on ContactModel {
   ContactEntity toEntity() {
-    return ContactEntity(profileId: profileId, provider: provider, contact: contact);
+    return ContactEntity(
+      profileId: profileId,
+      provider: provider,
+      contact: contact,
+    );
   }
 }

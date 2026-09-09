@@ -10,17 +10,26 @@ class UserModel extends Equatable {
   final String username;
   final String email;
 
-  const UserModel({required this.id, required this.username, required this.email});
+  const UserModel({
+    required this.id,
+    required this.username,
+    required this.email,
+  });
 
   @override
   List<Object?> get props => [id, username, email];
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 
   factory UserModel.fromEntity(UserEntity entity) {
-    return UserModel(id: entity.id, username: entity.username, email: entity.email);
+    return UserModel(
+      id: entity.id,
+      username: entity.username,
+      email: entity.email,
+    );
   }
 }
 

@@ -8,22 +8,28 @@ class AuthFieldValidators {
         errorText: 'Enter your email or username',
       )(value);
 
-  static String? username(String? value) => FormBuilderValidators.compose<String>([
-    FormBuilderValidators.required(errorText: 'Username is required'),
-    FormBuilderValidators.minLength(4, errorText: 'At least 4 characters'),
-    FormBuilderValidators.maxLength(100, errorText: 'At most 100 characters'),
-    FormBuilderValidators.match(
-      RegExp(r"^[a-zA-Z0-9 ,.'-]+$"),
-      errorText: "Only letters, numbers, spaces and , . ' - are allowed",
-    ),
-  ])(value);
+  static String? username(String? value) =>
+      FormBuilderValidators.compose<String>([
+        FormBuilderValidators.required(errorText: 'Username is required'),
+        FormBuilderValidators.minLength(4, errorText: 'At least 4 characters'),
+        FormBuilderValidators.maxLength(
+          100,
+          errorText: 'At most 100 characters',
+        ),
+        FormBuilderValidators.match(
+          RegExp(r"^[a-zA-Z0-9 ,.'-]+$"),
+          errorText: "Only letters, numbers, spaces and , . ' - are allowed",
+        ),
+      ])(value);
 
   static String? email(String? value) => FormBuilderValidators.compose<String>([
     FormBuilderValidators.required(errorText: 'Email is required'),
     FormBuilderValidators.email(errorText: 'Enter a valid email address'),
   ])(value);
 
-  static String? password(String? value) => FormBuilderValidators.compose<String>([
+  static String? password(
+    String? value,
+  ) => FormBuilderValidators.compose<String>([
     FormBuilderValidators.required(errorText: 'Password is required'),
     FormBuilderValidators.minLength(8, errorText: 'At least 8 characters'),
     FormBuilderValidators.maxLength(128, errorText: 'At most 128 characters'),
@@ -47,7 +53,8 @@ class AuthFieldValidators {
     ]);
   }
 
-  static String? required(String? value) => FormBuilderValidators.required<String>(
-    errorText: 'This field is required',
-  )(value);
+  static String? required(String? value) =>
+      FormBuilderValidators.required<String>(
+        errorText: 'This field is required',
+      )(value);
 }

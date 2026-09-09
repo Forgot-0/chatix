@@ -33,11 +33,13 @@ class _ResetPasswordConfirmScreenState
     setState(() => _isSubmitting = true);
 
     final values = _formKey.currentState!.value;
-    final result = await ref.read(confirmPasswordResetUseCaseProvider).execute(
-      token: values['token'] as String,
-      password: values['password'] as String,
-      passwordRepeat: values['password_repeat'] as String,
-    );
+    final result = await ref
+        .read(confirmPasswordResetUseCaseProvider)
+        .execute(
+          token: values['token'] as String,
+          password: values['password'] as String,
+          passwordRepeat: values['password_repeat'] as String,
+        );
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
@@ -70,7 +72,9 @@ class _ResetPasswordConfirmScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('Enter the code from your email and a new password.'),
+                const Text(
+                  'Enter the code from your email and a new password.',
+                ),
                 const SizedBox(height: 24),
                 FormBuilderTextField(
                   name: 'token',
@@ -84,8 +88,10 @@ class _ResetPasswordConfirmScreenState
                 FormBuilderTextField(
                   name: 'password',
                   obscureText: !_isPasswordVisible,
-                  onChanged: (_) =>
-                      _formKey.currentState?.fields['password_repeat']?.validate(),
+                  onChanged: (_) => _formKey
+                      .currentState
+                      ?.fields['password_repeat']
+                      ?.validate(),
                   decoration: InputDecoration(
                     labelText: 'New password',
                     hintText: '8+ chars, upper/lower/digit/special',
@@ -117,11 +123,14 @@ class _ResetPasswordConfirmScreenState
                             : Icons.visibility,
                       ),
                       onPressed: () => setState(
-                        () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible,
+                        () => _isConfirmPasswordVisible =
+                            !_isConfirmPasswordVisible,
                       ),
                     ),
                   ),
-                  validator: AuthFieldValidators.passwordRepeat(_currentPassword),
+                  validator: AuthFieldValidators.passwordRepeat(
+                    _currentPassword,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(

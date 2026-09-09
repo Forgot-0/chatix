@@ -120,6 +120,7 @@ abstract class ChatRestDataSource {
     required String sourceMessageId,
     required String targetChatId,
     String? comment,
+    String? idempotencyKey,
   });
 
   Future<Either<Failure, void>> markRead(String chatId, int messageSeq);
@@ -475,7 +476,10 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     required String sourceMessageId,
     required String targetChatId,
     String? comment,
+    String? idempotencyKey,
   }) async {
+    final key = idempotencyKey ?? _uuid.v4();
+
     final result = await _apiClient.post(
       '/chats/$targetChatId/messages/forward/',
       data: {
@@ -483,6 +487,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
         'source_message_id': sourceMessageId,
         'comment': ?comment,
       },
+      options: Options(headers: {'Idempotency-Key': key}),
     );
     return result.map(
       (data) => MessageModel.fromJson(data as Map<String, dynamic>),

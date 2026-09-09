@@ -20,5 +20,6 @@
   "tryAgain": "Erneut versuchen",
   "greeting": "Hallo, {name}!",
   "itemCount": "{count, plural, =0{Keine Elemente} =1{1 Element} other{{count} Elemente}}",
-  "lastUpdated": "Zuletzt aktualisiert: {date}"
+  "lastUpdated": "Zuletzt aktualisiert: {date}",
+  "browsePeople": "Personen"
 }

@@ -377,6 +377,90 @@ void main() {
         'comment': 'look',
       });
     });
+
+    test('always sends an Idempotency-Key header', () async {
+      stubPost(tMessageJson);
+
+      await dataSource.forwardMessage(
+        sourceChatId: tChatId,
+        sourceMessageId: tMessageId,
+        targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
+      );
+
+      final captured = verify(
+        () => mockApiClient.post(
+          any(),
+          data: any(named: 'data'),
+          options: captureAny(named: 'options'),
+        ),
+      ).captured;
+
+      // Â§6.4 supports the header for forward as well as send. Without it a
+      // transport-level retry of a request the server already applied
+      // duplicates the forwarded message.
+      final key = (captured.single as Options).headers?['Idempotency-Key']
+          as String?;
+      expect(key, isNotNull);
+      expect(
+        RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ).hasMatch(key!),
+        isTrue,
+        reason: 'expected a v4 UUID, got "$key"',
+      );
+    });
+
+    test('reuses a caller-supplied key verbatim so a retry cannot duplicate', () async {
+      stubPost(tMessageJson);
+      const tKey = 'f8c6d7e9-0000-4000-8000-000000000006';
+
+      for (var i = 0; i < 2; i++) {
+        await dataSource.forwardMessage(
+          sourceChatId: tChatId,
+          sourceMessageId: tMessageId,
+          targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
+          idempotencyKey: tKey,
+        );
+      }
+
+      final captured = verify(
+        () => mockApiClient.post(
+          any(),
+          data: any(named: 'data'),
+          options: captureAny(named: 'options'),
+        ),
+      ).captured;
+
+      expect(
+        captured.map((o) => (o as Options).headers?['Idempotency-Key']),
+        [tKey, tKey],
+      );
+    });
+
+    test('generates a DIFFERENT key per forward when none is supplied', () async {
+      stubPost(tMessageJson);
+
+      for (var i = 0; i < 2; i++) {
+        await dataSource.forwardMessage(
+          sourceChatId: tChatId,
+          sourceMessageId: tMessageId,
+          targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
+        );
+      }
+
+      final captured = verify(
+        () => mockApiClient.post(
+          any(),
+          data: any(named: 'data'),
+          options: captureAny(named: 'options'),
+        ),
+      ).captured;
+
+      final keys = captured
+          .map((o) => (o as Options).headers?['Idempotency-Key'])
+          .toSet();
+      expect(keys, hasLength(2));
+    });
   });
 
   group('attachments (api-docs §6.5)', () {

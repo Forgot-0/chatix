@@ -20,11 +20,9 @@ class LocalizationRouterObserver extends NavigatorObserver {
     }
   }
 
-  void _refreshRouteWithCurrentLocale(Route<dynamic> route) {
-  }
+  void _refreshRouteWithCurrentLocale(Route<dynamic> route) {}
 
-  void onLocaleChanged(Locale locale) {
-  }
+  void onLocaleChanged(Locale locale) {}
 }
 
 final localizationRouterObserverProvider = Provider<NavigatorObserver>((ref) {
@@ -34,7 +32,6 @@ final localizationRouterObserverProvider = Provider<NavigatorObserver>((ref) {
 class _LocalizationRouterObserverWithRef extends NavigatorObserver {
   _LocalizationRouterObserverWithRef(this.ref);
   final Ref ref;
-
 }
 
 extension LocaleAwareNavigation on BuildContext {

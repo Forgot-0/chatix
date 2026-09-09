@@ -49,7 +49,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final currentUserId = ref.watch(authProvider).value?.id;
 
     if (currentUserId == null) {
-      return const Scaffold(body: Center(child: Text('Sign in to edit your profile')));
+      return const Scaffold(
+        body: Center(child: Text('Sign in to edit your profile')),
+      );
     }
 
     final profileAsync = ref.watch(profileDetailProvider(currentUserId));
@@ -60,7 +62,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         final error = next.error;
         AppUtils.showSnackBar(
           context,
-          message: friendlyFailureMessage(error, fallback: 'Could not save changes'),
+          message: friendlyFailureMessage(
+            error,
+            fallback: 'Could not save changes',
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -70,8 +75,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       appBar: AppBar(title: const Text('Edit profile')),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            Center(child: Text(friendlyFailureMessage(error, fallback: 'Could not load your profile'))),
+        error: (error, _) => Center(
+          child: Text(
+            friendlyFailureMessage(
+              error,
+              fallback: 'Could not load your profile',
+            ),
+          ),
+        ),
         data: (profile) => _EditForm(
           formKey: _formKey,
           profile: profile,
@@ -122,7 +133,10 @@ class _EditForm extends ConsumerWidget {
               name: 'bio',
               initialValue: profile.bio,
               maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Bio', alignLabelWithHint: true),
+              decoration: const InputDecoration(
+                labelText: 'Bio',
+                alignLabelWithHint: true,
+              ),
               validator: ProfileFieldValidators.bio,
             ),
             const SizedBox(height: 16),
@@ -175,7 +189,9 @@ class _EditForm extends ConsumerWidget {
             trailing: IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () {
-                ref.read(profileEditProvider.notifier).removeContact(profile.id, provider: contact.provider);
+                ref
+                    .read(profileEditProvider.notifier)
+                    .removeContact(profile.id, provider: contact.provider);
               },
             ),
           ),
@@ -183,7 +199,10 @@ class _EditForm extends ConsumerWidget {
         .toList();
   }
 
-  Future<void> _showAddContactDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showAddContactDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final providerController = TextEditingController();
     final contactController = TextEditingController();
 
@@ -196,12 +215,16 @@ class _EditForm extends ConsumerWidget {
           children: [
             TextField(
               controller: providerController,
-              decoration: const InputDecoration(labelText: 'Provider (e.g. telegram)'),
+              decoration: const InputDecoration(
+                labelText: 'Provider (e.g. telegram)',
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: contactController,
-              decoration: const InputDecoration(labelText: 'Contact (e.g. @handle)'),
+              decoration: const InputDecoration(
+                labelText: 'Contact (e.g. @handle)',
+              ),
             ),
           ],
         ),
@@ -210,7 +233,10 @@ class _EditForm extends ConsumerWidget {
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('Cancel'),
           ),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Add')),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Add'),
+          ),
         ],
       ),
     );

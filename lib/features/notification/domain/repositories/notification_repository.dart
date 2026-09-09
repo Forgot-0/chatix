@@ -20,7 +20,10 @@ abstract class NotificationRepository {
 
   Future<Either<Failure, int>> getUnreadCount();
 
-  Future<Either<Failure, void>> markAsRead(int notificationId, {bool isRead = true});
+  Future<Either<Failure, void>> markAsRead(
+    int notificationId, {
+    bool isRead = true,
+  });
 
   Future<Either<Failure, int>> markAllAsRead();
 }

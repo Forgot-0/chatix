@@ -23,7 +23,10 @@ abstract class NotificationRemoteDataSource {
 
   Future<Either<Failure, int>> fetchUnreadCount();
 
-  Future<Either<Failure, void>> markAsRead(int notificationId, {bool isRead = true});
+  Future<Either<Failure, void>> markAsRead(
+    int notificationId, {
+    bool isRead = true,
+  });
 
   Future<Either<Failure, int>> markAllAsRead();
 }
@@ -41,11 +44,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   }) async {
     final result = await _apiClient.post(
       '/devices/',
-      data: {
-        'platform': platform,
-        'token': token,
-        'device_name': deviceName,
-      },
+      data: {'platform': platform, 'token': token, 'device_name': deviceName},
     );
     return result.map((_) {});
   }
@@ -116,6 +115,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   }
 }
 
-final notificationRemoteDataSourceProvider = Provider<NotificationRemoteDataSource>((ref) {
-  return NotificationRemoteDataSourceImpl(ref.watch(apiClientProvider));
-});
+final notificationRemoteDataSourceProvider =
+    Provider<NotificationRemoteDataSource>((ref) {
+      return NotificationRemoteDataSourceImpl(ref.watch(apiClientProvider));
+    });

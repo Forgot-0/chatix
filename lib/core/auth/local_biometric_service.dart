@@ -65,7 +65,6 @@ class LocalBiometricService implements BiometricService {
     }
 
     try {
-
       final didAuthenticate = await _localAuth.authenticate(
         localizedReason: localizedReason,
       );

@@ -20,11 +20,7 @@ class SessionExpiredSignal {
   }
 }
 
-enum SessionExpiredReason {
-  refreshFailed,
-
-  invalidToken,
-}
+enum SessionExpiredReason { refreshFailed, invalidToken }
 
 final sessionExpiredSignalProvider = Provider<SessionExpiredSignal>((ref) {
   final signal = SessionExpiredSignal();

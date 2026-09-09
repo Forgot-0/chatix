@@ -3,7 +3,6 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 abstract final class ChatRealtimeMerge {
-
   static List<MessageEntity> upsertMessage(
     List<MessageEntity> messages,
     MessageEntity message,
@@ -62,10 +61,13 @@ abstract final class ChatRealtimeMerge {
     final shouldBump = !isOpen && !isOwn;
     final current = chat.unreadCount;
 
+    final isNewer = message.seq >= chat.seqCounter;
+
     return chat.copyWith(
       seqCounter: message.seq > chat.seqCounter ? message.seq : chat.seqCounter,
       lastActivityAt: ts ?? DateTime.now(),
       unreadCount: shouldBump && current != null ? current + 1 : current,
+      lastMessage: isNewer ? message : null,
     );
   }
 
@@ -127,14 +129,15 @@ abstract final class ChatRealtimeMerge {
   }
 
   static List<ChatEntity> sortByActivity(List<ChatEntity> chats) {
-    final sorted = [...chats]..sort((a, b) {
-      final aAt = a.lastActivityAt;
-      final bAt = b.lastActivityAt;
-      if (aAt == null && bAt == null) return 0;
-      if (aAt == null) return 1;
-      if (bAt == null) return -1;
-      return bAt.compareTo(aAt);
-    });
+    final sorted = [...chats]
+      ..sort((a, b) {
+        final aAt = a.lastActivityAt;
+        final bAt = b.lastActivityAt;
+        if (aAt == null && bAt == null) return 0;
+        if (aAt == null) return 1;
+        if (bAt == null) return -1;
+        return bAt.compareTo(aAt);
+      });
     return sorted;
   }
 
@@ -151,7 +154,9 @@ abstract final class ChatRealtimeMerge {
       for (final c in chats)
         if (c.id == chatId)
           c.copyWith(
-            memberCount: (c.memberCount + delta) < 0 ? 0 : c.memberCount + delta,
+            memberCount: (c.memberCount + delta) < 0
+                ? 0
+                : c.memberCount + delta,
           )
         else
           c,

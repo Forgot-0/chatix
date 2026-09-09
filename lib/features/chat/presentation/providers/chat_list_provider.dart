@@ -131,17 +131,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         );
 
       case MemberJoined():
-        _mutate(
-          (s) => s.copyWith(
-            items: ChatRealtimeMerge.adjustMemberCount(
-              s.items,
-              event.chatId,
-              1,
-            ),
-            nextDate: s.nextDate,
-            nextChatId: s.nextChatId,
-          ),
-        );
+        await _onMemberJoined(event);
 
       case MemberLeft():
         _onMembershipChange(event.chatId, event.userId, removed: true);
@@ -255,6 +245,17 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     }
   }
 
+  Future<void> _onMemberJoined(MemberJoined event) async {
+    final myUserId = ref.read(authProvider).value?.id;
+
+    if (myUserId != null && event.userId == myUserId) {
+      await _refetchRow(event.chatId);
+      return;
+    }
+
+    _onMembershipChange(event.chatId, event.userId, removed: false);
+  }
+
   void _onMessagesRead(MessagesRead event) {
     final myUserId = ref.read(authProvider).value?.id;
     if (myUserId == null || event.readerId != myUserId) return;
@@ -262,11 +263,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     _patchRow(event.chatId, (chat) => chat.copyWith(unreadCount: 0));
   }
 
-  void _onMembershipChange(
-    String chatId,
-    int userId, {
-    required bool removed,
-  }) {
+  void _onMembershipChange(String chatId, int userId, {required bool removed}) {
     final myUserId = ref.read(authProvider).value?.id;
 
     if (myUserId != null && userId == myUserId && removed) {

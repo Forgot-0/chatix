@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/utils/app_utils.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
@@ -41,15 +42,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final canEdit = resolvedProfileId == currentUserId;
     final profileAsync = ref.watch(profileDetailProvider(resolvedProfileId));
 
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
-          if (canEdit)
+          if (canEdit) ...[
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () => context.push(ProfileEditRoute.location),
             ),
+            IconButton(
+              tooltip: l10n.browsePeople,
+              icon: const Icon(Icons.people_outline),
+              onPressed: () => context.push(ProfilesRoute.location),
+            ),
+            IconButton(
+              tooltip: l10n.settings,
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => context.push(SettingsRoute.location),
+            ),
+          ],
         ],
       ),
       body: profileAsync.when(

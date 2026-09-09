@@ -149,8 +149,7 @@ class MessageReactionsEntity extends Equatable {
       }
 
       final local = mine[group.emoji] ?? false;
-      final reactedByMe =
-          selfId != null && group.recentUserIds.contains(selfId)
+      final reactedByMe = selfId != null && group.recentUserIds.contains(selfId)
           ? true
           : local;
 

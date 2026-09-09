@@ -179,9 +179,7 @@ abstract final class ChatAttachmentLimits {
     }
 
     final only = distinctExclusive.first;
-    final label = only == AttachmentType.voice
-        ? 'voice message'
-        : 'video note';
+    final label = only == AttachmentType.voice ? 'voice message' : 'video note';
 
     if (exclusive.length > 1) {
       return 'Only one $label can be sent per message '

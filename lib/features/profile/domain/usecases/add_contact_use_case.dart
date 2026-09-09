@@ -14,16 +14,24 @@ class AddContactUseCase {
   }) {
     if (profileId <= 0) {
       return Future.value(
-        const Left(InputFailure(message: 'profileId must be a positive number')),
+        const Left(
+          InputFailure(message: 'profileId must be a positive number'),
+        ),
       );
     }
 
     if (provider.isEmpty || contact.isEmpty) {
       return Future.value(
-        const Left(InputFailure(message: 'Provider and contact cannot be empty')),
+        const Left(
+          InputFailure(message: 'Provider and contact cannot be empty'),
+        ),
       );
     }
 
-    return _repository.addContact(profileId, provider: provider, contact: contact);
+    return _repository.addContact(
+      profileId,
+      provider: provider,
+      contact: contact,
+    );
   }
 }

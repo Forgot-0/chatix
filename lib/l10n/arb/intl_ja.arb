@@ -20,5 +20,6 @@
   "tryAgain": "再試行",
   "greeting": "こんにちは、{name}さん！",
   "itemCount": "{count, plural, =0{アイテムなし} =1{1アイテム} other{{count}アイテム}}",
-  "lastUpdated": "最終更新: {date}"
+  "lastUpdated": "最終更新: {date}",
+  "browsePeople": "ユーザー"
 }

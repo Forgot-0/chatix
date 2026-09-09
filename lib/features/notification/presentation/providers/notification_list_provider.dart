@@ -43,7 +43,13 @@ class NotificationListState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [items, page, hasNext, isLoadingMore, isReadFilter];
+  List<Object?> get props => [
+    items,
+    page,
+    hasNext,
+    isLoadingMore,
+    isReadFilter,
+  ];
 }
 
 class NotificationListController extends AsyncNotifier<NotificationListState> {
@@ -70,11 +76,13 @@ class NotificationListController extends AsyncNotifier<NotificationListState> {
 
     state = AsyncValue.data(current.copyWith(isLoadingMore: true));
 
-    final result = await ref.read(getNotificationsUseCaseProvider).execute(
-      isRead: current.isReadFilter,
-      page: current.page + 1,
-      pageSize: _pageSize,
-    );
+    final result = await ref
+        .read(getNotificationsUseCaseProvider)
+        .execute(
+          isRead: current.isReadFilter,
+          page: current.page + 1,
+          pageSize: _pageSize,
+        );
 
     state = result.fold(
       (_) => AsyncValue.data(current.copyWith(isLoadingMore: false)),
@@ -102,51 +110,47 @@ class NotificationListController extends AsyncNotifier<NotificationListState> {
     );
     ref.read(notificationBadgeProvider.notifier).decrementBy(1);
 
-    final result = await ref.read(markAsReadUseCaseProvider).execute(notificationId);
+    final result = await ref
+        .read(markAsReadUseCaseProvider)
+        .execute(notificationId);
 
-    return result.match(
-      (failure) {
-        final latest = state.value;
-        if (latest != null) {
-          final i = latest.items.indexWhere((n) => n.id == notificationId);
-          if (i != -1) {
-            state = AsyncValue.data(
-              latest.copyWith(items: _withReadFlag(latest.items, i, false)),
-            );
-          }
+    return result.match((failure) {
+      final latest = state.value;
+      if (latest != null) {
+        final i = latest.items.indexWhere((n) => n.id == notificationId);
+        if (i != -1) {
+          state = AsyncValue.data(
+            latest.copyWith(items: _withReadFlag(latest.items, i, false)),
+          );
         }
-        unawaited(ref.read(notificationBadgeProvider.notifier).refresh());
-        return failure;
-      },
-      (_) => null,
-    );
+      }
+      unawaited(ref.read(notificationBadgeProvider.notifier).refresh());
+      return failure;
+    }, (_) => null);
   }
 
   Future<Either<Failure, int>> markAllAsRead() async {
     final result = await ref.read(markAllAsReadUseCaseProvider).execute();
 
-    return result.match(
-      (failure) => Left(failure),
-      (count) {
-        final current = state.value;
-        if (current != null) {
-          if (current.isReadFilter == false) {
-            unawaited(refresh());
-          } else {
-            state = AsyncValue.data(
-              current.copyWith(
-                items: [
-                  for (final n in current.items)
-                    n.isRead ? n : n.copyWith(isRead: true),
-                ],
-              ),
-            );
-          }
+    return result.match((failure) => Left(failure), (count) {
+      final current = state.value;
+      if (current != null) {
+        if (current.isReadFilter == false) {
+          unawaited(refresh());
+        } else {
+          state = AsyncValue.data(
+            current.copyWith(
+              items: [
+                for (final n in current.items)
+                  n.isRead ? n : n.copyWith(isRead: true),
+              ],
+            ),
+          );
         }
-        ref.read(notificationBadgeProvider.notifier).clear();
-        return Right(count);
-      },
-    );
+      }
+      ref.read(notificationBadgeProvider.notifier).clear();
+      return Right(count);
+    });
   }
 
   static List<NotificationEntity> _withReadFlag(
@@ -160,11 +164,9 @@ class NotificationListController extends AsyncNotifier<NotificationListState> {
   }
 
   Future<NotificationListState> _fetchFirstPage({bool? isRead}) async {
-    final result = await ref.read(getNotificationsUseCaseProvider).execute(
-      isRead: isRead,
-      page: 1,
-      pageSize: _pageSize,
-    );
+    final result = await ref
+        .read(getNotificationsUseCaseProvider)
+        .execute(isRead: isRead, page: 1, pageSize: _pageSize);
 
     return result.fold((failure) => throw failure, (page) {
       return NotificationListState(

@@ -60,7 +60,8 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
     return const ChatAttachmentState();
   }
 
-  ChatAttachmentState get _current => state.value ?? const ChatAttachmentState();
+  ChatAttachmentState get _current =>
+      state.value ?? const ChatAttachmentState();
 
   void select(List<AttachmentUploadRequestEntity> uploads) {
     _generation++;

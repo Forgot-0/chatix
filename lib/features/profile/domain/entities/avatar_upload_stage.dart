@@ -1,9 +1,1 @@
-enum AvatarUploadStage {
-  presigning,
-
-  uploading,
-
-  confirming,
-
-  done,
-}
+enum AvatarUploadStage { presigning, uploading, confirming, done }

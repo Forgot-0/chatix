@@ -12,15 +12,7 @@ import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/core/websocket/ws_event_parser.dart';
 
-enum ChatSocketStatus {
-  disconnected,
-
-  connecting,
-
-  ready,
-
-  reconnecting,
-}
+enum ChatSocketStatus { disconnected, connecting, ready, reconnecting }
 
 class ChatSocketService {
   ChatSocketService({

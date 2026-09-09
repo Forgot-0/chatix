@@ -13,10 +13,14 @@ class ConfirmPasswordResetUseCase {
     required String passwordRepeat,
   }) {
     if (token.isEmpty || password.isEmpty || passwordRepeat.isEmpty) {
-      return Future.value(const Left(InputFailure(message: 'All fields are required')));
+      return Future.value(
+        const Left(InputFailure(message: 'All fields are required')),
+      );
     }
     if (password != passwordRepeat) {
-      return Future.value(const Left(InputFailure(message: 'Passwords do not match')));
+      return Future.value(
+        const Left(InputFailure(message: 'Passwords do not match')),
+      );
     }
     return _repository.confirmPasswordReset(
       token: token,

@@ -152,7 +152,13 @@ final class ReactionUpdated extends WSDomainEvent {
   static const String legacyWireType = 'chats.message.reaction_updated';
 
   @override
-  List<Object?> get props => [...super.props, messageId, actorId, action, reaction];
+  List<Object?> get props => [
+    ...super.props,
+    messageId,
+    actorId,
+    action,
+    reaction,
+  ];
 }
 
 final class MemberJoined extends WSDomainEvent {
@@ -344,7 +350,11 @@ final class WsUnimplementedEvent extends WSEvent {
 
   final Map<String, dynamic> payload;
 
-  const WsUnimplementedEvent(super.type, {this.chatId, this.payload = const {}});
+  const WsUnimplementedEvent(
+    super.type, {
+    this.chatId,
+    this.payload = const {},
+  });
 
   static const Set<String> types = {
     'typing_start',

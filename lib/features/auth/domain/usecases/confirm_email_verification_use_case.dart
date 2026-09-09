@@ -9,7 +9,9 @@ class ConfirmEmailVerificationUseCase {
 
   Future<Either<Failure, void>> execute({required String token}) {
     if (token.isEmpty) {
-      return Future.value(const Left(InputFailure(message: 'Token cannot be empty')));
+      return Future.value(
+        const Left(InputFailure(message: 'Token cannot be empty')),
+      );
     }
     return _repository.confirmEmailVerification(token: token);
   }

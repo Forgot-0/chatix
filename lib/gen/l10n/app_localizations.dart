@@ -387,6 +387,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last updated: {date}'**
   String lastUpdated(DateTime date);
+
+  /// Tooltip for the action that opens the people directory
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get browsePeople;
 }
 
 class _AppLocalizationsDelegate

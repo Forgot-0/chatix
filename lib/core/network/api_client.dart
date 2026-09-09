@@ -19,9 +19,7 @@ class ApiClient {
     try {
       final response = await _dio.get<dynamic>(
         healthCheckUrl,
-        options: Options(
-          extra: const {'skipTrailingSlash': true},
-        ),
+        options: Options(extra: const {'skipTrailingSlash': true}),
       );
       return Right(response.data);
     } on DioException catch (e) {

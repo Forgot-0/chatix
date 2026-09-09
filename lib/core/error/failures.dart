@@ -59,11 +59,17 @@ class CacheFailure extends Failure {
 }
 
 class ValidationFailure extends Failure {
-  const ValidationFailure({super.message = 'Validation error', super.statusCode});
+  const ValidationFailure({
+    super.message = 'Validation error',
+    super.statusCode,
+  });
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure({super.message = 'Authentication failed', super.statusCode});
+  const AuthFailure({
+    super.message = 'Authentication failed',
+    super.statusCode,
+  });
 }
 
 class UnauthorizedFailure extends Failure {

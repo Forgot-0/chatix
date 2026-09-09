@@ -67,8 +67,13 @@ WSEvent parseWsFrame(dynamic frame) {
         return WsUnknown(type: '<binary>', raw: {'bytes': bytes.length});
       }
     default:
-      Logger.warning('WS frame of unexpected runtime type: ${frame.runtimeType}');
-      return WsUnknown(type: '<invalid>', raw: {'runtimeType': '${frame.runtimeType}'});
+      Logger.warning(
+        'WS frame of unexpected runtime type: ${frame.runtimeType}',
+      );
+      return WsUnknown(
+        type: '<invalid>',
+        raw: {'runtimeType': '${frame.runtimeType}'},
+      );
   }
 
   final Object? decoded;
@@ -91,7 +96,9 @@ WSEvent parseWsFrame(dynamic frame) {
 WSEvent _parseReady(Map<String, dynamic> raw) {
   final payload = _payloadOf(raw);
   final reconnect = payload['reconnect'];
-  final reconnectMap = reconnect is Map ? reconnect.cast<String, dynamic>() : const <String, dynamic>{};
+  final reconnectMap = reconnect is Map
+      ? reconnect.cast<String, dynamic>()
+      : const <String, dynamic>{};
 
   return WsReady(
     connectionId: _asString(payload['connection_id']) ?? '',
@@ -133,7 +140,9 @@ WSEvent _parseHistory(Map<String, dynamic> raw) {
       if (entry is Map) {
         messages.add(entry.cast<String, dynamic>());
       } else {
-        Logger.warning('ws.history contained a non-object message entry, skipped');
+        Logger.warning(
+          'ws.history contained a non-object message entry, skipped',
+        );
       }
     }
   }

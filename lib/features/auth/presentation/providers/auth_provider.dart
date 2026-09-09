@@ -14,9 +14,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   Future<UserEntity?> build() async {
     _listenForSessionExpiry();
 
-    final token = await ref.read(secureStorageServiceProvider).read(
-      key: AppConstants.accessTokenKey,
-    );
+    final token = await ref
+        .read(secureStorageServiceProvider)
+        .read(key: AppConstants.accessTokenKey);
     if (token == null || token.isEmpty) {
       return null;
     }
@@ -25,13 +25,15 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     return result.fold((failure) => null, (user) => user);
   }
 
-  Future<void> login({required String username, required String password}) async {
+  Future<void> login({
+    required String username,
+    required String password,
+  }) async {
     state = const AsyncValue.loading();
 
-    final loginResult = await ref.read(loginUseCaseProvider).execute(
-      username: username,
-      password: password,
-    );
+    final loginResult = await ref
+        .read(loginUseCaseProvider)
+        .execute(username: username, password: password);
 
     if (loginResult.isLeft()) {
       state = AsyncValue.error(
@@ -54,12 +56,14 @@ class AuthController extends AsyncNotifier<UserEntity?> {
   }) async {
     state = const AsyncValue.loading();
 
-    final registerResult = await ref.read(registerUseCaseProvider).execute(
-      username: username,
-      email: email,
-      password: password,
-      passwordRepeat: passwordRepeat,
-    );
+    final registerResult = await ref
+        .read(registerUseCaseProvider)
+        .execute(
+          username: username,
+          email: email,
+          password: password,
+          passwordRepeat: passwordRepeat,
+        );
 
     if (registerResult.isLeft()) {
       state = AsyncValue.error(
@@ -77,9 +81,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
     final result = await ref.read(logoutUseCaseProvider).execute();
 
-    final tokenStillPresent = await ref.read(secureStorageServiceProvider).read(
-      key: AppConstants.accessTokenKey,
-    );
+    final tokenStillPresent = await ref
+        .read(secureStorageServiceProvider)
+        .read(key: AppConstants.accessTokenKey);
 
     if (tokenStillPresent != null && tokenStillPresent.isNotEmpty) {
       state = AsyncValue.error(
@@ -124,10 +128,9 @@ class AuthController extends AsyncNotifier<UserEntity?> {
       final token = await notificationService.getToken();
       if (token == null || token.isEmpty) return;
 
-      await ref.read(registerDeviceUseCaseProvider).execute(
-        token: token,
-        deviceName: AppConstants.appName,
-      );
+      await ref
+          .read(registerDeviceUseCaseProvider)
+          .execute(token: token, deviceName: AppConstants.appName);
     } catch (error, stackTrace) {
       debugPrint('Push device registration skipped: $error');
       debugPrintStack(stackTrace: stackTrace);

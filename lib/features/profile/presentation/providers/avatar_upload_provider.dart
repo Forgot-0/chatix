@@ -24,11 +24,9 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
         ref.read(profileDetailProvider(profileId)).value?.avatars ??
         const <String, Map<String, String>>{};
 
-    final stream = ref.read(uploadAvatarUseCaseProvider).execute(
-      bytes: bytes,
-      filename: filename,
-      contentType: contentType,
-    );
+    final stream = ref
+        .read(uploadAvatarUseCaseProvider)
+        .execute(bytes: bytes, filename: filename, contentType: contentType);
 
     await for (final event in stream) {
       state = event.fold(
@@ -97,6 +95,7 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
   }
 }
 
-final avatarUploadProvider = AsyncNotifierProvider<AvatarUploadController, AvatarUploadStage?>(
-  AvatarUploadController.new,
-);
+final avatarUploadProvider =
+    AsyncNotifierProvider<AvatarUploadController, AvatarUploadStage?>(
+      AvatarUploadController.new,
+    );

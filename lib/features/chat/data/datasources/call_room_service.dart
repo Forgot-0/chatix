@@ -40,10 +40,7 @@ class CallRoomServiceImpl implements CallRoomService {
 
     try {
       final room = Room(
-        roomOptions: const RoomOptions(
-          adaptiveStream: true,
-          dynacast: true,
-        ),
+        roomOptions: const RoomOptions(adaptiveStream: true, dynacast: true),
       );
 
       final listener = room.createListener();
@@ -90,8 +87,7 @@ class CallRoomServiceImpl implements CallRoomService {
     if (room != null) {
       try {
         await room.disconnect();
-      } catch (_) {
-      }
+      } catch (_) {}
       await room.dispose();
     }
   }

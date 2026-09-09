@@ -24,7 +24,12 @@ class GetChatsUseCase {
     if (!previous.canLoadMore) {
       return Future.value(
         const Right(
-          ChatsPage(chats: [], hasNext: false, nextDate: null, nextChatId: null),
+          ChatsPage(
+            chats: [],
+            hasNext: false,
+            nextDate: null,
+            nextChatId: null,
+          ),
         ),
       );
     }

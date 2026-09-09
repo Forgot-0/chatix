@@ -14,6 +14,7 @@ class ForwardMessageUseCase {
     required String sourceMessageId,
     required String targetChatId,
     String? comment,
+    String? idempotencyKey,
   }) {
     if (sourceChatId.trim().isEmpty) {
       return _fail('Source chat is required');
@@ -41,6 +42,7 @@ class ForwardMessageUseCase {
       comment: (trimmedComment == null || trimmedComment.isEmpty)
           ? null
           : trimmedComment,
+      idempotencyKey: idempotencyKey,
     );
   }
 

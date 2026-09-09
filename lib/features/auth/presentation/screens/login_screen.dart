@@ -27,10 +27,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     FocusScope.of(context).unfocus();
 
     final values = _formKey.currentState!.value;
-    ref.read(authProvider.notifier).login(
-      username: values['username'] as String,
-      password: values['password'] as String,
-    );
+    ref
+        .read(authProvider.notifier)
+        .login(
+          username: values['username'] as String,
+          password: values['password'] as String,
+        );
   }
 
   @override
@@ -142,26 +144,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : const Text('Log In'),
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'or continue with',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                  if (oauthSignInEnabled) ...[
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'or continue with',
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.color
+                                  ?.withValues(alpha: 0.7),
+                            ),
                           ),
                         ),
-                      ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const OAuthButtons(),
-                  const SizedBox(height: 16),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const OAuthButtons(),
+                    const SizedBox(height: 16),
+                  ],
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -189,5 +195,4 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-
 }

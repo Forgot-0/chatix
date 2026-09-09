@@ -8,7 +8,6 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
 abstract class ChatRepository {
-
   Future<Either<Failure, ChatsPage>> getChats({
     int limit = 50,
     String? lastChatId,
@@ -113,6 +112,7 @@ abstract class ChatRepository {
     required String sourceMessageId,
     required String targetChatId,
     String? comment,
+    String? idempotencyKey,
   });
 
   Future<Either<Failure, void>> markRead(String chatId, int messageSeq);
@@ -128,8 +128,7 @@ abstract class ChatRepository {
     List<String> uploadTokens,
   );
 
-  Future<Either<Failure, AttachmentDownloadUrlEntity>>
-  getAttachmentDownloadUrl(
+  Future<Either<Failure, AttachmentDownloadUrlEntity>> getAttachmentDownloadUrl(
     String chatId,
     String messageId,
     String attachmentId,

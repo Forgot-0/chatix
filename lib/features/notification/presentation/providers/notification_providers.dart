@@ -7,7 +7,9 @@ import 'package:chatix/features/notification/domain/usecases/mark_all_as_read_us
 import 'package:chatix/features/notification/domain/usecases/mark_as_read_use_case.dart';
 import 'package:chatix/features/notification/domain/usecases/register_device_use_case.dart';
 
-final getNotificationsUseCaseProvider = Provider<GetNotificationsUseCase>((ref) {
+final getNotificationsUseCaseProvider = Provider<GetNotificationsUseCase>((
+  ref,
+) {
   return GetNotificationsUseCase(ref.watch(notificationRepositoryProvider));
 });
 

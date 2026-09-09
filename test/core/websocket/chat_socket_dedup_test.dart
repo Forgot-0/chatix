@@ -1,67 +1,14 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stream_channel/stream_channel.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 
 import '../../helpers/fakes/fake_secure_storage_service.dart';
-
-class _FakeWebSocketSink implements WebSocketSink {
-  final List<Object?> sent = [];
-  final Completer<void> _done = Completer<void>();
-
-  @override
-  Future<void> get done => _done.future;
-
-  @override
-  void add(Object? data) => sent.add(data);
-
-  @override
-  void addError(Object error, [StackTrace? stackTrace]) {}
-
-  @override
-  Future<void> addStream(Stream<Object?> stream) async {}
-
-  @override
-  Future<void> close([int? closeCode, String? closeReason]) async {
-    if (!_done.isCompleted) _done.complete();
-  }
-}
-
-class _FakeWebSocketChannel extends StreamChannelMixin<dynamic>
-    implements WebSocketChannel {
-  _FakeWebSocketChannel() : _controller = StreamController<dynamic>();
-
-  final StreamController<dynamic> _controller;
-
-  final _FakeWebSocketSink outbound = _FakeWebSocketSink();
-
-  void emit(Map<String, dynamic> frame) => _controller.add(jsonEncode(frame));
-
-  @override
-  Stream<dynamic> get stream => _controller.stream;
-
-  @override
-  WebSocketSink get sink => outbound;
-
-  @override
-  int? get closeCode => null;
-
-  @override
-  String? get closeReason => null;
-
-  @override
-  String? get protocol => null;
-
-  @override
-  Future<void> get ready => Future.value();
-}
+import '../../helpers/fakes/fake_web_socket_channel.dart';
 
 void main() {
   const chatId = '550e8400-e29b-41d4-a716-446655440000';
@@ -80,11 +27,11 @@ void main() {
     'ts': '2026-01-15T10:30:00Z',
   };
 
-  late _FakeWebSocketChannel channel;
+  late FakeWebSocketChannel channel;
   late ChatSocketService service;
 
   setUp(() async {
-    channel = _FakeWebSocketChannel();
+    channel = FakeWebSocketChannel();
     service = ChatSocketService(
       secureStorage: FakeSecureStorageService(
         initialValues: {AppConstants.accessTokenKey: 'token'},
@@ -178,7 +125,7 @@ void main() {
 
     await service.disconnect();
 
-    final next = _FakeWebSocketChannel();
+    final next = FakeWebSocketChannel();
     final reconnected = ChatSocketService(
       secureStorage: FakeSecureStorageService(
         initialValues: {AppConstants.accessTokenKey: 'token'},

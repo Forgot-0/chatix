@@ -72,8 +72,7 @@ class ChatMembersState extends Equatable {
   ];
 }
 
-class ChatMembersController
-    extends AsyncNotifier<ChatMembersState> {
+class ChatMembersController extends AsyncNotifier<ChatMembersState> {
   ChatMembersController(this._chatId);
 
   final String _chatId;
@@ -109,10 +108,7 @@ class ChatMembersController
 
     state = result.fold(
       (_) => AsyncValue.data(
-        current.copyWith(
-          isLoadingMore: false,
-          nextUserId: current.nextUserId,
-        ),
+        current.copyWith(isLoadingMore: false, nextUserId: current.nextUserId),
       ),
       (page) => AsyncValue.data(
         current.copyWith(

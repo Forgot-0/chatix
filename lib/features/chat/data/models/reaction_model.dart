@@ -47,9 +47,7 @@ extension ReactionGroupModelX on ReactionGroupModel {
     count: count,
     version: version,
     reactedByMe: reactedByMe,
-    recentUserIds: recentUserIds
-        .take(ReactionLimits.recentUsersLimit)
-        .toList(),
+    recentUserIds: recentUserIds.take(ReactionLimits.recentUsersLimit).toList(),
   );
 }
 

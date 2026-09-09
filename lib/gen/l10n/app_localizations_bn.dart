@@ -174,4 +174,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
     return 'সর্বশেষ আপডেট: $dateString';
   }
+
+  @override
+  String get browsePeople => 'লোকজন';
 }

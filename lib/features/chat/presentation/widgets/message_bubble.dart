@@ -163,8 +163,7 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  bool get _hasReactions =>
-      reactions != null && reactions!.groups.isNotEmpty;
+  bool get _hasReactions => reactions != null && reactions!.groups.isNotEmpty;
 
   void _showActions(BuildContext context) {
     showModalBottomSheet<void>(

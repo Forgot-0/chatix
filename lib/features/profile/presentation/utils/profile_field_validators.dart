@@ -6,7 +6,8 @@ class ProfileFieldValidators {
 
   static String? displayName(String? value) => FormBuilderValidators.maxLength(
     UpdateProfileUseCase.maxDisplayNameLength,
-    errorText: 'At most ${UpdateProfileUseCase.maxDisplayNameLength} characters',
+    errorText:
+        'At most ${UpdateProfileUseCase.maxDisplayNameLength} characters',
   )(value);
 
   static String? bio(String? value) => FormBuilderValidators.maxLength(

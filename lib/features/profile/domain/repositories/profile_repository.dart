@@ -16,8 +16,6 @@ abstract class ProfileRepository {
 
   Future<Either<Failure, ProfileEntity>> getProfile(int profileId);
 
-  Future<Either<Failure, ProfileEntity>> getMyProfile();
-
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,
@@ -31,9 +29,7 @@ abstract class ProfileRepository {
     required String filename,
   });
 
-  Future<Either<Failure, void>> completeAvatarUpload({
-    required String fileKey,
-  });
+  Future<Either<Failure, void>> completeAvatarUpload({required String fileKey});
 
   Future<Either<Failure, void>> addContact(
     int profileId, {

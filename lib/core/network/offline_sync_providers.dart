@@ -82,8 +82,7 @@ class LoadingOfflineSyncService implements OfflineSyncService {
   }
 
   @override
-  Future<void> syncChanges() async {
-  }
+  Future<void> syncChanges() async {}
 
   @override
   Future<SyncStatus?> getSyncStatus(String entityType, String entityId) async {
@@ -99,8 +98,7 @@ class LoadingOfflineSyncService implements OfflineSyncService {
   Future<void> resolveConflict(
     String changeId,
     Map<String, dynamic> resolvedData,
-  ) async {
-  }
+  ) async {}
 
   @override
   Stream<List<OfflineChange>> get syncStatusStream => const Stream.empty();
@@ -111,8 +109,7 @@ class LoadingOfflineSyncService implements OfflineSyncService {
   }
 
   @override
-  Future<void> init() async {
-  }
+  Future<void> init() async {}
 }
 
 class ErrorOfflineSyncService implements OfflineSyncService {
@@ -131,8 +128,7 @@ class ErrorOfflineSyncService implements OfflineSyncService {
   }
 
   @override
-  Future<void> syncChanges() async {
-  }
+  Future<void> syncChanges() async {}
 
   @override
   Future<SyncStatus?> getSyncStatus(String entityType, String entityId) async {
@@ -148,8 +144,7 @@ class ErrorOfflineSyncService implements OfflineSyncService {
   Future<void> resolveConflict(
     String changeId,
     Map<String, dynamic> resolvedData,
-  ) async {
-  }
+  ) async {}
 
   @override
   Stream<List<OfflineChange>> get syncStatusStream => const Stream.empty();
@@ -160,8 +155,7 @@ class ErrorOfflineSyncService implements OfflineSyncService {
   }
 
   @override
-  Future<void> init() async {
-  }
+  Future<void> init() async {}
 }
 
 class OfflineStatusIndicator extends ConsumerWidget {

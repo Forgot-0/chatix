@@ -41,12 +41,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, ProfileEntity>> getMyProfile() async {
-    final result = await _remoteDataSource.fetchMyProfile();
-    return result.map((model) => model.toEntity());
-  }
-
-  @override
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,

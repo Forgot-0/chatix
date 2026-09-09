@@ -23,9 +23,13 @@ abstract class AuthRemoteDataSource {
 
   Future<Either<Failure, UserModel>> getCurrentUser();
 
-  Future<Either<Failure, void>> requestEmailVerification({required String email});
+  Future<Either<Failure, void>> requestEmailVerification({
+    required String email,
+  });
 
-  Future<Either<Failure, void>> confirmEmailVerification({required String token});
+  Future<Either<Failure, void>> confirmEmailVerification({
+    required String token,
+  });
 
   Future<Either<Failure, void>> requestPasswordReset({required String email});
 
@@ -62,7 +66,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password_repeat': passwordRepeat,
       },
     );
-    return result.map((data) => UserModel.fromJson(data as Map<String, dynamic>));
+    return result.map(
+      (data) => UserModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   @override
@@ -75,7 +81,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       data: {'username': username, 'password': password},
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
-    return result.map((data) => (data as Map<String, dynamic>)['access_token'] as String);
+    return result.map(
+      (data) => (data as Map<String, dynamic>)['access_token'] as String,
+    );
   }
 
   @override
@@ -87,11 +95,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Either<Failure, UserModel>> getCurrentUser() async {
     final result = await _apiClient.get('/users/me/');
-    return result.map((data) => UserModel.fromJson(data as Map<String, dynamic>));
+    return result.map(
+      (data) => UserModel.fromJson(data as Map<String, dynamic>),
+    );
   }
 
   @override
-  Future<Either<Failure, void>> requestEmailVerification({required String email}) async {
+  Future<Either<Failure, void>> requestEmailVerification({
+    required String email,
+  }) async {
     final result = await _apiClient.post(
       '/auth/verifications/email/',
       data: {'email': email},
@@ -100,7 +112,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, void>> confirmEmailVerification({required String token}) async {
+  Future<Either<Failure, void>> confirmEmailVerification({
+    required String token,
+  }) async {
     final result = await _apiClient.post(
       '/auth/verifications/email/verify/',
       data: {'token': token},
@@ -109,7 +123,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, void>> requestPasswordReset({required String email}) async {
+  Future<Either<Failure, void>> requestPasswordReset({
+    required String email,
+  }) async {
     final result = await _apiClient.post(
       '/auth/password-resets/',
       data: {'email': email},
@@ -143,7 +159,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         ? '/auth/oauth/$provider/authorize/connect/'
         : '/auth/oauth/$provider/authorize/';
     final result = await _apiClient.get(path);
-    return result.map((data) => (data as Map<String, dynamic>)['url'] as String);
+    return result.map(
+      (data) => (data as Map<String, dynamic>)['url'] as String,
+    );
   }
 }
 

@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/features/profile/data/datasources/avatar_uploader_impl.dart';
 import 'package:chatix/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:chatix/features/profile/domain/usecases/add_contact_use_case.dart';
-import 'package:chatix/features/profile/domain/usecases/get_my_profile_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profile_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/remove_contact_use_case.dart';
@@ -34,8 +33,4 @@ final uploadAvatarUseCaseProvider = Provider<UploadAvatarUseCase>((ref) {
     ref.watch(profileRepositoryProvider),
     ref.watch(avatarUploaderProvider),
   );
-});
-
-final getMyProfileUseCaseProvider = Provider<GetMyProfileUseCase>((ref) {
-  return GetMyProfileUseCase(ref.watch(profileRepositoryProvider));
 });

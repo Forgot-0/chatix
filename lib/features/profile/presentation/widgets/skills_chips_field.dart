@@ -6,7 +6,12 @@ class SkillsChipsField extends StatefulWidget {
   final List<String>? initialValue;
   final String? Function(List<String>?)? validator;
 
-  const SkillsChipsField({super.key, required this.name, this.initialValue, this.validator});
+  const SkillsChipsField({
+    super.key,
+    required this.name,
+    this.initialValue,
+    this.validator,
+  });
 
   @override
   State<SkillsChipsField> createState() => _SkillsChipsFieldState();
@@ -41,7 +46,9 @@ class _SkillsChipsFieldState extends State<SkillsChipsField> {
         }
 
         void removeSkill(String skill) {
-          field.didChange(skills.where((existing) => existing != skill).toList());
+          field.didChange(
+            skills.where((existing) => existing != skill).toList(),
+          );
         }
 
         return InputDecorator(

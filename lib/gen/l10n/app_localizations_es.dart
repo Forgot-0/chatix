@@ -175,4 +175,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
     return 'Última actualización: $dateString';
   }
+
+  @override
+  String get browsePeople => 'Personas';
 }

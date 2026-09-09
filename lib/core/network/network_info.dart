@@ -17,6 +17,4 @@ class NetworkInfoImpl implements NetworkInfo {
   }
 }
 
-final networkInfoProvider = Provider<NetworkInfo>(
-  (ref) => NetworkInfoImpl(),
-);
+final networkInfoProvider = Provider<NetworkInfo>((ref) => NetworkInfoImpl());

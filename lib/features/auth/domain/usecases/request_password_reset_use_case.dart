@@ -9,7 +9,9 @@ class RequestPasswordResetUseCase {
 
   Future<Either<Failure, void>> execute({required String email}) {
     if (email.isEmpty) {
-      return Future.value(const Left(InputFailure(message: 'Email cannot be empty')));
+      return Future.value(
+        const Left(InputFailure(message: 'Email cannot be empty')),
+      );
     }
     return _repository.requestPasswordReset(email: email);
   }

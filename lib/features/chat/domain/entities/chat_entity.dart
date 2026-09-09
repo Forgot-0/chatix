@@ -191,9 +191,7 @@ class ChatEntity extends Equatable {
       unreadCount: clearUnreadCount ? null : (unreadCount ?? this.unreadCount),
       me: clearMe ? null : (me ?? this.me),
       lastRead: clearLastRead ? null : (lastRead ?? this.lastRead),
-      lastMessage: clearLastMessage
-          ? null
-          : (lastMessage ?? this.lastMessage),
+      lastMessage: clearLastMessage ? null : (lastMessage ?? this.lastMessage),
       members: clearMembers ? null : (members ?? this.members),
     );
   }

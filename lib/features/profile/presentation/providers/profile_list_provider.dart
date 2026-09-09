@@ -45,7 +45,16 @@ class ProfileListState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [items, page, hasNext, isLoadingMore, username, displayName, skills, sort];
+  List<Object?> get props => [
+    items,
+    page,
+    hasNext,
+    isLoadingMore,
+    username,
+    displayName,
+    skills,
+    sort,
+  ];
 }
 
 class ProfileListController extends AsyncNotifier<ProfileListState> {
@@ -54,10 +63,20 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
     return _fetchFirstPage();
   }
 
-  Future<void> search({String? username, String? displayName, List<String>? skills, String? sort}) async {
+  Future<void> search({
+    String? username,
+    String? displayName,
+    List<String>? skills,
+    String? sort,
+  }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => _fetchFirstPage(username: username, displayName: displayName, skills: skills, sort: sort),
+      () => _fetchFirstPage(
+        username: username,
+        displayName: displayName,
+        skills: skills,
+        sort: sort,
+      ),
     );
   }
 
@@ -80,14 +99,16 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
 
     state = AsyncValue.data(current.copyWith(isLoadingMore: true));
 
-    final result = await ref.read(getProfilesUseCaseProvider).execute(
-      username: current.username,
-      displayName: current.displayName,
-      skills: current.skills,
-      page: current.page + 1,
-      pageSize: _pageSize,
-      sort: current.sort,
-    );
+    final result = await ref
+        .read(getProfilesUseCaseProvider)
+        .execute(
+          username: current.username,
+          displayName: current.displayName,
+          skills: current.skills,
+          page: current.page + 1,
+          pageSize: _pageSize,
+          sort: current.sort,
+        );
 
     state = result.fold(
       (failure) => AsyncValue.error(failure, StackTrace.current),
@@ -108,14 +129,16 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
     List<String>? skills,
     String? sort,
   }) async {
-    final result = await ref.read(getProfilesUseCaseProvider).execute(
-      username: username,
-      displayName: displayName,
-      skills: skills,
-      page: 1,
-      pageSize: _pageSize,
-      sort: sort,
-    );
+    final result = await ref
+        .read(getProfilesUseCaseProvider)
+        .execute(
+          username: username,
+          displayName: displayName,
+          skills: skills,
+          page: 1,
+          pageSize: _pageSize,
+          sort: sort,
+        );
 
     return result.fold((failure) => throw failure, (page) {
       return ProfileListState(
@@ -131,6 +154,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
   }
 }
 
-final profileListProvider = AsyncNotifierProvider<ProfileListController, ProfileListState>(
-  ProfileListController.new,
-);
+final profileListProvider =
+    AsyncNotifierProvider<ProfileListController, ProfileListState>(
+      ProfileListController.new,
+    );

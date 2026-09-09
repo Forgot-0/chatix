@@ -174,4 +174,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
     return '最終更新: $dateString';
   }
+
+  @override
+  String get browsePeople => 'ユーザー';
 }

@@ -6,29 +6,9 @@ import 'package:uuid/uuid.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-enum SyncStatus {
-  pending,
+enum SyncStatus { pending, syncing, synced, failed, conflict, canceled }
 
-  syncing,
-
-  synced,
-
-  failed,
-
-  conflict,
-
-  canceled,
-}
-
-enum OfflineOperationType {
-  create,
-
-  update,
-
-  delete,
-
-  custom,
-}
+enum OfflineOperationType { create, update, delete, custom }
 
 class OfflineChange {
   final String id;

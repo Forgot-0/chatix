@@ -26,8 +26,7 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.brightness_6),
             title: Text(context.tr('theme')),
             subtitle: Text(context.tr('change_theme')),
-            onTap: () {
-            },
+            onTap: () {},
           ),
 
           const Divider(),
@@ -36,8 +35,7 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.notifications),
             title: Text(context.tr('notifications')),
             subtitle: Text(context.tr('notification_settings')),
-            onTap: () {
-            },
+            onTap: () {},
           ),
 
           const Divider(),

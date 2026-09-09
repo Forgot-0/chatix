@@ -39,7 +39,8 @@ class ProfileModel extends Equatable {
     contacts,
   ];
 
-  factory ProfileModel.fromJson(Map<String, dynamic> json) => _$ProfileModelFromJson(json);
+  factory ProfileModel.fromJson(Map<String, dynamic> json) =>
+      _$ProfileModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$ProfileModelToJson(this);
 }

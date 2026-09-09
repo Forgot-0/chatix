@@ -14,23 +14,9 @@ enum BiometricResult {
   error,
 }
 
-enum BiometricType {
-  fingerprint,
+enum BiometricType { fingerprint, face, iris, multiple }
 
-  face,
-
-  iris,
-
-  multiple,
-}
-
-enum AuthReason {
-  appAccess,
-
-  transaction,
-
-  sensitiveData,
-}
+enum AuthReason { appAccess, transaction, sensitiveData }
 
 abstract class BiometricService {
   Future<bool> isAvailable();

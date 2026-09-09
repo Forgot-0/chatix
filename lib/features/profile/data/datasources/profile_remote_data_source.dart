@@ -19,8 +19,6 @@ abstract class ProfileRemoteDataSource {
 
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId);
 
-  Future<Either<Failure, ProfileModel>> fetchMyProfile();
-
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,
@@ -34,9 +32,7 @@ abstract class ProfileRemoteDataSource {
     required String filename,
   });
 
-  Future<Either<Failure, void>> completeAvatarUpload({
-    required String fileKey,
-  });
+  Future<Either<Failure, void>> completeAvatarUpload({required String fileKey});
 
   Future<Either<Failure, void>> addContact(
     int profileId, {
@@ -87,14 +83,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId) async {
     final result = await _apiClient.get('/profiles/$profileId/');
-    return result.map(
-      (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
-    );
-  }
-
-  @override
-  Future<Either<Failure, ProfileModel>> fetchMyProfile() async {
-    final result = await _apiClient.get('/profiles/my/');
     return result.map(
       (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
     );

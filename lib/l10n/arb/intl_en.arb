@@ -212,5 +212,9 @@
         "format": "yMMMd"
       }
     }
+  },
+  "browsePeople": "People",
+  "@browsePeople": {
+    "description": "Tooltip for the action that opens the people directory"
   }
 }

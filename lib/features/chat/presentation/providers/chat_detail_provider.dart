@@ -366,16 +366,20 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     try {
       final result = await ref.read(getChatUseCaseProvider).execute(_chatId);
 
-      result.match((failure) {
-        if (_isAccessDenied(failure)) {
-          _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
-        } else {
-          Logger.warning(
-            'ChatDetail($_chatId): membership refresh failed '
-            '(${failure.message})',
-          );
-        }
-      }, (chat) => _mutate((s) => s.copyWith(chat: chat, nextCursor: s.nextCursor)));
+      result.match(
+        (failure) {
+          if (_isAccessDenied(failure)) {
+            _mutate((s) => s.copyWith(isGone: true, nextCursor: s.nextCursor));
+          } else {
+            Logger.warning(
+              'ChatDetail($_chatId): membership refresh failed '
+              '(${failure.message})',
+            );
+          }
+        },
+        (chat) =>
+            _mutate((s) => s.copyWith(chat: chat, nextCursor: s.nextCursor)),
+      );
     } finally {
       _membershipRefreshInFlight = false;
     }
@@ -475,7 +479,10 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         messages: ChatRealtimeMerge.setReactionGroups(
           s.messages,
           messageId,
-          s.reactionsFor(messageId).toggleMine(emoji, myUserId: myUserId).groups,
+          s
+              .reactionsFor(messageId)
+              .toggleMine(emoji, myUserId: myUserId)
+              .groups,
         ),
         nextCursor: s.nextCursor,
       ),

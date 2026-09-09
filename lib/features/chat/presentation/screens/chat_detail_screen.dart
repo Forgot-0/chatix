@@ -248,7 +248,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 IconButton(
                   tooltip: 'Call',
                   icon: const Icon(Icons.call_outlined),
-                  onPressed: detail.value?.chat == null ? null : _joinCall,
+                  onPressed: detail.value?.chat == null
+                      ? null
+                      : () => context.push(
+                          ChatCallRoute.locationOf(widget.chatId),
+                        ),
                 ),
                 IconButton(
                   tooltip: 'Members',
@@ -468,47 +472,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       default:
         return 'application/octet-stream';
     }
-  }
-
-  Future<void> _joinCall() async {
-    final result = await ref
-        .read(joinCallUseCaseProvider)
-        .execute(widget.chatId);
-    if (!mounted) return;
-
-    result.match(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (token) => showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Call token'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Room: ${token.slug}'),
-              const SizedBox(height: 8),
-              Text('LiveKit URL: ${token.livekitUrl}'),
-              const SizedBox(height: 8),
-              const Text('Access token:'),
-              const SizedBox(height: 4),
-              SelectableText(
-                token.token,
-                style: Theme.of(dialogContext).textTheme.bodySmall,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

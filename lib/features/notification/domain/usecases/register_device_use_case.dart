@@ -25,7 +25,8 @@ class RegisterDeviceUseCase {
     if (resolved == null) {
       return const Left(
         InputFailure(
-          message: 'This platform is not one of IOS/WEB/ANDROID — '
+          message:
+              'This platform is not one of IOS/WEB/ANDROID — '
               'push registration skipped',
         ),
       );

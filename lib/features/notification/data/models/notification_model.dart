@@ -61,9 +61,11 @@ extension NotificationModelX on NotificationModel {
       message: message,
       payload: payload,
       isRead: isRead,
-      createdAt: DateTime.tryParse(createdAt)?.toLocal() ??
+      createdAt:
+          DateTime.tryParse(createdAt)?.toLocal() ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      updatedAt: DateTime.tryParse(updatedAt)?.toLocal() ??
+      updatedAt:
+          DateTime.tryParse(updatedAt)?.toLocal() ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
   }

@@ -25,7 +25,9 @@ class GetProfilesUseCase {
 
     if (pageSize < 1 || pageSize > 100) {
       return Future.value(
-        const Left(InputFailure(message: 'Page size must be between 1 and 100')),
+        const Left(
+          InputFailure(message: 'Page size must be between 1 and 100'),
+        ),
       );
     }
 

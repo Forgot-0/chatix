@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 
+const bool oauthSignInEnabled = false;
+
 class OAuthButtons extends ConsumerWidget {
   const OAuthButtons({super.key});
 
@@ -32,7 +34,8 @@ class OAuthButtons extends ConsumerWidget {
       ),
       (url) async {
         final uri = Uri.tryParse(url);
-        if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        if (uri == null ||
+            !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
           if (!context.mounted) return;
           AppUtils.showSnackBar(
             context,
@@ -46,6 +49,8 @@ class OAuthButtons extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!oauthSignInEnabled) return const SizedBox.shrink();
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: _providers.map((provider) {

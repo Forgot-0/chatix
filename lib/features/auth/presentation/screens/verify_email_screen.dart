@@ -123,9 +123,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'We can resend it — up to 3 times per hour.',
-              ),
+              const Text('We can resend it — up to 3 times per hour.'),
               const SizedBox(height: 16),
               FormBuilder(
                 key: _resendFormKey,
@@ -156,5 +154,4 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       ),
     );
   }
-
 }

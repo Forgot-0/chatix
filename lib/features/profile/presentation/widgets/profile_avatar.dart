@@ -7,7 +7,12 @@ class ProfileAvatar extends StatelessWidget {
   final double radius;
   final String? displayNameFallback;
 
-  const ProfileAvatar({super.key, required this.profile, this.radius = 24, this.displayNameFallback});
+  const ProfileAvatar({
+    super.key,
+    required this.profile,
+    this.radius = 24,
+    this.displayNameFallback,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +34,11 @@ class ProfileAvatar extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               )
-            : Icon(Icons.person, color: theme.colorScheme.onPrimaryContainer, size: radius),
+            : Icon(
+                Icons.person,
+                color: theme.colorScheme.onPrimaryContainer,
+                size: radius,
+              ),
       );
     }
 

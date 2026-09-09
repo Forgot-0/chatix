@@ -8,7 +8,10 @@ class MarkAsReadUseCase {
 
   MarkAsReadUseCase(this._repository);
 
-  Future<Either<Failure, void>> execute(int notificationId, {bool isRead = true}) {
+  Future<Either<Failure, void>> execute(
+    int notificationId, {
+    bool isRead = true,
+  }) {
     return _repository.markAsRead(notificationId, isRead: isRead);
   }
 }

@@ -20,10 +20,7 @@ class LocalizationAssetsDemo extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr('localization_assets_demo')),
-        actions: const [
-          LanguagePopupMenuButton(),
-          SizedBox(width: 8),
-        ],
+        actions: const [LanguagePopupMenuButton(), SizedBox(width: 8)],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

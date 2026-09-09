@@ -50,7 +50,10 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }
 
   @override
-  Future<Either<Failure, void>> markAsRead(int notificationId, {bool isRead = true}) {
+  Future<Either<Failure, void>> markAsRead(
+    int notificationId, {
+    bool isRead = true,
+  }) {
     return _remote.markAsRead(notificationId, isRead: isRead);
   }
 
@@ -61,5 +64,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
 }
 
 final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
-  return NotificationRepositoryImpl(ref.watch(notificationRemoteDataSourceProvider));
+  return NotificationRepositoryImpl(
+    ref.watch(notificationRemoteDataSourceProvider),
+  );
 });

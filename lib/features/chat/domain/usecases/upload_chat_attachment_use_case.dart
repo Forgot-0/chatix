@@ -6,15 +6,7 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
-enum ChatAttachmentUploadStage {
-  requesting,
-
-  uploading,
-
-  confirming,
-
-  done,
-}
+enum ChatAttachmentUploadStage { requesting, uploading, confirming, done }
 
 class ChatAttachmentUploadProgress extends Equatable {
   final ChatAttachmentUploadStage stage;

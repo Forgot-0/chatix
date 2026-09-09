@@ -17,10 +17,16 @@ class AvatarPickerWidget extends ConsumerWidget {
     final picker = ImagePicker();
     final XFile? picked;
     try {
-      picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+      picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+      );
     } catch (_) {
       if (context.mounted) {
-        AppUtils.showSnackBar(context, message: 'Could not open the photo library');
+        AppUtils.showSnackBar(
+          context,
+          message: 'Could not open the photo library',
+        );
       }
       return;
     }
@@ -79,7 +85,10 @@ class AvatarPickerWidget extends ConsumerWidget {
         final error = next.error;
         AppUtils.showSnackBar(
           context,
-          message: friendlyFailureMessage(error, fallback: 'Could not update avatar'),
+          message: friendlyFailureMessage(
+            error,
+            fallback: 'Could not update avatar',
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -94,7 +103,10 @@ class AvatarPickerWidget extends ConsumerWidget {
         Stack(
           alignment: Alignment.center,
           children: [
-            Opacity(opacity: isBusy ? 0.5 : 1, child: ProfileAvatar(profile: profile, radius: 48)),
+            Opacity(
+              opacity: isBusy ? 0.5 : 1,
+              child: ProfileAvatar(profile: profile, radius: 48),
+            ),
             if (isBusy) const CircularProgressIndicator(),
             Positioned(
               bottom: 0,
@@ -109,7 +121,10 @@ class AvatarPickerWidget extends ConsumerWidget {
         ),
         if (stage != null) ...[
           const SizedBox(height: 8),
-          Text(_stageLabel(stage), style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            _stageLabel(stage),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ],
     );

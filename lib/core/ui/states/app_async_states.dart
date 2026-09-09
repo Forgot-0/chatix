@@ -1,4 +1,5 @@
 library;
+
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -161,11 +162,7 @@ class AppEmptyState extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    icon,
-                    size: 56,
-                    color: theme.colorScheme.outline,
-                  ),
+                  Icon(icon, size: 56, color: theme.colorScheme.outline),
                   const SizedBox(height: 16),
                   Text(
                     title,
@@ -182,10 +179,7 @@ class AppEmptyState extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ],
-                  if (action != null) ...[
-                    const SizedBox(height: 20),
-                    action!,
-                  ],
+                  if (action != null) ...[const SizedBox(height: 20), action!],
                 ],
               ),
             ),
@@ -369,9 +363,8 @@ class AppInlineSkeleton extends StatelessWidget {
               hasLeading: hasLeading,
               hasTrailing: false,
               lines: lines,
-              titleWidthFactor:
-                  AppListSkeleton._titleWidths[index %
-                      AppListSkeleton._titleWidths.length],
+              titleWidthFactor: AppListSkeleton
+                  ._titleWidths[index % AppListSkeleton._titleWidths.length],
             ),
           ),
         ),

@@ -119,9 +119,7 @@ class _AdvancedImageState extends ConsumerState<AdvancedImage> {
       final imageProvider = NetworkImage(widget.imageUrl);
 
       if (widget.useThumbnailPreview) {
-        _thumbnailProvider = NetworkImage(
-          widget.imageUrl,
-        );
+        _thumbnailProvider = NetworkImage(widget.imageUrl);
         setState(() {});
       }
 
