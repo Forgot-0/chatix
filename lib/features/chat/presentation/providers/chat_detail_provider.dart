@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
@@ -79,6 +80,10 @@ class ChatDetailState extends Equatable {
 
   final Map<int, int> peerReadSeq;
 
+  final String? highlightMessageId;
+
+  final bool isViewingHistory;
+
   const ChatDetailState({
     this.chat,
     this.messages = const [],
@@ -90,6 +95,8 @@ class ChatDetailState extends Equatable {
     this.myUserId,
     this.isGone = false,
     this.peerReadSeq = const {},
+    this.highlightMessageId,
+    this.isViewingHistory = false,
   });
 
   bool get canLoadMore => hasNext && nextCursor != null;
@@ -128,6 +135,9 @@ class ChatDetailState extends Equatable {
     int? myUserId,
     bool? isGone,
     Map<int, int>? peerReadSeq,
+    String? highlightMessageId,
+    bool clearHighlight = false,
+    bool? isViewingHistory,
   }) {
     return ChatDetailState(
       chat: chat ?? this.chat,
@@ -140,6 +150,10 @@ class ChatDetailState extends Equatable {
       replyTo: clearReplyTo ? null : (replyTo ?? this.replyTo),
       isGone: isGone ?? this.isGone,
       peerReadSeq: peerReadSeq ?? this.peerReadSeq,
+      highlightMessageId: clearHighlight
+          ? null
+          : (highlightMessageId ?? this.highlightMessageId),
+      isViewingHistory: isViewingHistory ?? this.isViewingHistory,
     );
   }
 
@@ -155,6 +169,8 @@ class ChatDetailState extends Equatable {
     myUserId,
     isGone,
     peerReadSeq,
+    highlightMessageId,
+    isViewingHistory,
   ];
 }
 
@@ -165,7 +181,13 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
 
   StreamSubscription<WSEvent>? _eventSubscription;
 
+  ChatSocketService? _socket;
+
   bool _membershipRefreshInFlight = false;
+
+  int? _lastHistoryCursor;
+  int _historyPagesFetched = 0;
+  static const int _maxHistoryPages = 20;
 
   @override
   Future<ChatDetailState> build() async {
@@ -180,6 +202,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
 
   void _attachRealtime(ChatDetailState loaded) {
     final socket = ref.read(chatSocketServiceProvider);
+    _socket = socket;
 
     socket.subscribe(
       _chatId,
@@ -202,7 +225,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   void _teardown() {
     _eventSubscription?.cancel();
     _eventSubscription = null;
-    ref.read(chatSocketServiceProvider).unsubscribe(_chatId);
+    _socket?.unsubscribe(_chatId);
+    _socket = null;
   }
 
   Future<void> _onEvent(WSEvent event) async {
@@ -328,8 +352,6 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   }
 
   void _onHistory(WsHistory event) {
-    if (event.messages.isEmpty) return;
-
     final decoded = <MessageEntity>[];
     for (final raw in event.messages) {
       try {
@@ -338,18 +360,45 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         Logger.warning('ChatDetail($_chatId): bad ws.history message: $error');
       }
     }
-    if (decoded.isEmpty) return;
 
-    _mutate((s) {
-      var messages = s.messages;
-      for (final message in decoded) {
-        messages = ChatRealtimeMerge.upsertMessage(messages, message);
-      }
-      return s.copyWith(messages: messages, nextCursor: s.nextCursor);
-    });
+    if (decoded.isNotEmpty) {
+      _mutate((s) {
+        var messages = s.messages;
+        for (final message in decoded) {
+          messages = ChatRealtimeMerge.upsertMessage(messages, message);
+        }
+        return s.copyWith(messages: messages, nextCursor: s.nextCursor);
+      });
 
-    final newest = ChatRealtimeMerge.highestSeq(decoded);
-    if (newest != null) _markReadUpTo(newest);
+      final newest = ChatRealtimeMerge.highestSeq(decoded);
+      if (newest != null) _markReadUpTo(newest);
+    }
+
+    _continueHistory(event);
+  }
+
+  void _continueHistory(WsHistory event) {
+    if (!event.hasMore) {
+      _historyPagesFetched = 0;
+      return;
+    }
+
+    final next = event.nextLastSeq;
+    if (next == null) return;
+
+    if (_lastHistoryCursor != null && next <= _lastHistoryCursor!) return;
+
+    if (_historyPagesFetched >= _maxHistoryPages) {
+      Logger.warning(
+        'ChatDetail($_chatId): stopping ws.history catch-up after '
+        '$_maxHistoryPages pages; the rest loads on scroll',
+      );
+      return;
+    }
+
+    _historyPagesFetched++;
+    _lastHistoryCursor = next;
+    ref.read(chatSocketServiceProvider).subscribe(_chatId, lastSeq: next);
   }
 
   bool _hasMessage(String messageId) =>
@@ -619,6 +668,68 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       ),
     );
   }
+
+  Future<bool> revealMessage(String messageId, {int? seq}) async {
+    final current = state.value;
+    if (current == null) return false;
+
+    if (current.messages.any((m) => m.id == messageId)) {
+      _highlight(messageId);
+      return true;
+    }
+
+    var targetSeq = seq;
+    if (targetSeq == null) {
+      final found = await ref
+          .read(getMessageUseCaseProvider)
+          .execute(_chatId, messageId);
+      targetSeq = found.getRight().toNullable()?.seq;
+    }
+    if (targetSeq == null) return false;
+
+    final result = await ref
+        .read(getMessagesContextUseCaseProvider)
+        .execute(_chatId, targetSeq);
+
+    return result.match(
+      (failure) {
+        Logger.warning(
+          'ChatDetail($_chatId): context around seq $targetSeq failed '
+          '(${failure.message})',
+        );
+        return false;
+      },
+      (page) {
+        if (!page.messages.any((m) => m.id == messageId)) return false;
+
+        _mutate(
+          (s) => s.copyWith(
+            messages: page.messages,
+            nextCursor: page.nextCursor,
+            hasNext: page.hasNext,
+            highlightMessageId: messageId,
+            isViewingHistory: true,
+          ),
+        );
+        return true;
+      },
+    );
+  }
+
+  void _highlight(String messageId) {
+    _mutate(
+      (s) =>
+          s.copyWith(highlightMessageId: messageId, nextCursor: s.nextCursor),
+    );
+  }
+
+  void clearHighlight() {
+    final current = state.value;
+    if (current == null || current.highlightMessageId == null) return;
+    _mutate((s) => s.copyWith(clearHighlight: true, nextCursor: s.nextCursor));
+  }
+
+  Future<void> returnToLatest() => refresh();
 
   void setReplyTo(MessageEntity? message) {
     final current = state.value;

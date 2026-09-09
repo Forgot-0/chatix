@@ -21,6 +21,7 @@ abstract final class RouteNames {
   static const String createChat = 'createChat';
   static const String chatDetail = 'chatDetail';
   static const String chatMembers = 'chatMembers';
+  static const String chatInfo = 'chatInfo';
   static const String chatCall = 'chatCall';
 
   static const String notifications = 'notifications';
@@ -96,15 +97,30 @@ abstract final class ChatSearchRoute {
 }
 
 class ChatDetailRoute {
-  const ChatDetailRoute(this.chatId);
+  const ChatDetailRoute(this.chatId, {this.messageId});
 
   final String chatId;
 
+  final String? messageId;
+
   static const String path = ':chatId';
-  String get location => '/chats/$chatId';
+  static const String messageQueryParam = 'message';
+
+  String get location {
+    final base = '/chats/$chatId';
+    final target = messageId;
+    if (target == null || target.isEmpty) return base;
+    return '$base?$messageQueryParam=${Uri.encodeQueryComponent(target)}';
+  }
 
   static String? idFrom(GoRouterState state) {
     final raw = state.pathParameters[RouteParams.chatId];
+    if (raw == null || raw.isEmpty) return null;
+    return raw;
+  }
+
+  static String? messageIdFrom(GoRouterState state) {
+    final raw = state.uri.queryParameters[messageQueryParam];
     if (raw == null || raw.isEmpty) return null;
     return raw;
   }
@@ -113,6 +129,11 @@ class ChatDetailRoute {
 abstract final class ChatMembersRoute {
   static const String path = 'members';
   static String locationOf(String chatId) => '/chats/$chatId/members';
+}
+
+abstract final class ChatInfoRoute {
+  static const String path = 'info';
+  static String locationOf(String chatId) => '/chats/$chatId/info';
 }
 
 abstract final class ChatCallRoute {

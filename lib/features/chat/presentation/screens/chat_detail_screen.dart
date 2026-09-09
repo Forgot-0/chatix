@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -18,15 +20,25 @@ import 'package:chatix/features/chat/presentation/providers/chat_providers.dart'
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 enum _AttachmentSource { media, document }
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
-  const ChatDetailScreen({super.key, required this.chatId});
+  const ChatDetailScreen({
+    super.key,
+    required this.chatId,
+    this.focusMessageId,
+  });
 
   final String chatId;
+
+  final String? focusMessageId;
 
   @override
   ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
@@ -40,10 +52,73 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   bool get _selectionMode => _selectedMessageIds != null;
 
+  final Map<String, GlobalKey> _messageKeys = {};
+
+  String? _pendingScrollTo;
+  int _scrollAttempts = 0;
+
+  static const int _maxScrollAttempts = 12;
+
+  void _scheduleScrollTo(String messageId) {
+    if (_pendingScrollTo == messageId) return;
+    _pendingScrollTo = messageId;
+    _scrollAttempts = 0;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _stepTowardTarget());
+  }
+
+  void _stepTowardTarget() {
+    if (!mounted) return;
+    final target = _pendingScrollTo;
+    if (target == null) return;
+
+    final context = _messageKeys[target]?.currentContext;
+    if (context != null) {
+      _pendingScrollTo = null;
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.4,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+      );
+      return;
+    }
+
+    if (++_scrollAttempts > _maxScrollAttempts ||
+        !_scrollController.hasClients) {
+      _pendingScrollTo = null;
+      return;
+    }
+
+    final position = _scrollController.position;
+    final step = position.viewportDimension * 0.8;
+    _scrollController.jumpTo(
+      (position.pixels + step).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      ),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _stepTowardTarget());
+  }
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    _pendingFocusId = widget.focusMessageId;
+  }
+
+  String? _pendingFocusId;
+
+  Future<void> _focusOnOpen(String messageId) async {
+    final ok = await ref
+        .read(chatDetailProvider(widget.chatId).notifier)
+        .revealMessage(messageId);
+    if (ok || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).messageNotFound)),
+    );
   }
 
   void _startSelection(String messageId) {
@@ -239,11 +314,35 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final detail = ref.watch(chatDetailProvider(widget.chatId));
     final myUserId = ref.watch(authProvider).value?.id;
 
+    ref.listen(chatDetailProvider(widget.chatId), (previous, next) {
+      final target = next.value?.highlightMessageId;
+      if (target == null || target == previous?.value?.highlightMessageId) {
+        return;
+      }
+      _scheduleScrollTo(target);
+    });
+
+    final pendingFocus = _pendingFocusId;
+    if (pendingFocus != null && detail.hasValue) {
+      _pendingFocusId = null;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _focusOnOpen(pendingFocus),
+      );
+    }
+
     return Scaffold(
       appBar: _selectionMode
           ? _buildSelectionAppBar(detail.value)
           : AppBar(
-              title: Text(detail.value?.chat?.name ?? 'Chat'),
+              titleSpacing: 0,
+              title: _ChatHeader(
+                chat: detail.value?.chat,
+                myUserId: myUserId,
+                onTap: detail.value?.chat == null
+                    ? null
+                    : () =>
+                          context.push(ChatInfoRoute.locationOf(widget.chatId)),
+              ),
               actions: [
                 IconButton(
                   tooltip: 'Call',
@@ -291,9 +390,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     selectedIds: _selectedMessageIds ?? const <String>{},
                     onStartSelection: _startSelection,
                     onToggleSelected: _toggleSelected,
+                    messageKeys: _messageKeys,
                   ),
                 ),
               ),
+              if (state.isViewingHistory)
+                _BackToLatestBar(
+                  onPressed: () => ref
+                      .read(chatDetailProvider(widget.chatId).notifier)
+                      .returnToLatest(),
+                ),
               if (state.replyTo != null)
                 _ReplyBanner(
                   message: state.replyTo!,
@@ -475,6 +581,114 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 }
 
+class _BackToLatestBar extends StatelessWidget {
+  const _BackToLatestBar({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.colorScheme.secondaryContainer,
+      child: InkWell(
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.arrow_downward,
+                size: 16,
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context).backToLatest,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatHeader extends StatelessWidget {
+  const _ChatHeader({
+    required this.chat,
+    required this.myUserId,
+    required this.onTap,
+  });
+
+  final ChatEntity? chat;
+  final int? myUserId;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final current = chat;
+
+    if (current == null) {
+      return Text(l10n.chatFallbackTitle, style: theme.textTheme.titleMedium);
+    }
+
+    final peer = current.peerProfile(myUserId);
+    final title = chatTitleOf(current, l10n, myUserId: myUserId);
+
+    final subtitle = current.type == ChatType.direct
+        ? peer?.username?.trim().isNotEmpty == true
+              ? '@${peer!.username!.trim()}'
+              : null
+        : l10n.membersCount(current.memberCount);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (peer != null)
+              ChatAvatar(profile: peer, userId: peer.userId, radius: 18),
+            if (peer != null) const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MessageList extends ConsumerWidget {
   const _MessageList({
     required this.state,
@@ -485,6 +699,7 @@ class _MessageList extends ConsumerWidget {
     required this.selectedIds,
     required this.onStartSelection,
     required this.onToggleSelected,
+    required this.messageKeys,
   });
 
   final ChatDetailState state;
@@ -496,6 +711,7 @@ class _MessageList extends ConsumerWidget {
   final Set<String> selectedIds;
   final void Function(String messageId) onStartSelection;
   final void Function(String messageId) onToggleSelected;
+  final Map<String, GlobalKey> messageKeys;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -534,6 +750,7 @@ class _MessageList extends ConsumerWidget {
         final isMine = myUserId != null && message.authorId == myUserId;
 
         return MessageBubble(
+          key: messageKeys.putIfAbsent(message.id, GlobalKey.new),
           message: message,
           isMine: isMine,
           selectionMode: selectionMode,
@@ -541,6 +758,11 @@ class _MessageList extends ConsumerWidget {
           onSelectionToggled: () => onToggleSelected(message.id),
           onStartSelection: () => onStartSelection(message.id),
           reactions: state.reactionsFor(message.id),
+          reactionPolicy: state.chat?.reactionPolicy,
+          isHighlighted: state.highlightMessageId == message.id,
+          onJumpToOriginal: message.isReply
+              ? () => _jumpToOriginal(context, ref, message)
+              : null,
           onToggleReaction: (emoji) =>
               notifier.toggleReaction(message.id, emoji),
           onShowReactionUsers: (emoji) =>
@@ -644,45 +866,61 @@ class _MessageList extends ConsumerWidget {
     );
   }
 
+  Future<void> _jumpToOriginal(
+    BuildContext context,
+    WidgetRef ref,
+    MessageEntity message,
+  ) async {
+    final targetId = message.replyToId ?? message.replyTo?.id;
+    if (targetId == null) return;
+
+    final ok = await ref
+        .read(chatDetailProvider(chatId).notifier)
+        .revealMessage(targetId, seq: message.replyTo?.seq);
+
+    if (ok || !context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).messageNotFound)),
+    );
+  }
+
   Future<void> _openAttachment(
     BuildContext context,
     WidgetRef ref,
     MessageEntity message,
     AttachmentEntity attachment,
   ) async {
+    if (attachment.attachmentType == AttachmentType.image) {
+      await AttachmentViewer.open(
+        context,
+        attachment: attachment,
+        messageId: message.id,
+      );
+      return;
+    }
+
     final result = await ref
         .read(getAttachmentDownloadUrlUseCaseProvider)
         .execute(message.chatId, message.id, attachment.id);
 
     if (!context.mounted) return;
-    result.match(
-      (failure) => ScaffoldMessenger.of(
+
+    final failureMessage = AppLocalizations.of(context).attachmentOpenFailed;
+
+    await result.match(
+      (failure) async => ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (download) => showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(attachment.originalFilename),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Expires in ${download.expiresIn}s'),
-              const SizedBox(height: 8),
-              SelectableText(
-                download.url,
-                style: Theme.of(dialogContext).textTheme.bodySmall,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      ),
+      (download) async {
+        final uri = Uri.tryParse(download.url);
+        final opened =
+            uri != null &&
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (opened || !context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failureMessage)));
+      },
     );
   }
 }
@@ -1051,13 +1289,25 @@ class _ForwardTargetDialog extends ConsumerWidget {
                 .where((chat) => chat.id != excludeChatId)
                 .toList();
             if (targets.isEmpty) return const Text('No other chats');
+
+            final l10n = AppLocalizations.of(context);
+            final myUserId = ref.watch(authProvider).value?.id;
+
             return ListView.builder(
               shrinkWrap: true,
               itemCount: targets.length,
               itemBuilder: (context, index) {
                 final chat = targets[index];
+                final peer = chat.peerProfile(myUserId);
                 return ListTile(
-                  title: Text(chat.name ?? 'Chat'),
+                  leading: peer == null
+                      ? null
+                      : ChatAvatar(
+                          profile: peer,
+                          userId: peer.userId,
+                          radius: 16,
+                        ),
+                  title: Text(chatTitleOf(chat, l10n, myUserId: myUserId)),
                   onTap: () => Navigator.of(context).pop(chat.id),
                 );
               },

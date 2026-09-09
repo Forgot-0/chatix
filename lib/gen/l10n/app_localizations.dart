@@ -393,6 +393,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'People'**
   String get browsePeople;
+
+  /// Fallback title for a 1:1 chat with an unidentified peer
+  ///
+  /// In en, this message translates to:
+  /// **'Direct chat'**
+  String get chatDirect;
+
+  /// Fallback title for a group chat
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get chatGroup;
+
+  /// Fallback title for a supergroup chat
+  ///
+  /// In en, this message translates to:
+  /// **'Supergroup'**
+  String get chatSupergroup;
+
+  /// Fallback title for a channel
+  ///
+  /// In en, this message translates to:
+  /// **'Channel'**
+  String get chatChannel;
+
+  /// Generic fallback when a chat has no name at all
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get chatFallbackTitle;
+
+  /// Member count shown under a chat title
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No members} =1{1 member} other{{count} members}}'**
+  String membersCount(num count);
+
+  /// Attachment is still being validated by the backend
+  ///
+  /// In en, this message translates to:
+  /// **'Processing…'**
+  String get attachmentProcessing;
+
+  /// Attachment ended in attachment_status = error
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get attachmentFailed;
+
+  /// Shown when the download URL could not be fetched or launched
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this file'**
+  String get attachmentOpenFailed;
+
+  /// Placeholder when an image attachment fails to render
+  ///
+  /// In en, this message translates to:
+  /// **'Image unavailable'**
+  String get imageLoadFailed;
+
+  /// Generic close action
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// Tooltip/label for opening the emoji reaction panel
+  ///
+  /// In en, this message translates to:
+  /// **'Add a reaction'**
+  String get addReaction;
+
+  /// Chat reactions_mode = none
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions are off in this chat'**
+  String get reactionsDisabled;
+
+  /// MAX_REACTIONS_PER_USER_PER_MESSAGE reached
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {limit} reactions per message'**
+  String reactionLimitReached(Object limit);
+
+  /// Jump target was deleted or is out of reach
+  ///
+  /// In en, this message translates to:
+  /// **'That message is no longer available'**
+  String get messageNotFound;
+
+  /// Title of the chat information screen
+  ///
+  /// In en, this message translates to:
+  /// **'Chat info'**
+  String get chatInfo;
+
+  /// Chat name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get chatName;
+
+  /// Chat description field label
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get chatDescription;
+
+  /// is_public toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Public chat'**
+  String get chatPublic;
+
+  /// is_public explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone with the link can join'**
+  String get chatPublicHint;
+
+  /// admin_only toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Admins only'**
+  String get chatAdminOnly;
+
+  /// admin_only explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Only admins can post'**
+  String get chatAdminOnlyHint;
+
+  /// slow_mode_seconds field label
+  ///
+  /// In en, this message translates to:
+  /// **'Slow mode'**
+  String get chatSlowMode;
+
+  /// slow_mode_seconds = 0
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get chatSlowModeOff;
+
+  /// slow_mode_seconds value
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s between messages'**
+  String chatSlowModeSeconds(Object seconds);
+
+  /// reactions_mode field label
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions'**
+  String get chatReactionsMode;
+
+  /// reactions_mode = all
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone, any emoji'**
+  String get chatReactionsAll;
+
+  /// reactions_mode = some
+  ///
+  /// In en, this message translates to:
+  /// **'Only selected emoji'**
+  String get chatReactionsSome;
+
+  /// reactions_mode = none
+  ///
+  /// In en, this message translates to:
+  /// **'Turned off'**
+  String get chatReactionsNone;
+
+  /// Leave action
+  ///
+  /// In en, this message translates to:
+  /// **'Leave chat'**
+  String get leaveChat;
+
+  /// Leave confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this chat? You will stop receiving its messages.'**
+  String get leaveChatConfirm;
+
+  /// created_by is locked in by the backend
+  ///
+  /// In en, this message translates to:
+  /// **'The chat creator cannot leave — delete the chat instead.'**
+  String get leaveChatOwnerBlocked;
+
+  /// Delete action
+  ///
+  /// In en, this message translates to:
+  /// **'Delete chat'**
+  String get deleteChat;
+
+  /// Delete confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this chat for everyone? This cannot be undone.'**
+  String get deleteChatConfirm;
+
+  /// Save action
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveChanges;
+
+  /// Generic cancel action
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// Snackbar after a successful PATCH /chats/{id}/
+  ///
+  /// In en, this message translates to:
+  /// **'Chat updated'**
+  String get chatSettingsSaved;
+
+  /// Row that opens the member list
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get viewMembers;
+
+  /// Marker next to the timestamp of an edited message
+  ///
+  /// In en, this message translates to:
+  /// **'edited'**
+  String get messageEdited;
+
+  /// Message action: reply
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get messageReply;
+
+  /// Message action: forward
+  ///
+  /// In en, this message translates to:
+  /// **'Forward'**
+  String get messageForward;
+
+  /// Message action: edit
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get messageEdit;
+
+  /// Message action: delete
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get messageDelete;
+
+  /// Message action: enter selection mode
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get messageSelect;
+
+  /// Returns from a jumped-to history window to the live tail
+  ///
+  /// In en, this message translates to:
+  /// **'Back to latest messages'**
+  String get backToLatest;
 }
 
 class _AppLocalizationsDelegate

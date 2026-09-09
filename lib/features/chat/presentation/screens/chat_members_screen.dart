@@ -7,6 +7,7 @@ import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 
 class ChatMembersScreen extends ConsumerStatefulWidget {
@@ -169,30 +170,13 @@ class _MemberTile extends ConsumerWidget {
         moderatable && hasChatPermission(chat, me, ChatPermissions.memberKick);
 
     final role = member.role;
-    final avatarUrl = member.profile?.avatarUrl;
     final username = member.profile?.username;
 
     return ListTile(
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            foregroundImage: avatarUrl == null ? null : NetworkImage(avatarUrl),
-            child: const Icon(Icons.person_outline),
-          ),
-          if (isOnline == true)
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
+      leading: ChatAvatar(
+        profile: member.profile,
+        userId: member.userId,
+        isOnline: isOnline,
       ),
       title: Text(member.displayLabel),
       subtitle: Row(

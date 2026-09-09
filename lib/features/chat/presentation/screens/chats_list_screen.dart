@@ -1,10 +1,14 @@
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
 class ChatsListScreen extends ConsumerStatefulWidget {
@@ -103,24 +107,32 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   }
 }
 
-class ChatListTile extends StatelessWidget {
+class ChatListTile extends ConsumerWidget {
   const ChatListTile({super.key, required this.chat});
 
   final ChatEntity chat;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final unread = chat.unreadCount ?? 0;
+    final l10n = AppLocalizations.of(context);
+    final myUserId = ref.watch(authProvider).value?.id;
+
+    final peer = chat.peerProfile(myUserId);
 
     return ListTile(
-      leading: CircleAvatar(child: Icon(_iconFor(chat.type))),
+      leading: peer != null
+          ? ChatAvatar(profile: peer, userId: peer.userId)
+          : CircleAvatar(child: Icon(_iconFor(chat.type))),
       title: Text(
-        chat.name ?? _fallbackTitle(chat),
+        chatTitleOf(chat, l10n, myUserId: myUserId),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        _previewOf(chat) ?? chat.description ?? '${chat.memberCount} members',
+        _previewOf(chat) ??
+            chat.description ??
+            l10n.membersCount(chat.memberCount),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -182,19 +194,6 @@ class ChatListTile extends StatelessWidget {
         return Icons.groups_outlined;
       case ChatType.channel:
         return Icons.campaign_outlined;
-    }
-  }
-
-  static String _fallbackTitle(ChatEntity chat) {
-    switch (chat.type) {
-      case ChatType.direct:
-        return 'Direct chat';
-      case ChatType.group:
-        return 'Group chat';
-      case ChatType.supergroup:
-        return 'Supergroup';
-      case ChatType.channel:
-        return 'Channel';
     }
   }
 

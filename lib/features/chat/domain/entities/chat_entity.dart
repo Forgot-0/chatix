@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 
 enum ChatType {
@@ -134,6 +135,29 @@ class ChatEntity extends Equatable {
 
   List<String>? get reactionWhitelist =>
       reactionsMode == ChatReactionsMode.some ? allowedReactions : null;
+
+  ChatProfileEntity? peerProfile(int? myUserId) {
+    if (type != ChatType.direct) return null;
+
+    final mine = myUserId ?? me?.userId;
+    if (mine == null) return null;
+
+    final roster = members;
+    if (roster != null) {
+      for (final member in roster) {
+        if (member.userId != mine && member.profile != null) {
+          return member.profile;
+        }
+      }
+    }
+
+    final author = lastMessage?.profile;
+    if (author != null && author.userId != mine) return author;
+
+    return null;
+  }
+
+  String? peerName(int? myUserId) => peerProfile(myUserId)?.bestName;
 
   ChatMemberEntity? membershipOf(int userId) {
     if (me != null && me!.userId == userId) return me;

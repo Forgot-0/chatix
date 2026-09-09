@@ -30,11 +30,11 @@
   },
   "systemMode": "System Mode",
   "@systemMode": {
-    "description": "Label for the system mode option"
+    "description": "Label for the system theme mode option"
   },
   "language": "Language",
   "@language": {
-    "description": "Label for language selection"
+    "description": "Label for the language setting"
   },
   "change_language": "Change application language",
   "@change_language": {
@@ -140,13 +140,6 @@
   "@common_image_caption": {
     "description": "Caption for the common image example"
   },
-  "@systemMode": {
-    "description": "Label for the system theme mode option"
-  },
-  "language": "Language",
-  "@language": {
-    "description": "Label for the language setting"
-  },
   "logout": "Logout",
   "@logout": {
     "description": "Label for the logout button"
@@ -216,5 +209,185 @@
   "browsePeople": "People",
   "@browsePeople": {
     "description": "Tooltip for the action that opens the people directory"
+  },
+  "chatDirect": "Direct chat",
+  "@chatDirect": {
+    "description": "Fallback title for a 1:1 chat with an unidentified peer"
+  },
+  "chatGroup": "Group",
+  "@chatGroup": {
+    "description": "Fallback title for a group chat"
+  },
+  "chatSupergroup": "Supergroup",
+  "@chatSupergroup": {
+    "description": "Fallback title for a supergroup chat"
+  },
+  "chatChannel": "Channel",
+  "@chatChannel": {
+    "description": "Fallback title for a channel"
+  },
+  "chatFallbackTitle": "Chat",
+  "@chatFallbackTitle": {
+    "description": "Generic fallback when a chat has no name at all"
+  },
+  "membersCount": "{count, plural, =0{No members} =1{1 member} other{{count} members}}",
+  "@membersCount": {
+    "description": "Member count shown under a chat title"
+  },
+  "attachmentProcessing": "Processing…",
+  "@attachmentProcessing": {
+    "description": "Attachment is still being validated by the backend"
+  },
+  "attachmentFailed": "Upload failed",
+  "@attachmentFailed": {
+    "description": "Attachment ended in attachment_status = error"
+  },
+  "attachmentOpenFailed": "Could not open this file",
+  "@attachmentOpenFailed": {
+    "description": "Shown when the download URL could not be fetched or launched"
+  },
+  "imageLoadFailed": "Image unavailable",
+  "@imageLoadFailed": {
+    "description": "Placeholder when an image attachment fails to render"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Generic close action"
+  },
+  "addReaction": "Add a reaction",
+  "@addReaction": {
+    "description": "Tooltip/label for opening the emoji reaction panel"
+  },
+  "reactionsDisabled": "Reactions are off in this chat",
+  "@reactionsDisabled": {
+    "description": "Chat reactions_mode = none"
+  },
+  "reactionLimitReached": "You can add up to {limit} reactions per message",
+  "@reactionLimitReached": {
+    "description": "MAX_REACTIONS_PER_USER_PER_MESSAGE reached"
+  },
+  "messageNotFound": "That message is no longer available",
+  "@messageNotFound": {
+    "description": "Jump target was deleted or is out of reach"
+  },
+  "chatInfo": "Chat info",
+  "@chatInfo": {
+    "description": "Title of the chat information screen"
+  },
+  "chatName": "Name",
+  "@chatName": {
+    "description": "Chat name field label"
+  },
+  "chatDescription": "Description",
+  "@chatDescription": {
+    "description": "Chat description field label"
+  },
+  "chatPublic": "Public chat",
+  "@chatPublic": {
+    "description": "is_public toggle"
+  },
+  "chatPublicHint": "Anyone with the link can join",
+  "@chatPublicHint": {
+    "description": "is_public explanation"
+  },
+  "chatAdminOnly": "Admins only",
+  "@chatAdminOnly": {
+    "description": "admin_only toggle"
+  },
+  "chatAdminOnlyHint": "Only admins can post",
+  "@chatAdminOnlyHint": {
+    "description": "admin_only explanation"
+  },
+  "chatSlowMode": "Slow mode",
+  "@chatSlowMode": {
+    "description": "slow_mode_seconds field label"
+  },
+  "chatSlowModeOff": "Off",
+  "@chatSlowModeOff": {
+    "description": "slow_mode_seconds = 0"
+  },
+  "chatSlowModeSeconds": "{seconds}s between messages",
+  "@chatSlowModeSeconds": {
+    "description": "slow_mode_seconds value"
+  },
+  "chatReactionsMode": "Reactions",
+  "@chatReactionsMode": {
+    "description": "reactions_mode field label"
+  },
+  "chatReactionsAll": "Everyone, any emoji",
+  "@chatReactionsAll": {
+    "description": "reactions_mode = all"
+  },
+  "chatReactionsSome": "Only selected emoji",
+  "@chatReactionsSome": {
+    "description": "reactions_mode = some"
+  },
+  "chatReactionsNone": "Turned off",
+  "@chatReactionsNone": {
+    "description": "reactions_mode = none"
+  },
+  "leaveChat": "Leave chat",
+  "@leaveChat": {
+    "description": "Leave action"
+  },
+  "leaveChatConfirm": "Leave this chat? You will stop receiving its messages.",
+  "@leaveChatConfirm": {
+    "description": "Leave confirmation body"
+  },
+  "leaveChatOwnerBlocked": "The chat creator cannot leave — delete the chat instead.",
+  "@leaveChatOwnerBlocked": {
+    "description": "created_by is locked in by the backend"
+  },
+  "deleteChat": "Delete chat",
+  "@deleteChat": {
+    "description": "Delete action"
+  },
+  "deleteChatConfirm": "Delete this chat for everyone? This cannot be undone.",
+  "@deleteChatConfirm": {
+    "description": "Delete confirmation body"
+  },
+  "saveChanges": "Save",
+  "@saveChanges": {
+    "description": "Save action"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel action"
+  },
+  "chatSettingsSaved": "Chat updated",
+  "@chatSettingsSaved": {
+    "description": "Snackbar after a successful PATCH /chats/{id}/"
+  },
+  "viewMembers": "Members",
+  "@viewMembers": {
+    "description": "Row that opens the member list"
+  },
+  "messageEdited": "edited",
+  "@messageEdited": {
+    "description": "Marker next to the timestamp of an edited message"
+  },
+  "messageReply": "Reply",
+  "@messageReply": {
+    "description": "Message action: reply"
+  },
+  "messageForward": "Forward",
+  "@messageForward": {
+    "description": "Message action: forward"
+  },
+  "messageEdit": "Edit",
+  "@messageEdit": {
+    "description": "Message action: edit"
+  },
+  "messageDelete": "Delete",
+  "@messageDelete": {
+    "description": "Message action: delete"
+  },
+  "messageSelect": "Select",
+  "@messageSelect": {
+    "description": "Message action: enter selection mode"
+  },
+  "backToLatest": "Back to latest messages",
+  "@backToLatest": {
+    "description": "Returns from a jumped-to history window to the live tail"
   }
 }

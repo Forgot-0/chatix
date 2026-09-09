@@ -177,4 +177,157 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get browsePeople => 'Personnes';
+
+  @override
+  String get chatDirect => 'Discussion privée';
+
+  @override
+  String get chatGroup => 'Groupe';
+
+  @override
+  String get chatSupergroup => 'Supergroupe';
+
+  @override
+  String get chatChannel => 'Canal';
+
+  @override
+  String get chatFallbackTitle => 'Discussion';
+
+  @override
+  String membersCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count membres',
+      one: '1 membre',
+      zero: 'Aucun membre',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get attachmentProcessing => 'Traitement…';
+
+  @override
+  String get attachmentFailed => 'Échec de l’envoi';
+
+  @override
+  String get attachmentOpenFailed => 'Impossible d’ouvrir ce fichier';
+
+  @override
+  String get imageLoadFailed => 'Image indisponible';
+
+  @override
+  String get close => 'Fermer';
+
+  @override
+  String get addReaction => 'Ajouter une réaction';
+
+  @override
+  String get reactionsDisabled =>
+      'Les réactions sont désactivées dans cette discussion';
+
+  @override
+  String reactionLimitReached(Object limit) {
+    return 'Vous pouvez ajouter jusqu’à $limit réactions par message';
+  }
+
+  @override
+  String get messageNotFound => 'Ce message n’est plus disponible';
+
+  @override
+  String get chatInfo => 'Infos sur la discussion';
+
+  @override
+  String get chatName => 'Nom';
+
+  @override
+  String get chatDescription => 'Description';
+
+  @override
+  String get chatPublic => 'Discussion publique';
+
+  @override
+  String get chatPublicHint =>
+      'Toute personne disposant du lien peut rejoindre';
+
+  @override
+  String get chatAdminOnly => 'Administrateurs uniquement';
+
+  @override
+  String get chatAdminOnlyHint => 'Seuls les administrateurs peuvent publier';
+
+  @override
+  String get chatSlowMode => 'Mode lent';
+
+  @override
+  String get chatSlowModeOff => 'Désactivé';
+
+  @override
+  String chatSlowModeSeconds(Object seconds) {
+    return '${seconds}s entre les messages';
+  }
+
+  @override
+  String get chatReactionsMode => 'Réactions';
+
+  @override
+  String get chatReactionsAll => 'Tout le monde, tout emoji';
+
+  @override
+  String get chatReactionsSome => 'Emojis sélectionnés uniquement';
+
+  @override
+  String get chatReactionsNone => 'Désactivées';
+
+  @override
+  String get leaveChat => 'Quitter la discussion';
+
+  @override
+  String get leaveChatConfirm =>
+      'Quitter cette discussion ? Vous ne recevrez plus ses messages.';
+
+  @override
+  String get leaveChatOwnerBlocked =>
+      'Le créateur ne peut pas quitter la discussion — supprimez-la à la place.';
+
+  @override
+  String get deleteChat => 'Supprimer la discussion';
+
+  @override
+  String get deleteChatConfirm =>
+      'Supprimer cette discussion pour tout le monde ? Action irréversible.';
+
+  @override
+  String get saveChanges => 'Enregistrer';
+
+  @override
+  String get cancel => 'Annuler';
+
+  @override
+  String get chatSettingsSaved => 'Discussion mise à jour';
+
+  @override
+  String get viewMembers => 'Membres';
+
+  @override
+  String get messageEdited => 'modifié';
+
+  @override
+  String get messageReply => 'Répondre';
+
+  @override
+  String get messageForward => 'Transférer';
+
+  @override
+  String get messageEdit => 'Modifier';
+
+  @override
+  String get messageDelete => 'Supprimer';
+
+  @override
+  String get messageSelect => 'Sélectionner';
+
+  @override
+  String get backToLatest => 'Revenir aux derniers messages';
 }

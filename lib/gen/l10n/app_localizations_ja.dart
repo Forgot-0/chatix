@@ -177,4 +177,150 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get browsePeople => 'ユーザー';
+
+  @override
+  String get chatDirect => '個人チャット';
+
+  @override
+  String get chatGroup => 'グループ';
+
+  @override
+  String get chatSupergroup => 'スーパーグループ';
+
+  @override
+  String get chatChannel => 'チャンネル';
+
+  @override
+  String get chatFallbackTitle => 'チャット';
+
+  @override
+  String membersCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 人のメンバー',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get attachmentProcessing => '処理中…';
+
+  @override
+  String get attachmentFailed => 'アップロード失敗';
+
+  @override
+  String get attachmentOpenFailed => 'このファイルを開けませんでした';
+
+  @override
+  String get imageLoadFailed => '画像を表示できません';
+
+  @override
+  String get close => '閉じる';
+
+  @override
+  String get addReaction => 'リアクションを追加';
+
+  @override
+  String get reactionsDisabled => 'このチャットではリアクションが無効です';
+
+  @override
+  String reactionLimitReached(Object limit) {
+    return '1 メッセージにつき最大 $limit 件のリアクションを追加できます';
+  }
+
+  @override
+  String get messageNotFound => 'そのメッセージは利用できません';
+
+  @override
+  String get chatInfo => 'チャット情報';
+
+  @override
+  String get chatName => '名前';
+
+  @override
+  String get chatDescription => '説明';
+
+  @override
+  String get chatPublic => '公開チャット';
+
+  @override
+  String get chatPublicHint => 'リンクを知っている人は誰でも参加できます';
+
+  @override
+  String get chatAdminOnly => '管理者のみ';
+
+  @override
+  String get chatAdminOnlyHint => '管理者のみ投稿できます';
+
+  @override
+  String get chatSlowMode => '低速モード';
+
+  @override
+  String get chatSlowModeOff => 'オフ';
+
+  @override
+  String chatSlowModeSeconds(Object seconds) {
+    return 'メッセージ間隔 $seconds 秒';
+  }
+
+  @override
+  String get chatReactionsMode => 'リアクション';
+
+  @override
+  String get chatReactionsAll => '全員・すべての絵文字';
+
+  @override
+  String get chatReactionsSome => '選択した絵文字のみ';
+
+  @override
+  String get chatReactionsNone => 'オフ';
+
+  @override
+  String get leaveChat => 'チャットを退出';
+
+  @override
+  String get leaveChatConfirm => 'このチャットを退出しますか？メッセージは届かなくなります。';
+
+  @override
+  String get leaveChatOwnerBlocked => '作成者は退出できません。チャットを削除してください。';
+
+  @override
+  String get deleteChat => 'チャットを削除';
+
+  @override
+  String get deleteChatConfirm => '全員のためにこのチャットを削除しますか？取り消せません。';
+
+  @override
+  String get saveChanges => '保存';
+
+  @override
+  String get cancel => 'キャンセル';
+
+  @override
+  String get chatSettingsSaved => 'チャットを更新しました';
+
+  @override
+  String get viewMembers => 'メンバー';
+
+  @override
+  String get messageEdited => '編集済み';
+
+  @override
+  String get messageReply => '返信';
+
+  @override
+  String get messageForward => '転送';
+
+  @override
+  String get messageEdit => '編集';
+
+  @override
+  String get messageDelete => '削除';
+
+  @override
+  String get messageSelect => '選択';
+
+  @override
+  String get backToLatest => '最新のメッセージに戻る';
 }

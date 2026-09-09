@@ -32,7 +32,11 @@ class FakeWebSocketSink implements WebSocketSink {
 /// client exactly as the gateway would, without any network.
 class FakeWebSocketChannel extends StreamChannelMixin<dynamic>
     implements WebSocketChannel {
-  FakeWebSocketChannel() : _controller = StreamController<dynamic>();
+  /// Broadcast on purpose: `close()` on a single-subscription controller that
+  /// was never listened to never completes, which would hang the tearDown of
+  /// any test that builds the socket without connecting. Broadcast also lets a
+  /// reconnect re-listen to the same fake channel.
+  FakeWebSocketChannel() : _controller = StreamController<dynamic>.broadcast();
 
   final StreamController<dynamic> _controller;
 

@@ -17,6 +17,8 @@ class UpdateChatUseCase {
     bool? adminOnly,
     int? slowModeSeconds,
     Map<String, bool>? permissions,
+    ChatReactionsMode? reactionsMode,
+    List<String>? allowedReactions,
   }) {
     if (chatId.trim().isEmpty) {
       return _fail('Chat id is required');
@@ -28,7 +30,9 @@ class UpdateChatUseCase {
         isPublic == null &&
         adminOnly == null &&
         slowModeSeconds == null &&
-        permissions == null;
+        permissions == null &&
+        reactionsMode == null &&
+        allowedReactions == null;
     if (noChanges) {
       return _fail('Nothing to update');
     }
@@ -57,6 +61,11 @@ class UpdateChatUseCase {
       );
     }
 
+    if (reactionsMode == ChatReactionsMode.some &&
+        (allowedReactions == null || allowedReactions.isEmpty)) {
+      return _fail('Pick at least one emoji to allow');
+    }
+
     return _repository.updateChat(
       chatId,
       name: name?.trim(),
@@ -65,6 +74,8 @@ class UpdateChatUseCase {
       adminOnly: adminOnly,
       slowModeSeconds: slowModeSeconds,
       permissions: permissions,
+      reactionsMode: reactionsMode,
+      allowedReactions: allowedReactions,
     );
   }
 

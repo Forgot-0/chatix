@@ -177,4 +177,154 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get browsePeople => 'লোকজন';
+
+  @override
+  String get chatDirect => 'সরাসরি চ্যাট';
+
+  @override
+  String get chatGroup => 'গ্রুপ';
+
+  @override
+  String get chatSupergroup => 'সুপারগ্রুপ';
+
+  @override
+  String get chatChannel => 'চ্যানেল';
+
+  @override
+  String get chatFallbackTitle => 'চ্যাট';
+
+  @override
+  String membersCount(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count জন সদস্য',
+      one: '১ জন সদস্য',
+      zero: 'কোন সদস্য নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get attachmentProcessing => 'প্রক্রিয়াকরণ…';
+
+  @override
+  String get attachmentFailed => 'আপলোড ব্যর্থ';
+
+  @override
+  String get attachmentOpenFailed => 'এই ফাইলটি খোলা যায়নি';
+
+  @override
+  String get imageLoadFailed => 'ছবি অনুপলব্ধ';
+
+  @override
+  String get close => 'বন্ধ';
+
+  @override
+  String get addReaction => 'প্রতিক্রিয়া যোগ করুন';
+
+  @override
+  String get reactionsDisabled => 'এই চ্যাটে প্রতিক্রিয়া বন্ধ';
+
+  @override
+  String reactionLimitReached(Object limit) {
+    return 'প্রতি বার্তায় সর্বোচ্চ $limitটি প্রতিক্রিয়া যোগ করতে পারেন';
+  }
+
+  @override
+  String get messageNotFound => 'সেই বার্তাটি আর নেই';
+
+  @override
+  String get chatInfo => 'চ্যাট তথ্য';
+
+  @override
+  String get chatName => 'নাম';
+
+  @override
+  String get chatDescription => 'বিবরণ';
+
+  @override
+  String get chatPublic => 'পাবলিক চ্যাট';
+
+  @override
+  String get chatPublicHint => 'লিঙ্ক থাকলে যে কেউ যোগ দিতে পারে';
+
+  @override
+  String get chatAdminOnly => 'শুধু অ্যাডমিন';
+
+  @override
+  String get chatAdminOnlyHint => 'শুধু অ্যাডমিনরা পোস্ট করতে পারে';
+
+  @override
+  String get chatSlowMode => 'স্লো মোড';
+
+  @override
+  String get chatSlowModeOff => 'বন্ধ';
+
+  @override
+  String chatSlowModeSeconds(Object seconds) {
+    return 'বার্তার মধ্যে $seconds সেকেন্ড';
+  }
+
+  @override
+  String get chatReactionsMode => 'প্রতিক্রিয়া';
+
+  @override
+  String get chatReactionsAll => 'সবাই, যেকোনো ইমোজি';
+
+  @override
+  String get chatReactionsSome => 'শুধু নির্বাচিত ইমোজি';
+
+  @override
+  String get chatReactionsNone => 'বন্ধ';
+
+  @override
+  String get leaveChat => 'চ্যাট ছাড়ুন';
+
+  @override
+  String get leaveChatConfirm => 'এই চ্যাট ছাড়বেন? আপনি আর বার্তা পাবেন না।';
+
+  @override
+  String get leaveChatOwnerBlocked =>
+      'চ্যাটের নির্মাতা ছাড়তে পারেন না — বরং চ্যাটটি মুছুন।';
+
+  @override
+  String get deleteChat => 'চ্যাট মুছুন';
+
+  @override
+  String get deleteChatConfirm =>
+      'সবার জন্য এই চ্যাট মুছবেন? এটি ফেরানো যাবে না।';
+
+  @override
+  String get saveChanges => 'সংরক্ষণ';
+
+  @override
+  String get cancel => 'বাতিল';
+
+  @override
+  String get chatSettingsSaved => 'চ্যাট আপডেট হয়েছে';
+
+  @override
+  String get viewMembers => 'সদস্যরা';
+
+  @override
+  String get messageEdited => 'সম্পাদিত';
+
+  @override
+  String get messageReply => 'উত্তর';
+
+  @override
+  String get messageForward => 'ফরোয়ার্ড';
+
+  @override
+  String get messageEdit => 'সম্পাদনা';
+
+  @override
+  String get messageDelete => 'মুছুন';
+
+  @override
+  String get messageSelect => 'নির্বাচন';
+
+  @override
+  String get backToLatest => 'সাম্প্রতিক বার্তায় ফিরুন';
 }

@@ -16,6 +16,7 @@ import 'package:chatix/features/auth/presentation/screens/reset_password_request
 import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/call_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_info_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
@@ -87,7 +88,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                           message: 'Unknown chat',
                         );
                       }
-                      return ChatDetailScreen(chatId: chatId);
+                      return ChatDetailScreen(
+                        chatId: chatId,
+                        focusMessageId: ChatDetailRoute.messageIdFrom(state),
+                      );
                     },
                     routes: [
                       GoRoute(
@@ -102,6 +106,20 @@ final routerProvider = Provider<GoRouter>((ref) {
                             );
                           }
                           return ChatMembersScreen(chatId: chatId);
+                        },
+                      ),
+                      GoRoute(
+                        path: ChatInfoRoute.path,
+                        name: RouteNames.chatInfo,
+                        parentNavigatorKey: _rootNavigatorKey,
+                        builder: (context, state) {
+                          final chatId = ChatDetailRoute.idFrom(state);
+                          if (chatId == null) {
+                            return const _InvalidRouteScreen(
+                              message: 'Unknown chat',
+                            );
+                          }
+                          return ChatInfoScreen(chatId: chatId);
                         },
                       ),
                       GoRoute(

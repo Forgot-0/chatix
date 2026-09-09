@@ -4,7 +4,7 @@ import 'package:chatix/features/notification/domain/entities/notification_entity
 String? resolveNotificationRoute(NotificationEntity notification) {
   final chatId = notification.chatId;
   if (chatId != null) {
-    return ChatDetailRoute(chatId).location;
+    return ChatDetailRoute(chatId, messageId: notification.messageId).location;
   }
 
   return null;

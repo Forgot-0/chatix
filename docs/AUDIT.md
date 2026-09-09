@@ -3,9 +3,9 @@
 > Дата: 2026-09-09. Ветка `main`, коммит `990cfad`.
 > Базовая линия перед аудитом: `flutter analyze` — **0 issues**, `flutter test` — **314 passed**.
 >
-> **Обновление:** ярус 1 бэклога (T-1…T-7) реализован. Состояние после него —
-> `flutter analyze` 0 issues, `flutter test` **334 passed**. Затронутые строки таблиц
-> помечены ✔ и описывают состояние ДО правки; актуальный статус — в разделе 5.
+> **Обновление:** ярусы 1 и 2 бэклога (T-1…T-14) реализованы. Состояние после них —
+> `flutter analyze` 0 issues, `flutter test` **369 passed**. Таблицы разделов 1–4
+> описывают состояние ДО правок; актуальный статус — в разделе 5.
 
 Обозначения покрытия UI:
 - ✅ — есть пользовательский путь, фича доведена до продукта;
@@ -189,7 +189,7 @@
 
 | # | Серьёзность | Где | Что не так |
 |---|---|---|---|
-| **V-1** | 🔴 блокер | [profile_remote_data_source.dart:96](lib/features/profile/data/datasources/profile_remote_data_source.dart:96) | `GET /profiles/my/` — **такого эндпоинта в api-docs нет** (§4 знает только `/profiles/` и `/profiles/{profile_id}/`). FastAPI сматчит это как `profile_id = "my"` → `422 VALIDATION`. Путь боевой: [profile_detail_provider.dart:13](lib/features/profile/presentation/providers/profile_detail_provider.dart:13) вызывает `getMyProfile()` всегда, когда `profileId == currentUserId`, то есть **свой профиль не открывается вообще**. Починка — использовать `fetchProfile(currentUserId)`, `profile.id === user.id` (§4.1) |
+| **V-1** | 🔴 блокер | [profile_remote_data_source.dart:96](lib/features/profile/data/datasources/profile_remote_data_source.dart:96) | `GET /profiles/my/` — **такого эндпоинта в api-docs нет** (§4 знает только `/profiles/` и `/profiles/{profile_id}/`). FastAPI сматчит это как `profile_id = "my"` → `422 VALIDATION`. Путь боевой: [profile_detail_provider.dart](lib/features/profile/presentation/providers/profile_detail_provider.dart) вызывает `getMyProfile()` всегда, когда `profileId == currentUserId`, то есть **свой профиль не открывается вообще**. Починка — использовать `fetchProfile(currentUserId)`, `profile.id === user.id` (§4.1) |
 | **V-3** | 🟠 | [login_screen.dart:163](lib/features/auth/presentation/screens/login_screen.dart:163) → [oauth_callback_screen.dart](lib/features/auth/presentation/screens/oauth_callback_screen.dart) | OAuth-кнопки в продакшн-UI ведут на экран с текстом «not fully wired up yet». Обмен `code`+`state` (§3.8.3) не реализован. Нарушает DoD «никаких TODO-заглушек в пользовательских путях» |
 | **V-4** | 🟠 | [chat_members_screen.dart:179](lib/features/chat/presentation/screens/chat_members_screen.dart:179) | `NetworkImage(avatarUrl)`, где `avatarUrl` — это `ChatProfileDTO.avatar_url`, а он по §5.3 «presigned URL, генерируется на лету». `ImageCache` во Flutter ключуется строкой URL: подпись меняется на каждом рефетче → промах кэша каждый раз, и картинка ломается, когда подпись истекает у живого виджета. Кэшировать надо по `avatar_s3_key` (поле есть в DTO и в `ChatProfileEntity`) |
 | **V-5** | 🟠 | [chat_realtime_merge.dart:55](lib/features/chat/presentation/providers/chat_realtime_merge.dart:55) | `applyNewMessageToRow` двигает `lastActivityAt`, `seqCounter` и `unreadCount`, но **не выставляет `lastMessage`** — притом что декодированный `MessageEntity` уже на руках ([chat_list_provider.dart:187](lib/features/chat/presentation/providers/chat_list_provider.dart:187)). Превью в списке чатов остаётся старым до полного рефетча |
@@ -254,17 +254,38 @@
 | T-6 | **G-9/G-10**: точки входа в `/settings` и `/profiles` (иконка в шапке профиля) | XS | Два готовых экрана перестают быть мёртвыми |
 | T-7 | **V-3**: убрать OAuth-кнопки с логина до готовности callback (или спрятать за feature-flag — `feature_flag_service` уже есть) | XS | Уходит тупик из главного пользовательского пути |
 
-### Ярус 2 — дешёвая большая польза
+### Ярус 2 — дешёвая большая польза ✅ СДЕЛАНО
 
-| # | Задача | Стоимость | Польза |
+| # | Задача | Статус | Что получилось |
 |---|---|---|---|
-| T-8 | **Слабое место №2**: `peerOf(myUserId)` в `ChatEntity` (из `members` / `last_message.profile`), использовать в тайле списка, в шапке чата и в диалоге форварда; аватар собеседника | S | Личные чаты перестают быть безликими — самый заметный сдвиг качества на единицу работы |
-| T-9 | **Слабое место №1, часть 1**: превью изображений в пузыре — `cached_network_image` c `cacheKey: attachment.s3Key`, `AspectRatio` из `width/height`, полноэкранный просмотр вместо диалога с URL | M | Мессенджер начинает выглядеть мессенджером. Сразу закрывает V-10 и задаёт правильный ключ кэша по §5.5 |
-| T-10 | **G-2/G-3/G-4**: экран «Информация о чате»: имя/описание, участники, `slow_mode`, `admin_only`, `is_public`, `reactions_mode`/`allowed_reactions`, «Выйти», «Удалить». Новый типизированный Route в `app_routes.dart` | M | Три неиспользуемых usecase + `canLeaveChat`/`hasAnyChatManagementAction` становятся фичами. Единственный способ управлять чатом после создания |
-| T-11 | **G-6**: панель реакций поверх сообщения (§2.1) на долгое нажатие; `replaceReactions` уже готов, `reactionPolicy` фильтрует по `mode=some` | S | Сейчас первую реакцию поставить физически невозможно — только переключить существующую |
-| T-12 | **G-5**: тап по цитате-ответу → `getMessagesContext` + скролл к `seq`; тот же путь для пуша с `message_id` | M | Один из ключевых паттернов §2.1; полностью готовый эндпоинт наконец используется |
-| T-13 | **V-4**: аватары чат-профилей кэшировать по `avatar_s3_key`, а не по presigned URL | S | Кэш аватаров начинает работать; картинки не отваливаются по истечении подписи |
-| T-14 | **V-7**: дочитывать `ws.history` пока `has_more == true` (по `next_last_seq`) + тест | S | Пропущенные сообщения после долгого офлайна не теряются |
+| T-8 | Идентичность собеседника | ✅ | `ChatEntity.peerProfile(myUserId)` достаёт визави из данных, которые уже приходят: `members` (ChatDetailDTO) или `last_message.profile` (ChatDTO в списке) — ни одного лишнего запроса. Единая точка именования — [chat_title.dart](lib/features/chat/presentation/utils/chat_title.dart): `name` → имя собеседника → локализованный тип чата. Применено в тайле списка, в новой шапке чата (аватар + имя + `@username`/счётчик участников, тап → инфо) и в диалоге форварда |
+| T-9 | Превью изображений | ✅ | [attachment_preview.dart](lib/features/chat/presentation/widgets/attachment_preview.dart): одиночная картинка занимает пузырь в своём соотношении сторон (`width`/`height` из DTO — layout не прыгает при загрузке), несколько складываются в сетку 2×N. Тап → полноэкранный просмотр с зумом вместо диалога с текстом ссылки. Кэш по `s3_key`; протухшая подпись ловится в `errorWidget` и один раз перевыпускается через [attachment_url_provider.dart](lib/features/chat/presentation/providers/attachment_url_provider.dart) (§5.5). Не-картинки открываются во внешнем приложении по свежей ссылке |
+| T-10 | Экран «Информация о чате» | ✅ | [chat_info_screen.dart](lib/features/chat/presentation/screens/chat_info_screen.dart) + маршрут `ChatInfoRoute`. Имя, описание, `is_public`, `admin_only`, `slow_mode_seconds`, `reactions_mode`; переход к участникам; «Выйти» и «Удалить». PATCH шлёт **только изменённые** поля — это настоящий partial update (§5.2). Права разводят редактируемый и read-only вид. Создателю вместо неработающей кнопки «Выйти» показывается причина: `Chat.leave()` сверяется с `created_by`, и он заперт в чате навсегда (§5.2) |
+| T-11 | Панель реакций | ✅ | [reaction_picker.dart](lib/features/chat/presentation/widgets/reaction_picker.dart) поверх листа действий. До этого **первую** реакцию поставить было физически нельзя — чипсы под пузырём умеют только переключать уже существующие. Строка фильтруется политикой чата, так что при `mode = "some"` тап не может получить `REACTION_NOT_ALLOWED`; на лимите в 3 эмодзи свои остаются активными (снять можно всегда), чужие гаснут |
+| T-12 | Переход к сообщению | ✅ | `ChatDetailController.revealMessage` — если сообщение в окне, просто подсветка; иначе `GET /messages/context/`. `seq` берётся из вложенного `reply_to` (бесплатно), иначе одним `GET /messages/{id}/` — тот самый usecase, который раньше не использовался. Слайс **заменяет** окно, а не подмешивается: склейка оставила бы невидимую дыру и сломала бы обратную пагинацию. Плюс путь из пуша: `message_id` теперь доезжает через `ChatDetailRoute(chatId, messageId:)` до экрана |
+| T-13 | Кэш аватаров по `s3_key` | ✅ | [chat_avatar.dart](lib/features/chat/presentation/widgets/chat_avatar.dart) — один виджет на аватар участника: `CachedNetworkImageProvider(url, cacheKey: avatar_s3_key)`, инициал-фолбэк, точка присутствия. `NetworkImage(avatarUrl)` в списке участников убран |
+| T-14 | Дочитывание `ws.history` | ✅ | `_continueHistory` переподписывается с `next_last_seq`, пока `has_more`. Три предохранителя: курсор обязан расти, `next_last_seq == null` игнорируется, и не больше 20 страниц — иначе сервер, отвечающий одним и тем же курсором, запер бы клиента в цикле subscribe/history |
+
+**Тесты, добавленные ярусом:** +35 (334 → 369). Пять поведенческих правок проверены мутацией
+(T-8, T-11, T-12, T-13, T-14): на откате падают, на исправленном коде проходят.
+
+- [chat_peer_test.dart](test/features/chat/domain/entities/chat_peer_test.dart) — разрешение собеседника из обоих источников + отказ выдавать моё же сообщение за визави
+- [chat_detail_reveal_test.dart](test/features/chat/presentation/providers/chat_detail_reveal_test.dart) — переход к сообщению во всех ветках, включая замену окна
+- [chat_detail_history_test.dart](test/features/chat/presentation/providers/chat_detail_history_test.dart) — прогон `ws.history` через настоящий контроллер и фейковый сокет
+- [chat_avatar_test.dart](test/features/chat/presentation/widgets/chat_avatar_test.dart) — ключ кэша не зависит от подписи URL
+- [reaction_picker_test.dart](test/features/chat/presentation/widgets/reaction_picker_test.dart) — белый список и лимит на пользователя
+
+**Найдено и починено по дороге (оба нашлись при написании тестов):**
+
+- `ChatDetailController._teardown` вызывал `ref.read` внутри `onDispose`. Riverpod это запрещает и роняет assertion **при каждом закрытии экрана чата в debug-сборке**; в release ассерты вырезаны, поэтому баг не был виден. Сокет теперь захватывается в `build` и отвязывается без `ref`.
+- Тестовый фейк сокета висел в `tearDown`: `close()` у single-subscription `StreamController`, которого никто не слушал, не завершается никогда. Переведён на broadcast.
+
+**Локализация:** 45 новых ключей заведено во всех 6 локалях; ни одной новой строки мимо ARB.
+В `lib/features/chat` остаётся ~72 старых захардкоженных строки (экраны создания чата, участников,
+поиска) — это T-15, отдельная механическая задача.
+
+**Тема:** новые виджеты собраны на токенах `ColorScheme`; светлая и тёмная отрендерены и сверены.
+Единственные жёсткие цвета — чёрный фон полноэкранного просмотра медиа, как и в `call_screen.dart`.
 
 ### Ярус 3 — дорого, но обязательно
 
