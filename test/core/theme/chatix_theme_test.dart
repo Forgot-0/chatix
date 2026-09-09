@@ -1,158 +1,200 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
-import 'package:chatix/core/theme/chatix_palette.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/theme/theme_config.dart';
 
 void main() {
-  group('authorColor', () {
-    test('is stable for the same user id', () {
-      expect(
-        ChatixPalette.authorColor(42, Brightness.light),
-        ChatixPalette.authorColor(42, Brightness.light),
-      );
+  final light = ChatixTheme.light();
+  final dark = ChatixTheme.dark();
+
+  group('author accents', () {
+    test('are stable for the same user id', () {
+      expect(light.authorColor(42), light.authorColor(42));
     });
 
-    test('differs between themes so it stays readable on either ground', () {
-      expect(
-        ChatixPalette.authorColor(42, Brightness.light),
-        isNot(ChatixPalette.authorColor(42, Brightness.dark)),
-      );
+    test('differ between themes so they stay readable on either ground', () {
+      expect(light.authorColor(42), isNot(dark.authorColor(42)));
     });
 
-    test('spreads ids across the whole palette', () {
+    test('spread ids across the whole palette', () {
       final used = {
-        for (var id = 0; id < ChatixPalette.authorAccents.length; id++)
-          ChatixPalette.authorColor(id, Brightness.light),
+        for (var id = 0; id < light.authorPalette.length; id++)
+          light.authorColor(id),
       };
-      expect(used, hasLength(ChatixPalette.authorAccents.length));
+      expect(used, hasLength(light.authorPalette.length));
     });
 
-    test('wraps instead of overflowing on a large id', () {
-      final wrapped = ChatixPalette.authorColor(
-        ChatixPalette.authorAccents.length + 3,
-        Brightness.light,
-      );
-      expect(wrapped, ChatixPalette.authorColor(3, Brightness.light));
-    });
-
-    test('handles a negative id rather than throwing', () {
+    test('wrap instead of overflowing on a large id', () {
       expect(
-        () => ChatixPalette.authorColor(-5, Brightness.light),
-        returnsNormally,
+        light.authorColor(light.authorPalette.length + 3),
+        light.authorColor(3),
       );
     });
 
-    test('falls back to a neutral for an unknown author', () {
-      expect(
-        ChatixPalette.authorColor(null, Brightness.light),
-        ChatixPalette.graphite400,
-      );
+    test('handle a negative id rather than throwing', () {
+      expect(() => light.authorColor(-5), returnsNormally);
+    });
+
+    test('fall back to a neutral for an unknown author', () {
+      expect(light.authorColor(null), AppNeutrals.outline(Brightness.light));
+      expect(dark.authorColor(null), AppNeutrals.outline(Brightness.dark));
+    });
+
+    test('the palette is the documented eight', () {
+      expect(light.authorPalette, hasLength(AppAuthorPalette.size));
     });
   });
 
-  group('bubble geometry', () {
-    final theme = ChatixTheme.light(ChatDensity.cosy);
-
-    test('a lone bubble anchors on the author side', () {
-      final mine = theme.bubbleBorderRadius(isMine: true);
-      expect(mine.bottomRight.x, theme.bubbleAnchorRadius);
-      expect(mine.bottomLeft.x, theme.bubbleRadius);
-
-      final theirs = theme.bubbleBorderRadius(isMine: false);
-      expect(theirs.bottomLeft.x, theme.bubbleAnchorRadius);
-      expect(theirs.bottomRight.x, theme.bubbleRadius);
-    });
-
-    test('only the last bubble of a run keeps the anchor', () {
-      final middle = theme.stackedBorderRadius(
-        isMine: false,
-        isFirstInGroup: false,
-        isLastInGroup: false,
-      );
-      final last = theme.stackedBorderRadius(
-        isMine: false,
-        isFirstInGroup: false,
-        isLastInGroup: true,
+  group('derivation from the colour scheme', () {
+    test('follows the accent rather than hard-coding violet', () {
+      final crimson = ChatixTheme.fromScheme(
+        scheme: ColorScheme.fromSeed(seedColor: AppPalette.coral),
+        density: AppDensity.cozy,
       );
 
-      expect(last.bottomLeft.x, theme.bubbleAnchorRadius);
-      expect(middle.bottomLeft.x, theme.bubbleAnchorRadius);
-      // The outer edge stays soft the whole way down the run.
-      expect(middle.bottomRight.x, theme.bubbleRadius);
-      expect(last.bottomRight.x, theme.bubbleRadius);
+      expect(crimson.bubbleOutgoingGradient.colors.first, isNot(
+        light.bubbleOutgoingGradient.colors.first,
+      ));
+      expect(crimson.wallpaperSeed, isNot(light.wallpaperSeed));
+      expect(crimson.unreadDivider, isNot(light.unreadDivider));
     });
 
-    test('the first bubble of a run keeps both top corners soft', () {
-      final first = theme.stackedBorderRadius(
-        isMine: false,
-        isFirstInGroup: true,
-        isLastInGroup: false,
-      );
-      expect(first.topLeft.x, theme.bubbleRadius);
-      expect(first.topRight.x, theme.bubbleRadius);
-    });
-  });
-
-  group('density', () {
-    test('each step gives messages more air than the last', () {
-      const order = [
-        ChatDensity.compact,
-        ChatDensity.cosy,
-        ChatDensity.spacious,
-      ];
-      for (var i = 1; i < order.length; i++) {
+    test('the outgoing gradient runs light to dark', () {
+      for (final theme in [light, dark]) {
+        final colors = theme.bubbleOutgoingGradient.colors;
+        expect(colors, hasLength(2));
         expect(
-          order[i].bubblePaddingY,
-          greaterThan(order[i - 1].bubblePaddingY),
-        );
-        expect(order[i].groupGap, greaterThan(order[i - 1].groupGap));
-      }
-    });
-
-    test('a run is always tighter than a gap between authors', () {
-      for (final density in ChatDensity.values) {
-        expect(
-          density.stackGap,
-          lessThan(density.groupGap),
-          reason: density.name,
+          HSLColor.fromColor(colors.last).lightness,
+          lessThan(HSLColor.fromColor(colors.first).lightness),
         );
       }
     });
 
-    test('an unknown stored value falls back to the default', () {
-      expect(ChatDensity.fromName('nonsense'), ChatDensity.cosy);
-      expect(ChatDensity.fromName(null), ChatDensity.cosy);
-      expect(ChatDensity.fromName('compact'), ChatDensity.compact);
-    });
-  });
+    test('bubble text contrasts with the bubble it sits on', () {
+      expect(
+        ThemeData.estimateBrightnessForColor(
+          light.bubbleOutgoingGradient.colors.first,
+        ),
+        isNot(ThemeData.estimateBrightnessForColor(
+          light.bubbleOutgoingForeground,
+        )),
+      );
 
-  group('AppTheme', () {
-    test('carries the ChatiX extension in both brightnesses', () {
-      for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
-        expect(theme.extension<ChatixTheme>(), isNotNull);
+      for (final theme in [light, dark]) {
+        expect(
+          ThemeData.estimateBrightnessForColor(theme.bubbleIncoming),
+          isNot(
+            ThemeData.estimateBrightnessForColor(
+              theme.bubbleIncomingForeground,
+            ),
+          ),
+          reason: theme.brightness.name,
+        );
       }
     });
 
-    test('is violet, not the Material default blue', () {
-      expect(AppTheme.lightTheme.colorScheme.primary, ChatixPalette.violet);
-      expect(AppTheme.lightTheme.colorScheme.secondary, ChatixPalette.mint);
-      expect(AppTheme.lightTheme.colorScheme.error, ChatixPalette.coral);
+    test('an incoming bubble is separated by a hairline in light and by lift in dark', () {
+      expect(light.bubbleIncomingBorder.a, greaterThan(0));
+      expect(dark.bubbleIncomingBorder, Colors.transparent);
+      expect(
+        HSLColor.fromColor(dark.bubbleIncoming).lightness,
+        greaterThan(HSLColor.fromColor(dark.chatBackground).lightness),
+      );
     });
 
-    test('density reaches the theme extension', () {
-      final spacious = AppTheme.light(ChatDensity.spacious);
-      expect(spacious.extension<ChatixTheme>()!.density, ChatDensity.spacious);
+    test('a selected reaction chip reads differently from an idle one', () {
+      for (final theme in [light, dark]) {
+        expect(
+          theme.reactionChipSelected,
+          isNot(theme.reactionChip),
+          reason: theme.brightness.name,
+        );
+      }
     });
 
-    test('uses the bundled grotesque', () {
-      expect(AppTheme.lightTheme.textTheme.bodyMedium?.fontFamily, 'Manrope');
+    test('the composer separates from the conversation ground', () {
+      for (final theme in [light, dark]) {
+        expect(
+          theme.composerSurface,
+          isNot(theme.chatBackground),
+          reason: theme.brightness.name,
+        );
+      }
     });
 
-    test('numeric styles ask for tabular figures so digits do not jump', () {
-      final label = AppTheme.lightTheme.textTheme.labelSmall;
-      expect(label?.fontFeatures, contains(const FontFeature.tabularFigures()));
+    test('outgoing text meets AA on every offered accent', () {
+      for (final seed in AppPalette.accentSeeds) {
+        for (final brightness in Brightness.values) {
+          final theme = ChatixTheme.fromScheme(
+            scheme: ColorScheme.fromSeed(
+              seedColor: seed,
+              brightness: brightness,
+            ),
+            density: AppDensity.cozy,
+            accent: seed,
+          );
+
+          expect(
+            AppContrast.ratio(
+              theme.bubbleOutgoingGradient.colors.first,
+              theme.bubbleOutgoingForeground,
+            ),
+            greaterThan(4.5),
+            reason: '$seed on ${brightness.name}',
+          );
+        }
+      }
+    });
+
+    test('density reaches the extension', () {
+      expect(ChatixTheme.light(AppDensity.comfortable).density,
+          AppDensity.comfortable);
+    });
+  });
+
+  group('theme extension plumbing', () {
+    test('lerp lands on each end and never throws in between', () {
+      final start = light.lerp(dark, 0);
+      expect(start.bubbleIncoming, light.bubbleIncoming);
+      expect(start.brightness, light.brightness);
+
+      final end = light.lerp(dark, 1);
+      expect(end.bubbleIncoming, dark.bubbleIncoming);
+      expect(end.brightness, dark.brightness);
+      expect(end.authorPalette, dark.authorPalette);
+
+      final middle = light.lerp(dark, 0.5);
+      expect(middle.authorPalette, hasLength(AppAuthorPalette.size));
+      expect(middle.bubbleRadius, light.bubbleRadius);
+      expect(middle.chatBackground, isNot(light.chatBackground));
+    });
+
+    test('lerp against another extension keeps this one', () {
+      expect(light.lerp(null, 0.5), light);
+    });
+
+    test('copyWith replaces only what it is given', () {
+      final swapped = light.copyWith(onlineDot: AppPalette.amber);
+      expect(swapped.onlineDot, AppPalette.amber);
+      expect(swapped.bubbleIncoming, light.bubbleIncoming);
+    });
+
+    testWidgets('of() falls back outside a ChatiX theme', (tester) async {
+      late ChatixTheme resolved;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              resolved = ChatixTheme.of(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(resolved.authorPalette, hasLength(AppAuthorPalette.size));
     });
   });
 }

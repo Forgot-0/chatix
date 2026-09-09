@@ -727,14 +727,14 @@ abstract class AppLocalizations {
   /// Density option — the default
   ///
   /// In en, this message translates to:
-  /// **'Cosy'**
-  String get densityCosy;
+  /// **'Cozy'**
+  String get densityCozy;
 
   /// Density option
   ///
   /// In en, this message translates to:
-  /// **'Spacious'**
-  String get densitySpacious;
+  /// **'Comfortable'**
+  String get densityComfortable;
 
   /// Hint while holding the mic
   ///
@@ -1635,6 +1635,312 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last active {date}'**
   String deviceLastActive(String date);
+
+  /// Title of the design-system showcase screen
+  ///
+  /// In en, this message translates to:
+  /// **'Design system'**
+  String get designSystem;
+
+  /// Label for the accent colour picker in appearance settings
+  ///
+  /// In en, this message translates to:
+  /// **'Accent color'**
+  String get accentColor;
+
+  /// Label for the chat wallpaper picker
+  ///
+  /// In en, this message translates to:
+  /// **'Chat wallpaper'**
+  String get chatWallpaper;
+
+  /// Wallpaper option: colour blooms with a lattice
+  ///
+  /// In en, this message translates to:
+  /// **'Aurora'**
+  String get wallpaperAurora;
+
+  /// Wallpaper option: colour blooms only
+  ///
+  /// In en, this message translates to:
+  /// **'Mesh'**
+  String get wallpaperMesh;
+
+  /// Wallpaper option: flat surface
+  ///
+  /// In en, this message translates to:
+  /// **'Plain'**
+  String get wallpaperPlain;
+
+  /// Label for the in-app text scale control
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get textSize;
+
+  /// Text scale option
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get textSizeSmall;
+
+  /// Text scale option
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get textSizeDefault;
+
+  /// Text scale option
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get textSizeLarge;
+
+  /// Text scale option
+  ///
+  /// In en, this message translates to:
+  /// **'Extra large'**
+  String get textSizeExtraLarge;
+
+  /// Button that restores the default appearance settings
+  ///
+  /// In en, this message translates to:
+  /// **'Reset appearance'**
+  String get resetAppearance;
+
+  /// Showcase section: brand accent colours
+  ///
+  /// In en, this message translates to:
+  /// **'Accents'**
+  String get showcaseAccents;
+
+  /// Showcase section: the neutral ramps
+  ///
+  /// In en, this message translates to:
+  /// **'Neutrals'**
+  String get showcaseNeutrals;
+
+  /// Label for the light neutral ramp
+  ///
+  /// In en, this message translates to:
+  /// **'Light ramp'**
+  String get showcaseNeutralsLight;
+
+  /// Label for the dark neutral ramp
+  ///
+  /// In en, this message translates to:
+  /// **'Dark ramp'**
+  String get showcaseNeutralsDark;
+
+  /// Showcase section: corner radius scale
+  ///
+  /// In en, this message translates to:
+  /// **'Radii'**
+  String get showcaseRadii;
+
+  /// Showcase section: spacing scale
+  ///
+  /// In en, this message translates to:
+  /// **'Spacing'**
+  String get showcaseSpacing;
+
+  /// Showcase section: elevation levels
+  ///
+  /// In en, this message translates to:
+  /// **'Elevation'**
+  String get showcaseElevation;
+
+  /// Showcase section: animation durations
+  ///
+  /// In en, this message translates to:
+  /// **'Motion'**
+  String get showcaseMotion;
+
+  /// Name of the fast animation duration
+  ///
+  /// In en, this message translates to:
+  /// **'Fast'**
+  String get showcaseMotionFast;
+
+  /// Name of the default animation duration
+  ///
+  /// In en, this message translates to:
+  /// **'Base'**
+  String get showcaseMotionBase;
+
+  /// Name of the slow animation duration
+  ///
+  /// In en, this message translates to:
+  /// **'Slow'**
+  String get showcaseMotionSlow;
+
+  /// Button that replays the motion demo
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get showcaseMotionReplay;
+
+  /// Showcase section: text styles
+  ///
+  /// In en, this message translates to:
+  /// **'Typography'**
+  String get showcaseTypography;
+
+  /// Label above the tabular digit sample
+  ///
+  /// In en, this message translates to:
+  /// **'Tabular figures'**
+  String get showcaseTabularFigures;
+
+  /// Showcase section: chat bubbles
+  ///
+  /// In en, this message translates to:
+  /// **'Message bubbles'**
+  String get showcaseBubbles;
+
+  /// Showcase section: reaction chips
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions'**
+  String get showcaseReactions;
+
+  /// Showcase section: per-author colours
+  ///
+  /// In en, this message translates to:
+  /// **'Author accents'**
+  String get showcaseAuthors;
+
+  /// Showcase section: common components
+  ///
+  /// In en, this message translates to:
+  /// **'Components'**
+  String get showcaseComponents;
+
+  /// Sample text inside an incoming bubble
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming: warm surface, one hairline.'**
+  String get showcaseIncomingSample;
+
+  /// Sample text inside a stacked incoming bubble
+  ///
+  /// In en, this message translates to:
+  /// **'Second message in the same run.'**
+  String get showcaseStackedSample;
+
+  /// Sample text inside an outgoing bubble
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing: accent gradient.'**
+  String get showcaseOutgoingSample;
+
+  /// Semantic label for the clock tick on a message that has not reached the server yet
+  ///
+  /// In en, this message translates to:
+  /// **'Sending'**
+  String get messageSending;
+
+  /// Semantic label for the presence dot on an avatar
+  ///
+  /// In en, this message translates to:
+  /// **'Online'**
+  String get onlineNow;
+
+  /// Header subtitle while one person types
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is typing…'**
+  String userTyping(String name);
+
+  /// Header subtitle while several people type
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person is typing…} other{{count} people are typing…}}'**
+  String severalTyping(int count);
+
+  /// Attachment count on a message that is still being sent
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attachment} other{{count} attachments}}'**
+  String attachmentsCount(int count);
+
+  /// Label for the contacts tab
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get contacts;
+
+  /// Subtitle of the profile row in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Your name, avatar and contact details'**
+  String get profileSettingsHint;
+
+  /// Title of the placeholder pane shown next to the chat list before a chat is picked
+  ///
+  /// In en, this message translates to:
+  /// **'No chat selected'**
+  String get noChatSelected;
+
+  /// Body of the placeholder pane shown next to the chat list
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a conversation from the list to start reading.'**
+  String get noChatSelectedHint;
+
+  /// Quick action: start a one-to-one chat
+  ///
+  /// In en, this message translates to:
+  /// **'New direct chat'**
+  String get newDirectChat;
+
+  /// Quick action: create a group
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// Quick action: create a channel
+  ///
+  /// In en, this message translates to:
+  /// **'New channel'**
+  String get newChannel;
+
+  /// Accessibility hint for long-pressing the chats tab
+  ///
+  /// In en, this message translates to:
+  /// **'Start something new'**
+  String get quickActionsHint;
+
+  /// Accessible label for the unread badge on the chats tab
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No unread messages} =1{1 unread message} other{{count} unread messages}}'**
+  String unreadMessagesCount(int count);
+
+  /// Accessible label for the badge on the notifications tab
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No new notifications} =1{1 new notification} other{{count} new notifications}}'**
+  String unreadNotificationsCount(int count);
+
+  /// Empty state on the contacts tab when a search matches nobody
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody matches that name'**
+  String get noContactsFound;
+
+  /// Advice under the empty contacts search result
+  ///
+  /// In en, this message translates to:
+  /// **'Try a shorter or differently spelled name.'**
+  String get noContactsFoundHint;
+
+  /// Empty state on the contacts tab before anything is loaded
+  ///
+  /// In en, this message translates to:
+  /// **'No people to show yet'**
+  String get noContactsYet;
 }
 
 class _AppLocalizationsDelegate

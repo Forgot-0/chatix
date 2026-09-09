@@ -314,6 +314,108 @@ void main() {
     });
   });
 
+  // The deep-link path: `/chats/{id}?message={seq}` already names the seq, so
+  // there is nothing to resolve before calling the context endpoint.
+  group('revealSeq', () {
+    test('highlights a loaded seq without touching the network', () async {
+      final container = await boot();
+
+      final ok = await container
+          .read(chatDetailProvider(chatId).notifier)
+          .revealSeq(99);
+
+      expect(ok, isTrue);
+      final state = container.read(chatDetailProvider(chatId)).value!;
+      expect(state.highlightMessageId, 'm99');
+      expect(state.isViewingHistory, isFalse);
+      verifyNever(
+        () => getContext.execute(any(), any(), limit: any(named: 'limit')),
+      );
+      verifyNever(() => getMessage.execute(any(), any()));
+    });
+
+    test('loads the context slice and never looks the id up first', () async {
+      final container = await boot();
+
+      final slice = [
+        message('m12', 12),
+        message('m11', 11),
+        message('m10', 10),
+      ];
+      when(
+        () => getContext.execute(chatId, 11, limit: any(named: 'limit')),
+      ).thenAnswer(
+        (_) async =>
+            Right(MessagesPage(messages: slice, nextCursor: 10, hasNext: true)),
+      );
+
+      final ok = await container
+          .read(chatDetailProvider(chatId).notifier)
+          .revealSeq(11);
+
+      expect(ok, isTrue);
+      final state = container.read(chatDetailProvider(chatId)).value!;
+      expect(state.messages.map((m) => m.id), ['m12', 'm11', 'm10']);
+      expect(state.nextCursor, 10);
+      expect(state.highlightMessageId, 'm11');
+      expect(state.isViewingHistory, isTrue);
+      verifyNever(() => getMessage.execute(any(), any()));
+    });
+
+    test('reports failure and keeps the window when the call fails', () async {
+      final container = await boot();
+
+      when(
+        () => getContext.execute(chatId, 11, limit: any(named: 'limit')),
+      ).thenAnswer(
+        (_) async => const Left(
+          ApiFailure(
+            code: 'NOT_FOUND_MESSAGE',
+            message: 'gone',
+            detail: <String, dynamic>{},
+            status: 404,
+          ),
+        ),
+      );
+
+      final ok = await container
+          .read(chatDetailProvider(chatId).notifier)
+          .revealSeq(11);
+
+      expect(ok, isFalse);
+      final state = container.read(chatDetailProvider(chatId)).value!;
+      expect(state.messages.map((m) => m.id), ['m100', 'm99']);
+      expect(state.isViewingHistory, isFalse);
+      expect(state.highlightMessageId, isNull);
+    });
+
+    test('reports failure when the slice misses the seq it asked for', () async {
+      final container = await boot();
+
+      when(
+        () => getContext.execute(chatId, 11, limit: any(named: 'limit')),
+      ).thenAnswer(
+        (_) async => Right(
+          MessagesPage(
+            messages: [message('m12', 12)],
+            nextCursor: null,
+            hasNext: false,
+          ),
+        ),
+      );
+
+      final ok = await container
+          .read(chatDetailProvider(chatId).notifier)
+          .revealSeq(11);
+
+      expect(ok, isFalse);
+      expect(
+        container.read(chatDetailProvider(chatId)).value!.isViewingHistory,
+        isFalse,
+      );
+    });
+  });
+
   group('clearHighlight', () {
     test('drops the flash once the view has consumed it', () async {
       final container = await boot();

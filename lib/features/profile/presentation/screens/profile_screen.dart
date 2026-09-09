@@ -51,22 +51,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       appBar: AppBar(
         title: Text(l10n.profile),
         actions: [
-          if (canEdit) ...[
+          // "People" and "Settings" used to hang off this app bar; both are
+          // destinations in the shell's navigation now.
+          if (canEdit)
             IconButton(
+              tooltip: l10n.editProfile,
               icon: const Icon(Icons.edit),
               onPressed: () => context.push(ProfileEditRoute.location),
             ),
-            IconButton(
-              tooltip: l10n.browsePeople,
-              icon: const Icon(Icons.people_outline),
-              onPressed: () => context.push(ProfilesRoute.location),
-            ),
-            IconButton(
-              tooltip: l10n.settings,
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => context.push(SettingsRoute.location),
-            ),
-          ],
         ],
       ),
       body: profileAsync.when(

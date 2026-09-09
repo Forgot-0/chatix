@@ -430,12 +430,12 @@
   "@densityCompact": {
     "description": "Density option"
   },
-  "densityCosy": "Cosy",
-  "@densityCosy": {
+  "densityCozy": "Cozy",
+  "@densityCozy": {
     "description": "Density option — the default"
   },
-  "densitySpacious": "Spacious",
-  "@densitySpacious": {
+  "densityComfortable": "Comfortable",
+  "@densityComfortable": {
     "description": "Density option"
   },
   "voiceSlideToCancel": "Slide left to cancel, up to lock",
@@ -1095,5 +1095,234 @@
         "type": "String"
       }
     }
+  },
+  "designSystem": "Design system",
+  "@designSystem": {
+    "description": "Title of the design-system showcase screen"
+  },
+  "accentColor": "Accent color",
+  "@accentColor": {
+    "description": "Label for the accent colour picker in appearance settings"
+  },
+  "chatWallpaper": "Chat wallpaper",
+  "@chatWallpaper": {
+    "description": "Label for the chat wallpaper picker"
+  },
+  "wallpaperAurora": "Aurora",
+  "@wallpaperAurora": {
+    "description": "Wallpaper option: colour blooms with a lattice"
+  },
+  "wallpaperMesh": "Mesh",
+  "@wallpaperMesh": {
+    "description": "Wallpaper option: colour blooms only"
+  },
+  "wallpaperPlain": "Plain",
+  "@wallpaperPlain": {
+    "description": "Wallpaper option: flat surface"
+  },
+  "textSize": "Text size",
+  "@textSize": {
+    "description": "Label for the in-app text scale control"
+  },
+  "textSizeSmall": "Small",
+  "@textSizeSmall": {
+    "description": "Text scale option"
+  },
+  "textSizeDefault": "Default",
+  "@textSizeDefault": {
+    "description": "Text scale option"
+  },
+  "textSizeLarge": "Large",
+  "@textSizeLarge": {
+    "description": "Text scale option"
+  },
+  "textSizeExtraLarge": "Extra large",
+  "@textSizeExtraLarge": {
+    "description": "Text scale option"
+  },
+  "resetAppearance": "Reset appearance",
+  "@resetAppearance": {
+    "description": "Button that restores the default appearance settings"
+  },
+  "showcaseAccents": "Accents",
+  "@showcaseAccents": {
+    "description": "Showcase section: brand accent colours"
+  },
+  "showcaseNeutrals": "Neutrals",
+  "@showcaseNeutrals": {
+    "description": "Showcase section: the neutral ramps"
+  },
+  "showcaseNeutralsLight": "Light ramp",
+  "@showcaseNeutralsLight": {
+    "description": "Label for the light neutral ramp"
+  },
+  "showcaseNeutralsDark": "Dark ramp",
+  "@showcaseNeutralsDark": {
+    "description": "Label for the dark neutral ramp"
+  },
+  "showcaseRadii": "Radii",
+  "@showcaseRadii": {
+    "description": "Showcase section: corner radius scale"
+  },
+  "showcaseSpacing": "Spacing",
+  "@showcaseSpacing": {
+    "description": "Showcase section: spacing scale"
+  },
+  "showcaseElevation": "Elevation",
+  "@showcaseElevation": {
+    "description": "Showcase section: elevation levels"
+  },
+  "showcaseMotion": "Motion",
+  "@showcaseMotion": {
+    "description": "Showcase section: animation durations"
+  },
+  "showcaseMotionFast": "Fast",
+  "@showcaseMotionFast": {
+    "description": "Name of the fast animation duration"
+  },
+  "showcaseMotionBase": "Base",
+  "@showcaseMotionBase": {
+    "description": "Name of the default animation duration"
+  },
+  "showcaseMotionSlow": "Slow",
+  "@showcaseMotionSlow": {
+    "description": "Name of the slow animation duration"
+  },
+  "showcaseMotionReplay": "Replay",
+  "@showcaseMotionReplay": {
+    "description": "Button that replays the motion demo"
+  },
+  "showcaseTypography": "Typography",
+  "@showcaseTypography": {
+    "description": "Showcase section: text styles"
+  },
+  "showcaseTabularFigures": "Tabular figures",
+  "@showcaseTabularFigures": {
+    "description": "Label above the tabular digit sample"
+  },
+  "showcaseBubbles": "Message bubbles",
+  "@showcaseBubbles": {
+    "description": "Showcase section: chat bubbles"
+  },
+  "showcaseReactions": "Reactions",
+  "@showcaseReactions": {
+    "description": "Showcase section: reaction chips"
+  },
+  "showcaseAuthors": "Author accents",
+  "@showcaseAuthors": {
+    "description": "Showcase section: per-author colours"
+  },
+  "showcaseComponents": "Components",
+  "@showcaseComponents": {
+    "description": "Showcase section: common components"
+  },
+  "showcaseIncomingSample": "Incoming: warm surface, one hairline.",
+  "@showcaseIncomingSample": {
+    "description": "Sample text inside an incoming bubble"
+  },
+  "showcaseStackedSample": "Second message in the same run.",
+  "@showcaseStackedSample": {
+    "description": "Sample text inside a stacked incoming bubble"
+  },
+  "showcaseOutgoingSample": "Outgoing: accent gradient.",
+  "@showcaseOutgoingSample": {
+    "description": "Sample text inside an outgoing bubble"
+  },
+  "messageSending": "Sending",
+  "@messageSending": {
+    "description": "Semantic label for the clock tick on a message that has not reached the server yet"
+  },
+  "onlineNow": "Online",
+  "@onlineNow": {
+    "description": "Semantic label for the presence dot on an avatar"
+  },
+  "userTyping": "{name} is typing…",
+  "@userTyping": {
+    "description": "Header subtitle while one person types",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "severalTyping": "{count, plural, =1{1 person is typing…} other{{count} people are typing…}}",
+  "@severalTyping": {
+    "description": "Header subtitle while several people type",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachmentsCount": "{count, plural, =1{1 attachment} other{{count} attachments}}",
+  "@attachmentsCount": {
+    "description": "Attachment count on a message that is still being sent",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contacts": "Contacts",
+  "@contacts": {
+    "description": "Label for the contacts tab"
+  },
+  "profileSettingsHint": "Your name, avatar and contact details",
+  "@profileSettingsHint": {
+    "description": "Subtitle of the profile row in settings"
+  },
+  "noChatSelected": "No chat selected",
+  "@noChatSelected": {
+    "description": "Title of the placeholder pane shown next to the chat list before a chat is picked"
+  },
+  "noChatSelectedHint": "Pick a conversation from the list to start reading.",
+  "@noChatSelectedHint": {
+    "description": "Body of the placeholder pane shown next to the chat list"
+  },
+  "newDirectChat": "New direct chat",
+  "@newDirectChat": {
+    "description": "Quick action: start a one-to-one chat"
+  },
+  "newGroup": "New group",
+  "@newGroup": {
+    "description": "Quick action: create a group"
+  },
+  "newChannel": "New channel",
+  "@newChannel": {
+    "description": "Quick action: create a channel"
+  },
+  "quickActionsHint": "Start something new",
+  "@quickActionsHint": {
+    "description": "Accessibility hint for long-pressing the chats tab"
+  },
+  "unreadMessagesCount": "{count, plural, =0{No unread messages} =1{1 unread message} other{{count} unread messages}}",
+  "@unreadMessagesCount": {
+    "description": "Accessible label for the unread badge on the chats tab",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unreadNotificationsCount": "{count, plural, =0{No new notifications} =1{1 new notification} other{{count} new notifications}}",
+  "@unreadNotificationsCount": {
+    "description": "Accessible label for the badge on the notifications tab",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noContactsFound": "Nobody matches that name",
+  "@noContactsFound": {
+    "description": "Empty state on the contacts tab when a search matches nobody"
+  },
+  "noContactsFoundHint": "Try a shorter or differently spelled name.",
+  "@noContactsFoundHint": {
+    "description": "Advice under the empty contacts search result"
+  },
+  "noContactsYet": "No people to show yet",
+  "@noContactsYet": {
+    "description": "Empty state on the contacts tab before anything is loaded"
   }
 }

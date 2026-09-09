@@ -19,6 +19,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_detail_provider
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/typing_provider.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/utils/message_grouping.dart';
@@ -28,10 +29,16 @@ import 'package:chatix/features/chat/presentation/providers/voice_recorder_provi
 import 'package:chatix/features/chat/presentation/widgets/chat_wallpaper.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_record_button.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/date_chip.dart';
+import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
+import 'package:chatix/features/chat/presentation/widgets/typing_dots.dart';
+import 'package:chatix/features/chat/presentation/widgets/unread_divider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 enum _AttachmentSource { media, document }
@@ -41,11 +48,18 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
     super.key,
     required this.chatId,
     this.focusMessageId,
+    this.focusMessageSeq,
   });
 
   final String chatId;
 
+  /// Message to open on, named by id — what a push notification carries.
   final String? focusMessageId;
+
+  /// Message to open on, named by its per-chat sequence number: the deep-link
+  /// form `/chats/{id}?message={seq}`. Takes precedence over
+  /// [focusMessageId], since it needs no lookup to resolve.
+  final int? focusMessageSeq;
 
   @override
   ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
@@ -120,14 +134,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _textController.addListener(_onTextChanged);
 
     _pendingFocusId = widget.focusMessageId;
+    _pendingFocusSeq = widget.focusMessageSeq;
   }
 
   String? _pendingFocusId;
+  int? _pendingFocusSeq;
 
-  Future<void> _focusOnOpen(String messageId) async {
-    final ok = await ref
-        .read(chatDetailProvider(widget.chatId).notifier)
-        .revealMessage(messageId);
+  Future<void> _focusOnOpen({String? messageId, int? seq}) async {
+    final notifier = ref.read(chatDetailProvider(widget.chatId).notifier);
+
+    final ok = seq != null
+        ? await notifier.revealSeq(seq)
+        : await notifier.revealMessage(messageId!);
     if (ok || !mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -372,11 +390,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       _scheduleScrollTo(target);
     });
 
-    final pendingFocus = _pendingFocusId;
-    if (pendingFocus != null && detail.hasValue) {
+    final pendingFocusId = _pendingFocusId;
+    final pendingFocusSeq = _pendingFocusSeq;
+    if ((pendingFocusId != null || pendingFocusSeq != null) &&
+        detail.hasValue) {
       _pendingFocusId = null;
+      _pendingFocusSeq = null;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _focusOnOpen(pendingFocus),
+        (_) => _focusOnOpen(messageId: pendingFocusId, seq: pendingFocusSeq),
       );
     }
 
@@ -384,8 +405,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       appBar: _selectionMode
           ? _buildSelectionAppBar(detail.value)
           : AppBar(
+              // In two-pane mode the list stays on screen beside the chat, so
+              // there is nothing for a back arrow to reveal.
+              automaticallyImplyLeading:
+                  !AppLayoutScope.of(context).isTwoPane,
               titleSpacing: 0,
               title: _ChatHeader(
+                chatId: widget.chatId,
                 chat: detail.value?.chat,
                 myUserId: myUserId,
                 onTap: detail.value?.chat == null
@@ -753,22 +779,45 @@ class _BackToLatestBar extends StatelessWidget {
   }
 }
 
-class _ChatHeader extends StatelessWidget {
+/// What the header says while people are typing.
+///
+/// One name when we can resolve it from the roster, a count otherwise —
+/// never a bare "someone", which reads as a bug when it is the only line.
+String _typingLabel(
+  AppLocalizations l10n,
+  ChatEntity? chat,
+  Set<int> typing,
+) {
+  if (typing.length == 1) {
+    final name = chat?.membershipOf(typing.first)?.profile?.bestName;
+    if (name != null && name.isNotEmpty) return l10n.userTyping(name);
+  }
+  return l10n.severalTyping(typing.length);
+}
+
+class _ChatHeader extends ConsumerWidget {
   const _ChatHeader({
+    required this.chatId,
     required this.chat,
     required this.myUserId,
     required this.onTap,
   });
 
+  final String chatId;
   final ChatEntity? chat;
   final int? myUserId;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final current = chat;
+
+    // Empty until the gateway starts publishing typing_start/typing_stop —
+    // it declares both and sends neither (api-docs §6.4). Nothing else in
+    // the header fakes activity while that is the case.
+    final typing = ref.watch(typingUsersProvider(chatId));
 
     if (current == null) {
       return Text(l10n.chatFallbackTitle, style: theme.textTheme.titleMedium);
@@ -791,7 +840,7 @@ class _ChatHeader extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (peer != null)
-              ChatAvatar(profile: peer, userId: peer.userId, radius: 18),
+              ChatAvatar.profile(peer),
             if (peer != null) const SizedBox(width: 10),
             Flexible(
               child: Column(
@@ -804,7 +853,11 @@ class _ChatHeader extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium,
                   ),
-                  if (subtitle != null)
+                  if (typing.isNotEmpty)
+                    TypingIndicator(
+                      label: _typingLabel(l10n, current, typing),
+                    )
+                  else if (subtitle != null)
                     Text(
                       subtitle,
                       maxLines: 1,
@@ -927,8 +980,13 @@ class _MessageList extends ConsumerWidget {
               notifier.toggleReaction(message.id, emoji),
           onShowReactionUsers: (emoji) =>
               _showReactionUsers(context, ref, message.id, emoji),
-          showReadTicks: isMine && state.chat?.type == ChatType.direct,
-          readByPeer: state.isReadByPeer(message),
+          deliveryStatus: resolveDeliveryStatus(
+            isMine: isMine,
+            isDirect: state.chat?.type == ChatType.direct,
+            isPending: false,
+            seq: message.seq,
+            peerReadSeq: state.peerReadCursor,
+          ),
           onReply: canSendMessage(state.chat, me)
               ? () => notifier.setReplyTo(message)
               : null,
@@ -1087,25 +1145,12 @@ class _DateSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.92,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          label(context, date),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2 + 2),
+        // Inline between day groups: it sits on the wallpaper, so there is
+        // nothing behind it worth blurring.
+        child: DateChip(label: label(context, date), blurred: false),
       ),
     );
   }
@@ -1116,28 +1161,7 @@ class _UnreadSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final accent = theme.colorScheme.primary;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Expanded(child: Divider(color: accent.withValues(alpha: 0.4))),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              AppLocalizations.of(context).unreadMessages,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Expanded(child: Divider(color: accent.withValues(alpha: 0.4))),
-        ],
-      ),
-    );
+    return UnreadDivider(label: AppLocalizations.of(context).unreadMessages);
   }
 }
 
@@ -1215,16 +1239,14 @@ class _PendingBubble extends ConsumerWidget {
             if (pending.content != null) Text(pending.content!),
             if (pending.uploadTokens.isNotEmpty)
               Text(
-                '${pending.uploadTokens.length} attachment(s)',
+                AppLocalizations.of(
+                  context,
+                ).attachmentsCount(pending.uploadTokens.length),
                 style: theme.textTheme.labelSmall,
               ),
             const SizedBox(height: 4),
             if (!failed)
-              const SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+              const StatusTicks(status: MessageDeliveryStatus.sending)
             else
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1561,13 +1583,14 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final chatix = ChatixTheme.of(context);
 
     if (!enabled) {
       return SafeArea(
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          color: theme.colorScheme.surfaceContainerHighest,
+          color: chatix.composerSurface,
           child: Text(
             disabledReason,
             textAlign: TextAlign.center,
@@ -1581,42 +1604,50 @@ class _Composer extends StatelessWidget {
 
     final l10n = AppLocalizations.of(context);
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Row(
-          children: [
-            if (!isEditing && !isRecording)
-              IconButton(
-                tooltip: l10n.attach,
-                icon: const Icon(Icons.attach_file),
-                onPressed: onAttach,
-              ),
-            Expanded(
-              child: isRecording
-                  ? const VoiceRecordingBar()
-                  : TextField(
-                      controller: controller,
-                      minLines: 1,
-                      maxLines: 5,
-                      maxLength: 4096,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText: l10n.messageHint,
-                        counterText: '',
-                        isDense: true,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: chatix.composerSurface,
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              if (!isEditing && !isRecording)
+                IconButton(
+                  tooltip: l10n.attach,
+                  icon: const Icon(Icons.attach_file),
+                  onPressed: onAttach,
+                ),
+              Expanded(
+                child: isRecording
+                    ? const VoiceRecordingBar()
+                    : TextField(
+                        controller: controller,
+                        minLines: 1,
+                        maxLines: 5,
+                        maxLength: 4096,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          hintText: l10n.messageHint,
+                          counterText: '',
+                          isDense: true,
+                        ),
                       ),
-                    ),
-            ),
-            const SizedBox(width: 8),
-            if (!isEditing && onVoiceRecorded != null && !hasText)
-              VoiceRecordButton(onRecorded: onVoiceRecorded!)
-            else
-              IconButton.filled(
-                icon: Icon(isEditing ? Icons.check : Icons.send),
-                onPressed: onSend == null ? null : () => onSend!(),
               ),
-          ],
+              const SizedBox(width: 8),
+              if (!isEditing && onVoiceRecorded != null && !hasText)
+                VoiceRecordButton(onRecorded: onVoiceRecorded!)
+              else
+                IconButton.filled(
+                  icon: Icon(isEditing ? Icons.check : Icons.send),
+                  onPressed: onSend == null ? null : () => onSend!(),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -1696,10 +1727,9 @@ class _ForwardTargetDialogState extends ConsumerState<_ForwardTargetDialog> {
                         selected: chat.id == _selectedChatId,
                         leading: peer == null
                             ? null
-                            : ChatAvatar(
-                                profile: peer,
-                                userId: peer.userId,
-                                radius: 16,
+                            : ChatAvatar.profile(
+                                peer,
+                                size: ChatAvatarSize.xs,
                               ),
                         title: Text(
                           chatTitleOf(chat, l10n, myUserId: myUserId),

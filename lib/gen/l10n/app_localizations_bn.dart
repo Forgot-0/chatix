@@ -359,10 +359,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get densityCompact => 'সংক্ষিপ্ত';
 
   @override
-  String get densityCosy => 'স্বাভাবিক';
+  String get densityCozy => 'স্বাভাবিক';
 
   @override
-  String get densitySpacious => 'প্রশস্ত';
+  String get densityComfortable => 'প্রশস্ত';
 
   @override
   String get voiceSlideToCancel => 'বাতিলে বামে, লক করতে উপরে সোয়াইপ';
@@ -831,4 +831,194 @@ class AppLocalizationsBn extends AppLocalizations {
   String deviceLastActive(String date) {
     return 'সর্বশেষ সক্রিয়: $date';
   }
+
+  @override
+  String get designSystem => 'ডিজাইন সিস্টেম';
+
+  @override
+  String get accentColor => 'অ্যাকসেন্ট রঙ';
+
+  @override
+  String get chatWallpaper => 'চ্যাটের পটভূমি';
+
+  @override
+  String get wallpaperAurora => 'অরোরা';
+
+  @override
+  String get wallpaperMesh => 'মেশ';
+
+  @override
+  String get wallpaperPlain => 'সাদামাটা';
+
+  @override
+  String get textSize => 'লেখার আকার';
+
+  @override
+  String get textSizeSmall => 'ছোট';
+
+  @override
+  String get textSizeDefault => 'স্বাভাবিক';
+
+  @override
+  String get textSizeLarge => 'বড়';
+
+  @override
+  String get textSizeExtraLarge => 'অতি বড়';
+
+  @override
+  String get resetAppearance => 'চেহারা রিসেট করুন';
+
+  @override
+  String get showcaseAccents => 'অ্যাকসেন্ট';
+
+  @override
+  String get showcaseNeutrals => 'নিউট্রাল';
+
+  @override
+  String get showcaseNeutralsLight => 'হালকা ধাপ';
+
+  @override
+  String get showcaseNeutralsDark => 'গাঢ় ধাপ';
+
+  @override
+  String get showcaseRadii => 'কোণের ব্যাসার্ধ';
+
+  @override
+  String get showcaseSpacing => 'ফাঁক';
+
+  @override
+  String get showcaseElevation => 'উচ্চতা';
+
+  @override
+  String get showcaseMotion => 'গতি';
+
+  @override
+  String get showcaseMotionFast => 'দ্রুত';
+
+  @override
+  String get showcaseMotionBase => 'সাধারণ';
+
+  @override
+  String get showcaseMotionSlow => 'ধীর';
+
+  @override
+  String get showcaseMotionReplay => 'আবার চালান';
+
+  @override
+  String get showcaseTypography => 'টাইপোগ্রাফি';
+
+  @override
+  String get showcaseTabularFigures => 'সারিবদ্ধ সংখ্যা';
+
+  @override
+  String get showcaseBubbles => 'বার্তার বাবল';
+
+  @override
+  String get showcaseReactions => 'প্রতিক্রিয়া';
+
+  @override
+  String get showcaseAuthors => 'লেখকের রঙ';
+
+  @override
+  String get showcaseComponents => 'কম্পোনেন্ট';
+
+  @override
+  String get showcaseIncomingSample => 'আগত: উষ্ণ পৃষ্ঠ, একটি সরু রেখা।';
+
+  @override
+  String get showcaseStackedSample => 'একই ধারার দ্বিতীয় বার্তা।';
+
+  @override
+  String get showcaseOutgoingSample => 'প্রেরিত: অ্যাকসেন্ট গ্রেডিয়েন্ট।';
+
+  @override
+  String get messageSending => 'পাঠানো হচ্ছে';
+
+  @override
+  String get onlineNow => 'অনলাইন';
+
+  @override
+  String userTyping(String name) {
+    return '$name লিখছেন…';
+  }
+
+  @override
+  String severalTyping(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count জন লিখছেন…',
+      one: '1 জন লিখছেন…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String attachmentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি সংযুক্তি',
+      one: '1টি সংযুক্তি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contacts => 'পরিচিতি';
+
+  @override
+  String get profileSettingsHint => 'আপনার নাম, অবতার ও যোগাযোগের তথ্য';
+
+  @override
+  String get noChatSelected => 'কোনো চ্যাট নির্বাচিত হয়নি';
+
+  @override
+  String get noChatSelectedHint =>
+      'পড়া শুরু করতে তালিকা থেকে একটি কথোপকথন বেছে নিন।';
+
+  @override
+  String get newDirectChat => 'নতুন সরাসরি চ্যাট';
+
+  @override
+  String get newGroup => 'নতুন গ্রুপ';
+
+  @override
+  String get newChannel => 'নতুন চ্যানেল';
+
+  @override
+  String get quickActionsHint => 'নতুন কিছু শুরু করুন';
+
+  @override
+  String unreadMessagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি অপঠিত বার্তা',
+      one: '১টি অপঠিত বার্তা',
+      zero: 'কোনো অপঠিত বার্তা নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unreadNotificationsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি নতুন বিজ্ঞপ্তি',
+      one: '১টি নতুন বিজ্ঞপ্তি',
+      zero: 'কোনো নতুন বিজ্ঞপ্তি নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noContactsFound => 'এই নামের সঙ্গে কেউ মেলেনি';
+
+  @override
+  String get noContactsFoundHint => 'ছোট নাম বা অন্য বানানে চেষ্টা করুন।';
+
+  @override
+  String get noContactsYet => 'দেখানোর মতো এখনো কেউ নেই';
 }

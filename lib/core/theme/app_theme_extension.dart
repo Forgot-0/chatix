@@ -1,180 +1,274 @@
 import 'package:flutter/material.dart';
 
-import 'package:chatix/core/theme/chatix_palette.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/theme/theme_config.dart';
 
-enum ChatDensity {
-  compact,
-  cosy,
-  spacious;
-
-  static ChatDensity fromName(String? value) => ChatDensity.values.firstWhere(
-    (d) => d.name == value,
-    orElse: () => ChatDensity.cosy,
-  );
-
-  double get bubblePaddingY => switch (this) {
-    ChatDensity.compact => 6,
-    ChatDensity.cosy => 9,
-    ChatDensity.spacious => 13,
-  };
-
-  double get bubblePaddingX => switch (this) {
-    ChatDensity.compact => 10,
-    ChatDensity.cosy => 12,
-    ChatDensity.spacious => 14,
-  };
-
-  double get groupGap => switch (this) {
-    ChatDensity.compact => 6,
-    ChatDensity.cosy => 10,
-    ChatDensity.spacious => 16,
-  };
-
-  double get stackGap => switch (this) {
-    ChatDensity.compact => 1,
-    ChatDensity.cosy => 2,
-    ChatDensity.spacious => 4,
-  };
-}
-
+/// The half of the ChatiX design system that [ColorScheme] has no room for.
+///
+/// Message bubbles, date chips, reaction chips, the composer ground and the
+/// per-author accents all need colours that Material does not name. They are
+/// derived from the active [ColorScheme] — so a user-picked accent flows
+/// through them — and reached from widgets via [ChatixTheme.of].
 @immutable
 class ChatixTheme extends ThemeExtension<ChatixTheme> {
   const ChatixTheme({
-    required this.outgoingGradient,
-    required this.outgoingForeground,
-    required this.incomingSurface,
-    required this.incomingForeground,
-    required this.incomingHairline,
-    required this.bubbleRadius,
-    required this.bubbleAnchorRadius,
-    required this.density,
+    required this.brightness,
+    required this.bubbleOutgoingGradient,
+    required this.bubbleOutgoingForeground,
+    required this.bubbleIncoming,
+    required this.bubbleIncomingForeground,
+    required this.bubbleIncomingBorder,
+    required this.chatBackground,
+    required this.dateChip,
+    required this.unreadDivider,
+    required this.reactionChip,
+    required this.reactionChipSelected,
+    required this.onlineDot,
+    required this.authorPalette,
+    required this.composerSurface,
     required this.wallpaperSeed,
     required this.success,
     required this.danger,
     required this.attention,
+    required this.bubbleRadius,
+    required this.bubbleAnchorRadius,
+    required this.density,
   });
 
-  final LinearGradient outgoingGradient;
-  final Color outgoingForeground;
+  /// Which ground these colours were tuned for. Kept on the extension so
+  /// widgets can pick a variant without a second [Theme.of] lookup.
+  final Brightness brightness;
 
-  final Color incomingSurface;
-  final Color incomingForeground;
+  /// Fill of a message you sent.
+  final LinearGradient bubbleOutgoingGradient;
 
-  final Color incomingHairline;
+  /// Text and icons on [bubbleOutgoingGradient].
+  final Color bubbleOutgoingForeground;
 
-  final double bubbleRadius;
+  /// Fill of a message someone else sent.
+  final Color bubbleIncoming;
 
-  final double bubbleAnchorRadius;
+  /// Text and icons on [bubbleIncoming].
+  final Color bubbleIncomingForeground;
 
-  final ChatDensity density;
+  /// Hairline around an incoming bubble. Transparent in dark, where the
+  /// bubble separates from the ground by elevation instead.
+  final Color bubbleIncomingBorder;
 
+  /// The ground a conversation is painted on.
+  final Color chatBackground;
+
+  /// The floating "Today" / "12 May" pill between message groups.
+  final Color dateChip;
+
+  /// The rule of the "unread messages" marker.
+  final Color unreadDivider;
+
+  /// A reaction chip you have not reacted with.
+  final Color reactionChip;
+
+  /// A reaction chip carrying your own reaction.
+  final Color reactionChipSelected;
+
+  /// The presence dot on an avatar.
+  final Color onlineDot;
+
+  /// Eight accents, indexed by author, for names in group chats.
+  final List<Color> authorPalette;
+
+  /// The ground under the message composer.
+  final Color composerSurface;
+
+  /// Accent the chat wallpaper blooms from.
   final Color wallpaperSeed;
 
+  /// Delivered/read ticks, confirmations.
   final Color success;
+
+  /// Destructive actions, failed sends.
   final Color danger;
+
+  /// Warnings, pending states.
   final Color attention;
 
-  static const Curve curve = Curves.easeOutCubic;
-  static const Duration duration = Duration(milliseconds: 220);
-  static const Duration fastDuration = Duration(milliseconds: 120);
+  /// Radius of a bubble's free corners. The geometry that turns these two
+  /// numbers into corners lives in `BubbleShape`, next to the bubbles.
+  final double bubbleRadius;
 
-  BorderRadius bubbleBorderRadius({required bool isMine}) {
-    final soft = Radius.circular(bubbleRadius);
-    final anchor = Radius.circular(bubbleAnchorRadius);
-    return BorderRadius.only(
-      topLeft: soft,
-      topRight: soft,
-      bottomLeft: isMine ? soft : anchor,
-      bottomRight: isMine ? anchor : soft,
-    );
+  /// Radius of the corner that anchors a bubble to its author's side.
+  final double bubbleAnchorRadius;
+
+  /// How much air messages and rows get.
+  final AppDensity density;
+
+  /// The band the outgoing gradient's head is held inside.
+  static const double _headLightness = 0.62;
+  static const double _headMinLightness = 0.42;
+  static const double _headMinSaturation = 0.55;
+
+  static const Duration fastDuration = AppMotion.fast;
+  static const Duration duration = AppMotion.base;
+  static const Duration slowDuration = AppMotion.slow;
+  static const Curve curve = AppMotion.curve;
+
+  /// The accent for [userId], stable across sessions and readable on the
+  /// current ground. Falls back to a neutral for an unknown author.
+  Color authorColor(int? userId) {
+    if (userId == null) return AppNeutrals.outline(brightness);
+    return authorPalette[userId.abs() % authorPalette.length];
   }
 
-  BorderRadius stackedBorderRadius({
-    required bool isMine,
-    required bool isFirstInGroup,
-    required bool isLastInGroup,
-  }) {
-    final soft = Radius.circular(bubbleRadius);
-    final anchor = Radius.circular(bubbleAnchorRadius);
-    final tight = Radius.circular(bubbleAnchorRadius);
-
-    return BorderRadius.only(
-      topLeft: isMine || isFirstInGroup ? soft : tight,
-      topRight: !isMine || isFirstInGroup ? soft : tight,
-      bottomLeft: isMine ? soft : (isLastInGroup ? anchor : tight),
-      bottomRight: !isMine ? soft : (isLastInGroup ? anchor : tight),
-    );
-  }
-
+  /// The extension carried by the ambient theme, or a default one if the
+  /// widget is being rendered outside a ChatiX theme (bare test harnesses).
   static ChatixTheme of(BuildContext context) =>
-      Theme.of(context).extension<ChatixTheme>() ?? light(ChatDensity.cosy);
+      Theme.of(context).extension<ChatixTheme>() ?? _fallback;
 
-  static ChatixTheme light(ChatDensity density) => ChatixTheme(
-    outgoingGradient: const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [ChatixPalette.violet, ChatixPalette.indigo],
-    ),
-    outgoingForeground: Colors.white,
-    incomingSurface: Colors.white,
-    incomingForeground: ChatixPalette.graphite900,
-    incomingHairline: ChatixPalette.graphite200,
-    bubbleRadius: 20,
-    bubbleAnchorRadius: 6,
-    density: density,
-    wallpaperSeed: ChatixPalette.violet,
-    success: ChatixPalette.mint,
-    danger: ChatixPalette.coral,
-    attention: ChatixPalette.amber,
+  static final ChatixTheme _fallback = fromScheme(
+    scheme: ColorScheme.fromSeed(seedColor: AppPalette.violet),
+    density: AppDensity.cozy,
   );
 
-  static ChatixTheme dark(ChatDensity density) => ChatixTheme(
-    outgoingGradient: const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF7B65FF), Color(0xFF4B36C9)],
+  /// Derives every chat colour from [scheme], so the whole surface follows a
+  /// user-picked accent instead of hard-coding violet.
+  ///
+  /// [accent] is the raw seed the user picked. It matters because a dark
+  /// scheme's `primary` is a lifted, pale tone: right for buttons, far too
+  /// washed out for a fill the size of a message bubble.
+  static ChatixTheme fromScheme({
+    required ColorScheme scheme,
+    required AppDensity density,
+    Color? accent,
+  }) {
+    final brightness = scheme.brightness;
+    final isDark = brightness == Brightness.dark;
+
+    final seed = HSLColor.fromColor(accent ?? scheme.primary);
+
+    // The gradient runs from a saturated head to a deeper tail. The head is
+    // pulled into a narrow band of lightness so that any accent — pale amber
+    // or deep indigo — still reads as a bubble and not as a highlight.
+    final head = seed
+        .withLightness(seed.lightness.clamp(_headMinLightness, _headLightness))
+        .withSaturation(
+          seed.saturation < _headMinSaturation
+              ? _headMinSaturation
+              : seed.saturation,
+        )
+        .toColor();
+    final tail = HSLColor.fromColor(head)
+        .withLightness(
+          (HSLColor.fromColor(head).lightness - 0.16).clamp(0.0, 1.0),
+        )
+        .toColor();
+
+    final incoming = isDark
+        ? AppElevations.surfaceOf(brightness, AppNeutrals.dark[8], 1)
+        : AppNeutrals.light[0];
+
+    return ChatixTheme(
+      brightness: brightness,
+      bubbleOutgoingGradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[head, tail],
+      ),
+      bubbleOutgoingForeground: AppContrast.foregroundOn(head),
+      bubbleIncoming: incoming,
+      bubbleIncomingForeground: AppNeutrals.text(brightness),
+      bubbleIncomingBorder: isDark
+          ? Colors.transparent
+          : AppNeutrals.border(brightness),
+      chatBackground: AppNeutrals.canvas(brightness),
+      dateChip: (isDark ? AppNeutrals.dark[7] : AppNeutrals.light[3])
+          .withValues(alpha: 0.92),
+      unreadDivider: scheme.primary.withValues(alpha: 0.4),
+      reactionChip: AppNeutrals.surfaceMuted(brightness),
+      reactionChipSelected: Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.16),
+        AppNeutrals.surface(brightness),
+      ),
+      onlineDot: AppPalette.mint,
+      authorPalette: AppAuthorPalette.of(brightness),
+      composerSurface: AppElevations.surfaceOf(
+        brightness,
+        isDark ? AppNeutrals.dark[9] : AppNeutrals.light[0],
+        2,
+      ),
+      wallpaperSeed: scheme.primary,
+      success: AppPalette.mint,
+      danger: AppPalette.coral,
+      attention: AppPalette.amber,
+      bubbleRadius: AppRadii.xl,
+      bubbleAnchorRadius: AppRadii.xs + 2,
+      density: density,
+    );
+  }
+
+  /// Convenience for tests, previews and the [of] fallback.
+  static ChatixTheme light([AppDensity density = AppDensity.cozy]) =>
+      fromScheme(
+        scheme: ColorScheme.fromSeed(seedColor: AppPalette.violet),
+        density: density,
+      );
+
+  /// Convenience for tests, previews and the [of] fallback.
+  static ChatixTheme dark([AppDensity density = AppDensity.cozy]) => fromScheme(
+    scheme: ColorScheme.fromSeed(
+      seedColor: AppPalette.violet,
+      brightness: Brightness.dark,
     ),
-    outgoingForeground: Colors.white,
-    incomingSurface: ChatixPalette.graphite700,
-    incomingForeground: ChatixPalette.graphite50,
-    incomingHairline: Colors.transparent,
-    bubbleRadius: 20,
-    bubbleAnchorRadius: 6,
     density: density,
-    wallpaperSeed: ChatixPalette.indigo,
-    success: ChatixPalette.mint,
-    danger: ChatixPalette.coral,
-    attention: ChatixPalette.amber,
   );
 
   @override
   ChatixTheme copyWith({
-    LinearGradient? outgoingGradient,
-    Color? outgoingForeground,
-    Color? incomingSurface,
-    Color? incomingForeground,
-    Color? incomingHairline,
-    double? bubbleRadius,
-    double? bubbleAnchorRadius,
-    ChatDensity? density,
+    Brightness? brightness,
+    LinearGradient? bubbleOutgoingGradient,
+    Color? bubbleOutgoingForeground,
+    Color? bubbleIncoming,
+    Color? bubbleIncomingForeground,
+    Color? bubbleIncomingBorder,
+    Color? chatBackground,
+    Color? dateChip,
+    Color? unreadDivider,
+    Color? reactionChip,
+    Color? reactionChipSelected,
+    Color? onlineDot,
+    List<Color>? authorPalette,
+    Color? composerSurface,
     Color? wallpaperSeed,
     Color? success,
     Color? danger,
     Color? attention,
+    double? bubbleRadius,
+    double? bubbleAnchorRadius,
+    AppDensity? density,
   }) {
     return ChatixTheme(
-      outgoingGradient: outgoingGradient ?? this.outgoingGradient,
-      outgoingForeground: outgoingForeground ?? this.outgoingForeground,
-      incomingSurface: incomingSurface ?? this.incomingSurface,
-      incomingForeground: incomingForeground ?? this.incomingForeground,
-      incomingHairline: incomingHairline ?? this.incomingHairline,
-      bubbleRadius: bubbleRadius ?? this.bubbleRadius,
-      bubbleAnchorRadius: bubbleAnchorRadius ?? this.bubbleAnchorRadius,
-      density: density ?? this.density,
+      brightness: brightness ?? this.brightness,
+      bubbleOutgoingGradient:
+          bubbleOutgoingGradient ?? this.bubbleOutgoingGradient,
+      bubbleOutgoingForeground:
+          bubbleOutgoingForeground ?? this.bubbleOutgoingForeground,
+      bubbleIncoming: bubbleIncoming ?? this.bubbleIncoming,
+      bubbleIncomingForeground:
+          bubbleIncomingForeground ?? this.bubbleIncomingForeground,
+      bubbleIncomingBorder: bubbleIncomingBorder ?? this.bubbleIncomingBorder,
+      chatBackground: chatBackground ?? this.chatBackground,
+      dateChip: dateChip ?? this.dateChip,
+      unreadDivider: unreadDivider ?? this.unreadDivider,
+      reactionChip: reactionChip ?? this.reactionChip,
+      reactionChipSelected: reactionChipSelected ?? this.reactionChipSelected,
+      onlineDot: onlineDot ?? this.onlineDot,
+      authorPalette: authorPalette ?? this.authorPalette,
+      composerSurface: composerSurface ?? this.composerSurface,
       wallpaperSeed: wallpaperSeed ?? this.wallpaperSeed,
       success: success ?? this.success,
       danger: danger ?? this.danger,
       attention: attention ?? this.attention,
+      bubbleRadius: bubbleRadius ?? this.bubbleRadius,
+      bubbleAnchorRadius: bubbleAnchorRadius ?? this.bubbleAnchorRadius,
+      density: density ?? this.density,
     );
   }
 
@@ -182,32 +276,64 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
   ChatixTheme lerp(ThemeExtension<ChatixTheme>? other, double t) {
     if (other is! ChatixTheme) return this;
     return ChatixTheme(
-      outgoingGradient:
-          LinearGradient.lerp(outgoingGradient, other.outgoingGradient, t) ??
-          outgoingGradient,
-      outgoingForeground: Color.lerp(
-        outgoingForeground,
-        other.outgoingForeground,
+      brightness: t < 0.5 ? brightness : other.brightness,
+      bubbleOutgoingGradient:
+          LinearGradient.lerp(
+            bubbleOutgoingGradient,
+            other.bubbleOutgoingGradient,
+            t,
+          ) ??
+          bubbleOutgoingGradient,
+      bubbleOutgoingForeground: Color.lerp(
+        bubbleOutgoingForeground,
+        other.bubbleOutgoingForeground,
         t,
       )!,
-      incomingSurface: Color.lerp(incomingSurface, other.incomingSurface, t)!,
-      incomingForeground: Color.lerp(
-        incomingForeground,
-        other.incomingForeground,
+      bubbleIncoming: Color.lerp(bubbleIncoming, other.bubbleIncoming, t)!,
+      bubbleIncomingForeground: Color.lerp(
+        bubbleIncomingForeground,
+        other.bubbleIncomingForeground,
         t,
       )!,
-      incomingHairline: Color.lerp(
-        incomingHairline,
-        other.incomingHairline,
+      bubbleIncomingBorder: Color.lerp(
+        bubbleIncomingBorder,
+        other.bubbleIncomingBorder,
         t,
       )!,
-      bubbleRadius: bubbleRadius,
-      bubbleAnchorRadius: bubbleAnchorRadius,
-      density: t < 0.5 ? density : other.density,
+      chatBackground: Color.lerp(chatBackground, other.chatBackground, t)!,
+      dateChip: Color.lerp(dateChip, other.dateChip, t)!,
+      unreadDivider: Color.lerp(unreadDivider, other.unreadDivider, t)!,
+      reactionChip: Color.lerp(reactionChip, other.reactionChip, t)!,
+      reactionChipSelected: Color.lerp(
+        reactionChipSelected,
+        other.reactionChipSelected,
+        t,
+      )!,
+      onlineDot: Color.lerp(onlineDot, other.onlineDot, t)!,
+      authorPalette: <Color>[
+        for (var i = 0; i < authorPalette.length; i++)
+          Color.lerp(
+            authorPalette[i],
+            i < other.authorPalette.length
+                ? other.authorPalette[i]
+                : authorPalette[i],
+            t,
+          )!,
+      ],
+      composerSurface: Color.lerp(composerSurface, other.composerSurface, t)!,
       wallpaperSeed: Color.lerp(wallpaperSeed, other.wallpaperSeed, t)!,
       success: Color.lerp(success, other.success, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       attention: Color.lerp(attention, other.attention, t)!,
+      bubbleRadius: lerpDouble(bubbleRadius, other.bubbleRadius, t),
+      bubbleAnchorRadius: lerpDouble(
+        bubbleAnchorRadius,
+        other.bubbleAnchorRadius,
+        t,
+      ),
+      density: t < 0.5 ? density : other.density,
     );
   }
+
+  static double lerpDouble(double a, double b, double t) => a + (b - a) * t;
 }

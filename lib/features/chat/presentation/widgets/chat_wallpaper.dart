@@ -1,36 +1,43 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/theme_config.dart';
 
-class ChatWallpaper extends StatelessWidget {
-  const ChatWallpaper({
-    super.key,
-    required this.child,
-    this.seed = 0,
-    this.showLattice = true,
-  });
+/// The ground a conversation is painted on.
+///
+/// Which pattern it draws comes from appearance settings; [seed] only varies
+/// the layout so two chats do not look identical.
+class ChatWallpaper extends ConsumerWidget {
+  const ChatWallpaper({super.key, required this.child, this.seed = 0});
 
   final Widget child;
   final int seed;
-  final bool showLattice;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
     final chatix = ChatixTheme.of(context);
+    final wallpaper = ref.watch(wallpaperProvider);
+
+    final ground = DecoratedBox(
+      decoration: BoxDecoration(color: chatix.chatBackground),
+      child: child,
+    );
+
+    if (wallpaper == AppWallpaper.plain) return ground;
 
     return DecoratedBox(
-      decoration: BoxDecoration(color: theme.colorScheme.surface),
+      decoration: BoxDecoration(color: chatix.chatBackground),
       child: CustomPaint(
         painter: _MeshPainter(
           accent: chatix.wallpaperSeed,
           secondary: chatix.success,
-          surface: theme.colorScheme.surface,
-          isDark: theme.brightness == Brightness.dark,
+          isDark: chatix.brightness == Brightness.dark,
           seed: seed,
-          showLattice: showLattice,
+          showLattice: wallpaper.hasLattice,
         ),
         isComplex: true,
         willChange: false,
@@ -44,7 +51,6 @@ class _MeshPainter extends CustomPainter {
   _MeshPainter({
     required this.accent,
     required this.secondary,
-    required this.surface,
     required this.isDark,
     required this.seed,
     required this.showLattice,
@@ -52,7 +58,6 @@ class _MeshPainter extends CustomPainter {
 
   final Color accent;
   final Color secondary;
-  final Color surface;
   final bool isDark;
   final int seed;
   final bool showLattice;
@@ -112,7 +117,6 @@ class _MeshPainter extends CustomPainter {
   bool shouldRepaint(_MeshPainter old) =>
       old.accent != accent ||
       old.secondary != secondary ||
-      old.surface != surface ||
       old.isDark != isDark ||
       old.seed != seed ||
       old.showLattice != showLattice;

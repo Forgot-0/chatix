@@ -118,13 +118,24 @@ class ChatDetailState extends Equatable {
     return MessageReactionsEntity.empty(messageId);
   }
 
-  bool isReadByPeer(MessageEntity message) {
-    if (chat?.type != ChatType.direct) return false;
+  /// How far the other side has read, or null when nobody has told us.
+  ///
+  /// `messages_read` carries `{ seq, reader_id }` (api-docs §6.4), so this is
+  /// the furthest seq reported by anyone who is not me. Null is "unknown",
+  /// which is not the same as "unread" — the ticks depend on the difference.
+  int? get peerReadCursor {
+    int? furthest;
     for (final entry in peerReadSeq.entries) {
       if (entry.key == myUserId) continue;
-      if (entry.value >= message.seq) return true;
+      if (furthest == null || entry.value > furthest) furthest = entry.value;
     }
-    return false;
+    return furthest;
+  }
+
+  bool isReadByPeer(MessageEntity message) {
+    if (chat?.type != ChatType.direct) return false;
+    final cursor = peerReadCursor;
+    return cursor != null && cursor >= message.seq;
   }
 
   ChatMemberEntity? get me {
@@ -736,6 +747,59 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         return true;
       },
     );
+  }
+
+  /// Reveals the message with this per-chat `seq`.
+  ///
+  /// The deep-link path: `seq` is exactly what
+  /// `GET /chats/{id}/messages/context/?target_seq=` wants, so unlike
+  /// [revealMessage] there is nothing to look up first — one request, and the
+  /// window of messages around the target replaces what was loaded.
+  Future<bool> revealSeq(int seq) async {
+    final current = state.value;
+    if (current == null) return false;
+
+    final loaded = _findBySeq(current.messages, seq);
+    if (loaded != null) {
+      _highlight(loaded.id);
+      return true;
+    }
+
+    final result = await ref
+        .read(getMessagesContextUseCaseProvider)
+        .execute(_chatId, seq);
+
+    return result.match(
+      (failure) {
+        Logger.warning(
+          'ChatDetail($_chatId): context around seq $seq failed '
+          '(${failure.message})',
+        );
+        return false;
+      },
+      (page) {
+        final target = _findBySeq(page.messages, seq);
+        if (target == null) return false;
+
+        _mutate(
+          (s) => s.copyWith(
+            messages: page.messages,
+            nextCursor: page.nextCursor,
+            hasNext: page.hasNext,
+            highlightMessageId: target.id,
+            isViewingHistory: true,
+          ),
+        );
+        return true;
+      },
+    );
+  }
+
+  static MessageEntity? _findBySeq(List<MessageEntity> messages, int seq) {
+    for (final message in messages) {
+      if (message.seq == seq) return message;
+    }
+    return null;
   }
 
   void _highlight(String messageId) {

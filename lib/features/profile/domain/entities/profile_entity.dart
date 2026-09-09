@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+
+import 'package:chatix/core/media/avatar_variants.dart';
 import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 
 class ProfileEntity extends Equatable {
@@ -27,40 +29,11 @@ class ProfileEntity extends Equatable {
 
   bool get hasAvatar => avatars.isNotEmpty;
 
-  String? bestAvatarUrl(int preferredSize) {
-    if (avatars.isEmpty) return null;
-
-    final availableSizes =
-        avatars.keys.map(int.tryParse).whereType<int>().toList()..sort();
-    if (availableSizes.isEmpty) return null;
-
-    final atLeastPreferred = availableSizes.where(
-      (size) => size >= preferredSize,
-    );
-    final smallerThanPreferred = availableSizes
-        .where((size) => size < preferredSize)
-        .toList()
-        .reversed;
-    final orderedSizes = [...atLeastPreferred, ...smallerThanPreferred];
-
-    const formatPriority = ['webp', 'jpg', 'avif'];
-
-    for (final size in orderedSizes) {
-      final formats = avatars[size.toString()];
-      if (formats == null || formats.isEmpty) continue;
-
-      for (final format in formatPriority) {
-        final url = formats[format];
-        if (url != null && url.isNotEmpty) return url;
-      }
-
-      for (final url in formats.values) {
-        if (url.isNotEmpty) return url;
-      }
-    }
-
-    return null;
-  }
+  /// The avatar to draw at [preferredSize] physical pixels, or null when the
+  /// user has none. The size/format rule is shared with every other avatar
+  /// surface — see `pickAvatarUrl` (api-docs §4.3).
+  String? bestAvatarUrl(int preferredSize) =>
+      pickAvatarUrl(avatars, preferredSize: preferredSize);
 
   ProfileEntity copyWith({
     int? id,

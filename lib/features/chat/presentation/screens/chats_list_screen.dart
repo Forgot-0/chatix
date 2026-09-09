@@ -7,19 +7,43 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_list_scroll_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 
+/// Opens a chat the way the current layout wants it opened.
+///
+/// With one pane a chat is a place you go to and come back from, so it is
+/// pushed. With two panes it is a selection in a list that is still on screen,
+/// so it replaces whatever the right pane was showing instead of stacking a
+/// new page behind it every time the user glances at another conversation.
+void openChat(BuildContext context, String chatId) {
+  final location = ChatDetailRoute(chatId).location;
+
+  if (AppLayoutScope.of(context).isTwoPane) {
+    context.go(location);
+  } else {
+    context.push(location);
+  }
+}
+
 class ChatsListScreen extends ConsumerStatefulWidget {
-  const ChatsListScreen({super.key});
+  const ChatsListScreen({super.key, this.selectedChatId});
+
+  /// The chat shown in the other pane, highlighted in the list. Always null
+  /// in single-pane mode, where nothing is on screen beside the list.
+  final String? selectedChatId;
 
   @override
   ConsumerState<ChatsListScreen> createState() => _ChatsListScreenState();
 }
 
 class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
-  final _scrollController = ScrollController();
+  late final ScrollController _scrollController = ScrollController(
+    initialScrollOffset: ref.read(chatListScrollOffsetProvider),
+  );
 
   @override
   void initState() {
@@ -36,8 +60,11 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+
+    final position = _scrollController.position;
+    ref.read(chatListScrollOffsetProvider.notifier).save(position.pixels);
+
+    if (position.pixels >= position.maxScrollExtent - 200) {
       ref.read(chatListProvider.notifier).loadMore();
     }
   }
@@ -85,6 +112,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
           return RefreshIndicator(
             onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
             child: ListView.separated(
+              key: const PageStorageKey<String>('chats-list'),
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               itemCount: state.items.length + (state.canLoadMore ? 1 : 0),
@@ -93,7 +121,11 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
                 if (index >= state.items.length) {
                   return const AppLoadMoreIndicator();
                 }
-                return ChatListTile(chat: state.items[index]);
+                final chat = state.items[index];
+                return ChatListTile(
+                  chat: chat,
+                  isSelected: chat.id == widget.selectedChatId,
+                );
               },
             ),
           );
@@ -109,9 +141,16 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
 }
 
 class ChatListTile extends ConsumerWidget {
-  const ChatListTile({super.key, required this.chat});
+  const ChatListTile({
+    super.key,
+    required this.chat,
+    this.isSelected = false,
+  });
 
   final ChatEntity chat;
+
+  /// Whether this chat is the one open in the detail pane.
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -122,9 +161,15 @@ class ChatListTile extends ConsumerWidget {
     final peer = chat.peerProfile(myUserId);
 
     return ListTile(
+      selected: isSelected,
+      selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
+      selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
       leading: peer != null
-          ? ChatAvatar(profile: peer, userId: peer.userId)
-          : CircleAvatar(child: Icon(_iconFor(chat.type))),
+          ? ChatAvatar.profile(peer)
+          : ChatAvatarMosaic(
+              faces: _facesOf(chat, myUserId),
+              fallbackIcon: _iconFor(chat.type),
+            ),
       title: Text(
         chatTitleOf(chat, l10n, myUserId: myUserId),
         maxLines: 1,
@@ -153,7 +198,7 @@ class ChatListTile extends ConsumerWidget {
             ),
         ],
       ),
-      onTap: () => context.push(ChatDetailRoute(chat.id).location),
+      onTap: () => openChat(context, chat.id),
     );
   }
 
@@ -183,6 +228,22 @@ class ChatListTile extends ConsumerWidget {
     return chat.type == ChatType.direct
         ? label
         : '${message.authorLabel}: $label';
+  }
+
+  /// Faces for a group's mosaic avatar.
+  ///
+  /// The list endpoint does not always carry a roster, and a group that has
+  /// its own `avatar_s3_key` does not need one; both cases fall through to
+  /// the type icon that [ChatAvatarMosaic] draws when handed nothing.
+  static List<AvatarFace> _facesOf(ChatEntity chat, int? myUserId) {
+    final roster = chat.members;
+    if (roster == null) return const [];
+
+    return [
+      for (final member in roster)
+        if (member.userId != myUserId && member.profile != null)
+          AvatarFace.profile(member.profile!),
+    ];
   }
 
   static IconData _iconFor(ChatType type) {

@@ -362,10 +362,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get densityCompact => 'Compacte';
 
   @override
-  String get densityCosy => 'Normale';
+  String get densityCozy => 'Normale';
 
   @override
-  String get densitySpacious => 'Aérée';
+  String get densityComfortable => 'Aérée';
 
   @override
   String get voiceSlideToCancel =>
@@ -845,4 +845,196 @@ class AppLocalizationsFr extends AppLocalizations {
   String deviceLastActive(String date) {
     return 'Dernière activité : $date';
   }
+
+  @override
+  String get designSystem => 'Système de design';
+
+  @override
+  String get accentColor => 'Couleur d’accent';
+
+  @override
+  String get chatWallpaper => 'Fond de discussion';
+
+  @override
+  String get wallpaperAurora => 'Aurore';
+
+  @override
+  String get wallpaperMesh => 'Maillage';
+
+  @override
+  String get wallpaperPlain => 'Uni';
+
+  @override
+  String get textSize => 'Taille du texte';
+
+  @override
+  String get textSizeSmall => 'Petite';
+
+  @override
+  String get textSizeDefault => 'Normale';
+
+  @override
+  String get textSizeLarge => 'Grande';
+
+  @override
+  String get textSizeExtraLarge => 'Très grande';
+
+  @override
+  String get resetAppearance => 'Réinitialiser l’apparence';
+
+  @override
+  String get showcaseAccents => 'Accents';
+
+  @override
+  String get showcaseNeutrals => 'Neutres';
+
+  @override
+  String get showcaseNeutralsLight => 'Gamme claire';
+
+  @override
+  String get showcaseNeutralsDark => 'Gamme sombre';
+
+  @override
+  String get showcaseRadii => 'Rayons';
+
+  @override
+  String get showcaseSpacing => 'Espacements';
+
+  @override
+  String get showcaseElevation => 'Élévation';
+
+  @override
+  String get showcaseMotion => 'Animation';
+
+  @override
+  String get showcaseMotionFast => 'Rapide';
+
+  @override
+  String get showcaseMotionBase => 'Base';
+
+  @override
+  String get showcaseMotionSlow => 'Lente';
+
+  @override
+  String get showcaseMotionReplay => 'Rejouer';
+
+  @override
+  String get showcaseTypography => 'Typographie';
+
+  @override
+  String get showcaseTabularFigures => 'Chiffres tabulaires';
+
+  @override
+  String get showcaseBubbles => 'Bulles de message';
+
+  @override
+  String get showcaseReactions => 'Réactions';
+
+  @override
+  String get showcaseAuthors => 'Accents d’auteur';
+
+  @override
+  String get showcaseComponents => 'Composants';
+
+  @override
+  String get showcaseIncomingSample => 'Reçu : surface chaude, un filet.';
+
+  @override
+  String get showcaseStackedSample => 'Deuxième message de la même série.';
+
+  @override
+  String get showcaseOutgoingSample => 'Envoyé : dégradé d’accent.';
+
+  @override
+  String get messageSending => 'Envoi…';
+
+  @override
+  String get onlineNow => 'En ligne';
+
+  @override
+  String userTyping(String name) {
+    return '$name écrit…';
+  }
+
+  @override
+  String severalTyping(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count personnes écrivent…',
+      one: '1 personne écrit…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String attachmentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pièces jointes',
+      one: '1 pièce jointe',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contacts => 'Contacts';
+
+  @override
+  String get profileSettingsHint =>
+      'Votre nom, votre avatar et vos coordonnées';
+
+  @override
+  String get noChatSelected => 'Aucune discussion sélectionnée';
+
+  @override
+  String get noChatSelectedHint =>
+      'Choisissez une conversation dans la liste pour commencer à lire.';
+
+  @override
+  String get newDirectChat => 'Nouvelle discussion privée';
+
+  @override
+  String get newGroup => 'Nouveau groupe';
+
+  @override
+  String get newChannel => 'Nouvelle chaîne';
+
+  @override
+  String get quickActionsHint => 'Créer du nouveau';
+
+  @override
+  String unreadMessagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count messages non lus',
+      one: '1 message non lu',
+      zero: 'Aucun message non lu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unreadNotificationsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count nouvelles notifications',
+      one: '1 nouvelle notification',
+      zero: 'Aucune nouvelle notification',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noContactsFound => 'Personne ne correspond à ce nom';
+
+  @override
+  String get noContactsFoundHint =>
+      'Essayez un nom plus court ou orthographié autrement.';
+
+  @override
+  String get noContactsYet => 'Aucune personne à afficher pour l’instant';
 }

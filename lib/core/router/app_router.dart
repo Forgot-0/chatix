@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/router/app_page_transitions.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/router/app_shell.dart';
+import 'package:chatix/core/router/chats_pane_shell.dart';
 import 'package:chatix/core/router/locale_aware_router.dart';
 import 'package:chatix/examples/localization_assets_demo.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
@@ -21,7 +23,6 @@ import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dar
 import 'package:chatix/features/chat/presentation/screens/chat_info_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
-import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
@@ -29,7 +30,27 @@ import 'package:chatix/features/profile/presentation/screens/profile_screen.dart
 import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
+import 'package:chatix/features/ui_showcase/ui_showcase.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
+
+/// A page that slides in on the horizontal axis: forward inside a section.
+Page<void> _push(GoRouterState state, Widget child) {
+  return AppPageTransitions.sharedAxisHorizontal<void>(
+    key: state.pageKey,
+    name: state.name ?? state.fullPath,
+    child: child,
+  );
+}
+
+/// A page that fades through: the root of a tab, which has no neighbours to
+/// slide away from.
+Page<void> _root(GoRouterState state, Widget child) {
+  return AppPageTransitions.fadeThrough<void>(
+    key: state.pageKey,
+    name: state.name ?? state.fullPath,
+    child: child,
+  );
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authListenable = ValueNotifier<AsyncValue<UserEntity?>>(
@@ -61,83 +82,109 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),
         branches: [
+          // ── Chats ──────────────────────────────────────────────────────
+          //
+          // A nested ShellRoute wraps the whole branch so the layout can be
+          // decided in one place: on a wide window it pulls the list out to
+          // the left and leaves this navigator — the chat, its members, its
+          // info — as the right pane. The chat that is open is the one in the
+          // URL, so flipping between one and two panes never loses it.
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: ChatsRoute.path,
-                name: RouteNames.chats,
-                builder: (context, state) => const ChatsListScreen(),
+              ShellRoute(
+                builder: (context, state, child) => ChatsPaneShell(
+                  selectedChatId: ChatDetailRoute.idFrom(state),
+                  child: child,
+                ),
                 routes: [
                   GoRoute(
-                    path: CreateChatRoute.path,
-                    name: RouteNames.createChat,
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) => const CreateChatScreen(),
-                  ),
-                  GoRoute(
-                    path: ChatSearchRoute.path,
-                    name: RouteNames.chatSearch,
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) => const ChatSearchScreen(),
-                  ),
-                  GoRoute(
-                    path: ChatDetailRoute.path,
-                    name: RouteNames.chatDetail,
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) {
-                      final chatId = ChatDetailRoute.idFrom(state);
-                      if (chatId == null) {
-                        return _InvalidRouteScreen(
-                          message: AppLocalizations.of(context).unknownChat,
-                        );
-                      }
-                      return ChatDetailScreen(
-                        chatId: chatId,
-                        focusMessageId: ChatDetailRoute.messageIdFrom(state),
-                      );
-                    },
+                    path: ChatsRoute.path,
+                    name: RouteNames.chats,
+                    pageBuilder: (context, state) =>
+                        _root(state, const ChatsListPane()),
                     routes: [
                       GoRoute(
-                        path: ChatMembersRoute.path,
-                        name: RouteNames.chatMembers,
+                        path: CreateChatRoute.path,
+                        name: RouteNames.createChat,
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
-                          final chatId = ChatDetailRoute.idFrom(state);
-                          if (chatId == null) {
-                            return _InvalidRouteScreen(
-                              message: AppLocalizations.of(context).unknownChat,
-                            );
-                          }
-                          return ChatMembersScreen(chatId: chatId);
-                        },
+                        pageBuilder: (context, state) => _push(
+                          state,
+                          CreateChatScreen(
+                            initialType: CreateChatRoute.typeFrom(state),
+                          ),
+                        ),
                       ),
                       GoRoute(
-                        path: ChatInfoRoute.path,
-                        name: RouteNames.chatInfo,
+                        path: ChatSearchRoute.path,
+                        name: RouteNames.chatSearch,
                         parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
-                          final chatId = ChatDetailRoute.idFrom(state);
-                          if (chatId == null) {
-                            return _InvalidRouteScreen(
-                              message: AppLocalizations.of(context).unknownChat,
-                            );
-                          }
-                          return ChatInfoScreen(chatId: chatId);
-                        },
+                        pageBuilder: (context, state) =>
+                            _push(state, const ChatSearchScreen()),
                       ),
                       GoRoute(
-                        path: ChatCallRoute.path,
-                        name: RouteNames.chatCall,
-                        parentNavigatorKey: _rootNavigatorKey,
-                        builder: (context, state) {
+                        path: ChatDetailRoute.path,
+                        name: RouteNames.chatDetail,
+                        pageBuilder: (context, state) {
                           final chatId = ChatDetailRoute.idFrom(state);
                           if (chatId == null) {
-                            return _InvalidRouteScreen(
-                              message: AppLocalizations.of(context).unknownChat,
-                            );
+                            return _push(state, const _UnknownChatScreen());
                           }
-                          return CallScreen(chatId: chatId);
+                          return _push(
+                            state,
+                            ChatDetailScreen(
+                              chatId: chatId,
+                              focusMessageId: ChatDetailRoute.messageIdFrom(
+                                state,
+                              ),
+                              focusMessageSeq: ChatDetailRoute.messageSeqFrom(
+                                state,
+                              ),
+                            ),
+                          );
                         },
+                        routes: [
+                          GoRoute(
+                            path: ChatMembersRoute.path,
+                            name: RouteNames.chatMembers,
+                            pageBuilder: (context, state) {
+                              final chatId = ChatDetailRoute.idFrom(state);
+                              if (chatId == null) {
+                                return _push(state, const _UnknownChatScreen());
+                              }
+                              return _push(
+                                state,
+                                ChatMembersScreen(chatId: chatId),
+                              );
+                            },
+                          ),
+                          GoRoute(
+                            path: ChatInfoRoute.path,
+                            name: RouteNames.chatInfo,
+                            pageBuilder: (context, state) {
+                              final chatId = ChatDetailRoute.idFrom(state);
+                              if (chatId == null) {
+                                return _push(state, const _UnknownChatScreen());
+                              }
+                              return _push(
+                                state,
+                                ChatInfoScreen(chatId: chatId),
+                              );
+                            },
+                          ),
+                          // A call takes over the screen: no shell, no panes.
+                          GoRoute(
+                            path: ChatCallRoute.path,
+                            name: RouteNames.chatCall,
+                            parentNavigatorKey: _rootNavigatorKey,
+                            pageBuilder: (context, state) {
+                              final chatId = ChatDetailRoute.idFrom(state);
+                              if (chatId == null) {
+                                return _push(state, const _UnknownChatScreen());
+                              }
+                              return _push(state, CallScreen(chatId: chatId));
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -146,71 +193,85 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
+          // ── Contacts ───────────────────────────────────────────────────
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: NotificationsRoute.path,
-                name: RouteNames.notifications,
-                builder: (context, state) => const NotificationsScreen(),
-              ),
-            ],
-          ),
-
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: ProfileRoute.path,
-                name: RouteNames.profile,
-                builder: (context, state) => const ProfileScreen(),
+                path: ProfilesRoute.path,
+                name: RouteNames.profiles,
+                pageBuilder: (context, state) =>
+                    _root(state, const ProfilesListScreen()),
                 routes: [
                   GoRoute(
-                    path: ProfileEditRoute.path,
-                    name: RouteNames.profileEdit,
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) => const ProfileEditScreen(),
+                    path: ProfileDetailRoute.path,
+                    name: RouteNames.profileDetail,
+                    pageBuilder: (context, state) {
+                      final profileId = ProfileDetailRoute.idFrom(state);
+                      if (profileId == null) {
+                        return _push(state, const _UnknownProfileScreen());
+                      }
+                      return _push(state, ProfileScreen(profileId: profileId));
+                    },
                   ),
                 ],
               ),
             ],
           ),
-        ],
-      ),
 
-      GoRoute(
-        path: ProfilesRoute.path,
-        name: RouteNames.profiles,
-        builder: (context, state) => const ProfilesListScreen(),
-        routes: [
-          GoRoute(
-            path: ProfileDetailRoute.path,
-            name: RouteNames.profileDetail,
-            builder: (context, state) {
-              final profileId = ProfileDetailRoute.idFrom(state);
-              if (profileId == null) {
-                return _InvalidRouteScreen(
-                  message: AppLocalizations.of(context).unknownProfile,
-                );
-              }
-              return ProfileScreen(profileId: profileId);
-            },
+          // ── Notifications ──────────────────────────────────────────────
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: NotificationsRoute.path,
+                name: RouteNames.notifications,
+                pageBuilder: (context, state) =>
+                    _root(state, const NotificationsScreen()),
+              ),
+            ],
           ),
-        ],
-      ),
 
-      GoRoute(
-        path: SettingsRoute.path,
-        name: RouteNames.settings,
-        builder: (context, state) => const SettingsScreen(),
-        routes: [
-          GoRoute(
-            path: LanguageSettingsRoute.path,
-            name: RouteNames.languageSettings,
-            builder: (context, state) => const LanguageSettingsScreen(),
-          ),
-          GoRoute(
-            path: SessionsRoute.path,
-            name: RouteNames.sessions,
-            builder: (context, state) => const SessionsScreen(),
+          // ── Settings ───────────────────────────────────────────────────
+          //
+          // The account lives here now that the profile tab is gone: /profile
+          // is a second top-level route of this branch, so opening it selects
+          // the settings tab rather than dropping the shell entirely.
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: SettingsRoute.path,
+                name: RouteNames.settings,
+                pageBuilder: (context, state) =>
+                    _root(state, const SettingsScreen()),
+                routes: [
+                  GoRoute(
+                    path: LanguageSettingsRoute.path,
+                    name: RouteNames.languageSettings,
+                    pageBuilder: (context, state) =>
+                        _push(state, const LanguageSettingsScreen()),
+                  ),
+                  GoRoute(
+                    path: SessionsRoute.path,
+                    name: RouteNames.sessions,
+                    pageBuilder: (context, state) =>
+                        _push(state, const SessionsScreen()),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: ProfileRoute.path,
+                name: RouteNames.profile,
+                pageBuilder: (context, state) =>
+                    _push(state, const ProfileScreen()),
+                routes: [
+                  GoRoute(
+                    path: ProfileEditRoute.path,
+                    name: RouteNames.profileEdit,
+                    pageBuilder: (context, state) =>
+                        _push(state, const ProfileEditScreen()),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -223,6 +284,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           path: LocalizationAssetsDemoRoute.path,
           name: RouteNames.localizationAssetsDemo,
           builder: (context, state) => const LocalizationAssetsDemo(),
+        ),
+
+      // The design-system showcase: a developer surface for checking tokens
+      // against both themes, tree-shaken out of release alongside the demos.
+      if (kDebugMode)
+        GoRoute(
+          path: ComponentShowcaseRoute.path,
+          name: RouteNames.componentShowcase,
+          builder: (context, state) => const ComponentShowcaseScreen(),
         ),
 
       GoRoute(
@@ -307,6 +377,22 @@ class _SessionLoadingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
+}
+
+class _UnknownChatScreen extends StatelessWidget {
+  const _UnknownChatScreen();
+
+  @override
+  Widget build(BuildContext context) =>
+      _InvalidRouteScreen(message: AppLocalizations.of(context).unknownChat);
+}
+
+class _UnknownProfileScreen extends StatelessWidget {
+  const _UnknownProfileScreen();
+
+  @override
+  Widget build(BuildContext context) =>
+      _InvalidRouteScreen(message: AppLocalizations.of(context).unknownProfile);
 }
 
 class _InvalidRouteScreen extends StatelessWidget {

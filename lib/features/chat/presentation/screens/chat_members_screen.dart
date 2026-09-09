@@ -162,6 +162,7 @@ class _MemberTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final moderatable = canModerate(me, member);
     final canChangeRole =
         moderatable && hasChatPermission(chat, me, ChatPermissions.roleChange);
@@ -174,10 +175,11 @@ class _MemberTile extends ConsumerWidget {
     final username = member.profile?.username;
 
     return ListTile(
-      leading: ChatAvatar(
-        profile: member.profile,
+      leading: ChatAvatar.profile(
+        member.profile,
         userId: member.userId,
         isOnline: isOnline,
+        onlineLabel: l10n.onlineNow,
       ),
       title: Text(member.displayLabel),
       subtitle: Row(

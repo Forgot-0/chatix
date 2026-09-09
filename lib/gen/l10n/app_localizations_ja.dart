@@ -355,10 +355,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get densityCompact => 'コンパクト';
 
   @override
-  String get densityCosy => '標準';
+  String get densityCozy => '標準';
 
   @override
-  String get densitySpacious => 'ゆったり';
+  String get densityComfortable => 'ゆったり';
 
   @override
   String get voiceSlideToCancel => '左にスワイプで取消、上で固定';
@@ -825,4 +825,189 @@ class AppLocalizationsJa extends AppLocalizations {
   String deviceLastActive(String date) {
     return '最終利用: $date';
   }
+
+  @override
+  String get designSystem => 'デザインシステム';
+
+  @override
+  String get accentColor => 'アクセントカラー';
+
+  @override
+  String get chatWallpaper => 'チャットの背景';
+
+  @override
+  String get wallpaperAurora => 'オーロラ';
+
+  @override
+  String get wallpaperMesh => 'メッシュ';
+
+  @override
+  String get wallpaperPlain => 'プレーン';
+
+  @override
+  String get textSize => '文字サイズ';
+
+  @override
+  String get textSizeSmall => '小';
+
+  @override
+  String get textSizeDefault => '標準';
+
+  @override
+  String get textSizeLarge => '大';
+
+  @override
+  String get textSizeExtraLarge => '特大';
+
+  @override
+  String get resetAppearance => '外観をリセット';
+
+  @override
+  String get showcaseAccents => 'アクセント';
+
+  @override
+  String get showcaseNeutrals => 'ニュートラル';
+
+  @override
+  String get showcaseNeutralsLight => 'ライトの階調';
+
+  @override
+  String get showcaseNeutralsDark => 'ダークの階調';
+
+  @override
+  String get showcaseRadii => '角丸';
+
+  @override
+  String get showcaseSpacing => '余白';
+
+  @override
+  String get showcaseElevation => '高さ';
+
+  @override
+  String get showcaseMotion => 'モーション';
+
+  @override
+  String get showcaseMotionFast => '速い';
+
+  @override
+  String get showcaseMotionBase => '標準';
+
+  @override
+  String get showcaseMotionSlow => '遅い';
+
+  @override
+  String get showcaseMotionReplay => '再生';
+
+  @override
+  String get showcaseTypography => 'タイポグラフィ';
+
+  @override
+  String get showcaseTabularFigures => '等幅数字';
+
+  @override
+  String get showcaseBubbles => 'メッセージバブル';
+
+  @override
+  String get showcaseReactions => 'リアクション';
+
+  @override
+  String get showcaseAuthors => '送信者の色';
+
+  @override
+  String get showcaseComponents => 'コンポーネント';
+
+  @override
+  String get showcaseIncomingSample => '受信：温かみのある面と細い枠線。';
+
+  @override
+  String get showcaseStackedSample => '同じ連続の2通目。';
+
+  @override
+  String get showcaseOutgoingSample => '送信：アクセントのグラデーション。';
+
+  @override
+  String get messageSending => '送信中';
+
+  @override
+  String get onlineNow => 'オンライン';
+
+  @override
+  String userTyping(String name) {
+    return '$name が入力中…';
+  }
+
+  @override
+  String severalTyping(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 人が入力中…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String attachmentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '添付ファイル $count 件',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contacts => '連絡先';
+
+  @override
+  String get profileSettingsHint => '名前、アイコン、連絡先情報';
+
+  @override
+  String get noChatSelected => 'チャットが選択されていません';
+
+  @override
+  String get noChatSelectedHint => '一覧から会話を選んでください。';
+
+  @override
+  String get newDirectChat => '新しい個人チャット';
+
+  @override
+  String get newGroup => '新しいグループ';
+
+  @override
+  String get newChannel => '新しいチャンネル';
+
+  @override
+  String get quickActionsHint => '新しく作成';
+
+  @override
+  String unreadMessagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '未読メッセージ$count件',
+      zero: '未読メッセージはありません',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unreadNotificationsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '新しい通知$count件',
+      zero: '新しい通知はありません',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noContactsFound => 'その名前に一致する人はいません';
+
+  @override
+  String get noContactsFoundHint => 'より短い名前や別の綴りでお試しください。';
+
+  @override
+  String get noContactsYet => '表示できる人はまだいません';
 }

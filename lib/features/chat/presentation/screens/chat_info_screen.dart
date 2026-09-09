@@ -433,7 +433,7 @@ class _Header extends StatelessWidget {
       child: Column(
         children: [
           if (peer != null)
-            ChatAvatar(profile: peer, userId: peer.userId, radius: 40)
+            ChatAvatar.profile(peer, size: ChatAvatarSize.lg)
           else
             CircleAvatar(
               radius: 40,

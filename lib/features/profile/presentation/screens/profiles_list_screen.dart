@@ -51,7 +51,7 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
     final listState = ref.watch(profileListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).profiles)),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).contacts)),
       body: Column(
         children: [
           Padding(
@@ -88,10 +88,10 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                           ? Icons.person_search_outlined
                           : Icons.people_outline,
                       title: isSearching
-                          ? 'Nobody matches that name'
-                          : 'No profiles yet',
+                          ? AppLocalizations.of(context).noContactsFound
+                          : AppLocalizations.of(context).noContactsYet,
                       message: isSearching
-                          ? 'Try a shorter or differently spelled name.'
+                          ? AppLocalizations.of(context).noContactsFoundHint
                           : null,
                     ),
                   );
@@ -101,6 +101,7 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                   onRefresh: () =>
                       ref.read(profileListProvider.notifier).refresh(),
                   child: ListView.builder(
+                    key: const PageStorageKey<String>('contacts-list'),
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: state.items.length + (state.hasNext ? 1 : 0),

@@ -21929,3 +21929,171 @@ at:
 #1      Future.any.onValue (dart:async/future.dart:637)
 <asynchronous suspension>
 
+[custom_lint] 2026-09-09T20:40:08.747556 Unhandled exception:
+[custom_lint] 2026-09-09T20:40:08.747556 SocketException: Connection timed out (OS Error: Connection timed out, errno = 110), address = ::1, port = 47068
+[custom_lint] 2026-09-09T20:40:08.747556 #0      _NativeSocket.startConnect (dart:io-patch/socket_patch.dart:817:35)
+[custom_lint] 2026-09-09T20:40:08.747556 #1      _NativeSocket.connect (dart:io-patch/socket_patch.dart:1142:12)
+[custom_lint] 2026-09-09T20:40:08.747556 #2      _RawSocket.connect (dart:io-patch/socket_patch.dart:2256:26)
+[custom_lint] 2026-09-09T20:40:08.747556 #3      RawSocket.connect (dart:io-patch/socket_patch.dart:31:23)
+[custom_lint] 2026-09-09T20:40:08.747556 #4      Socket._connect (dart:io-patch/socket_patch.dart:2526:22)
+[custom_lint] 2026-09-09T20:40:08.747556 #5      Socket.connect (dart:io/socket.dart:869:21)
+[custom_lint] 2026-09-09T20:40:08.747556 #6      runSocket.<anonymous closure>.<anonymous closure> (package:custom_lint_builder/src/channel.dart:69:35)
+[custom_lint] 2026-09-09T20:40:08.747556 #7      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[custom_lint] 2026-09-09T20:40:08.747556 #8      _rootRun (dart:async/zone_root.dart:27:47)
+[custom_lint] 2026-09-09T20:40:08.747556 #9      _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T20:40:08.747556 #10     _CustomZone.runGuarded (dart:async/zone.dart:625:7)
+[custom_lint] 2026-09-09T20:40:08.747556 #11     _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:666:23)
+[custom_lint] 2026-09-09T20:40:08.747556 #12     _rootRun (dart:async/zone_root.dart:35:13)
+[custom_lint] 2026-09-09T20:40:08.747556 #13     _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T20:40:08.747556 #14     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:649:23)
+[custom_lint] 2026-09-09T20:40:08.747556 #15     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[custom_lint] 2026-09-09T20:40:08.747556 #16     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:423:19)
+[custom_lint] 2026-09-09T20:40:08.747556 #17     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:454:5)
+[custom_lint] 2026-09-09T20:40:08.747556 #18     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+[custom_lint] 2026-09-09T20:40:08.747556
+[custom_lint] 2026-09-09T20:40:08.747556
+Failed to start pluginsThe request analysis.setContextRoots failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+Bad state: Failed to start the plugins.
+at:
+#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223)
+<asynchronous suspension>
+#1      Future.any.onValue (dart:async/future.dart:637)
+<asynchronous suspension>
+
+[custom_lint] 2026-09-09T21:15:14.096184 Unhandled exception:
+[custom_lint] 2026-09-09T21:15:14.096184 SocketException: Connection timed out (OS Error: Connection timed out, errno = 110), address = ::1, port = 49324
+[custom_lint] 2026-09-09T21:15:14.096184 #0      _NativeSocket.startConnect (dart:io-patch/socket_patch.dart:817:35)
+[custom_lint] 2026-09-09T21:15:14.096184 #1      _NativeSocket.connect (dart:io-patch/socket_patch.dart:1142:12)
+[custom_lint] 2026-09-09T21:15:14.096184 #2      _RawSocket.connect (dart:io-patch/socket_patch.dart:2256:26)
+[custom_lint] 2026-09-09T21:15:14.096184 #3      RawSocket.connect (dart:io-patch/socket_patch.dart:31:23)
+[custom_lint] 2026-09-09T21:15:14.096184 #4      Socket._connect (dart:io-patch/socket_patch.dart:2526:22)
+[custom_lint] 2026-09-09T21:15:14.096184 #5      Socket.connect (dart:io/socket.dart:869:21)
+[custom_lint] 2026-09-09T21:15:14.096184 #6      runSocket.<anonymous closure>.<anonymous closure> (package:custom_lint_builder/src/channel.dart:69:35)
+[custom_lint] 2026-09-09T21:15:14.096184 #7      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[custom_lint] 2026-09-09T21:15:14.096184 #8      _rootRun (dart:async/zone_root.dart:27:47)
+[custom_lint] 2026-09-09T21:15:14.096184 #9      _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T21:15:14.096184 #10     _CustomZone.runGuarded (dart:async/zone.dart:625:7)
+[custom_lint] 2026-09-09T21:15:14.096184 #11     _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:666:23)
+[custom_lint] 2026-09-09T21:15:14.096184 #12     _rootRun (dart:async/zone_root.dart:35:13)
+[custom_lint] 2026-09-09T21:15:14.096184 #13     _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T21:15:14.096184 #14     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:649:23)
+[custom_lint] 2026-09-09T21:15:14.096184 #15     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[custom_lint] 2026-09-09T21:15:14.096184 #16     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:423:19)
+[custom_lint] 2026-09-09T21:15:14.096184 #17     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:454:5)
+[custom_lint] 2026-09-09T21:15:14.096184 #18     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+[custom_lint] 2026-09-09T21:15:14.096184
+[custom_lint] 2026-09-09T21:15:14.096184
+Failed to start pluginsThe request analysis.setContextRoots failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+Bad state: Failed to start the plugins.
+at:
+#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223:11)
+<asynchronous suspension>
+#1      Future.any.onValue (dart:async/future.dart:637:5)
+<asynchronous suspension>
+
+[custom_lint] 2026-09-09T21:15:14.130498 _PrettyRequestFailure: {"code":"PLUGIN_ERROR","message":"Bad state: Failed to start the plugins.","stackTrace":"#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223:11)\n<asynchronous suspension>\n#1      Future.any.onValue (dart:async/future.dart:637:5)\n<asynchronous suspension>\n"}
+[custom_lint] 2026-09-09T21:15:14.130498 #0      ChannelBase.sendRequest (package:custom_lint/src/server_isolate_channel.dart:82:7)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #1      CustomLintRunner.initialize.<anonymous closure> (package:custom_lint/src/runner.dart:41:5)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #2      _runServer.<anonymous closure> (package:custom_lint/custom_lint.dart:96:7)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #3      _AsyncCompleter.complete (dart:async/future_impl.dart:96:3)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #4      _runServer.<anonymous closure> (package:custom_lint/custom_lint.dart:126:19)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #5      _runServer (package:custom_lint/custom_lint.dart:86:3)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #6      customLint (package:custom_lint/custom_lint.dart:50:5)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #7      entrypoint (file:///home/forgot/.pub-cache/hosted/pub.dev/custom_lint-0.8.1/bin/custom_lint.dart:68:3)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498 #8      main (file:///home/forgot/.pub-cache/hosted/pub.dev/custom_lint-0.8.1/bin/custom_lint.dart:80:5)
+[custom_lint] 2026-09-09T21:15:14.130498 <asynchronous suspension>
+[custom_lint] 2026-09-09T21:15:14.130498
+[custom_lint] 2026-09-09T22:11:57.894066 Unhandled exception:
+[custom_lint] 2026-09-09T22:11:57.894066 SocketException: Connection timed out (OS Error: Connection timed out, errno = 110), address = ::1, port = 45906
+[custom_lint] 2026-09-09T22:11:57.894066 #0      _NativeSocket.startConnect (dart:io-patch/socket_patch.dart:817:35)
+[custom_lint] 2026-09-09T22:11:57.894066 #1      _NativeSocket.connect (dart:io-patch/socket_patch.dart:1142:12)
+[custom_lint] 2026-09-09T22:11:57.894066 #2      _RawSocket.connect (dart:io-patch/socket_patch.dart:2256:26)
+[custom_lint] 2026-09-09T22:11:57.894066 #3      RawSocket.connect (dart:io-patch/socket_patch.dart:31:23)
+[custom_lint] 2026-09-09T22:11:57.894066 #4      Socket._connect (dart:io-patch/socket_patch.dart:2526:22)
+[custom_lint] 2026-09-09T22:11:57.894066 #5      Socket.connect (dart:io/socket.dart:869:21)
+[custom_lint] 2026-09-09T22:11:57.894066 #6      runSocket.<anonymous closure>.<anonymous closure> (package:custom_lint_builder/src/channel.dart:69:35)
+[custom_lint] 2026-09-09T22:11:57.894066 #7      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[custom_lint] 2026-09-09T22:11:57.894066 #8      _rootRun (dart:async/zone_root.dart:27:47)
+[custom_lint] 2026-09-09T22:11:57.894066 #9      _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T22:11:57.894066 #10     _CustomZone.runGuarded (dart:async/zone.dart:625:7)
+[custom_lint] 2026-09-09T22:11:57.894066 #11     _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:666:23)
+[custom_lint] 2026-09-09T22:11:57.894066 #12     _rootRun (dart:async/zone_root.dart:35:13)
+[custom_lint] 2026-09-09T22:11:57.894066 #13     _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T22:11:57.894066 #14     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:649:23)
+[custom_lint] 2026-09-09T22:11:57.894066 #15     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[custom_lint] 2026-09-09T22:11:57.894066 #16     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:423:19)
+[custom_lint] 2026-09-09T22:11:57.894066 #17     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:454:5)
+[custom_lint] 2026-09-09T22:11:57.894066 #18     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+[custom_lint] 2026-09-09T22:11:57.894066
+[custom_lint] 2026-09-09T22:11:57.894066
+Failed to start pluginsThe request analysis.setContextRoots failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+Bad state: Failed to start the plugins.
+at:
+#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223)
+<asynchronous suspension>
+#1      Future.any.onValue (dart:async/future.dart:637)
+<asynchronous suspension>
+
+[custom_lint] 2026-09-09T22:34:33.652038 Unhandled exception:
+[custom_lint] 2026-09-09T22:34:33.652038 SocketException: Connection timed out (OS Error: Connection timed out, errno = 110), address = ::1, port = 60772
+[custom_lint] 2026-09-09T22:34:33.652038 #0      _NativeSocket.startConnect (dart:io-patch/socket_patch.dart:817:35)
+[custom_lint] 2026-09-09T22:34:33.652038 #1      _NativeSocket.connect (dart:io-patch/socket_patch.dart:1142:12)
+[custom_lint] 2026-09-09T22:34:33.652038 #2      _RawSocket.connect (dart:io-patch/socket_patch.dart:2256:26)
+[custom_lint] 2026-09-09T22:34:33.652038 #3      RawSocket.connect (dart:io-patch/socket_patch.dart:31:23)
+[custom_lint] 2026-09-09T22:34:33.652038 #4      Socket._connect (dart:io-patch/socket_patch.dart:2526:22)
+[custom_lint] 2026-09-09T22:34:33.652038 #5      Socket.connect (dart:io/socket.dart:869:21)
+[custom_lint] 2026-09-09T22:34:33.652038 #6      runSocket.<anonymous closure>.<anonymous closure> (package:custom_lint_builder/src/channel.dart:69:35)
+[custom_lint] 2026-09-09T22:34:33.652038 #7      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[custom_lint] 2026-09-09T22:34:33.652038 #8      _rootRun (dart:async/zone_root.dart:27:47)
+[custom_lint] 2026-09-09T22:34:33.652038 #9      _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T22:34:33.652038 #10     _CustomZone.runGuarded (dart:async/zone.dart:625:7)
+[custom_lint] 2026-09-09T22:34:33.652038 #11     _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:666:23)
+[custom_lint] 2026-09-09T22:34:33.652038 #12     _rootRun (dart:async/zone_root.dart:35:13)
+[custom_lint] 2026-09-09T22:34:33.652038 #13     _CustomZone.run (dart:async/zone.dart:726:19)
+[custom_lint] 2026-09-09T22:34:33.652038 #14     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:649:23)
+[custom_lint] 2026-09-09T22:34:33.652038 #15     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[custom_lint] 2026-09-09T22:34:33.652038 #16     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:423:19)
+[custom_lint] 2026-09-09T22:34:33.652038 #17     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:454:5)
+[custom_lint] 2026-09-09T22:34:33.652038 #18     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+[custom_lint] 2026-09-09T22:34:33.652038
+[custom_lint] 2026-09-09T22:34:33.652038
+Failed to start pluginsThe request analysis.setContextRoots failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+Bad state: Failed to start the plugins.
+at:
+#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223:11)
+<asynchronous suspension>
+#1      Future.any.onValue (dart:async/future.dart:637:5)
+<asynchronous suspension>
+
+[custom_lint] 2026-09-09T22:34:33.689979 _PrettyRequestFailure: {"code":"PLUGIN_ERROR","message":"Bad state: Failed to start the plugins.","stackTrace":"#0      SocketCustomLintServerToClientChannel._checkInitializationFail.<anonymous closure> (package:custom_lint/src/v2/server_to_client_channel.dart:223:11)\n<asynchronous suspension>\n#1      Future.any.onValue (dart:async/future.dart:637:5)\n<asynchronous suspension>\n"}
+[custom_lint] 2026-09-09T22:34:33.689979 #0      ChannelBase.sendRequest (package:custom_lint/src/server_isolate_channel.dart:82:7)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #1      CustomLintRunner.initialize.<anonymous closure> (package:custom_lint/src/runner.dart:41:5)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #2      _runServer.<anonymous closure> (package:custom_lint/custom_lint.dart:96:7)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #3      _AsyncCompleter.complete (dart:async/future_impl.dart:96:3)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #4      _runServer.<anonymous closure> (package:custom_lint/custom_lint.dart:126:19)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #5      _runServer (package:custom_lint/custom_lint.dart:86:3)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #6      customLint (package:custom_lint/custom_lint.dart:50:5)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #7      entrypoint (file:///home/forgot/.pub-cache/hosted/pub.dev/custom_lint-0.8.1/bin/custom_lint.dart:68:3)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979 #8      main (file:///home/forgot/.pub-cache/hosted/pub.dev/custom_lint-0.8.1/bin/custom_lint.dart:80:5)
+[custom_lint] 2026-09-09T22:34:33.689979 <asynchronous suspension>
+[custom_lint] 2026-09-09T22:34:33.689979

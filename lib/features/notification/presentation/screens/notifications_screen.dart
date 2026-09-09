@@ -166,6 +166,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             onRefresh: () =>
                 ref.read(notificationListProvider.notifier).refresh(),
             child: ListView.separated(
+              key: const PageStorageKey<String>('notifications-list'),
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),

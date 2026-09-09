@@ -35,6 +35,7 @@ abstract final class RouteNames {
   static const String languageSettings = 'languageSettings';
   static const String sessions = 'sessions';
   static const String localizationAssetsDemo = 'localizationAssetsDemo';
+  static const String componentShowcase = 'componentShowcase';
 }
 
 abstract final class SplashRoute {
@@ -87,9 +88,30 @@ abstract final class ProfileRoute {
   static const String location = '/profile';
 }
 
+/// `/chats/create`, optionally pre-set to a chat type.
+///
+/// The type travels as its wire value (`ChatType.wire`) rather than as an enum
+/// so the router stays clear of the chat feature's domain layer; the screen
+/// parses it back with `ChatType.fromWire`, which falls back to a direct chat
+/// for anything it does not recognise.
 abstract final class CreateChatRoute {
   static const String path = 'create';
   static const String location = '/chats/create';
+
+  static const String typeQueryParam = 'type';
+
+  static const String directType = 'direct';
+  static const String groupType = 'group';
+  static const String channelType = 'channel';
+
+  static String locationOf(String type) =>
+      '$location?$typeQueryParam=${Uri.encodeQueryComponent(type)}';
+
+  static String? typeFrom(GoRouterState state) {
+    final raw = state.uri.queryParameters[typeQueryParam];
+    if (raw == null || raw.isEmpty) return null;
+    return raw;
+  }
 }
 
 abstract final class ChatSearchRoute {
@@ -97,21 +119,44 @@ abstract final class ChatSearchRoute {
   static const String location = '/chats/search';
 }
 
+/// `/chats/{chatId}`, optionally focused on one message.
+///
+/// Two ways to name that message, because the two callers have different
+/// halves of it:
+///
+/// * `?message={seq}` — the per-chat sequence number. This is the deep-link
+///   form: `seq` is all the context endpoint needs
+///   (`GET /chats/{id}/messages/context/?target_seq=`), so the screen can jump
+///   straight there without a lookup.
+/// * `?message_id={uuid}` — a push notification carries `message_id` and no
+///   `seq`, so the screen resolves the seq first and then loads the context.
+///
+/// A non-numeric `?message=` is read as an id, so links minted before the seq
+/// form existed still land on the right message.
 class ChatDetailRoute {
-  const ChatDetailRoute(this.chatId, {this.messageId});
+  const ChatDetailRoute(this.chatId, {this.messageSeq, this.messageId});
 
   final String chatId;
 
+  /// Per-chat sequence number of the message to reveal.
+  final int? messageSeq;
+
+  /// Id of the message to reveal, when the seq is not known.
   final String? messageId;
 
   static const String path = ':chatId';
   static const String messageQueryParam = 'message';
+  static const String messageIdQueryParam = 'message_id';
 
   String get location {
     final base = '/chats/$chatId';
-    final target = messageId;
-    if (target == null || target.isEmpty) return base;
-    return '$base?$messageQueryParam=${Uri.encodeQueryComponent(target)}';
+
+    final seq = messageSeq;
+    if (seq != null) return '$base?$messageQueryParam=$seq';
+
+    final id = messageId;
+    if (id == null || id.isEmpty) return base;
+    return '$base?$messageIdQueryParam=${Uri.encodeQueryComponent(id)}';
   }
 
   static String? idFrom(GoRouterState state) {
@@ -120,10 +165,24 @@ class ChatDetailRoute {
     return raw;
   }
 
-  static String? messageIdFrom(GoRouterState state) {
+  static int? messageSeqFrom(GoRouterState state) {
     final raw = state.uri.queryParameters[messageQueryParam];
     if (raw == null || raw.isEmpty) return null;
-    return raw;
+
+    final seq = int.tryParse(raw);
+    if (seq == null || seq < 1) return null;
+    return seq;
+  }
+
+  static String? messageIdFrom(GoRouterState state) {
+    final explicit = state.uri.queryParameters[messageIdQueryParam];
+    if (explicit != null && explicit.isNotEmpty) return explicit;
+
+    final raw = state.uri.queryParameters[messageQueryParam];
+    if (raw == null || raw.isEmpty) return null;
+
+    // A numeric `?message=` is a seq, and messageSeqFrom already has it.
+    return int.tryParse(raw) == null ? raw : null;
   }
 }
 
@@ -177,6 +236,12 @@ abstract final class SessionsRoute {
 abstract final class LanguageSettingsRoute {
   static const String path = 'language';
   static const String location = '/settings/language';
+}
+
+/// The design-system showcase. Debug-only, like the other demo surfaces.
+abstract final class ComponentShowcaseRoute {
+  static const String path = '/demo/design-system';
+  static const String location = '/demo/design-system';
 }
 
 abstract final class LocalizationAssetsDemoRoute {

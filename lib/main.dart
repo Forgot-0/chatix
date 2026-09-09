@@ -8,10 +8,9 @@ import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
+import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/router/app_router.dart';
-import 'package:chatix/core/theme/app_theme.dart';
-import 'package:chatix/core/theme/chat_density_provider.dart';
-import 'package:chatix/core/theme/theme_mode_provider.dart';
+import 'package:chatix/core/ui/widgets/app_text_scale.dart';
 import 'package:chatix/core/updates/update_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
@@ -57,7 +56,7 @@ class MyApp extends ConsumerWidget {
 
     final themeMode = ref.watch(themeModeProvider);
 
-    final density = ref.watch(chatDensityProvider);
+    final textScale = ref.watch(textScaleProvider);
 
     final locale = ref.watch(persistentLocaleProvider);
 
@@ -69,11 +68,15 @@ class MyApp extends ConsumerWidget {
       child: AccessibilityWrapper(
         child: MaterialApp.router(
           title: AppConstants.appName,
-          theme: AppTheme.light(density),
-          darkTheme: AppTheme.dark(density),
+          theme: ref.watch(lightThemeProvider),
+          darkTheme: ref.watch(darkThemeProvider),
           themeMode: themeMode,
           routerConfig: router,
           debugShowCheckedModeBanner: false,
+          builder: (context, child) => AppTextScale(
+            scale: textScale,
+            child: child ?? const SizedBox.shrink(),
+          ),
 
           locale: locale,
           localizationsDelegates: [

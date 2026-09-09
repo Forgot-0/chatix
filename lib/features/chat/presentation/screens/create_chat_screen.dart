@@ -13,7 +13,12 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class CreateChatScreen extends ConsumerStatefulWidget {
-  const CreateChatScreen({super.key});
+  const CreateChatScreen({super.key, this.initialType});
+
+  /// Wire value of the chat type to open on, from `?type=` — the shell's
+  /// long-press shortcut lands straight on "new group" or "new channel".
+  /// Anything unrecognised falls back to a direct chat.
+  final String? initialType;
 
   @override
   ConsumerState<CreateChatScreen> createState() => _CreateChatScreenState();
@@ -26,7 +31,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
 
   final List<ProfileEntity> _selectedMembers = [];
 
-  ChatType _chatType = ChatType.direct;
+  late ChatType _chatType = ChatType.fromWire(widget.initialType);
   bool _isPublic = false;
   bool _adminOnly = false;
   bool _isSubmitting = false;
