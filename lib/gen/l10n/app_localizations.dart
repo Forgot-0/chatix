@@ -1941,6 +1941,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No people to show yet'**
   String get noContactsYet;
+
+  /// Author of the last message in a group when it was the reader
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get previewYou;
+
+  /// Chat row preview of a photo sent without a caption
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get previewPhoto;
+
+  /// Chat row preview of a video sent without a caption
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get previewVideo;
+
+  /// Chat row preview of a voice message of unknown length
+  ///
+  /// In en, this message translates to:
+  /// **'Voice message'**
+  String get previewVoice;
+
+  /// Chat row preview of a round video note
+  ///
+  /// In en, this message translates to:
+  /// **'Video message'**
+  String get previewVideoNote;
+
+  /// Chat row preview of a document whose filename is unknown
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get previewFile;
+
+  /// Chat row preview of a message with neither text nor a known attachment
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get previewNoText;
+
+  /// Prefix of the chat row preview when unsent text is waiting in the composer
+  ///
+  /// In en, this message translates to:
+  /// **'Draft:'**
+  String get draftLabel;
+
+  /// Quick action on a chat row that clears its unread count
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read'**
+  String get markAsRead;
+
+  /// Quick action that moves a chat into the archive section
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get archiveChat;
+
+  /// Quick action that moves a chat back out of the archive
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get unarchiveChat;
+
+  /// Quick action that keeps a chat at the top of the list
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get pinChat;
+
+  /// Quick action that releases a pinned chat back into the list
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get unpinChat;
+
+  /// Quick action that turns off notifications for a chat on this device
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get muteChat;
+
+  /// Quick action that turns notifications for a chat back on
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get unmuteChat;
+
+  /// Header of the collapsed section holding archived chats
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get archivedChats;
+
+  /// Accessible label of the pin marker on a chat row
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get chatPinnedLabel;
+
+  /// Accessible label of the muted marker on a chat row
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications off'**
+  String get chatMutedLabel;
+
+  /// Confirmation shown after a chat is archived
+  ///
+  /// In en, this message translates to:
+  /// **'Chat archived'**
+  String get chatArchivedToast;
+
+  /// Confirmation shown after a chat is deleted for everyone
+  ///
+  /// In en, this message translates to:
+  /// **'Chat deleted'**
+  String get chatDeletedToast;
+
+  /// Action on a confirmation snackbar that reverses what just happened
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// Shown when the only chats left are in the archive
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is archived'**
+  String get allChatsArchived;
+
+  /// Chat row preview of a voice message, with its length as m:ss
+  ///
+  /// In en, this message translates to:
+  /// **'Voice message {duration}'**
+  String previewVoiceWithDuration(String duration);
+
+  /// How many chats are inside the archive section
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 chat} other{{count} chats}}'**
+  String archivedChatsCount(int count);
 }
 
 class _AppLocalizationsDelegate

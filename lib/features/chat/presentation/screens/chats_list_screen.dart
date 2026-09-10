@@ -1,34 +1,25 @@
-import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
-import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
-import 'package:chatix/features/chat/domain/entities/message_entity.dart';
-import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_scroll_provider.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
-import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
-import 'package:chatix/core/router/app_layout.dart';
-import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_list_sections.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// Opens a chat the way the current layout wants it opened.
+/// The chats list: every conversation this account is in, most recent first.
 ///
-/// With one pane a chat is a place you go to and come back from, so it is
-/// pushed. With two panes it is a selection in a list that is still on screen,
-/// so it replaces whatever the right pane was showing instead of stacking a
-/// new page behind it every time the user glances at another conversation.
-void openChat(BuildContext context, String chatId) {
-  final location = ChatDetailRoute(chatId).location;
-
-  if (AppLayoutScope.of(context).isTwoPane) {
-    context.go(location);
-  } else {
-    context.push(location);
-  }
-}
-
+/// The rows come from `GET /chats/` a page at a time, on the two-part cursor
+/// the endpoint hands back (`last_activity_at` **and** `last_chat_id`,
+/// api-docs §5.2) — [ChatListController] keeps both, and this screen only has
+/// to ask for the next page as the bottom comes into view.
 class ChatsListScreen extends ConsumerStatefulWidget {
   const ChatsListScreen({super.key, this.selectedChatId});
 
@@ -44,6 +35,11 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   late final ScrollController _scrollController = ScrollController(
     initialScrollOffset: ref.read(chatListScrollOffsetProvider),
   );
+
+  /// The archive is a drawer inside the list rather than a screen of its own:
+  /// it holds chats you chose to stop seeing, and opening it should not cost
+  /// you your place in the list you were reading.
+  bool _archiveOpen = false;
 
   @override
   void initState() {
@@ -69,6 +65,12 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     }
   }
 
+  Future<void> _refresh() async {
+    // Presence answers are as stale as the rows they sit on.
+    ref.read(chatPresenceProvider.notifier).invalidate();
+    await ref.read(chatListProvider.notifier).refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final listState = ref.watch(chatListProvider);
@@ -90,46 +92,17 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
         error: (error, _) => AppErrorState(
           error: error,
           fallbackMessage: l10n.chatsLoadFailed,
-          onRetry: () => ref.read(chatListProvider.notifier).refresh(),
+          onRetry: _refresh,
         ),
-        data: (state) {
-          if (state.items.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
-              child: AppEmptyState(
-                icon: Icons.forum_outlined,
-                title: l10n.noChatsYet,
-                message: l10n.noChatsYetHint,
-                action: FilledButton.icon(
-                  onPressed: () => context.push(CreateChatRoute.location),
-                  icon: const Icon(Icons.add_comment_outlined),
-                  label: Text(l10n.newChat),
-                ),
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => ref.read(chatListProvider.notifier).refresh(),
-            child: ListView.separated(
-              key: const PageStorageKey<String>('chats-list'),
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: state.items.length + (state.canLoadMore ? 1 : 0),
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                if (index >= state.items.length) {
-                  return const AppLoadMoreIndicator();
-                }
-                final chat = state.items[index];
-                return ChatListTile(
-                  chat: chat,
-                  isSelected: chat.id == widget.selectedChatId,
-                );
-              },
-            ),
-          );
-        },
+        data: (state) => _ChatsList(
+          state: state,
+          selectedChatId: widget.selectedChatId,
+          scrollController: _scrollController,
+          archiveOpen: _archiveOpen,
+          onToggleArchive: () =>
+              setState(() => _archiveOpen = !_archiveOpen),
+          onRefresh: _refresh,
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(CreateChatRoute.location),
@@ -140,137 +113,223 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   }
 }
 
-class ChatListTile extends ConsumerWidget {
-  const ChatListTile({
-    super.key,
-    required this.chat,
-    this.isSelected = false,
+class _ChatsList extends ConsumerWidget {
+  const _ChatsList({
+    required this.state,
+    required this.selectedChatId,
+    required this.scrollController,
+    required this.archiveOpen,
+    required this.onToggleArchive,
+    required this.onRefresh,
   });
 
-  final ChatEntity chat;
-
-  /// Whether this chat is the one open in the detail pane.
-  final bool isSelected;
+  final ChatListState state;
+  final String? selectedChatId;
+  final ScrollController scrollController;
+  final bool archiveOpen;
+  final VoidCallback onToggleArchive;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unread = chat.unreadCount ?? 0;
     final l10n = AppLocalizations.of(context);
-    final myUserId = ref.watch(authProvider).value?.id;
+    final prefs = ref.watch(chatLocalPrefsProvider);
+    final sections = splitChatsForList(state.items, prefs);
 
-    final peer = chat.peerProfile(myUserId);
+    if (sections.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: onRefresh,
+        child: AppEmptyState(
+          icon: Icons.forum_outlined,
+          title: l10n.noChatsYet,
+          message: l10n.noChatsYetHint,
+          action: FilledButton.icon(
+            onPressed: () => context.push(CreateChatRoute.location),
+            icon: const Icon(Icons.add_comment_outlined),
+            label: Text(l10n.newChat),
+          ),
+        ),
+      );
+    }
 
-    return ListTile(
-      selected: isSelected,
-      selectedTileColor: Theme.of(context).colorScheme.secondaryContainer,
-      selectedColor: Theme.of(context).colorScheme.onSecondaryContainer,
-      leading: peer != null
-          ? ChatAvatar.profile(peer)
-          : ChatAvatarMosaic(
-              faces: _facesOf(chat, myUserId),
-              fallbackIcon: _iconFor(chat.type),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: CustomScrollView(
+        key: const PageStorageKey<String>('chats-list'),
+        controller: scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          if (sections.hasArchive)
+            SliverToBoxAdapter(
+              child: _ArchiveHeader(
+                count: sections.archived.length,
+                unread: sections.unreadInArchive(prefs),
+                isOpen: archiveOpen,
+                onTap: onToggleArchive,
+              ),
             ),
-      title: Text(
-        chatTitleOf(chat, l10n, myUserId: myUserId),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        _previewOf(chat) ??
-            chat.description ??
-            l10n.membersCount(chat.memberCount),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (chat.lastActivityAt != null)
-            Text(
-              _formatTime(chat.lastActivityAt!),
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-          if (unread > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Badge(label: Text('$unread')),
-            ),
+          if (sections.hasArchive && archiveOpen)
+            _rows(sections.archived, isLast: false),
+          if (sections.pinned.isNotEmpty) ...[
+            _SectionLabel(label: l10n.chatPinnedLabel),
+            _rows(sections.pinned, isLast: sections.active.isEmpty),
+          ],
+          if (sections.active.isNotEmpty)
+            _rows(sections.active, isLast: true),
+          if (state.canLoadMore)
+            const SliverToBoxAdapter(child: AppLoadMoreIndicator()),
+          if (sections.visible.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: _ArchiveOnlyNotice(),
+            )
+          else
+            const SliverToBoxAdapter(child: SizedBox(height: 88)),
         ],
       ),
-      onTap: () => openChat(context, chat.id),
     );
   }
 
-  static String? _previewOf(ChatEntity chat) {
-    final message = chat.lastMessage;
-    if (message == null) return null;
+  /// One block of rows, hairline-separated the way a list of people is —
+  /// the rule starts where the text does, so the avatars form a column.
+  Widget _rows(List<ChatEntity> chats, {required bool isLast}) {
+    return SliverList.builder(
+      itemCount: chats.length,
+      itemBuilder: (context, index) {
+        final chat = chats[index];
+        final isBlockEnd = index == chats.length - 1;
 
-    final content = message.content?.trim();
-    if (content != null && content.isNotEmpty) {
-      if (chat.type == ChatType.direct || message.type == MessageType.system) {
-        return content;
-      }
-      return '${message.authorLabel}: $content';
-    }
-
-    final label = switch (message.type) {
-      MessageType.image => '📷 Photo',
-      MessageType.file => '📎 File',
-      MessageType.voice => '🎤 Voice message',
-      MessageType.videoNote => '📹 Video message',
-      MessageType.system => null,
-      MessageType.text || MessageType.reply || MessageType.forward =>
-        message.attachments.isEmpty ? null : '📎 Attachment',
-    };
-    if (label == null) return null;
-
-    return chat.type == ChatType.direct
-        ? label
-        : '${message.authorLabel}: $label';
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ChatListTile(
+              key: ValueKey<String>(chat.id),
+              chat: chat,
+              isSelected: chat.id == selectedChatId,
+              peerReadSeq: state.peerReadSeqOf(chat.id),
+            ),
+            if (!isBlockEnd || !isLast)
+              const Divider(height: 1, indent: 80),
+          ],
+        );
+      },
+    );
   }
+}
 
-  /// Faces for a group's mosaic avatar.
-  ///
-  /// The list endpoint does not always carry a roster, and a group that has
-  /// its own `avatar_s3_key` does not need one; both cases fall through to
-  /// the type icon that [ChatAvatarMosaic] draws when handed nothing.
-  static List<AvatarFace> _facesOf(ChatEntity chat, int? myUserId) {
-    final roster = chat.members;
-    if (roster == null) return const [];
+/// What is left when every chat has been archived: not an empty account, so
+/// not the empty state — just a note that the rest is behind the lid above.
+class _ArchiveOnlyNotice extends StatelessWidget {
+  const _ArchiveOnlyNotice();
 
-    return [
-      for (final member in roster)
-        if (member.userId != myUserId && member.profile != null)
-          AvatarFace.profile(member.profile!),
-    ];
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.archive_outlined,
+              size: 48,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            Text(
+              l10n.allChatsArchived,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
+}
 
-  static IconData _iconFor(ChatType type) {
-    switch (type) {
-      case ChatType.direct:
-        return Icons.person_outline;
-      case ChatType.group:
-        return Icons.group_outlined;
-      case ChatType.supergroup:
-        return Icons.groups_outlined;
-      case ChatType.channel:
-        return Icons.campaign_outlined;
-    }
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.x4,
+          AppSpacing.x3,
+          AppSpacing.x4,
+          AppSpacing.x1,
+        ),
+        child: Text(
+          label.toUpperCase(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+      ),
+    );
   }
+}
 
-  static String _formatTime(DateTime value) {
-    final local = value.toLocal();
-    final now = DateTime.now();
-    final sameDay =
-        local.year == now.year &&
-        local.month == now.month &&
-        local.day == now.day;
-    if (sameDay) {
-      return '${local.hour.toString().padLeft(2, '0')}:'
-          '${local.minute.toString().padLeft(2, '0')}';
-    }
-    return '${local.day.toString().padLeft(2, '0')}.'
-        '${local.month.toString().padLeft(2, '0')}.${local.year}';
+/// The lid on the archive: how much is in there, and whether it is open.
+class _ArchiveHeader extends StatelessWidget {
+  const _ArchiveHeader({
+    required this.count,
+    required this.unread,
+    required this.isOpen,
+    required this.onTap,
+  });
+
+  final int count;
+  final int unread;
+  final bool isOpen;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          onTap: onTap,
+          leading: Icon(Icons.archive_outlined, color: scheme.onSurfaceVariant),
+          title: Text(
+            l10n.archivedChats,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: Text(l10n.archivedChatsCount(count)),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (unread > 0) ...[
+                UnreadBadge(count: unread),
+                const SizedBox(width: AppSpacing.x2),
+              ],
+              Icon(
+                isOpen ? Icons.expand_less : Icons.expand_more,
+                color: scheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+      ],
+    );
   }
 }

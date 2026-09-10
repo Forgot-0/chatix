@@ -1021,4 +1021,86 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get noContactsYet => 'দেখানোর মতো এখনো কেউ নেই';
+
+  @override
+  String get previewYou => 'আপনি';
+
+  @override
+  String get previewPhoto => 'ছবি';
+
+  @override
+  String get previewVideo => 'ভিডিও';
+
+  @override
+  String get previewVoice => 'ভয়েস বার্তা';
+
+  @override
+  String get previewVideoNote => 'ভিডিও বার্তা';
+
+  @override
+  String get previewFile => 'ফাইল';
+
+  @override
+  String get previewNoText => 'বার্তা';
+
+  @override
+  String get draftLabel => 'খসড়া:';
+
+  @override
+  String get markAsRead => 'পঠিত হিসেবে চিহ্নিত করুন';
+
+  @override
+  String get archiveChat => 'আর্কাইভ';
+
+  @override
+  String get unarchiveChat => 'আর্কাইভ থেকে ফেরান';
+
+  @override
+  String get pinChat => 'পিন করুন';
+
+  @override
+  String get unpinChat => 'পিন সরান';
+
+  @override
+  String get muteChat => 'নীরব করুন';
+
+  @override
+  String get unmuteChat => 'নীরবতা বন্ধ করুন';
+
+  @override
+  String get archivedChats => 'আর্কাইভ করা';
+
+  @override
+  String get chatPinnedLabel => 'পিন করা';
+
+  @override
+  String get chatMutedLabel => 'বিজ্ঞপ্তি বন্ধ';
+
+  @override
+  String get chatArchivedToast => 'চ্যাট আর্কাইভ করা হয়েছে';
+
+  @override
+  String get chatDeletedToast => 'চ্যাট মুছে ফেলা হয়েছে';
+
+  @override
+  String get undo => 'পূর্বাবস্থায় ফেরান';
+
+  @override
+  String get allChatsArchived => 'সবকিছু আর্কাইভ করা আছে';
+
+  @override
+  String previewVoiceWithDuration(String duration) {
+    return 'ভয়েস বার্তা $duration';
+  }
+
+  @override
+  String archivedChatsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি চ্যাট',
+      one: '১টি চ্যাট',
+    );
+    return '$_temp0';
+  }
 }

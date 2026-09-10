@@ -16,6 +16,7 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
@@ -131,6 +132,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+
+    // Whatever was typed here last time and never sent. Restored before the
+    // listener goes on, so putting it back does not count as a fresh edit.
+    _textController.text =
+        ref.read(chatDraftsProvider.notifier).of(widget.chatId) ?? '';
+    _textController.selection = TextSelection.collapsed(
+      offset: _textController.text.length,
+    );
+    _hasText = _textController.text.trim().isNotEmpty;
+
     _textController.addListener(_onTextChanged);
 
     _pendingFocusId = widget.focusMessageId;
@@ -374,7 +385,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   void _cancelEditing() {
     setState(() => _editing = null);
-    _textController.clear();
+
+    // Back to the draft the edit interrupted, so the composer and the chat
+    // row agree about what is waiting to be sent.
+    _textController.text =
+        ref.read(chatDraftsProvider.notifier).of(widget.chatId) ?? '';
+    _textController.selection = TextSelection.collapsed(
+      offset: _textController.text.length,
+    );
   }
 
   @override
@@ -536,6 +554,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void _onTextChanged() {
     final has = _textController.text.trim().isNotEmpty;
     if (has != _hasText) setState(() => _hasText = has);
+
+    // While an edit is in the composer the text belongs to that message, not
+    // to a draft of the next one.
+    if (_editing == null) {
+      ref.read(chatDraftsProvider.notifier).save(
+        widget.chatId,
+        _textController.text,
+      );
+    }
   }
 
   Future<void> _sendVoice(VoiceRecording recording) async {
@@ -597,6 +624,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (text.isEmpty && !(attachments?.isReady ?? false)) return;
 
     _textController.clear();
+    ref.read(chatDraftsProvider.notifier).clear(widget.chatId);
 
     await ref
         .read(chatDetailProvider(widget.chatId).notifier)

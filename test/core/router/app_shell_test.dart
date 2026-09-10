@@ -12,6 +12,7 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -351,11 +352,11 @@ void main() {
   group('scroll position', () {
     Finder listOf() => find.descendant(
       of: find.byType(ChatsListScreen),
-      matching: find.byType(ListView),
+      matching: find.byType(CustomScrollView),
     );
 
     double offsetOf(WidgetTester tester) =>
-        tester.widget<ListView>(listOf()).controller!.offset;
+        tester.widget<CustomScrollView>(listOf()).controller!.offset;
 
     testWidgets('survives the rotation that moves the list between panes', (
       tester,

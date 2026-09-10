@@ -23,13 +23,24 @@ class ChatListState extends Equatable {
   final String? nextChatId;
   final bool isLoadingMore;
 
+  /// How far the other side has read, per chat, as told by `messages_read`
+  /// events from someone who is not us (api-docs §6.4).
+  ///
+  /// `ChatDTO.last_read` is our own read position, so nothing in the list
+  /// response says whether our last message was read. Without an entry here
+  /// the row shows one tick, which is the honest answer: sent, unknown.
+  final Map<String, int> peerReadSeqs;
+
   const ChatListState({
     this.items = const [],
     this.hasNext = false,
     this.nextDate,
     this.nextChatId,
     this.isLoadingMore = false,
+    this.peerReadSeqs = const {},
   });
+
+  int? peerReadSeqOf(String chatId) => peerReadSeqs[chatId];
 
   bool get canLoadMore => hasNext && (nextChatId != null || nextDate != null);
 
@@ -42,6 +53,7 @@ class ChatListState extends Equatable {
     String? nextDate,
     String? nextChatId,
     bool? isLoadingMore,
+    Map<String, int>? peerReadSeqs,
   }) {
     return ChatListState(
       items: items ?? this.items,
@@ -49,6 +61,7 @@ class ChatListState extends Equatable {
       nextDate: nextDate,
       nextChatId: nextChatId,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      peerReadSeqs: peerReadSeqs ?? this.peerReadSeqs,
     );
   }
 
@@ -59,6 +72,7 @@ class ChatListState extends Equatable {
     nextDate,
     nextChatId,
     isLoadingMore,
+    peerReadSeqs,
   ];
 }
 
@@ -258,9 +272,28 @@ class ChatListController extends AsyncNotifier<ChatListState> {
 
   void _onMessagesRead(MessagesRead event) {
     final myUserId = ref.read(authProvider).value?.id;
-    if (myUserId == null || event.readerId != myUserId) return;
 
-    _patchRow(event.chatId, (chat) => chat.copyWith(unreadCount: 0));
+    if (myUserId != null && event.readerId == myUserId) {
+      _patchRow(event.chatId, (chat) => chat.copyWith(unreadCount: 0));
+      return;
+    }
+
+    _rememberPeerRead(event.chatId, event.seq);
+  }
+
+  /// Records how far someone else has read, which is what turns the row's
+  /// single tick into a double one.
+  void _rememberPeerRead(String chatId, int seq) {
+    _mutate((s) {
+      final known = s.peerReadSeqs[chatId];
+      if (known != null && known >= seq) return s;
+
+      return s.copyWith(
+        nextDate: s.nextDate,
+        nextChatId: s.nextChatId,
+        peerReadSeqs: {...s.peerReadSeqs, chatId: seq},
+      );
+    });
   }
 
   void _onMembershipChange(String chatId, int userId, {required bool removed}) {
@@ -379,6 +412,50 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_fetchFirstPage);
+  }
+
+  /// Clears a chat's unread count without opening it.
+  ///
+  /// `POST /chats/{id}/read/` wants a sequence number, so this reads up to the
+  /// last message the row knows about — `seq_counter` when the row has no
+  /// preview to read from. The badge goes at once and comes back, with a
+  /// `false` here, if the request does not land.
+  Future<bool> markChatRead(String chatId) async {
+    final current = state.value;
+    if (current == null) return false;
+
+    final index = current.items.indexWhere((chat) => chat.id == chatId);
+    if (index < 0) return false;
+
+    final chat = current.items[index];
+    final unread = chat.unreadCount ?? 0;
+    if (unread == 0) return true;
+
+    final seq = chat.lastMessage?.seq ?? chat.seqCounter;
+    if (seq < 1) return false;
+
+    _patchRow(chatId, (row) => row.copyWith(unreadCount: 0));
+
+    final result = await ref.read(markReadUseCaseProvider).execute(chatId, seq);
+
+    return result.match((failure) {
+      Logger.warning('ChatList: $chatId not marked read (${failure.message})');
+      _patchRow(chatId, (row) => row.copyWith(unreadCount: unread));
+      return false;
+    }, (_) => true);
+  }
+
+  /// Drops a chat from the list without waiting for the server to say so —
+  /// what deleting one from the list itself does, since the `chat_deleted`
+  /// event that confirms it may arrive after the row is gone.
+  void removeLocally(String chatId) {
+    _mutate(
+      (s) => s.copyWith(
+        items: ChatRealtimeMerge.removeChat(s.items, chatId),
+        nextDate: s.nextDate,
+        nextChatId: s.nextChatId,
+      ),
+    );
   }
 
   Future<void> loadMore() async {

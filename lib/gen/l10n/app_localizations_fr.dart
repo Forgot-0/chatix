@@ -1037,4 +1037,86 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noContactsYet => 'Aucune personne à afficher pour l’instant';
+
+  @override
+  String get previewYou => 'Vous';
+
+  @override
+  String get previewPhoto => 'Photo';
+
+  @override
+  String get previewVideo => 'Vidéo';
+
+  @override
+  String get previewVoice => 'Message vocal';
+
+  @override
+  String get previewVideoNote => 'Message vidéo';
+
+  @override
+  String get previewFile => 'Fichier';
+
+  @override
+  String get previewNoText => 'Message';
+
+  @override
+  String get draftLabel => 'Brouillon :';
+
+  @override
+  String get markAsRead => 'Marquer comme lu';
+
+  @override
+  String get archiveChat => 'Archiver';
+
+  @override
+  String get unarchiveChat => 'Désarchiver';
+
+  @override
+  String get pinChat => 'Épingler';
+
+  @override
+  String get unpinChat => 'Détacher';
+
+  @override
+  String get muteChat => 'Mettre en sourdine';
+
+  @override
+  String get unmuteChat => 'Réactiver les notifications';
+
+  @override
+  String get archivedChats => 'Archivés';
+
+  @override
+  String get chatPinnedLabel => 'Épinglé';
+
+  @override
+  String get chatMutedLabel => 'Notifications désactivées';
+
+  @override
+  String get chatArchivedToast => 'Discussion archivée';
+
+  @override
+  String get chatDeletedToast => 'Discussion supprimée';
+
+  @override
+  String get undo => 'Annuler';
+
+  @override
+  String get allChatsArchived => 'Tout est archivé';
+
+  @override
+  String previewVoiceWithDuration(String duration) {
+    return 'Message vocal $duration';
+  }
+
+  @override
+  String archivedChatsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count discussions',
+      one: '1 discussion',
+    );
+    return '$_temp0';
+  }
 }

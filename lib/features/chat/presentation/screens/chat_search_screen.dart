@@ -11,7 +11,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_list_provider.d
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/utils/direct_chat_lookup.dart';
-import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
@@ -202,7 +202,8 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
                     title: AppLocalizations.of(context).chats,
                     theme: theme,
                   ),
-                  for (final chat in chats) ChatListTile(chat: chat),
+                  for (final chat in chats)
+                    ChatListTile(chat: chat, enableActions: false),
                 ],
                 _SectionHeader(
                   title: AppLocalizations.of(context).searchPeople,

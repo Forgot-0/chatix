@@ -137,6 +137,59 @@ void main() {
     });
   });
 
+  group('chats — list (api-docs §5.2)', () {
+    void stubGet(Object? responseData) {
+      when(
+        () => mockApiClient.get(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenAnswer((_) async => Right(responseData));
+    }
+
+    Map<String, dynamic> capturedQuery() {
+      final captured = verify(
+        () => mockApiClient.get(
+          any(),
+          queryParameters: captureAny(named: 'queryParameters'),
+        ),
+      ).captured;
+      return captured.single as Map<String, dynamic>;
+    }
+
+    final emptyPage = <String, dynamic>{
+      'has_next': false,
+      'chats': <dynamic>[],
+      'next_date': null,
+      'next_chat_id': null,
+    };
+
+    test('the first page carries no cursor at all', () async {
+      stubGet(emptyPage);
+
+      await dataSource.fetchChats(limit: 50);
+
+      final query = capturedQuery();
+      expect(query['limit'], 50);
+      expect(query.containsKey('last_chat_id'), isFalse);
+      expect(query.containsKey('last_activity_at'), isFalse);
+    });
+
+    test('the next page sends BOTH halves of the cursor', () async {
+      stubGet(emptyPage);
+
+      await dataSource.fetchChats(
+        limit: 50,
+        lastChatId: tChatId,
+        lastActivityAt: DateTime.utc(2026, 1, 15, 10, 30),
+      );
+
+      final query = capturedQuery();
+      expect(query['last_chat_id'], tChatId);
+      expect(query['last_activity_at'], '2026-01-15T10:30:00.000Z');
+    });
+  });
+
   group('chats — update (api-docs §6.2)', () {
     test('uses PATCH, never PUT, and omits untouched fields', () async {
       stubPatch(tChatJson);

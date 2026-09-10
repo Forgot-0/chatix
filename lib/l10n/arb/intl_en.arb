@@ -1324,5 +1324,111 @@
   "noContactsYet": "No people to show yet",
   "@noContactsYet": {
     "description": "Empty state on the contacts tab before anything is loaded"
+  },
+  "previewYou": "You",
+  "@previewYou": {
+    "description": "Author of the last message in a group when it was the reader"
+  },
+  "previewPhoto": "Photo",
+  "@previewPhoto": {
+    "description": "Chat row preview of a photo sent without a caption"
+  },
+  "previewVideo": "Video",
+  "@previewVideo": {
+    "description": "Chat row preview of a video sent without a caption"
+  },
+  "previewVoice": "Voice message",
+  "@previewVoice": {
+    "description": "Chat row preview of a voice message of unknown length"
+  },
+  "previewVideoNote": "Video message",
+  "@previewVideoNote": {
+    "description": "Chat row preview of a round video note"
+  },
+  "previewFile": "File",
+  "@previewFile": {
+    "description": "Chat row preview of a document whose filename is unknown"
+  },
+  "previewNoText": "Message",
+  "@previewNoText": {
+    "description": "Chat row preview of a message with neither text nor a known attachment"
+  },
+  "draftLabel": "Draft:",
+  "@draftLabel": {
+    "description": "Prefix of the chat row preview when unsent text is waiting in the composer"
+  },
+  "markAsRead": "Mark as read",
+  "@markAsRead": {
+    "description": "Quick action on a chat row that clears its unread count"
+  },
+  "archiveChat": "Archive",
+  "@archiveChat": {
+    "description": "Quick action that moves a chat into the archive section"
+  },
+  "unarchiveChat": "Unarchive",
+  "@unarchiveChat": {
+    "description": "Quick action that moves a chat back out of the archive"
+  },
+  "pinChat": "Pin",
+  "@pinChat": {
+    "description": "Quick action that keeps a chat at the top of the list"
+  },
+  "unpinChat": "Unpin",
+  "@unpinChat": {
+    "description": "Quick action that releases a pinned chat back into the list"
+  },
+  "muteChat": "Mute",
+  "@muteChat": {
+    "description": "Quick action that turns off notifications for a chat on this device"
+  },
+  "unmuteChat": "Unmute",
+  "@unmuteChat": {
+    "description": "Quick action that turns notifications for a chat back on"
+  },
+  "archivedChats": "Archived",
+  "@archivedChats": {
+    "description": "Header of the collapsed section holding archived chats"
+  },
+  "chatPinnedLabel": "Pinned",
+  "@chatPinnedLabel": {
+    "description": "Accessible label of the pin marker on a chat row"
+  },
+  "chatMutedLabel": "Notifications off",
+  "@chatMutedLabel": {
+    "description": "Accessible label of the muted marker on a chat row"
+  },
+  "chatArchivedToast": "Chat archived",
+  "@chatArchivedToast": {
+    "description": "Confirmation shown after a chat is archived"
+  },
+  "chatDeletedToast": "Chat deleted",
+  "@chatDeletedToast": {
+    "description": "Confirmation shown after a chat is deleted for everyone"
+  },
+  "undo": "Undo",
+  "@undo": {
+    "description": "Action on a confirmation snackbar that reverses what just happened"
+  },
+  "allChatsArchived": "Everything is archived",
+  "@allChatsArchived": {
+    "description": "Shown when the only chats left are in the archive"
+  },
+  "previewVoiceWithDuration": "Voice message {duration}",
+  "@previewVoiceWithDuration": {
+    "description": "Chat row preview of a voice message, with its length as m:ss",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "archivedChatsCount": "{count, plural, =1{1 chat} other{{count} chats}}",
+  "@archivedChatsCount": {
+    "description": "How many chats are inside the archive section",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

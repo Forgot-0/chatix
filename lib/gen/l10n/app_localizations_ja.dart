@@ -1010,4 +1010,85 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noContactsYet => '表示できる人はまだいません';
+
+  @override
+  String get previewYou => '自分';
+
+  @override
+  String get previewPhoto => '写真';
+
+  @override
+  String get previewVideo => '動画';
+
+  @override
+  String get previewVoice => 'ボイスメッセージ';
+
+  @override
+  String get previewVideoNote => 'ビデオメッセージ';
+
+  @override
+  String get previewFile => 'ファイル';
+
+  @override
+  String get previewNoText => 'メッセージ';
+
+  @override
+  String get draftLabel => '下書き:';
+
+  @override
+  String get markAsRead => '既読にする';
+
+  @override
+  String get archiveChat => 'アーカイブ';
+
+  @override
+  String get unarchiveChat => 'アーカイブ解除';
+
+  @override
+  String get pinChat => 'ピン留め';
+
+  @override
+  String get unpinChat => 'ピン留めを外す';
+
+  @override
+  String get muteChat => '通知オフ';
+
+  @override
+  String get unmuteChat => '通知オン';
+
+  @override
+  String get archivedChats => 'アーカイブ済み';
+
+  @override
+  String get chatPinnedLabel => 'ピン留め済み';
+
+  @override
+  String get chatMutedLabel => '通知オフ';
+
+  @override
+  String get chatArchivedToast => 'チャットをアーカイブしました';
+
+  @override
+  String get chatDeletedToast => 'チャットを削除しました';
+
+  @override
+  String get undo => '元に戻す';
+
+  @override
+  String get allChatsArchived => 'すべてアーカイブ済みです';
+
+  @override
+  String previewVoiceWithDuration(String duration) {
+    return 'ボイスメッセージ $duration';
+  }
+
+  @override
+  String archivedChatsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 件のチャット',
+    );
+    return '$_temp0';
+  }
 }
