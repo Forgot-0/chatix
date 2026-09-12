@@ -8,6 +8,7 @@ import 'package:chatix/features/profile/data/datasources/profile_remote_data_sou
 import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
+import 'package:chatix/core/network/request_cancellation.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource _remoteDataSource;
@@ -22,6 +23,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     int page = 1,
     int pageSize = 20,
     String? sort,
+    RequestCancellation? cancellation,
   }) async {
     final result = await _remoteDataSource.fetchProfiles(
       username: username,
@@ -30,6 +32,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       page: page,
       pageSize: pageSize,
       sort: sort,
+      cancellation: cancellation,
     );
     return result.map((page) => page.map((model) => model.toEntity()));
   }

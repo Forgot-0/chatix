@@ -6,6 +6,7 @@ import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/features/profile/data/models/avatar_presign_model.dart';
 import 'package:chatix/features/profile/data/models/profile_model.dart';
+import 'package:chatix/core/network/request_cancellation.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<Either<Failure, PageResult<ProfileModel>>> fetchProfiles({
@@ -15,6 +16,7 @@ abstract class ProfileRemoteDataSource {
     int page = 1,
     int pageSize = 20,
     String? sort,
+    RequestCancellation? cancellation,
   });
 
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId);
@@ -59,9 +61,11 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     int page = 1,
     int pageSize = 20,
     String? sort,
+    RequestCancellation? cancellation,
   }) async {
     final result = await _apiClient.get(
       '/profiles/',
+      cancelToken: cancellation?.dioToken,
       queryParameters: {
         'username': ?username,
         'display_name': ?displayName,

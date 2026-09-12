@@ -20,39 +20,35 @@ void main() {
   test('a chat carries no flags until something says otherwise', () {
     final prefs = boot().read(chatLocalPrefsProvider);
 
-    expect(prefs.isPinned('a'), isFalse);
-    expect(prefs.isArchived('a'), isFalse);
     expect(prefs.isMuted('a'), isFalse);
   });
 
   test('toggling reports what the flag became', () {
     final controller = boot().read(chatLocalPrefsProvider.notifier);
 
-    expect(controller.toggle(ChatLocalFlag.pinned, 'a'), isTrue);
-    expect(controller.toggle(ChatLocalFlag.pinned, 'a'), isFalse);
+    expect(controller.toggle(ChatLocalFlag.muted, 'a'), isTrue);
+    expect(controller.toggle(ChatLocalFlag.muted, 'a'), isFalse);
   });
 
-  test('flags are independent of each other and of other chats', () {
+  test('flags are independent between chats', () {
     final container = boot();
     final controller = container.read(chatLocalPrefsProvider.notifier);
 
-    controller.toggle(ChatLocalFlag.pinned, 'a');
     controller.toggle(ChatLocalFlag.muted, 'b');
 
     final prefs = container.read(chatLocalPrefsProvider);
-    expect(prefs.pinned, {'a'});
     expect(prefs.muted, {'b'});
-    expect(prefs.archived, isEmpty);
+    expect(prefs.isMuted('a'), isFalse);
   });
 
   test('set is idempotent and leaves the state object alone', () {
     final container = boot();
     final controller = container.read(chatLocalPrefsProvider.notifier);
 
-    controller.set(ChatLocalFlag.archived, 'a', value: true);
+    controller.set(ChatLocalFlag.muted, 'a', value: true);
     final afterFirst = container.read(chatLocalPrefsProvider);
 
-    controller.set(ChatLocalFlag.archived, 'a', value: true);
+    controller.set(ChatLocalFlag.muted, 'a', value: true);
     expect(container.read(chatLocalPrefsProvider), same(afterFirst));
   });
 
@@ -60,29 +56,23 @@ void main() {
     final container = boot();
     final controller = container.read(chatLocalPrefsProvider.notifier);
 
-    controller.toggle(ChatLocalFlag.pinned, 'a');
     controller.toggle(ChatLocalFlag.muted, 'a');
-    controller.toggle(ChatLocalFlag.archived, 'a');
-
     controller.forget('a');
 
-    final prefs = container.read(chatLocalPrefsProvider);
-    expect(prefs.pinned, isEmpty);
-    expect(prefs.muted, isEmpty);
-    expect(prefs.archived, isEmpty);
+    expect(container.read(chatLocalPrefsProvider).muted, isEmpty);
   });
 
   test('flags survive into the next session', () async {
     final first = boot();
     first.read(chatLocalPrefsProvider.notifier).toggle(
-      ChatLocalFlag.pinned,
+      ChatLocalFlag.muted,
       'a',
     );
 
     // The write is fired off, not awaited, so let it land.
     await Future<void>.delayed(Duration.zero);
 
-    expect(boot().read(chatLocalPrefsProvider).isPinned('a'), isTrue);
+    expect(boot().read(chatLocalPrefsProvider).isMuted('a'), isTrue);
   });
 
   test('a store that cannot be built leaves the screen working', () {

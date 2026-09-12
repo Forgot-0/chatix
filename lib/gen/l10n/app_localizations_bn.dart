@@ -1103,4 +1103,277 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get chatFolders => 'ফোল্ডার';
+
+  @override
+  String get chatFoldersAll => 'সব চ্যাট';
+
+  @override
+  String get folderPresetUnread => 'অপঠিত';
+
+  @override
+  String get folderPresetPersonal => 'ব্যক্তিগত';
+
+  @override
+  String get folderPresetGroups => 'গ্রুপ';
+
+  @override
+  String get folderPresetChannels => 'চ্যানেল';
+
+  @override
+  String get folderPresetNoReply => 'আমার উত্তরের অপেক্ষায়';
+
+  @override
+  String get newFolder => 'নতুন ফোল্ডার';
+
+  @override
+  String get editFolder => 'ফোল্ডার সম্পাদনা';
+
+  @override
+  String get folderName => 'ফোল্ডারের নাম';
+
+  @override
+  String get folderIcon => 'আইকন';
+
+  @override
+  String get folderRules => 'নিয়ম';
+
+  @override
+  String get folderMatchModeTitle => 'একটি চ্যাট এখানে আসবে যখন';
+
+  @override
+  String get folderMatchAll => 'এটি সব নিয়ম মেনে চলে';
+
+  @override
+  String get folderMatchAny => 'এটি যেকোনো একটি নিয়ম মেনে চলে';
+
+  @override
+  String get addFolderRule => 'নিয়ম যোগ করুন';
+
+  @override
+  String get removeFolderRule => 'নিয়ম সরান';
+
+  @override
+  String get folderRuleChatType => 'চ্যাটের ধরন';
+
+  @override
+  String folderRuleChatTypeIn(String types) {
+    return 'ধরন $types';
+  }
+
+  @override
+  String get folderRuleUnread => 'অপঠিত বার্তা আছে';
+
+  @override
+  String get folderRuleRead => 'কিছুই অপঠিত নেই';
+
+  @override
+  String get folderRulePinned => 'পিন করা আছে';
+
+  @override
+  String get folderRuleNotPinned => 'পিন করা নেই';
+
+  @override
+  String get folderRuleNoReply => 'আমার উত্তরের অপেক্ষায়';
+
+  @override
+  String folderRuleNoReplyDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days দিনের বেশি আমার উত্তরের অপেক্ষায়',
+      one: '১ দিনের বেশি আমার উত্তরের অপেক্ষায়',
+      zero: 'আমার উত্তরের অপেক্ষায়',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderRuleDaysLabel => 'আমি উত্তর দিইনি যত দিন';
+
+  @override
+  String get folderRuleDaysAny => 'যেকোনো';
+
+  @override
+  String get folderRuleMember => 'একজন নির্দিষ্ট ব্যক্তি আছেন';
+
+  @override
+  String folderRuleMemberNamed(String name) {
+    return '$name আছেন';
+  }
+
+  @override
+  String get folderRulePickPerson => 'একজনকে বাছুন';
+
+  @override
+  String get folderRuleNoPeople =>
+      'যাদের সঙ্গে চ্যাট আছে, তারা এখানে দেখা যাবে';
+
+  @override
+  String get folderRuleMemberLocalNote =>
+      'চ্যাট তালিকা যা জানে তার উপরেই মিলিয়ে দেখে: আপনি, লোড হওয়া সদস্য তালিকা, শেষ বার্তার প্রেরক এবং চ্যাটটি যিনি তৈরি করেছেন।';
+
+  @override
+  String get deleteFolder => 'ফোল্ডার মুছুন';
+
+  @override
+  String get deleteFolderConfirm =>
+      'এই ফোল্ডারটি মুছবেন? ভিতরের চ্যাটগুলো যেখানে আছে সেখানেই থাকবে।';
+
+  @override
+  String get folderNameRequired => 'ফোল্ডারের একটি নাম দিন';
+
+  @override
+  String folderNameTooLong(int count) {
+    return 'ফোল্ডারের নাম সর্বোচ্চ $count অক্ষরের';
+  }
+
+  @override
+  String get folderRulesRequired => 'অন্তত একটি নিয়ম যোগ করুন';
+
+  @override
+  String folderLimitReached(int count) {
+    return 'আপনি সর্বোচ্চ $countটি ফোল্ডার রাখতে পারেন';
+  }
+
+  @override
+  String pinLimitReached(int count) {
+    return 'কেবল $countটি চ্যাট পিন করা যায়। আগে একটি খুলে দিন।';
+  }
+
+  @override
+  String get foldersEmpty => 'এখনও কোনো ফোল্ডার নেই';
+
+  @override
+  String get foldersEmptyHint =>
+      'ফোল্ডার হলো নিয়মের সমষ্টি, তালিকা নয়। চ্যাট নিজে থেকেই আসে ও যায়।';
+
+  @override
+  String get folderReadyMade => 'তৈরি করা আছে';
+
+  @override
+  String get folderYours => 'আপনার ফোল্ডার';
+
+  @override
+  String folderRuleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি নিয়ম',
+      one: '১টি নিয়ম',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderEmptyChats => 'এই ফোল্ডারে কিছু নেই';
+
+  @override
+  String get folderEmptyChatsHint => 'নিয়ম মিলে গেলেই চ্যাট এখানে দেখা যাবে।';
+
+  @override
+  String get hideFolderTabs => 'ফোল্ডারের সারি লুকান';
+
+  @override
+  String get hideFolderTabsHint =>
+      'ফোল্ডার থেকে যাবে, কেবল তালিকার উপরের ট্যাবগুলো দেখা যাবে না';
+
+  @override
+  String get unarchiveOnNewMessage => 'নতুন বার্তায় ফিরিয়ে আনুন';
+
+  @override
+  String get unarchiveOnNewMessageHint =>
+      'কেউ লিখলে আর্কাইভ করা চ্যাট তালিকায় ফিরে আসে';
+
+  @override
+  String get organizerDeviceOnly =>
+      'পিন, আর্কাইভ ও ফোল্ডার কেবল এই ডিভাইসে থাকে, অ্যাকাউন্টের সঙ্গে যায় না।';
+
+  @override
+  String get chatPinnedZone => 'পিন করা';
+
+  @override
+  String get chatUnarchivedToast => 'তালিকায় ফিরিয়ে আনা হয়েছে';
+
+  @override
+  String get searchTabMessages => 'বার্তা';
+
+  @override
+  String get searchEverything => 'চ্যাট, মানুষ ও বার্তা খুঁজুন';
+
+  @override
+  String get searchRecentQueries => 'সাম্প্রতিক অনুসন্ধান';
+
+  @override
+  String get searchRecentChats => 'সম্প্রতি খোলা';
+
+  @override
+  String get searchClearHistory => 'মুছুন';
+
+  @override
+  String get searchRemoveFromHistory => 'সাম্প্রতিক অনুসন্ধান থেকে সরান';
+
+  @override
+  String get searchStartTitle => 'চ্যাট, মানুষ বা বার্তা খুঁজুন';
+
+  @override
+  String get searchStartHint =>
+      'চ্যাট নাম দিয়ে, মানুষ ইউজারনেম দিয়ে, বার্তা তার লেখা দিয়ে খোঁজা হয়।';
+
+  @override
+  String get searchLoadedHistoryOnly => 'লোড হওয়া ইতিহাসে খোঁজা হচ্ছে';
+
+  @override
+  String get searchLoadedHistoryExplained =>
+      'সার্ভারে বার্তা অনুসন্ধান নেই, তাই এই ডিভাইসে থাকা বার্তাগুলোতেই খোঁজা হয়। আরও পেতে চ্যাট খুলুন।';
+
+  @override
+  String get noChatsFound => 'কোনো চ্যাট পাওয়া যায়নি';
+
+  @override
+  String get noChatsFoundHint =>
+      'ইতিমধ্যে লোড হওয়া চ্যাটগুলোর নাম ও বিবরণ দেখে খোঁজা হয়।';
+
+  @override
+  String get noPeopleFoundHint =>
+      'অন্য বানানে চেষ্টা করুন, বা ইউজারনেম দিয়ে খুঁজুন।';
+
+  @override
+  String get noMessagesFound => 'কোনো বার্তা পাওয়া যায়নি';
+
+  @override
+  String get messageSearchFailed => 'বার্তা খোঁজা যায়নি';
+
+  @override
+  String searchResultsCapped(int count) {
+    return 'প্রথম $countটি মিল দেখানো হচ্ছে';
+  }
+
+  @override
+  String get searchInChat => 'এই চ্যাটে খুঁজুন';
+
+  @override
+  String searchMatchPosition(int current, int total) {
+    return '$totalটির মধ্যে $current';
+  }
+
+  @override
+  String get searchNoMatches => 'কোনো মিল নেই';
+
+  @override
+  String get searchOlderMatch => 'আগের মিল';
+
+  @override
+  String get searchNewerMatch => 'পরের মিল';
+
+  @override
+  String get searchInChatHint => 'এই চ্যাটে খুঁজুন';
+
+  @override
+  String get searchChatDescriptionMatch => 'বিবরণে মিলেছে';
+
+  @override
+  String get searchOpenChat => 'চ্যাট খুলুন';
 }

@@ -20,6 +20,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_members_provide
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/search_providers.dart';
 
 const _pageSize = 30;
 const _uuid = Uuid();
@@ -649,7 +650,30 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     if (!ref.mounted) return;
     final current = state.value;
     if (current == null) return;
-    state = AsyncValue.data(transform(current));
+    final next = transform(current);
+    state = AsyncValue.data(next);
+    _cache(next.messages);
+  }
+
+  /// Files what is on screen where the search can find it.
+  ///
+  /// Every path that changes the message list ends up here or in the two
+  /// callers below, so anything the reader has actually seen becomes
+  /// searchable — which, with no search endpoint in the API (api-docs §5.4),
+  /// is the only history there is to search.
+  ///
+  /// The window is handed over whole so the cache can drop messages deleted
+  /// inside it; see [MessageCacheStore.remember].
+  List<MessageEntity> _cached(List<MessageEntity> messages) {
+    _cache(messages);
+    return messages;
+  }
+
+  void _cache(List<MessageEntity> messages) {
+    if (messages.isEmpty) return;
+    ref
+        .read(messageCacheStoreProvider)
+        .remember(_chatId, messages, reconcile: true);
   }
 
   Future<void> refresh() async {
@@ -693,7 +717,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       ),
       (page) => AsyncValue.data(
         current.copyWith(
-          messages: [...current.messages, ...page.messages],
+          messages: _cached([...current.messages, ...page.messages]),
           nextCursor: page.nextCursor,
           hasNext: page.hasNext,
           isLoadingMore: false,
@@ -1005,6 +1029,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     if (page.messages.isNotEmpty) {
       await _markReadUpTo(page.messages.first.seq);
     }
+
+    _cache(page.messages);
 
     return ChatDetailState(
       chat: chat,

@@ -16,6 +16,13 @@ import 'package:chatix/features/chat/presentation/providers/chat_list_provider.d
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
+import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
+import 'package:chatix/features/chat_organizer/data/models/chat_folder_model.dart';
+import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
+import 'package:chatix/features/chat_organizer/data/models/organizer_settings_model.dart';
+import 'package:chatix/features/chat_organizer/domain/entities/folder_preset.dart';
+import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_providers.dart';
+import 'package:chatix/features/chat_organizer/presentation/widgets/folder_tabs_bar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
 
@@ -69,6 +76,10 @@ void main() {
     WidgetTester tester, {
     ChatListState? state = const ChatListState(),
     ChatLocalPrefs prefs = const ChatLocalPrefs(),
+    Set<String> pinned = const <String>{},
+    Set<String> archived = const <String>{},
+    List<ChatFolder> folders = const <ChatFolder>[],
+    bool foldersHidden = false,
   }) async {
     for (final flag in ChatLocalFlag.values) {
       await store.writeFlag(flag, prefs.of(flag));
@@ -95,6 +106,14 @@ void main() {
       ProviderScope(
         overrides: [
           chatLocalPrefsStoreProvider.overrideWithValue(store),
+          chatOrganizerDataSourceProvider.overrideWithValue(
+            InMemoryChatOrganizerDataSource(
+              pinned: pinned,
+              archived: archived,
+              folders: folders.map(ChatFolderModel.fromEntity).toList(),
+              settings: OrganizerSettingsModel(foldersHidden: foldersHidden),
+            ),
+          ),
           authProvider.overrideWith(_FakeAuthController.new),
           chatListProvider.overrideWith(() => _FakeChatListController(state)),
         ],
@@ -141,10 +160,10 @@ void main() {
     await pumpScreen(
       tester,
       state: ChatListState(items: [chat('a'), chat('b')]),
-      prefs: const ChatLocalPrefs(pinned: {'b'}),
+      pinned: const {'b'},
     );
 
-    expect(find.text(l10n.chatPinnedLabel.toUpperCase()), findsOneWidget);
+    expect(find.text(l10n.chatPinnedZone.toUpperCase()), findsOneWidget);
 
     final rows = tester
         .widgetList<ChatListTile>(find.byType(ChatListTile))
@@ -158,7 +177,7 @@ void main() {
     await pumpScreen(
       tester,
       state: ChatListState(items: [chat('a'), chat('b', unread: 2)]),
-      prefs: const ChatLocalPrefs(archived: {'b'}),
+      archived: const {'b'},
     );
 
     expect(find.text(l10n.archivedChats), findsOneWidget);
@@ -179,7 +198,7 @@ void main() {
     await pumpScreen(
       tester,
       state: ChatListState(items: [chat('a')]),
-      prefs: const ChatLocalPrefs(archived: {'a'}),
+      archived: const {'a'},
     );
 
     expect(find.text(l10n.allChatsArchived), findsOneWidget);
@@ -200,5 +219,67 @@ void main() {
     );
 
     expect(find.byType(AppLoadMoreIndicator), findsOneWidget);
+  });
+
+  testWidgets('the folder strip stays away until there are folders', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      state: ChatListState(items: [chat('a')]),
+    );
+
+    expect(find.byType(FolderTabsBar), findsNothing);
+  });
+
+  testWidgets('a folder tab narrows the list to what its rules keep', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      state: ChatListState(items: [chat('a'), chat('b', unread: 3)]),
+      folders: [ChatFolder.fromPreset(FolderPreset.unread)],
+    );
+
+    expect(find.byType(FolderTabsBar), findsOneWidget);
+    expect(find.byType(ChatListTile), findsNWidgets(2));
+
+    await tester.tap(find.text(l10n.folderPresetUnread));
+    await tester.pumpAndSettle();
+
+    final rows = tester
+        .widgetList<ChatListTile>(find.byType(ChatListTile))
+        .toList();
+    expect(rows.map((row) => row.chat.id), ['b']);
+  });
+
+  testWidgets('a folder that matches nothing says so instead of looking broken', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      state: ChatListState(items: [chat('a')]),
+      folders: [ChatFolder.fromPreset(FolderPreset.channels)],
+    );
+
+    await tester.tap(find.text(l10n.folderPresetChannels));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.folderEmptyChats), findsOneWidget);
+    expect(find.byType(ChatListTile), findsNothing);
+  });
+
+  testWidgets('hiding the strip keeps the folders but takes the tabs away', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      state: ChatListState(items: [chat('a')]),
+      folders: [ChatFolder.fromPreset(FolderPreset.unread)],
+      foldersHidden: true,
+    );
+
+    expect(find.byType(FolderTabsBar), findsNothing);
+    expect(find.byType(ChatListTile), findsOneWidget);
   });
 }

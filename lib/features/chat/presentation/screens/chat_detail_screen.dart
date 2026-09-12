@@ -17,6 +17,7 @@ import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart'
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
@@ -36,6 +37,7 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/in_chat_search_bar.dart';
 import 'package:chatix/features/chat/presentation/widgets/date_chip.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/features/chat/presentation/widgets/typing_dots.dart';
@@ -73,6 +75,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Set<String>? _selectedMessageIds;
 
   bool get _selectionMode => _selectedMessageIds != null;
+
+  /// The search field in place of the header. Its own mode rather than a
+  /// route: the messages stay on screen behind it, which is the whole point
+  /// of searching inside one chat.
+  bool _searchMode = false;
+
+  final TextEditingController _searchController = TextEditingController();
 
   final Map<String, GlobalKey> _messageKeys = {};
 
@@ -186,7 +195,63 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _scrollController.dispose();
     _textController.removeListener(_onTextChanged);
     _textController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  /// Turns the header into a search field, and back.
+  ///
+  /// Leaving drops the matches: a search you cannot see the field for is a
+  /// chat that scrolls to places you did not ask for.
+  void _setSearchMode({required bool on}) {
+    if (_searchMode == on) return;
+
+    if (!on) {
+      _searchController.clear();
+      ref.read(inChatSearchProvider(widget.chatId).notifier).clear();
+    }
+
+    setState(() => _searchMode = on);
+  }
+
+  PreferredSizeWidget _buildSearchAppBar() {
+    final l10n = AppLocalizations.of(context);
+    final controller = ref.read(
+      inChatSearchProvider(widget.chatId).notifier,
+    );
+
+    return AppBar(
+      leading: IconButton(
+        tooltip: l10n.close,
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => _setSearchMode(on: false),
+      ),
+      titleSpacing: 0,
+      title: TextField(
+        controller: _searchController,
+        autofocus: true,
+        textInputAction: TextInputAction.search,
+        onChanged: controller.type,
+        onSubmitted: controller.submit,
+        decoration: InputDecoration(
+          hintText: l10n.searchInChatHint,
+          border: InputBorder.none,
+        ),
+      ),
+      actions: [
+        if (_searchController.text.isNotEmpty)
+          IconButton(
+            tooltip: l10n.clear,
+            icon: const Icon(Icons.close),
+            onPressed: () {
+              _searchController.clear();
+              controller.clear();
+              setState(() {});
+            },
+          ),
+      ],
+      bottom: InChatSearchBar(chatId: widget.chatId),
+    );
   }
 
   PreferredSizeWidget _buildSelectionAppBar(ChatDetailState? state) {
@@ -422,6 +487,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Scaffold(
       appBar: _selectionMode
           ? _buildSelectionAppBar(detail.value)
+          : _searchMode
+          ? _buildSearchAppBar()
           : AppBar(
               // In two-pane mode the list stays on screen beside the chat, so
               // there is nothing for a back arrow to reveal.
@@ -438,6 +505,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           context.push(ChatInfoRoute.locationOf(widget.chatId)),
               ),
               actions: [
+                IconButton(
+                  tooltip: AppLocalizations.of(context).searchInChat,
+                  icon: const Icon(Icons.search),
+                  onPressed: () => _setSearchMode(on: true),
+                ),
                 IconButton(
                   tooltip: AppLocalizations.of(context).callTitle,
                   icon: const Icon(Icons.call_outlined),

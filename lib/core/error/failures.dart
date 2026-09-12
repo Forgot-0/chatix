@@ -54,6 +54,15 @@ class ServerFailure extends Failure {
   });
 }
 
+/// A request the client itself dropped, because its answer stopped mattering
+/// — the next keystroke of a search, a screen that closed mid-flight.
+///
+/// Never worth showing: the user did not fail at anything, and the result
+/// they are waiting for is the one still in flight.
+class CancelledFailure extends Failure {
+  const CancelledFailure({super.message = 'Request cancelled'});
+}
+
 class CacheFailure extends Failure {
   const CacheFailure({super.message = 'Cache failure', super.statusCode});
 }

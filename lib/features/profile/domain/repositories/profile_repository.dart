@@ -3,6 +3,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/core/network/request_cancellation.dart';
 
 abstract class ProfileRepository {
   Future<Either<Failure, PageResult<ProfileEntity>>> getProfiles({
@@ -12,6 +13,7 @@ abstract class ProfileRepository {
     int page = 1,
     int pageSize = 20,
     String? sort,
+    RequestCancellation? cancellation,
   });
 
   Future<Either<Failure, ProfileEntity>> getProfile(int profileId);

@@ -1091,4 +1091,267 @@ class AppLocalizationsJa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get chatFolders => 'フォルダ';
+
+  @override
+  String get chatFoldersAll => 'すべてのチャット';
+
+  @override
+  String get folderPresetUnread => '未読';
+
+  @override
+  String get folderPresetPersonal => '個人';
+
+  @override
+  String get folderPresetGroups => 'グループ';
+
+  @override
+  String get folderPresetChannels => 'チャンネル';
+
+  @override
+  String get folderPresetNoReply => '返信待ち';
+
+  @override
+  String get newFolder => '新しいフォルダ';
+
+  @override
+  String get editFolder => 'フォルダを編集';
+
+  @override
+  String get folderName => 'フォルダ名';
+
+  @override
+  String get folderIcon => 'アイコン';
+
+  @override
+  String get folderRules => 'ルール';
+
+  @override
+  String get folderMatchModeTitle => 'チャットがここに入る条件';
+
+  @override
+  String get folderMatchAll => 'すべてのルールを満たす';
+
+  @override
+  String get folderMatchAny => 'いずれかのルールを満たす';
+
+  @override
+  String get addFolderRule => 'ルールを追加';
+
+  @override
+  String get removeFolderRule => 'ルールを削除';
+
+  @override
+  String get folderRuleChatType => 'チャットの種類';
+
+  @override
+  String folderRuleChatTypeIn(String types) {
+    return '種類が $types';
+  }
+
+  @override
+  String get folderRuleUnread => '未読メッセージがある';
+
+  @override
+  String get folderRuleRead => '未読がない';
+
+  @override
+  String get folderRulePinned => 'ピン留めしている';
+
+  @override
+  String get folderRuleNotPinned => 'ピン留めしていない';
+
+  @override
+  String get folderRuleNoReply => '自分の返信待ち';
+
+  @override
+  String folderRuleNoReplyDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days 日以上返信していない',
+      zero: '自分の返信待ち',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderRuleDaysLabel => '返信しないまま経った日数';
+
+  @override
+  String get folderRuleDaysAny => '指定なし';
+
+  @override
+  String get folderRuleMember => '特定の人がいる';
+
+  @override
+  String folderRuleMemberNamed(String name) {
+    return '$name がいる';
+  }
+
+  @override
+  String get folderRulePickPerson => '人を選ぶ';
+
+  @override
+  String get folderRuleNoPeople => 'チャットのある相手がここに表示されます';
+
+  @override
+  String get folderRuleMemberLocalNote =>
+      'チャット一覧がすでに知っている範囲で判定します。自分、読み込み済みのメンバー、最後の送信者、チャットの作成者です。';
+
+  @override
+  String get deleteFolder => 'フォルダを削除';
+
+  @override
+  String get deleteFolderConfirm => 'このフォルダを削除しますか？中のチャットはそのまま残ります。';
+
+  @override
+  String get folderNameRequired => 'フォルダ名を入力してください';
+
+  @override
+  String folderNameTooLong(int count) {
+    return 'フォルダ名は $count 文字までです';
+  }
+
+  @override
+  String get folderRulesRequired => 'ルールを1つ以上追加してください';
+
+  @override
+  String folderLimitReached(int count) {
+    return 'フォルダは $count 個まで作れます';
+  }
+
+  @override
+  String pinLimitReached(int count) {
+    return 'ピン留めできるのは $count 件までです。先に1件外してください。';
+  }
+
+  @override
+  String get foldersEmpty => 'フォルダはまだありません';
+
+  @override
+  String get foldersEmptyHint => 'フォルダは一覧ではなくルールの集まりです。チャットは自動で出入りします。';
+
+  @override
+  String get folderReadyMade => 'すぐ使える';
+
+  @override
+  String get folderYours => '自分のフォルダ';
+
+  @override
+  String folderRuleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ルール $count 件',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderEmptyChats => 'このフォルダには何もありません';
+
+  @override
+  String get folderEmptyChatsHint => 'ルールを満たしたチャットがここに表示されます。';
+
+  @override
+  String get hideFolderTabs => 'フォルダのタブを隠す';
+
+  @override
+  String get hideFolderTabsHint => 'フォルダは残したまま、一覧の上のタブを表示しません';
+
+  @override
+  String get unarchiveOnNewMessage => '新着で戻す';
+
+  @override
+  String get unarchiveOnNewMessageHint => 'アーカイブしたチャットは、誰かが書き込むと一覧に戻ります';
+
+  @override
+  String get organizerDeviceOnly =>
+      'ピン留め・アーカイブ・フォルダはこの端末にだけ保存され、アカウントには付いていきません。';
+
+  @override
+  String get chatPinnedZone => 'ピン留め';
+
+  @override
+  String get chatUnarchivedToast => '一覧に戻しました';
+
+  @override
+  String get searchTabMessages => 'メッセージ';
+
+  @override
+  String get searchEverything => 'チャット・人・メッセージを検索';
+
+  @override
+  String get searchRecentQueries => '最近の検索';
+
+  @override
+  String get searchRecentChats => '最近開いたチャット';
+
+  @override
+  String get searchClearHistory => '消去';
+
+  @override
+  String get searchRemoveFromHistory => '最近の検索から削除';
+
+  @override
+  String get searchStartTitle => 'チャット・人・メッセージを探す';
+
+  @override
+  String get searchStartHint => 'チャットは名前、人はユーザー名、メッセージは本文で探します。';
+
+  @override
+  String get searchLoadedHistoryOnly => '読み込み済みの履歴を検索';
+
+  @override
+  String get searchLoadedHistoryExplained =>
+      'サーバーにメッセージ検索がないため、この端末にすでにあるメッセージだけを探します。チャットを開くと対象が増えます。';
+
+  @override
+  String get noChatsFound => 'チャットが見つかりません';
+
+  @override
+  String get noChatsFoundHint => '読み込み済みのチャットの中から、名前と説明で探します。';
+
+  @override
+  String get noPeopleFoundHint => '綴りを変えるか、ユーザー名で探してみてください。';
+
+  @override
+  String get noMessagesFound => 'メッセージが見つかりません';
+
+  @override
+  String get messageSearchFailed => 'メッセージを検索できませんでした';
+
+  @override
+  String searchResultsCapped(int count) {
+    return '最初の $count 件を表示しています';
+  }
+
+  @override
+  String get searchInChat => 'このチャット内を検索';
+
+  @override
+  String searchMatchPosition(int current, int total) {
+    return '$total 件中 $current 件目';
+  }
+
+  @override
+  String get searchNoMatches => '該当なし';
+
+  @override
+  String get searchOlderMatch => '前の該当箇所';
+
+  @override
+  String get searchNewerMatch => '次の該当箇所';
+
+  @override
+  String get searchInChatHint => 'このチャット内を検索';
+
+  @override
+  String get searchChatDescriptionMatch => '説明に一致';
+
+  @override
+  String get searchOpenChat => 'チャットを開く';
 }

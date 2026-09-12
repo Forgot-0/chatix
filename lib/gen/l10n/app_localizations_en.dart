@@ -1106,4 +1106,278 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get chatFolders => 'Folders';
+
+  @override
+  String get chatFoldersAll => 'All chats';
+
+  @override
+  String get folderPresetUnread => 'Unread';
+
+  @override
+  String get folderPresetPersonal => 'Personal';
+
+  @override
+  String get folderPresetGroups => 'Groups';
+
+  @override
+  String get folderPresetChannels => 'Channels';
+
+  @override
+  String get folderPresetNoReply => 'Awaiting my reply';
+
+  @override
+  String get newFolder => 'New folder';
+
+  @override
+  String get editFolder => 'Edit folder';
+
+  @override
+  String get folderName => 'Folder name';
+
+  @override
+  String get folderIcon => 'Icon';
+
+  @override
+  String get folderRules => 'Rules';
+
+  @override
+  String get folderMatchModeTitle => 'A chat belongs here when';
+
+  @override
+  String get folderMatchAll => 'It meets every rule';
+
+  @override
+  String get folderMatchAny => 'It meets any rule';
+
+  @override
+  String get addFolderRule => 'Add rule';
+
+  @override
+  String get removeFolderRule => 'Remove rule';
+
+  @override
+  String get folderRuleChatType => 'Chat type';
+
+  @override
+  String folderRuleChatTypeIn(String types) {
+    return 'Type is $types';
+  }
+
+  @override
+  String get folderRuleUnread => 'Has unread messages';
+
+  @override
+  String get folderRuleRead => 'Has nothing unread';
+
+  @override
+  String get folderRulePinned => 'Is pinned';
+
+  @override
+  String get folderRuleNotPinned => 'Is not pinned';
+
+  @override
+  String get folderRuleNoReply => 'Waiting for my reply';
+
+  @override
+  String folderRuleNoReplyDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Waiting for my reply for over $days days',
+      one: 'Waiting for my reply for over 1 day',
+      zero: 'Waiting for my reply',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderRuleDaysLabel => 'Days without my reply';
+
+  @override
+  String get folderRuleDaysAny => 'Any';
+
+  @override
+  String get folderRuleMember => 'Includes a person';
+
+  @override
+  String folderRuleMemberNamed(String name) {
+    return 'Includes $name';
+  }
+
+  @override
+  String get folderRulePickPerson => 'Choose a person';
+
+  @override
+  String get folderRuleNoPeople =>
+      'People appear here once you have chats with them';
+
+  @override
+  String get folderRuleMemberLocalNote =>
+      'Matches on what the chat list already knows: you, anyone whose roster is loaded, the last sender and the chat\'s creator.';
+
+  @override
+  String get deleteFolder => 'Delete folder';
+
+  @override
+  String get deleteFolderConfirm =>
+      'Delete this folder? The chats in it stay where they are.';
+
+  @override
+  String get folderNameRequired => 'Give the folder a name';
+
+  @override
+  String folderNameTooLong(int count) {
+    return 'Folder names are limited to $count characters';
+  }
+
+  @override
+  String get folderRulesRequired => 'Add at least one rule';
+
+  @override
+  String folderLimitReached(int count) {
+    return 'You can keep up to $count folders';
+  }
+
+  @override
+  String pinLimitReached(int count) {
+    return 'Only $count chats can be pinned. Unpin one first.';
+  }
+
+  @override
+  String get foldersEmpty => 'No folders yet';
+
+  @override
+  String get foldersEmptyHint =>
+      'A folder is a set of rules, not a list. Chats join and leave it on their own.';
+
+  @override
+  String get folderReadyMade => 'Ready-made';
+
+  @override
+  String get folderYours => 'Your folders';
+
+  @override
+  String folderRuleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules',
+      one: '1 rule',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderEmptyChats => 'Nothing in this folder';
+
+  @override
+  String get folderEmptyChatsHint =>
+      'Chats show up here as soon as they meet its rules.';
+
+  @override
+  String get hideFolderTabs => 'Hide the folder strip';
+
+  @override
+  String get hideFolderTabsHint =>
+      'Keeps your folders without showing the tabs above the list';
+
+  @override
+  String get unarchiveOnNewMessage => 'Bring back on new message';
+
+  @override
+  String get unarchiveOnNewMessageHint =>
+      'An archived chat returns to the list when someone writes in it';
+
+  @override
+  String get organizerDeviceOnly =>
+      'Pins, the archive and folders are kept on this device and do not follow your account.';
+
+  @override
+  String get chatPinnedZone => 'Pinned';
+
+  @override
+  String get chatUnarchivedToast => 'Moved back to the list';
+
+  @override
+  String get searchTabMessages => 'Messages';
+
+  @override
+  String get searchEverything => 'Search chats, people and messages';
+
+  @override
+  String get searchRecentQueries => 'Recent searches';
+
+  @override
+  String get searchRecentChats => 'Recently opened';
+
+  @override
+  String get searchClearHistory => 'Clear';
+
+  @override
+  String get searchRemoveFromHistory => 'Remove from recent searches';
+
+  @override
+  String get searchStartTitle => 'Find a chat, a person or a message';
+
+  @override
+  String get searchStartHint =>
+      'Chats are matched by name, people by username, messages by what they say.';
+
+  @override
+  String get searchLoadedHistoryOnly => 'Searching loaded history';
+
+  @override
+  String get searchLoadedHistoryExplained =>
+      'The server has no message search, so this looks through the messages already on this device. Open a chat to load more of it.';
+
+  @override
+  String get noChatsFound => 'No chats found';
+
+  @override
+  String get noChatsFoundHint =>
+      'Chats are matched by name and description, among the ones already loaded.';
+
+  @override
+  String get noPeopleFoundHint =>
+      'Try another spelling, or search by username.';
+
+  @override
+  String get noMessagesFound => 'No messages found';
+
+  @override
+  String get messageSearchFailed => 'Could not search messages';
+
+  @override
+  String searchResultsCapped(int count) {
+    return 'Showing the first $count matches';
+  }
+
+  @override
+  String get searchInChat => 'Search in this chat';
+
+  @override
+  String searchMatchPosition(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get searchNoMatches => 'No matches';
+
+  @override
+  String get searchOlderMatch => 'Older match';
+
+  @override
+  String get searchNewerMatch => 'Newer match';
+
+  @override
+  String get searchInChatHint => 'Search in this chat';
+
+  @override
+  String get searchChatDescriptionMatch => 'Matched in the description';
+
+  @override
+  String get searchOpenChat => 'Open chat';
 }

@@ -30,11 +30,13 @@ class ApiClient {
   Future<Either<Failure, dynamic>> get(
     String path, {
     Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _dio.get<dynamic>(
         buildPath(path),
         queryParameters: queryParameters,
+        cancelToken: cancelToken,
       );
       return Right(response.data);
     } on DioException catch (e) {
@@ -115,7 +117,8 @@ class ApiClient {
       case DioExceptionType.receiveTimeout:
         return TimeoutFailure(statusCode: e.response?.statusCode);
       case DioExceptionType.cancel:
-        return const ServerFailure(message: 'Request cancelled');
+        // Not a failure of the request so much as of our interest in it.
+        return const CancelledFailure();
       case DioExceptionType.unknown:
         if (e.error is SocketException) {
           return const NetworkFailure();

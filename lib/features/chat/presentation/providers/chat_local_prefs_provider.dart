@@ -23,70 +23,38 @@ final chatLocalPrefsStoreProvider = Provider<ChatLocalPrefsStore>((ref) {
   }
 });
 
-/// Which chats this device pins, archives and silences.
+/// Which chats this device silences.
+///
+/// Pinning and archiving are the chat organizer's, not this — see
+/// `features/chat_organizer`.
 class ChatLocalPrefs extends Equatable {
-  const ChatLocalPrefs({
-    this.pinned = const <String>{},
-    this.archived = const <String>{},
-    this.muted = const <String>{},
-  });
-
-  /// Kept above everything else in the list, newest pin first is not a thing:
-  /// pins keep the list's own ordering among themselves.
-  final Set<String> pinned;
-
-  /// Hidden from the main list and reachable through the archive section.
-  final Set<String> archived;
+  const ChatLocalPrefs({this.muted = const <String>{}});
 
   /// Notifications off. Not `MemberChatDTO.is_muted`, which is the moderator
   /// mute that stops a member writing.
   final Set<String> muted;
 
-  bool isPinned(String chatId) => pinned.contains(chatId);
-
-  bool isArchived(String chatId) => archived.contains(chatId);
-
   bool isMuted(String chatId) => muted.contains(chatId);
 
   Set<String> of(ChatLocalFlag flag) => switch (flag) {
-    ChatLocalFlag.pinned => pinned,
-    ChatLocalFlag.archived => archived,
     ChatLocalFlag.muted => muted,
   };
 
   ChatLocalPrefs withFlag(ChatLocalFlag flag, Set<String> chatIds) {
     return switch (flag) {
-      ChatLocalFlag.pinned => ChatLocalPrefs(
-        pinned: chatIds,
-        archived: archived,
-        muted: muted,
-      ),
-      ChatLocalFlag.archived => ChatLocalPrefs(
-        pinned: pinned,
-        archived: chatIds,
-        muted: muted,
-      ),
-      ChatLocalFlag.muted => ChatLocalPrefs(
-        pinned: pinned,
-        archived: archived,
-        muted: chatIds,
-      ),
+      ChatLocalFlag.muted => ChatLocalPrefs(muted: chatIds),
     };
   }
 
   @override
-  List<Object?> get props => [pinned, archived, muted];
+  List<Object?> get props => [muted];
 }
 
 class ChatLocalPrefsController extends Notifier<ChatLocalPrefs> {
   @override
   ChatLocalPrefs build() {
     final store = ref.watch(chatLocalPrefsStoreProvider);
-    return ChatLocalPrefs(
-      pinned: store.readFlag(ChatLocalFlag.pinned),
-      archived: store.readFlag(ChatLocalFlag.archived),
-      muted: store.readFlag(ChatLocalFlag.muted),
-    );
+    return ChatLocalPrefs(muted: store.readFlag(ChatLocalFlag.muted));
   }
 
   /// Turns [flag] on or off for [chatId] and reports what it now is.

@@ -1430,5 +1430,361 @@
         "type": "int"
       }
     }
+  },
+  "chatFolders": "Folders",
+  "@chatFolders": {
+    "description": "Title of the screen that manages the chat list's folders"
+  },
+  "chatFoldersAll": "All chats",
+  "@chatFoldersAll": {
+    "description": "The first tab of the folder strip, which filters nothing"
+  },
+  "folderPresetUnread": "Unread",
+  "@folderPresetUnread": {
+    "description": "Ready-made folder holding chats with unread messages"
+  },
+  "folderPresetPersonal": "Personal",
+  "@folderPresetPersonal": {
+    "description": "Ready-made folder holding one-to-one chats"
+  },
+  "folderPresetGroups": "Groups",
+  "@folderPresetGroups": {
+    "description": "Ready-made folder holding group and supergroup chats"
+  },
+  "folderPresetChannels": "Channels",
+  "@folderPresetChannels": {
+    "description": "Ready-made folder holding channels"
+  },
+  "folderPresetNoReply": "Awaiting my reply",
+  "@folderPresetNoReply": {
+    "description": "Ready-made folder holding chats whose last message is not mine"
+  },
+  "newFolder": "New folder",
+  "@newFolder": {
+    "description": "Action that opens the editor for a folder that does not exist yet"
+  },
+  "editFolder": "Edit folder",
+  "@editFolder": {
+    "description": "Title of the editor when an existing folder is open in it"
+  },
+  "folderName": "Folder name",
+  "@folderName": {
+    "description": "Label of the folder title field"
+  },
+  "folderIcon": "Icon",
+  "@folderIcon": {
+    "description": "Label of the icon picker in the folder editor"
+  },
+  "folderRules": "Rules",
+  "@folderRules": {
+    "description": "Heading of the rule list in the folder editor"
+  },
+  "folderMatchModeTitle": "A chat belongs here when",
+  "@folderMatchModeTitle": {
+    "description": "Heading of the choice between matching every rule and matching any"
+  },
+  "folderMatchAll": "It meets every rule",
+  "@folderMatchAll": {
+    "description": "Match mode where all of a folder's rules have to hold"
+  },
+  "folderMatchAny": "It meets any rule",
+  "@folderMatchAny": {
+    "description": "Match mode where one of a folder's rules is enough"
+  },
+  "addFolderRule": "Add rule",
+  "@addFolderRule": {
+    "description": "Action that opens the list of rule kinds to add one"
+  },
+  "removeFolderRule": "Remove rule",
+  "@removeFolderRule": {
+    "description": "Accessible label of the button that drops a rule from a folder"
+  },
+  "folderRuleChatType": "Chat type",
+  "@folderRuleChatType": {
+    "description": "Rule that keeps chats of the chosen kinds"
+  },
+  "folderRuleChatTypeIn": "Type is {types}",
+  "@folderRuleChatTypeIn": {
+    "description": "Summary of a chat type rule, listing the types it accepts",
+    "placeholders": {
+      "types": {
+        "type": "String"
+      }
+    }
+  },
+  "folderRuleUnread": "Has unread messages",
+  "@folderRuleUnread": {
+    "description": "Rule that keeps chats with something unread in them"
+  },
+  "folderRuleRead": "Has nothing unread",
+  "@folderRuleRead": {
+    "description": "Rule that keeps chats that are fully read"
+  },
+  "folderRulePinned": "Is pinned",
+  "@folderRulePinned": {
+    "description": "Rule that keeps pinned chats"
+  },
+  "folderRuleNotPinned": "Is not pinned",
+  "@folderRuleNotPinned": {
+    "description": "Rule that keeps chats that are not pinned"
+  },
+  "folderRuleNoReply": "Waiting for my reply",
+  "@folderRuleNoReply": {
+    "description": "Rule kind matching chats whose last message is not mine"
+  },
+  "folderRuleNoReplyDays": "{days, plural, =0{Waiting for my reply} =1{Waiting for my reply for over 1 day} other{Waiting for my reply for over {days} days}}",
+  "@folderRuleNoReplyDays": {
+    "description": "Summary of the no-reply rule, including how long it has waited",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "folderRuleDaysLabel": "Days without my reply",
+  "@folderRuleDaysLabel": {
+    "description": "Label of the slider that sets how long a chat has waited"
+  },
+  "folderRuleDaysAny": "Any",
+  "@folderRuleDaysAny": {
+    "description": "Value of the no-reply slider that accepts a message of any age"
+  },
+  "folderRuleMember": "Includes a person",
+  "@folderRuleMember": {
+    "description": "Rule kind matching chats that a chosen person is in"
+  },
+  "folderRuleMemberNamed": "Includes {name}",
+  "@folderRuleMemberNamed": {
+    "description": "Summary of a member rule, naming the person it looks for",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "folderRulePickPerson": "Choose a person",
+  "@folderRulePickPerson": {
+    "description": "Title of the sheet that picks the person a member rule looks for"
+  },
+  "folderRuleNoPeople": "People appear here once you have chats with them",
+  "@folderRuleNoPeople": {
+    "description": "Shown in the person picker when no chat has named anyone yet"
+  },
+  "folderRuleMemberLocalNote": "Matches on what the chat list already knows: you, anyone whose roster is loaded, the last sender and the chat's creator.",
+  "@folderRuleMemberLocalNote": {
+    "description": "Explains the limits of the member rule, which cannot fetch rosters"
+  },
+  "deleteFolder": "Delete folder",
+  "@deleteFolder": {
+    "description": "Action that removes a folder"
+  },
+  "deleteFolderConfirm": "Delete this folder? The chats in it stay where they are.",
+  "@deleteFolderConfirm": {
+    "description": "Confirmation asked before a folder is removed"
+  },
+  "folderNameRequired": "Give the folder a name",
+  "@folderNameRequired": {
+    "description": "Validation shown when a folder is saved without a title"
+  },
+  "folderNameTooLong": "Folder names are limited to {count} characters",
+  "@folderNameTooLong": {
+    "description": "Validation shown when a folder title is too long",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "folderRulesRequired": "Add at least one rule",
+  "@folderRulesRequired": {
+    "description": "Validation shown when a folder is saved with no rules"
+  },
+  "folderLimitReached": "You can keep up to {count} folders",
+  "@folderLimitReached": {
+    "description": "Shown when adding one more folder would pass the limit",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pinLimitReached": "Only {count} chats can be pinned. Unpin one first.",
+  "@pinLimitReached": {
+    "description": "Shown when pinning a chat would pass the pinned zone's limit",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foldersEmpty": "No folders yet",
+  "@foldersEmpty": {
+    "description": "Title of the empty state on the folders screen"
+  },
+  "foldersEmptyHint": "A folder is a set of rules, not a list. Chats join and leave it on their own.",
+  "@foldersEmptyHint": {
+    "description": "Explains what a folder is on the empty folders screen"
+  },
+  "folderReadyMade": "Ready-made",
+  "@folderReadyMade": {
+    "description": "Heading of the presets that can be added in one tap"
+  },
+  "folderYours": "Your folders",
+  "@folderYours": {
+    "description": "Heading of the list of folders already added"
+  },
+  "folderRuleCount": "{count, plural, =1{1 rule} other{{count} rules}}",
+  "@folderRuleCount": {
+    "description": "How many rules a folder holds",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "folderEmptyChats": "Nothing in this folder",
+  "@folderEmptyChats": {
+    "description": "Title shown when the selected folder matches no chat"
+  },
+  "folderEmptyChatsHint": "Chats show up here as soon as they meet its rules.",
+  "@folderEmptyChatsHint": {
+    "description": "Explains that a folder fills itself, on its empty state"
+  },
+  "hideFolderTabs": "Hide the folder strip",
+  "@hideFolderTabs": {
+    "description": "Switch that keeps the folders but takes the tabs off the chat list"
+  },
+  "hideFolderTabsHint": "Keeps your folders without showing the tabs above the list",
+  "@hideFolderTabsHint": {
+    "description": "Explains what hiding the folder strip does"
+  },
+  "unarchiveOnNewMessage": "Bring back on new message",
+  "@unarchiveOnNewMessage": {
+    "description": "Switch that returns an archived chat to the list when someone writes"
+  },
+  "unarchiveOnNewMessageHint": "An archived chat returns to the list when someone writes in it",
+  "@unarchiveOnNewMessageHint": {
+    "description": "Explains what bringing a chat back on a new message does"
+  },
+  "organizerDeviceOnly": "Pins, the archive and folders are kept on this device and do not follow your account.",
+  "@organizerDeviceOnly": {
+    "description": "Says that the organizer's state is local, since the API stores none of it"
+  },
+  "chatPinnedZone": "Pinned",
+  "@chatPinnedZone": {
+    "description": "Header of the block at the top of the list holding pinned chats"
+  },
+  "chatUnarchivedToast": "Moved back to the list",
+  "@chatUnarchivedToast": {
+    "description": "Confirms that a chat has left the archive"
+  },
+  "searchTabMessages": "Messages",
+  "@searchTabMessages": {
+    "description": "Tab of the search screen listing matching messages"
+  },
+  "searchEverything": "Search chats, people and messages",
+  "@searchEverything": {
+    "description": "Placeholder of the single search field"
+  },
+  "searchRecentQueries": "Recent searches",
+  "@searchRecentQueries": {
+    "description": "Heading over the searches someone ran before"
+  },
+  "searchRecentChats": "Recently opened",
+  "@searchRecentChats": {
+    "description": "Heading over the chats someone opened most recently"
+  },
+  "searchClearHistory": "Clear",
+  "@searchClearHistory": {
+    "description": "Action that empties the list of recent searches"
+  },
+  "searchRemoveFromHistory": "Remove from recent searches",
+  "@searchRemoveFromHistory": {
+    "description": "Accessible label of the button that drops one recent search"
+  },
+  "searchStartTitle": "Find a chat, a person or a message",
+  "@searchStartTitle": {
+    "description": "Title shown when the search field is still empty"
+  },
+  "searchStartHint": "Chats are matched by name, people by username, messages by what they say.",
+  "@searchStartHint": {
+    "description": "Explains what each tab of the search covers"
+  },
+  "searchLoadedHistoryOnly": "Searching loaded history",
+  "@searchLoadedHistoryOnly": {
+    "description": "Notice saying message search covers only what this device has loaded"
+  },
+  "searchLoadedHistoryExplained": "The server has no message search, so this looks through the messages already on this device. Open a chat to load more of it.",
+  "@searchLoadedHistoryExplained": {
+    "description": "Explains why message search is limited to the device"
+  },
+  "noChatsFound": "No chats found",
+  "@noChatsFound": {
+    "description": "Title shown when no loaded chat matches the query"
+  },
+  "noChatsFoundHint": "Chats are matched by name and description, among the ones already loaded.",
+  "@noChatsFoundHint": {
+    "description": "Explains what the chats tab searches"
+  },
+  "noPeopleFoundHint": "Try another spelling, or search by username.",
+  "@noPeopleFoundHint": {
+    "description": "Suggestion shown when a people search comes back empty"
+  },
+  "noMessagesFound": "No messages found",
+  "@noMessagesFound": {
+    "description": "Title shown when no loaded message matches the query"
+  },
+  "messageSearchFailed": "Could not search messages",
+  "@messageSearchFailed": {
+    "description": "Fallback error message when the message search fails"
+  },
+  "searchResultsCapped": "Showing the first {count} matches",
+  "@searchResultsCapped": {
+    "description": "Says the result list was cut off at a limit",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchInChat": "Search in this chat",
+  "@searchInChat": {
+    "description": "Action in a chat's header that opens the search inside it"
+  },
+  "searchMatchPosition": "{current} of {total}",
+  "@searchMatchPosition": {
+    "description": "Which match of how many the chat is parked on",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "searchNoMatches": "No matches",
+  "@searchNoMatches": {
+    "description": "Shown in the in-chat search when nothing loaded matches"
+  },
+  "searchOlderMatch": "Older match",
+  "@searchOlderMatch": {
+    "description": "Button that moves to the previous match further back in time"
+  },
+  "searchNewerMatch": "Newer match",
+  "@searchNewerMatch": {
+    "description": "Button that moves to the next, more recent match"
+  },
+  "searchInChatHint": "Search in this chat",
+  "@searchInChatHint": {
+    "description": "Placeholder of the search field inside a chat"
+  },
+  "searchChatDescriptionMatch": "Matched in the description",
+  "@searchChatDescriptionMatch": {
+    "description": "Explains a chat result whose name does not contain the query"
+  },
+  "searchOpenChat": "Open chat",
+  "@searchOpenChat": {
+    "description": "Accessible label of a message result that opens its chat"
   }
 }

@@ -24,6 +24,8 @@ import 'package:chatix/features/chat/presentation/screens/chat_info_screen.dart'
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
+import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
+import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
@@ -120,6 +122,26 @@ final routerProvider = Provider<GoRouter>((ref) {
                         parentNavigatorKey: _rootNavigatorKey,
                         pageBuilder: (context, state) =>
                             _push(state, const ChatSearchScreen()),
+                      ),
+                      GoRoute(
+                        path: ChatFoldersRoute.path,
+                        name: RouteNames.chatFolders,
+                        parentNavigatorKey: _rootNavigatorKey,
+                        pageBuilder: (context, state) =>
+                            _push(state, const ChatFoldersScreen()),
+                        routes: [
+                          GoRoute(
+                            path: FolderEditorRoute.path,
+                            name: RouteNames.folderEditor,
+                            parentNavigatorKey: _rootNavigatorKey,
+                            pageBuilder: (context, state) => _push(
+                              state,
+                              FolderEditorScreen(
+                                folderId: FolderEditorRoute.folderIdFrom(state),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       GoRoute(
                         path: ChatDetailRoute.path,

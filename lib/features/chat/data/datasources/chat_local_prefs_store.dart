@@ -4,13 +4,15 @@ import 'package:chatix/core/storage/local_storage_service.dart';
 
 /// A per-chat flag the backend does not know about.
 ///
-/// Pinning, archiving and silencing notifications are all client-side ideas:
-/// `/chats/` has no field for any of them, and `MemberChatDTO.is_muted` is a
-/// moderator mute (api-docs §8.1, right `member:mute`) that stops the member
-/// writing — nothing to do with whether this device rings.
+/// Silencing notifications is a client-side idea: `/chats/` has no field for
+/// it, and `MemberChatDTO.is_muted` is a moderator mute (api-docs §8.1,
+/// right `member:mute`) that stops the member writing — nothing to do with
+/// whether this device rings.
+///
+/// Pinning and archiving used to live here too. They moved to
+/// `features/chat_organizer`, which owns them along with folders, and which
+/// still writes them under the keys this file used.
 enum ChatLocalFlag {
-  pinned('chat_flags.pinned'),
-  archived('chat_flags.archived'),
   muted('chat_flags.muted');
 
   const ChatLocalFlag(this.storageKey);

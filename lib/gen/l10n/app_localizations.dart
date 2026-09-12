@@ -2085,6 +2085,468 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 chat} other{{count} chats}}'**
   String archivedChatsCount(int count);
+
+  /// Title of the screen that manages the chat list's folders
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get chatFolders;
+
+  /// The first tab of the folder strip, which filters nothing
+  ///
+  /// In en, this message translates to:
+  /// **'All chats'**
+  String get chatFoldersAll;
+
+  /// Ready-made folder holding chats with unread messages
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get folderPresetUnread;
+
+  /// Ready-made folder holding one-to-one chats
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get folderPresetPersonal;
+
+  /// Ready-made folder holding group and supergroup chats
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get folderPresetGroups;
+
+  /// Ready-made folder holding channels
+  ///
+  /// In en, this message translates to:
+  /// **'Channels'**
+  String get folderPresetChannels;
+
+  /// Ready-made folder holding chats whose last message is not mine
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting my reply'**
+  String get folderPresetNoReply;
+
+  /// Action that opens the editor for a folder that does not exist yet
+  ///
+  /// In en, this message translates to:
+  /// **'New folder'**
+  String get newFolder;
+
+  /// Title of the editor when an existing folder is open in it
+  ///
+  /// In en, this message translates to:
+  /// **'Edit folder'**
+  String get editFolder;
+
+  /// Label of the folder title field
+  ///
+  /// In en, this message translates to:
+  /// **'Folder name'**
+  String get folderName;
+
+  /// Label of the icon picker in the folder editor
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get folderIcon;
+
+  /// Heading of the rule list in the folder editor
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get folderRules;
+
+  /// Heading of the choice between matching every rule and matching any
+  ///
+  /// In en, this message translates to:
+  /// **'A chat belongs here when'**
+  String get folderMatchModeTitle;
+
+  /// Match mode where all of a folder's rules have to hold
+  ///
+  /// In en, this message translates to:
+  /// **'It meets every rule'**
+  String get folderMatchAll;
+
+  /// Match mode where one of a folder's rules is enough
+  ///
+  /// In en, this message translates to:
+  /// **'It meets any rule'**
+  String get folderMatchAny;
+
+  /// Action that opens the list of rule kinds to add one
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get addFolderRule;
+
+  /// Accessible label of the button that drops a rule from a folder
+  ///
+  /// In en, this message translates to:
+  /// **'Remove rule'**
+  String get removeFolderRule;
+
+  /// Rule that keeps chats of the chosen kinds
+  ///
+  /// In en, this message translates to:
+  /// **'Chat type'**
+  String get folderRuleChatType;
+
+  /// Summary of a chat type rule, listing the types it accepts
+  ///
+  /// In en, this message translates to:
+  /// **'Type is {types}'**
+  String folderRuleChatTypeIn(String types);
+
+  /// Rule that keeps chats with something unread in them
+  ///
+  /// In en, this message translates to:
+  /// **'Has unread messages'**
+  String get folderRuleUnread;
+
+  /// Rule that keeps chats that are fully read
+  ///
+  /// In en, this message translates to:
+  /// **'Has nothing unread'**
+  String get folderRuleRead;
+
+  /// Rule that keeps pinned chats
+  ///
+  /// In en, this message translates to:
+  /// **'Is pinned'**
+  String get folderRulePinned;
+
+  /// Rule that keeps chats that are not pinned
+  ///
+  /// In en, this message translates to:
+  /// **'Is not pinned'**
+  String get folderRuleNotPinned;
+
+  /// Rule kind matching chats whose last message is not mine
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for my reply'**
+  String get folderRuleNoReply;
+
+  /// Summary of the no-reply rule, including how long it has waited
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =0{Waiting for my reply} =1{Waiting for my reply for over 1 day} other{Waiting for my reply for over {days} days}}'**
+  String folderRuleNoReplyDays(int days);
+
+  /// Label of the slider that sets how long a chat has waited
+  ///
+  /// In en, this message translates to:
+  /// **'Days without my reply'**
+  String get folderRuleDaysLabel;
+
+  /// Value of the no-reply slider that accepts a message of any age
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get folderRuleDaysAny;
+
+  /// Rule kind matching chats that a chosen person is in
+  ///
+  /// In en, this message translates to:
+  /// **'Includes a person'**
+  String get folderRuleMember;
+
+  /// Summary of a member rule, naming the person it looks for
+  ///
+  /// In en, this message translates to:
+  /// **'Includes {name}'**
+  String folderRuleMemberNamed(String name);
+
+  /// Title of the sheet that picks the person a member rule looks for
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a person'**
+  String get folderRulePickPerson;
+
+  /// Shown in the person picker when no chat has named anyone yet
+  ///
+  /// In en, this message translates to:
+  /// **'People appear here once you have chats with them'**
+  String get folderRuleNoPeople;
+
+  /// Explains the limits of the member rule, which cannot fetch rosters
+  ///
+  /// In en, this message translates to:
+  /// **'Matches on what the chat list already knows: you, anyone whose roster is loaded, the last sender and the chat\'s creator.'**
+  String get folderRuleMemberLocalNote;
+
+  /// Action that removes a folder
+  ///
+  /// In en, this message translates to:
+  /// **'Delete folder'**
+  String get deleteFolder;
+
+  /// Confirmation asked before a folder is removed
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this folder? The chats in it stay where they are.'**
+  String get deleteFolderConfirm;
+
+  /// Validation shown when a folder is saved without a title
+  ///
+  /// In en, this message translates to:
+  /// **'Give the folder a name'**
+  String get folderNameRequired;
+
+  /// Validation shown when a folder title is too long
+  ///
+  /// In en, this message translates to:
+  /// **'Folder names are limited to {count} characters'**
+  String folderNameTooLong(int count);
+
+  /// Validation shown when a folder is saved with no rules
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one rule'**
+  String get folderRulesRequired;
+
+  /// Shown when adding one more folder would pass the limit
+  ///
+  /// In en, this message translates to:
+  /// **'You can keep up to {count} folders'**
+  String folderLimitReached(int count);
+
+  /// Shown when pinning a chat would pass the pinned zone's limit
+  ///
+  /// In en, this message translates to:
+  /// **'Only {count} chats can be pinned. Unpin one first.'**
+  String pinLimitReached(int count);
+
+  /// Title of the empty state on the folders screen
+  ///
+  /// In en, this message translates to:
+  /// **'No folders yet'**
+  String get foldersEmpty;
+
+  /// Explains what a folder is on the empty folders screen
+  ///
+  /// In en, this message translates to:
+  /// **'A folder is a set of rules, not a list. Chats join and leave it on their own.'**
+  String get foldersEmptyHint;
+
+  /// Heading of the presets that can be added in one tap
+  ///
+  /// In en, this message translates to:
+  /// **'Ready-made'**
+  String get folderReadyMade;
+
+  /// Heading of the list of folders already added
+  ///
+  /// In en, this message translates to:
+  /// **'Your folders'**
+  String get folderYours;
+
+  /// How many rules a folder holds
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rule} other{{count} rules}}'**
+  String folderRuleCount(int count);
+
+  /// Title shown when the selected folder matches no chat
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in this folder'**
+  String get folderEmptyChats;
+
+  /// Explains that a folder fills itself, on its empty state
+  ///
+  /// In en, this message translates to:
+  /// **'Chats show up here as soon as they meet its rules.'**
+  String get folderEmptyChatsHint;
+
+  /// Switch that keeps the folders but takes the tabs off the chat list
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the folder strip'**
+  String get hideFolderTabs;
+
+  /// Explains what hiding the folder strip does
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps your folders without showing the tabs above the list'**
+  String get hideFolderTabsHint;
+
+  /// Switch that returns an archived chat to the list when someone writes
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back on new message'**
+  String get unarchiveOnNewMessage;
+
+  /// Explains what bringing a chat back on a new message does
+  ///
+  /// In en, this message translates to:
+  /// **'An archived chat returns to the list when someone writes in it'**
+  String get unarchiveOnNewMessageHint;
+
+  /// Says that the organizer's state is local, since the API stores none of it
+  ///
+  /// In en, this message translates to:
+  /// **'Pins, the archive and folders are kept on this device and do not follow your account.'**
+  String get organizerDeviceOnly;
+
+  /// Header of the block at the top of the list holding pinned chats
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get chatPinnedZone;
+
+  /// Confirms that a chat has left the archive
+  ///
+  /// In en, this message translates to:
+  /// **'Moved back to the list'**
+  String get chatUnarchivedToast;
+
+  /// Tab of the search screen listing matching messages
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get searchTabMessages;
+
+  /// Placeholder of the single search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search chats, people and messages'**
+  String get searchEverything;
+
+  /// Heading over the searches someone ran before
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches'**
+  String get searchRecentQueries;
+
+  /// Heading over the chats someone opened most recently
+  ///
+  /// In en, this message translates to:
+  /// **'Recently opened'**
+  String get searchRecentChats;
+
+  /// Action that empties the list of recent searches
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get searchClearHistory;
+
+  /// Accessible label of the button that drops one recent search
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from recent searches'**
+  String get searchRemoveFromHistory;
+
+  /// Title shown when the search field is still empty
+  ///
+  /// In en, this message translates to:
+  /// **'Find a chat, a person or a message'**
+  String get searchStartTitle;
+
+  /// Explains what each tab of the search covers
+  ///
+  /// In en, this message translates to:
+  /// **'Chats are matched by name, people by username, messages by what they say.'**
+  String get searchStartHint;
+
+  /// Notice saying message search covers only what this device has loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Searching loaded history'**
+  String get searchLoadedHistoryOnly;
+
+  /// Explains why message search is limited to the device
+  ///
+  /// In en, this message translates to:
+  /// **'The server has no message search, so this looks through the messages already on this device. Open a chat to load more of it.'**
+  String get searchLoadedHistoryExplained;
+
+  /// Title shown when no loaded chat matches the query
+  ///
+  /// In en, this message translates to:
+  /// **'No chats found'**
+  String get noChatsFound;
+
+  /// Explains what the chats tab searches
+  ///
+  /// In en, this message translates to:
+  /// **'Chats are matched by name and description, among the ones already loaded.'**
+  String get noChatsFoundHint;
+
+  /// Suggestion shown when a people search comes back empty
+  ///
+  /// In en, this message translates to:
+  /// **'Try another spelling, or search by username.'**
+  String get noPeopleFoundHint;
+
+  /// Title shown when no loaded message matches the query
+  ///
+  /// In en, this message translates to:
+  /// **'No messages found'**
+  String get noMessagesFound;
+
+  /// Fallback error message when the message search fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not search messages'**
+  String get messageSearchFailed;
+
+  /// Says the result list was cut off at a limit
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first {count} matches'**
+  String searchResultsCapped(int count);
+
+  /// Action in a chat's header that opens the search inside it
+  ///
+  /// In en, this message translates to:
+  /// **'Search in this chat'**
+  String get searchInChat;
+
+  /// Which match of how many the chat is parked on
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String searchMatchPosition(int current, int total);
+
+  /// Shown in the in-chat search when nothing loaded matches
+  ///
+  /// In en, this message translates to:
+  /// **'No matches'**
+  String get searchNoMatches;
+
+  /// Button that moves to the previous match further back in time
+  ///
+  /// In en, this message translates to:
+  /// **'Older match'**
+  String get searchOlderMatch;
+
+  /// Button that moves to the next, more recent match
+  ///
+  /// In en, this message translates to:
+  /// **'Newer match'**
+  String get searchNewerMatch;
+
+  /// Placeholder of the search field inside a chat
+  ///
+  /// In en, this message translates to:
+  /// **'Search in this chat'**
+  String get searchInChatHint;
+
+  /// Explains a chat result whose name does not contain the query
+  ///
+  /// In en, this message translates to:
+  /// **'Matched in the description'**
+  String get searchChatDescriptionMatch;
+
+  /// Accessible label of a message result that opens its chat
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat'**
+  String get searchOpenChat;
 }
 
 class _AppLocalizationsDelegate

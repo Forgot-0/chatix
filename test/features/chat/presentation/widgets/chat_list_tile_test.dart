@@ -16,6 +16,9 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
+import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
+import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
+import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
@@ -141,6 +144,7 @@ void main() {
     ChatEntity value, {
     int? peerReadSeq,
     ChatLocalPrefs prefs = const ChatLocalPrefs(),
+    Set<String> pinned = const <String>{},
     String? draft,
     bool dark = false,
   }) async {
@@ -151,6 +155,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         chatLocalPrefsStoreProvider.overrideWithValue(store),
+        chatOrganizerDataSourceProvider.overrideWithValue(
+          InMemoryChatOrganizerDataSource(pinned: pinned),
+        ),
         getMembersUseCaseProvider.overrideWithValue(getMembers),
         authProvider.overrideWith(() => FakeAuthController(me)),
       ],
@@ -158,6 +165,7 @@ void main() {
     addTearDown(container.dispose);
 
     await container.read(authProvider.future);
+    await container.read(chatOrganizerProvider.future);
     if (draft != null) {
       final drafts = container.read(chatDraftsProvider.notifier);
       drafts.save(value.id, draft);
@@ -240,7 +248,7 @@ void main() {
     await pumpTile(
       tester,
       chat(last: message(content: 'hi')),
-      prefs: const ChatLocalPrefs(pinned: {chatId}),
+      pinned: const {chatId},
     );
 
     expect(find.byIcon(Icons.push_pin), findsOneWidget);

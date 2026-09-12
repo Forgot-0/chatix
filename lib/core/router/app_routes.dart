@@ -23,6 +23,8 @@ abstract final class RouteNames {
   static const String chatMembers = 'chatMembers';
   static const String chatInfo = 'chatInfo';
   static const String chatCall = 'chatCall';
+  static const String chatFolders = 'chatFolders';
+  static const String folderEditor = 'folderEditor';
 
   static const String notifications = 'notifications';
 
@@ -117,6 +119,35 @@ abstract final class CreateChatRoute {
 abstract final class ChatSearchRoute {
   static const String path = 'search';
   static const String location = '/chats/search';
+}
+
+/// `/chats/folders` — the folders this device keeps and the switches around
+/// the chat list's pinned zone and archive.
+abstract final class ChatFoldersRoute {
+  static const String path = 'folders';
+  static const String location = '/chats/folders';
+}
+
+/// `/chats/folders/edit`, on an existing folder when `id` says which.
+///
+/// The id travels as a query parameter rather than as a path segment so the
+/// same route covers a folder that does not exist yet.
+abstract final class FolderEditorRoute {
+  static const String path = 'edit';
+  static const String location = '/chats/folders/edit';
+
+  static const String folderQueryParam = 'id';
+
+  static String locationOf(String? folderId) {
+    if (folderId == null || folderId.isEmpty) return location;
+    return '$location?$folderQueryParam=${Uri.encodeQueryComponent(folderId)}';
+  }
+
+  static String? folderIdFrom(GoRouterState state) {
+    final raw = state.uri.queryParameters[folderQueryParam];
+    if (raw == null || raw.isEmpty) return null;
+    return raw;
+  }
 }
 
 /// `/chats/{chatId}`, optionally focused on one message.

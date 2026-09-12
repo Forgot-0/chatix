@@ -1119,4 +1119,279 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get chatFolders => 'Dossiers';
+
+  @override
+  String get chatFoldersAll => 'Tous les chats';
+
+  @override
+  String get folderPresetUnread => 'Non lus';
+
+  @override
+  String get folderPresetPersonal => 'Personnels';
+
+  @override
+  String get folderPresetGroups => 'Groupes';
+
+  @override
+  String get folderPresetChannels => 'Canaux';
+
+  @override
+  String get folderPresetNoReply => 'En attente de ma réponse';
+
+  @override
+  String get newFolder => 'Nouveau dossier';
+
+  @override
+  String get editFolder => 'Modifier le dossier';
+
+  @override
+  String get folderName => 'Nom du dossier';
+
+  @override
+  String get folderIcon => 'Icône';
+
+  @override
+  String get folderRules => 'Règles';
+
+  @override
+  String get folderMatchModeTitle => 'Un chat entre ici quand';
+
+  @override
+  String get folderMatchAll => 'il respecte toutes les règles';
+
+  @override
+  String get folderMatchAny => 'il respecte une des règles';
+
+  @override
+  String get addFolderRule => 'Ajouter une règle';
+
+  @override
+  String get removeFolderRule => 'Retirer la règle';
+
+  @override
+  String get folderRuleChatType => 'Type de chat';
+
+  @override
+  String folderRuleChatTypeIn(String types) {
+    return 'Le type est $types';
+  }
+
+  @override
+  String get folderRuleUnread => 'A des messages non lus';
+
+  @override
+  String get folderRuleRead => 'N\'a rien de non lu';
+
+  @override
+  String get folderRulePinned => 'Est épinglé';
+
+  @override
+  String get folderRuleNotPinned => 'N\'est pas épinglé';
+
+  @override
+  String get folderRuleNoReply => 'Attend ma réponse';
+
+  @override
+  String folderRuleNoReplyDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Attend ma réponse depuis plus de $days jours',
+      one: 'Attend ma réponse depuis plus d\'un jour',
+      zero: 'Attend ma réponse',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderRuleDaysLabel => 'Jours sans réponse de ma part';
+
+  @override
+  String get folderRuleDaysAny => 'Peu importe';
+
+  @override
+  String get folderRuleMember => 'Contient une personne';
+
+  @override
+  String folderRuleMemberNamed(String name) {
+    return 'Contient $name';
+  }
+
+  @override
+  String get folderRulePickPerson => 'Choisir une personne';
+
+  @override
+  String get folderRuleNoPeople =>
+      'Les personnes apparaissent ici dès que vous avez des chats avec elles';
+
+  @override
+  String get folderRuleMemberLocalNote =>
+      'S\'appuie sur ce que la liste connaît déjà : vous, les listes de membres chargées, le dernier expéditeur et la personne qui a créé le chat.';
+
+  @override
+  String get deleteFolder => 'Supprimer le dossier';
+
+  @override
+  String get deleteFolderConfirm =>
+      'Supprimer ce dossier ? Les chats qu’il contient restent où ils sont.';
+
+  @override
+  String get folderNameRequired => 'Donnez un nom au dossier';
+
+  @override
+  String folderNameTooLong(int count) {
+    return 'Les noms de dossier font au plus $count caractères';
+  }
+
+  @override
+  String get folderRulesRequired => 'Ajoutez au moins une règle';
+
+  @override
+  String folderLimitReached(int count) {
+    return 'Vous pouvez garder jusqu’à $count dossiers';
+  }
+
+  @override
+  String pinLimitReached(int count) {
+    return 'Seuls $count chats peuvent être épinglés. Détachez-en un d’abord.';
+  }
+
+  @override
+  String get foldersEmpty => 'Pas encore de dossier';
+
+  @override
+  String get foldersEmptyHint =>
+      'Un dossier est un jeu de règles, pas une liste. Les chats y entrent et en sortent seuls.';
+
+  @override
+  String get folderReadyMade => 'Prêts à l’emploi';
+
+  @override
+  String get folderYours => 'Vos dossiers';
+
+  @override
+  String folderRuleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count règles',
+      one: '1 règle',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get folderEmptyChats => 'Rien dans ce dossier';
+
+  @override
+  String get folderEmptyChatsHint =>
+      'Les chats apparaissent ici dès qu’ils respectent ses règles.';
+
+  @override
+  String get hideFolderTabs => 'Masquer la barre de dossiers';
+
+  @override
+  String get hideFolderTabsHint =>
+      'Garde vos dossiers sans afficher les onglets au-dessus de la liste';
+
+  @override
+  String get unarchiveOnNewMessage => 'Ramener à la réception d’un message';
+
+  @override
+  String get unarchiveOnNewMessageHint =>
+      'Un chat archivé revient dans la liste dès que quelqu’un y écrit';
+
+  @override
+  String get organizerDeviceOnly =>
+      'Les épingles, l’archive et les dossiers restent sur cet appareil et ne suivent pas votre compte.';
+
+  @override
+  String get chatPinnedZone => 'Épinglés';
+
+  @override
+  String get chatUnarchivedToast => 'De retour dans la liste';
+
+  @override
+  String get searchTabMessages => 'Messages';
+
+  @override
+  String get searchEverything =>
+      'Rechercher des chats, des personnes et des messages';
+
+  @override
+  String get searchRecentQueries => 'Recherches récentes';
+
+  @override
+  String get searchRecentChats => 'Ouverts récemment';
+
+  @override
+  String get searchClearHistory => 'Effacer';
+
+  @override
+  String get searchRemoveFromHistory => 'Retirer des recherches récentes';
+
+  @override
+  String get searchStartTitle => 'Trouvez un chat, une personne ou un message';
+
+  @override
+  String get searchStartHint =>
+      'Les chats par leur nom, les personnes par leur identifiant, les messages par leur contenu.';
+
+  @override
+  String get searchLoadedHistoryOnly => 'Recherche dans l’historique chargé';
+
+  @override
+  String get searchLoadedHistoryExplained =>
+      'Le serveur n’a pas de recherche de messages : seuls ceux déjà présents sur cet appareil sont parcourus. Ouvrez un chat pour en charger davantage.';
+
+  @override
+  String get noChatsFound => 'Aucun chat trouvé';
+
+  @override
+  String get noChatsFoundHint =>
+      'Les chats sont trouvés par nom et description, parmi ceux déjà chargés.';
+
+  @override
+  String get noPeopleFoundHint =>
+      'Essayez une autre orthographe, ou cherchez par identifiant.';
+
+  @override
+  String get noMessagesFound => 'Aucun message trouvé';
+
+  @override
+  String get messageSearchFailed => 'Impossible de rechercher les messages';
+
+  @override
+  String searchResultsCapped(int count) {
+    return 'Affichage des $count premiers résultats';
+  }
+
+  @override
+  String get searchInChat => 'Rechercher dans ce chat';
+
+  @override
+  String searchMatchPosition(int current, int total) {
+    return '$current sur $total';
+  }
+
+  @override
+  String get searchNoMatches => 'Aucun résultat';
+
+  @override
+  String get searchOlderMatch => 'Résultat plus ancien';
+
+  @override
+  String get searchNewerMatch => 'Résultat plus récent';
+
+  @override
+  String get searchInChatHint => 'Rechercher dans ce chat';
+
+  @override
+  String get searchChatDescriptionMatch => 'Trouvé dans la description';
+
+  @override
+  String get searchOpenChat => 'Ouvrir le chat';
 }

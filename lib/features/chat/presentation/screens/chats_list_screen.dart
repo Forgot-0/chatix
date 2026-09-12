@@ -10,8 +10,11 @@ import 'package:chatix/features/chat/presentation/providers/chat_list_provider.d
 import 'package:chatix/features/chat/presentation/providers/chat_list_scroll_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_list_sections.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
+import 'package:chatix/features/chat_organizer/domain/entities/organized_chats.dart';
+import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
+import 'package:chatix/features/chat_organizer/presentation/providers/folder_selection_provider.dart';
+import 'package:chatix/features/chat_organizer/presentation/widgets/folder_tabs_bar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The chats list: every conversation this account is in, most recent first.
@@ -20,6 +23,10 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// the endpoint hands back (`last_activity_at` **and** `last_chat_id`,
 /// api-docs §5.2) — [ChatListController] keeps both, and this screen only has
 /// to ask for the next page as the bottom comes into view.
+///
+/// What the screen does with those rows — the pinned zone, the archive, the
+/// folder the strip is on — is the chat organizer's, and none of it exists
+/// on the server.
 class ChatsListScreen extends ConsumerStatefulWidget {
   const ChatsListScreen({super.key, this.selectedChatId});
 
@@ -76,16 +83,26 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     final listState = ref.watch(chatListProvider);
     final l10n = AppLocalizations.of(context);
 
+    final organizer = ref.watch(organizerDataProvider);
+    final showFolders =
+        organizer.folders.isNotEmpty && !organizer.settings.foldersHidden;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.chats),
         actions: [
+          IconButton(
+            onPressed: () => context.push(ChatFoldersRoute.location),
+            icon: const Icon(Icons.folder_outlined),
+            tooltip: l10n.chatFolders,
+          ),
           IconButton(
             onPressed: () => context.push(ChatSearchRoute.location),
             icon: const Icon(Icons.search),
             tooltip: l10n.searchChatsAndPeople,
           ),
         ],
+        bottom: showFolders ? const FolderTabsBar() : null,
       ),
       body: listState.when(
         loading: () => const AppListSkeleton(hasTrailing: true),
@@ -133,10 +150,20 @@ class _ChatsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final prefs = ref.watch(chatLocalPrefsProvider);
-    final sections = splitChatsForList(state.items, prefs);
+    final theme = Theme.of(context);
 
-    if (sections.isEmpty) {
+    final organizer = ref.watch(organizerDataProvider);
+    final folder = ref.watch(activeChatFolderProvider);
+    final muted = ref.watch(chatLocalPrefsProvider).muted;
+
+    final sections = organizeChats(
+      chats: state.items,
+      organizer: organizer,
+      context: ref.watch(chatRuleContextProvider),
+      folder: folder,
+    );
+
+    if (state.items.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: AppEmptyState(
@@ -163,25 +190,42 @@ class _ChatsList extends ConsumerWidget {
             SliverToBoxAdapter(
               child: _ArchiveHeader(
                 count: sections.archived.length,
-                unread: sections.unreadInArchive(prefs),
+                unread: sections.unreadInArchive(muted),
                 isOpen: archiveOpen,
                 onTap: onToggleArchive,
               ),
             ),
           if (sections.hasArchive && archiveOpen)
             _rows(sections.archived, isLast: false),
-          if (sections.pinned.isNotEmpty) ...[
-            _SectionLabel(label: l10n.chatPinnedLabel),
-            _rows(sections.pinned, isLast: sections.active.isEmpty),
-          ],
+
+          // The pinned zone is a block of its own, on its own ground: the
+          // point of pinning is that those rows are not part of the stream
+          // below them.
+          if (sections.pinned.isNotEmpty)
+            DecoratedSliver(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+              ),
+              sliver: SliverMainAxisGroup(
+                slivers: [
+                  _SectionLabel(label: l10n.chatPinnedZone),
+                  _rows(sections.pinned, isLast: true),
+                  const SliverToBoxAdapter(child: SizedBox(height: 6)),
+                ],
+              ),
+            ),
+
           if (sections.active.isNotEmpty)
             _rows(sections.active, isLast: true),
           if (state.canLoadMore)
             const SliverToBoxAdapter(child: AppLoadMoreIndicator()),
+
           if (sections.visible.isEmpty)
-            const SliverFillRemaining(
+            SliverFillRemaining(
               hasScrollBody: false,
-              child: _ArchiveOnlyNotice(),
+              child: folder == null
+                  ? const _ArchiveOnlyNotice()
+                  : const _FolderEmptyNotice(),
             )
           else
             const SliverToBoxAdapter(child: SizedBox(height: 88)),
@@ -251,6 +295,48 @@ class _ArchiveOnlyNotice extends StatelessWidget {
   }
 }
 
+/// A folder whose rules nothing meets right now. Not an error, and not
+/// something to fix — the folder fills itself.
+class _FolderEmptyNotice extends StatelessWidget {
+  const _FolderEmptyNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.folder_open_outlined,
+              size: 48,
+              color: theme.colorScheme.outline,
+            ),
+            const SizedBox(height: AppSpacing.x3),
+            Text(
+              l10n.folderEmptyChats,
+              style: theme.textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.x2),
+            Text(
+              l10n.folderEmptyChatsHint,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel({required this.label});
 
@@ -268,13 +354,23 @@ class _SectionLabel extends StatelessWidget {
           AppSpacing.x4,
           AppSpacing.x1,
         ),
-        child: Text(
-          label.toUpperCase(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.8,
-          ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.push_pin_outlined,
+              size: 14,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
         ),
       ),
     );

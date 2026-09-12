@@ -3,6 +3,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
+import 'package:chatix/core/network/request_cancellation.dart';
 
 class GetProfilesUseCase {
   final ProfileRepository _repository;
@@ -16,6 +17,7 @@ class GetProfilesUseCase {
     int page = 1,
     int pageSize = 20,
     String? sort,
+    RequestCancellation? cancellation,
   }) {
     if (page < 1) {
       return Future.value(
@@ -38,6 +40,7 @@ class GetProfilesUseCase {
       page: page,
       pageSize: pageSize,
       sort: sort,
+      cancellation: cancellation,
     );
   }
 }
