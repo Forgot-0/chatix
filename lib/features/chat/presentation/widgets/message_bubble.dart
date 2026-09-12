@@ -1,36 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
+import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
+import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_actions_overlay.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_attachments.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_forward_header.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_reply_quote.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_chip.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/features/chat/presentation/widgets/swipe_to_reply.dart';
-
-import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
-import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
-import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
-import 'package:chatix/features/chat/presentation/widgets/video_preview.dart';
-import 'package:chatix/features/chat/presentation/widgets/voice_player.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
-import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
-import 'package:chatix/features/chat/domain/entities/message_entity.dart';
-import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 
-class MessageBubble extends StatelessWidget {
+/// One message.
+///
+/// Everything about *what* the bubble may do arrives decided: [actions] is
+/// built from [MessageActions] against the reader's rights, and the callbacks
+/// are only non-null where the corresponding right exists. The bubble neither
+/// reads roles nor guesses at them.
+///
+/// A deleted message is not drawn here at all — `message_deleted` drops it
+/// from the window, so there is no tombstone state to render.
+class MessageBubble extends StatefulWidget {
   const MessageBubble({
     super.key,
     required this.message,
     required this.isMine,
+    this.actions = const [],
     this.onReply,
     this.onForward,
     this.onEdit,
     this.onDelete,
+    this.onCopy,
+    this.onShowDetails,
     this.onOpenAttachment,
+    this.onOpenLink,
+    this.isKnownMention,
     this.reactions,
-    this.reactionPolicy,
+    this.quickReactions = const [],
     this.onToggleReaction,
+    this.onShowReactionPicker,
     this.onShowReactionUsers,
     this.onJumpToOriginal,
     this.isHighlighted = false,
@@ -42,25 +58,44 @@ class MessageBubble extends StatelessWidget {
     this.isFirstInGroup = true,
     this.isLastInGroup = true,
     this.showAuthor = false,
+    this.showMeta = true,
   });
 
   final MessageEntity message;
 
   final bool isMine;
 
+  /// What the long-press menu offers, in order. Empty disables the menu.
+  final List<MessageAction> actions;
+
   final VoidCallback? onReply;
   final VoidCallback? onForward;
-
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onCopy;
+  final VoidCallback? onShowDetails;
 
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
 
+  /// Opening a url, an address or a phone number found in the text, or
+  /// visiting the person a mention names.
+  final void Function(LinkSpan link)? onOpenLink;
+
+  /// Decides which `@handle` in the text is somebody in this conversation.
+  final bool Function(String handle)? isKnownMention;
+
   final MessageReactionsEntity? reactions;
 
-  final ChatReactionPolicy? reactionPolicy;
+  /// The emoji the quick bar offers, already filtered by what this chat
+  /// allows and ordered by what this reader reaches for. The first is what a
+  /// double tap sends.
+  final List<String> quickReactions;
 
   final void Function(String emoji)? onToggleReaction;
+
+  /// Opens the full set of emoji this chat allows, for when the handful on
+  /// the quick bar is not the one someone wanted.
+  final VoidCallback? onShowReactionPicker;
 
   final void Function(String emoji)? onShowReactionUsers;
 
@@ -84,44 +119,244 @@ class MessageBubble extends StatelessWidget {
 
   final bool showAuthor;
 
+  /// Whether this bubble carries the timestamp and the delivery ticks.
+  ///
+  /// Off for every message in a run but the last, which is what turns a burst
+  /// of messages into one block instead of a column of clocks. An edited
+  /// message shows them anyway: the "edited" mark lives on that row, and
+  /// hiding it would quietly drop the only sign the text changed.
+  final bool showMeta;
+
+  @override
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<MessageBubble> {
+  /// Measured when the menu opens, so the overlay can redraw the bubble
+  /// exactly where the reader pressed it.
+  final GlobalKey _bubbleKey = GlobalKey();
+
+  bool _menuOpen = false;
+
+  MessageEntity get _message => widget.message;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_message.type == MessageType.system) {
+      return _SystemMessage(
+        message: _message,
+        onLongPress: widget.actions.isEmpty ? null : _openMenu,
+      );
+    }
+
+    final bubble = _buildBubble(context, forOverlay: false);
+
+    if (!widget.selectionMode) return bubble;
+
+    return _SelectionRow(
+      isSelected: widget.isSelected,
+      onToggle: widget.onSelectionToggled,
+      child: bubble,
+    );
+  }
+
+  /// The bubble and its margins.
+  ///
+  /// [forOverlay] draws the same thing without the gestures or the selection
+  /// chrome: the copy the context menu lifts over the blur has to look
+  /// identical and do nothing.
+  Widget _buildBubble(BuildContext context, {required bool forOverlay}) {
+    final chatix = ChatixTheme.of(context);
+    final density = chatix.density;
+    final scheme = Theme.of(context).colorScheme;
+
+    final content = _BubbleBody(
+      message: _message,
+      isMine: widget.isMine,
+      showAuthor: widget.showAuthor,
+      showMeta: widget.showMeta,
+      deliveryStatus: widget.deliveryStatus,
+      reactions: widget.reactions,
+      isFirstInGroup: widget.isFirstInGroup,
+      isLastInGroup: widget.isLastInGroup,
+      onJumpToOriginal: forOverlay ? null : widget.onJumpToOriginal,
+      onOpenAttachment: forOverlay ? null : widget.onOpenAttachment,
+      onOpenLink: forOverlay ? null : widget.onOpenLink,
+      isKnownMention: widget.isKnownMention,
+      onToggleReaction: forOverlay ? null : widget.onToggleReaction,
+      onShowReactionUsers: forOverlay ? null : widget.onShowReactionUsers,
+      onShowDetails: forOverlay ? null : widget.onShowDetails,
+    );
+
+    // The overlay positions its copy at the measured rect, so the copy is
+    // the bubble alone — any alignment or margin around it would be counted
+    // twice and squeeze it.
+    if (forOverlay) return content;
+
+    final aligned = Align(
+      alignment: widget.isMine
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
+      child: KeyedSubtree(key: _bubbleKey, child: content),
+    );
+
+    return AnimatedContainer(
+      duration: ChatixTheme.duration,
+      curve: ChatixTheme.curve,
+      margin: EdgeInsets.fromLTRB(
+        AppSpacing.x3,
+        widget.isFirstInGroup ? density.groupGap : density.stackGap,
+        AppSpacing.x3,
+        0,
+      ),
+      decoration: BoxDecoration(
+        color: widget.isHighlighted
+            ? scheme.primary.withValues(alpha: 0.14)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(chatix.bubbleRadius),
+      ),
+      child: SwipeToReply(
+        enabled: !widget.selectionMode && !_menuOpen,
+        onReply: widget.onReply,
+        child: GestureDetector(
+          behavior: HitTestBehavior.deferToChild,
+          onTap: widget.selectionMode ? widget.onSelectionToggled : null,
+          onDoubleTap: widget.selectionMode ? null : _quickReact,
+          onLongPress: widget.selectionMode || widget.actions.isEmpty
+              ? null
+              : _openMenu,
+          child: aligned,
+        ),
+      ),
+    );
+  }
+
+  /// Double tap sends the reaction this person reaches for most.
+  ///
+  /// Tapping again with the same emoji takes it back, which is what makes the
+  /// gesture safe to use by accident.
+  void _quickReact() {
+    final emoji = widget.quickReactions.firstOrNull;
+    final toggle = widget.onToggleReaction;
+    if (emoji == null || toggle == null) return;
+
+    HapticFeedback.selectionClick();
+    toggle(emoji);
+  }
+
+  Future<void> _openMenu() async {
+    final anchor = _anchorRect();
+    if (anchor == null || !mounted) return;
+
+    HapticFeedback.mediumImpact();
+    setState(() => _menuOpen = true);
+
+    final result = await MessageActionsOverlay.show(
+      context,
+      anchor: anchor,
+      bubble: _buildBubble(context, forOverlay: true),
+      actions: widget.actions,
+      reactions: widget.onToggleReaction == null
+          ? const []
+          : widget.quickReactions,
+      myReactions: widget.reactions?.myEmojis.toSet() ?? const {},
+      isMine: widget.isMine,
+    );
+
+    if (!mounted) return;
+    setState(() => _menuOpen = false);
+
+    if (result == null) return;
+
+    final emoji = result.emoji;
+    if (emoji != null) {
+      widget.onToggleReaction?.call(emoji);
+      return;
+    }
+
+    switch (result.action!) {
+      case MessageAction.reply:
+        widget.onReply?.call();
+      case MessageAction.react:
+        widget.onShowReactionPicker?.call();
+      case MessageAction.copy:
+        widget.onCopy?.call();
+      case MessageAction.forward:
+        widget.onForward?.call();
+      case MessageAction.edit:
+        widget.onEdit?.call();
+      case MessageAction.select:
+        widget.onStartSelection?.call();
+      case MessageAction.delete:
+        widget.onDelete?.call();
+      case MessageAction.details:
+        widget.onShowDetails?.call();
+    }
+  }
+
+  /// Where the bubble sits on screen right now, in global coordinates.
+  Rect? _anchorRect() {
+    final render = _bubbleKey.currentContext?.findRenderObject();
+    if (render is! RenderBox || !render.hasSize) return null;
+    return render.localToGlobal(Offset.zero) & render.size;
+  }
+}
+
+/// The painted bubble: its shape, its ground, and everything inside it.
+class _BubbleBody extends StatelessWidget {
+  const _BubbleBody({
+    required this.message,
+    required this.isMine,
+    required this.showAuthor,
+    required this.showMeta,
+    required this.deliveryStatus,
+    required this.reactions,
+    required this.isFirstInGroup,
+    required this.isLastInGroup,
+    required this.onJumpToOriginal,
+    required this.onOpenAttachment,
+    required this.onOpenLink,
+    required this.isKnownMention,
+    required this.onToggleReaction,
+    required this.onShowReactionUsers,
+    required this.onShowDetails,
+  });
+
+  final MessageEntity message;
+  final bool isMine;
+  final bool showAuthor;
+  final bool showMeta;
+  final MessageDeliveryStatus? deliveryStatus;
+  final MessageReactionsEntity? reactions;
+  final bool isFirstInGroup;
+  final bool isLastInGroup;
+  final VoidCallback? onJumpToOriginal;
+  final void Function(AttachmentEntity attachment)? onOpenAttachment;
+  final void Function(LinkSpan link)? onOpenLink;
+  final bool Function(String handle)? isKnownMention;
+  final void Function(String emoji)? onToggleReaction;
+  final void Function(String emoji)? onShowReactionUsers;
+  final VoidCallback? onShowDetails;
+
+  bool get _hasReactions =>
+      reactions != null && reactions!.groups.isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final chatix = ChatixTheme.of(context);
     final density = chatix.density;
-
-    if (message.type == MessageType.system) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-        child: Center(
-          child: Text(
-            message.content ?? '',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(color: scheme.outline),
-          ),
-        ),
-      );
-    }
 
     final foreground = isMine
         ? chatix.bubbleOutgoingForeground
         : chatix.bubbleIncomingForeground;
     final muted = foreground.withValues(alpha: 0.66);
-
-    final shape = BubbleShape.of(
-      context,
-      isOutgoing: isMine,
-      isFirstInGroup: isFirstInGroup,
-      isLastInGroup: isLastInGroup,
-      side: isMine
-          ? BorderSide.none
-          : BorderSide(color: chatix.bubbleIncomingBorder),
-    );
-
     final authorColor = chatix.authorColor(message.authorId);
 
-    final content = Container(
+    final content = message.content;
+    final hasText = content != null && content.isNotEmpty;
+
+    return Container(
       padding: EdgeInsets.symmetric(
         horizontal: density.bubblePaddingX,
         vertical: density.bubblePaddingY,
@@ -132,10 +367,21 @@ class MessageBubble extends StatelessWidget {
       decoration: ShapeDecoration(
         gradient: isMine ? chatix.bubbleOutgoingGradient : null,
         color: isMine ? null : chatix.bubbleIncoming,
-        shape: shape,
+        shape: BubbleShape.of(
+          context,
+          isOutgoing: isMine,
+          isFirstInGroup: isFirstInGroup,
+          isLastInGroup: isLastInGroup,
+          side: isMine
+              ? BorderSide.none
+              : BorderSide(color: chatix.bubbleIncomingBorder),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        // Without this the bubble swells to whatever height it is offered,
+        // which is also the rect the context menu measures to lift it.
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (showAuthor && !isMine)
             Padding(
@@ -148,40 +394,94 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-          if (message.forwardedFrom != null ||
-              message.forwardedFromMessageId != null)
-            _ForwardHeader(message: message, foreground: muted),
-          if (message.replyTo != null || message.replyToId != null)
-            _ReplyPreview(
-              message: message,
-              onTap: onJumpToOriginal,
+          if (message.isForward)
+            MessageForwardHeader(message: message, foreground: muted),
+          if (message.isReply)
+            MessageReplyQuote(
+              original: message.replyTo,
+              // On the outgoing gradient the author palette has nothing to
+              // sit on, so the rule borrows the bubble's own foreground.
               accent: isMine ? foreground : authorColor,
               foreground: muted,
+              onTap: onJumpToOriginal,
             ),
           if (message.attachments.isNotEmpty)
-            _AttachmentList(
+            MessageAttachments(
               messageId: message.id,
               attachments: message.attachments,
               onOpen: onOpenAttachment,
               foreground: foreground,
             ),
-          if (message.content != null && message.content!.isNotEmpty)
-            Text(
-              message.content!,
-              style: theme.textTheme.bodyMedium?.copyWith(color: foreground),
+          if (hasText)
+            MessageText(
+              content: content,
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(color: foreground) ??
+                  TextStyle(color: foreground),
+              linkColor: isMine ? foreground : theme.colorScheme.primary,
+              isKnownMention: isKnownMention,
+              onOpenLink: onOpenLink,
             ),
-          const SizedBox(height: 2),
-          Row(
+          if (showMeta || message.isEdited)
+            _MessageMeta(
+              message: message,
+              muted: muted,
+              deliveryStatus: deliveryStatus,
+              onTap: onShowDetails,
+            ),
+          if (_hasReactions)
+            _ReactionChips(
+              groups: reactions!.groups,
+              onTap: onToggleReaction,
+              onLongPress: onShowReactionUsers,
+              onSurface: isMine,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The time, the edited mark and the ticks — and the way into the details.
+class _MessageMeta extends StatelessWidget {
+  const _MessageMeta({
+    required this.message,
+    required this.muted,
+    required this.deliveryStatus,
+    required this.onTap,
+  });
+
+  final MessageEntity message;
+  final Color muted;
+  final MessageDeliveryStatus? deliveryStatus;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Semantics(
+      button: onTap != null,
+      label: onTap == null ? null : l10n.messageDetails,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          // Only above: the bubble's own padding closes the bottom, and the
+          // extra sides give the tap target somewhere to be.
+          padding: const EdgeInsets.only(top: 2),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _formatTime(message.createdAt),
+                formatTime(message.createdAt),
                 style: theme.textTheme.labelSmall?.copyWith(color: muted),
               ),
               if (message.isEdited) ...[
                 const SizedBox(width: 4),
                 Text(
-                  AppLocalizations.of(context).messageEdited,
+                  l10n.messageEdited,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: muted,
                     fontStyle: FontStyle.italic,
@@ -194,433 +494,93 @@ class MessageBubble extends StatelessWidget {
               ],
             ],
           ),
-          if (_hasReactions)
-            _ReactionChips(
-              groups: reactions!.groups,
-              onTap: onToggleReaction,
-              onLongPress: onShowReactionUsers,
-              onSurface: isMine,
-            ),
-        ],
-      ),
-    );
-
-    final bubble = Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: AnimatedContainer(
-        duration: ChatixTheme.duration,
-        curve: ChatixTheme.curve,
-        margin: EdgeInsets.fromLTRB(
-          12,
-          isFirstInGroup ? density.groupGap : density.stackGap,
-          12,
-          0,
-        ),
-        decoration: BoxDecoration(
-          color: isHighlighted
-              ? scheme.primary.withValues(alpha: 0.14)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(chatix.bubbleRadius),
-        ),
-        child: SwipeToReply(
-          enabled: !selectionMode,
-          onReply: onReply,
-          child: GestureDetector(
-            onTap: selectionMode ? onSelectionToggled : null,
-            onLongPress: selectionMode ? null : () => _showActions(context),
-            child: content,
-          ),
-        ),
-      ),
-    );
-
-    if (!selectionMode) return bubble;
-
-    return GestureDetector(
-      onTap: onSelectionToggled,
-      child: ColoredBox(
-        color: isSelected
-            ? scheme.primary.withValues(alpha: 0.08)
-            : Colors.transparent,
-        child: Row(
-          children: [
-            Checkbox(
-              value: isSelected,
-              onChanged: (_) => onSelectionToggled?.call(),
-            ),
-            Expanded(child: bubble),
-          ],
         ),
       ),
     );
   }
 
-  bool get _hasReactions => reactions != null && reactions!.groups.isNotEmpty;
-
-  void _showActions(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final policy = reactionPolicy;
-
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (sheetContext) => SafeArea(
-        child: Wrap(
-          children: [
-            if (policy != null && onToggleReaction != null) ...[
-              ReactionPicker(
-                reactions:
-                    reactions ?? MessageReactionsEntity.empty(message.id),
-                policy: policy,
-                onSelected: (emoji) {
-                  Navigator.of(sheetContext).pop();
-                  onToggleReaction!(emoji);
-                },
-              ),
-              const Divider(height: 1),
-            ],
-            if (onReply != null)
-              ListTile(
-                leading: const Icon(Icons.reply),
-                title: Text(l10n.messageReply),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onReply!();
-                },
-              ),
-            if (onForward != null)
-              ListTile(
-                leading: const Icon(Icons.forward),
-                title: Text(l10n.messageForward),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onForward!();
-                },
-              ),
-            if (onEdit != null)
-              ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: Text(l10n.messageEdit),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onEdit!();
-                },
-              ),
-            if (onDelete != null)
-              ListTile(
-                leading: const Icon(Icons.delete_outline),
-                title: Text(l10n.messageDelete),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onDelete!();
-                },
-              ),
-            if (onStartSelection != null)
-              ListTile(
-                leading: const Icon(Icons.checklist),
-                title: Text(l10n.messageSelect),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  onStartSelection!();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static String _formatTime(DateTime value) {
+  static String formatTime(DateTime value) {
     final local = value.toLocal();
     return '${local.hour.toString().padLeft(2, '0')}:'
         '${local.minute.toString().padLeft(2, '0')}';
   }
 }
 
-class _ForwardHeader extends StatelessWidget {
-  const _ForwardHeader({required this.message, required this.foreground});
+/// What the server says about the conversation, not what anyone said in it.
+class _SystemMessage extends StatelessWidget {
+  const _SystemMessage({required this.message, required this.onLongPress});
 
   final MessageEntity message;
-  final Color foreground;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final origin = message.forwardedFrom;
+    final chatix = ChatixTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.forward, size: 14, color: foreground),
-          const SizedBox(width: 4),
-          Text(
-            origin == null
-                ? 'Forwarded message'
-                : 'Forwarded from ${origin.authorLabel}',
-            style: theme.textTheme.labelSmall?.copyWith(color: foreground),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.x2,
+        horizontal: AppSpacing.x6,
       ),
-    );
-  }
-}
-
-class _ReplyPreview extends StatelessWidget {
-  const _ReplyPreview({
-    required this.message,
-    required this.accent,
-    required this.foreground,
-    this.onTap,
-  });
-
-  final MessageEntity message;
-  final Color accent;
-  final Color foreground;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final original = message.replyTo;
-    final l10n = AppLocalizations.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.only(left: 8),
-        decoration: BoxDecoration(
-          border: Border(left: BorderSide(color: accent, width: 3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (original != null)
-              Text(
-                original.authorLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            Text(
-              original?.content ?? l10n.messageNotFound,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(color: foreground),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AttachmentList extends StatelessWidget {
-  const _AttachmentList({
-    required this.messageId,
-    required this.attachments,
-    required this.foreground,
-    this.onOpen,
-  });
-
-  final String messageId;
-  final List<AttachmentEntity> attachments;
-  final Color foreground;
-  final void Function(AttachmentEntity attachment)? onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    bool ready(AttachmentEntity a) =>
-        a.attachmentStatus == AttachmentStatus.success;
-
-    final images = [
-      for (final a in attachments)
-        if (a.attachmentType == AttachmentType.image && ready(a)) a,
-    ];
-    final playable = [
-      for (final a in attachments)
-        if (ready(a) &&
-            (a.attachmentType == AttachmentType.video ||
-                a.attachmentType == AttachmentType.videoNote ||
-                a.attachmentType == AttachmentType.voice))
-          a,
-    ];
-    final rest = [
-      for (final a in attachments)
-        if (!images.contains(a) && !playable.contains(a)) a,
-    ];
-
-    final accent = ChatixTheme.of(context).success;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (images.isNotEmpty)
-          _ImageGrid(messageId: messageId, images: images, onOpen: onOpen),
-        for (final attachment in playable)
-          switch (attachment.attachmentType) {
-            AttachmentType.voice => VoicePlayer(
-              attachment: attachment,
-              messageId: messageId,
-              foreground: foreground,
-              accent: accent,
-            ),
-            AttachmentType.videoNote => VideoPreview(
-              attachment: attachment,
-              messageId: messageId,
-              isCircular: true,
-            ),
-            _ => GestureDetector(
-              onTap: () => onOpen?.call(attachment),
-              child: VideoPreview(attachment: attachment, messageId: messageId),
-            ),
-          },
-        for (final attachment in rest)
-          _AttachmentRow(
-            attachment: attachment,
-            onOpen: onOpen,
-            foreground: foreground,
-          ),
-        const SizedBox(height: 4),
-      ],
-    );
-  }
-}
-
-class _ImageGrid extends StatelessWidget {
-  const _ImageGrid({
-    required this.messageId,
-    required this.images,
-    this.onOpen,
-  });
-
-  final String messageId;
-  final List<AttachmentEntity> images;
-  final void Function(AttachmentEntity attachment)? onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    if (images.length == 1) {
-      final only = images.first;
-      final ratio =
-          (only.width != null && only.height != null && only.height! > 0)
-          ? (only.width! / only.height!).clamp(0.6, 1.8)
-          : 1.4;
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
+      child: Center(
         child: GestureDetector(
-          onTap: () => onOpen?.call(only),
-          child: AspectRatio(
-            aspectRatio: ratio.toDouble(),
-            child: AttachmentImage(attachment: only, messageId: messageId),
+          onLongPress: onLongPress,
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x3,
+              vertical: AppSpacing.x1 + 1,
+            ),
+            decoration: BoxDecoration(
+              color: chatix.dateChip,
+              borderRadius: BorderRadius.circular(AppRadii.full),
+            ),
+            child: Text(
+              message.content ?? '',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: images.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 3,
-          mainAxisSpacing: 3,
-        ),
-        itemBuilder: (context, index) {
-          final attachment = images[index];
-          return GestureDetector(
-            onTap: () => onOpen?.call(attachment),
-            child: AttachmentImage(
-              attachment: attachment,
-              messageId: messageId,
-              borderRadius: BorderRadius.circular(8),
-            ),
-          );
-        },
       ),
     );
   }
 }
 
-class _AttachmentRow extends StatelessWidget {
-  const _AttachmentRow({
-    required this.attachment,
-    required this.foreground,
-    this.onOpen,
+/// The checkbox lane that multi-select puts every message into.
+class _SelectionRow extends StatelessWidget {
+  const _SelectionRow({
+    required this.isSelected,
+    required this.onToggle,
+    required this.child,
   });
 
-  final AttachmentEntity attachment;
-  final Color foreground;
-  final void Function(AttachmentEntity attachment)? onOpen;
+  final bool isSelected;
+  final VoidCallback? onToggle;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
-    final l10n = AppLocalizations.of(context);
-
-    final (icon, label) = switch (attachment.attachmentStatus) {
-      AttachmentStatus.pending => (
-        Icons.hourglass_empty,
-        l10n.attachmentProcessing,
-      ),
-      AttachmentStatus.error => (Icons.error_outline, l10n.attachmentFailed),
-      AttachmentStatus.success => (
-        switch (attachment.attachmentType) {
-          AttachmentType.image => Icons.image_outlined,
-          AttachmentType.video => Icons.videocam_outlined,
-          AttachmentType.file => Icons.attach_file,
-          AttachmentType.voice => Icons.mic_outlined,
-          AttachmentType.videoNote => Icons.videocam_rounded,
-        },
-        ChatAttachmentLimits.formatBytes(attachment.size),
-      ),
-    };
-
-    return InkWell(
-      onTap: attachment.attachmentStatus == AttachmentStatus.success
-          ? () => onOpen?.call(attachment)
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+    return GestureDetector(
+      onTap: onToggle,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        curve: AppMotion.curve,
+        color: isSelected
+            ? scheme.primary.withValues(alpha: 0.10)
+            : Colors.transparent,
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: foreground),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    attachment.originalFilename,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: foreground,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color:
-                          attachment.attachmentStatus == AttachmentStatus.error
-                          ? ChatixTheme.of(context).danger
-                          : foreground.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ),
+            Checkbox(
+              value: isSelected,
+              onChanged: (_) => onToggle?.call(),
             ),
+            Expanded(child: child),
           ],
         ),
       ),

@@ -17,6 +17,7 @@ class DateChip extends StatelessWidget {
     required this.label,
     this.visible = true,
     this.blurred = true,
+    this.elevated = false,
   });
 
   final String label;
@@ -28,6 +29,11 @@ class DateChip extends StatelessWidget {
   /// Blur costs a saveLayer. Off for the inline separators between day
   /// groups, which sit on the wallpaper and have nothing to blur.
   final bool blurred;
+
+  /// Lifts the chip off the conversation with a shadow. What the sticky
+  /// header turns on while the list is moving, so it reads as floating over
+  /// the messages rather than sitting between them.
+  final bool elevated;
 
   static const double _blurSigma = 12;
 
@@ -62,7 +68,23 @@ class DateChip extends StatelessWidget {
         opacity: visible ? 1 : 0,
         duration: AppMotion.base,
         curve: AppMotion.curve,
-        child: capsule,
+        child: AnimatedContainer(
+          duration: AppMotion.base,
+          curve: AppMotion.curve,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.full),
+            boxShadow: elevated
+                ? [
+                    BoxShadow(
+                      color: theme.colorScheme.shadow.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : const [],
+          ),
+          child: capsule,
+        ),
       ),
     );
   }

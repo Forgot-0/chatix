@@ -69,6 +69,16 @@ ChatPreview chatPreviewOf(
   );
 }
 
+/// One line standing in for a whole message.
+///
+/// The chat row is not the only place that needs it: a reply quote and a
+/// forward header both show a message they are not drawing in full, and all
+/// three should call a voice note the same thing.
+ChatPreview messagePreviewOf(MessageEntity message, AppLocalizations l10n) {
+  final (body, icon) = _bodyOf(message, l10n);
+  return ChatPreview(body: body, icon: icon);
+}
+
 /// Who to credit in front of the preview.
 ///
 /// Direct chats say nothing — the only two people in one are you and the row's

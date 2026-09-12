@@ -29,6 +29,15 @@ abstract interface class ChatLocalPrefsStore {
   Map<String, String> readDrafts();
 
   Future<void> writeDrafts(Map<String, String> drafts);
+
+  /// Emoji this device reacted with, most recent first.
+  ///
+  /// Device-local like everything else here: reactions themselves live on the
+  /// server, but which ones this person reaches for first is a habit, not
+  /// chat data, and there is no endpoint that stores it.
+  List<String> readRecentReactions();
+
+  Future<void> writeRecentReactions(List<String> emojis);
 }
 
 /// The real store: shared preferences, one list per flag and one JSON blob
@@ -37,6 +46,7 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
   SharedPrefsChatLocalPrefsStore(this._storage);
 
   static const String _draftsKey = 'chat_drafts';
+  static const String _recentReactionsKey = 'chat.recent_reactions';
 
   final LocalStorageService _storage;
 
@@ -79,6 +89,19 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
     }
     await _storage.setString(_draftsKey, json.encode(drafts));
   }
+
+  @override
+  List<String> readRecentReactions() =>
+      _storage.getStringList(_recentReactionsKey) ?? const <String>[];
+
+  @override
+  Future<void> writeRecentReactions(List<String> emojis) async {
+    if (emojis.isEmpty) {
+      await _storage.remove(_recentReactionsKey);
+      return;
+    }
+    await _storage.setStringList(_recentReactionsKey, emojis);
+  }
 }
 
 /// The fallback used where shared preferences were never wired up — widget
@@ -87,6 +110,7 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
 class InMemoryChatLocalPrefsStore implements ChatLocalPrefsStore {
   final Map<ChatLocalFlag, Set<String>> _flags = <ChatLocalFlag, Set<String>>{};
   Map<String, String> _drafts = const <String, String>{};
+  List<String> _recentReactions = const <String>[];
 
   @override
   Set<String> readFlag(ChatLocalFlag flag) =>
@@ -103,5 +127,13 @@ class InMemoryChatLocalPrefsStore implements ChatLocalPrefsStore {
   @override
   Future<void> writeDrafts(Map<String, String> drafts) async {
     _drafts = {...drafts};
+  }
+
+  @override
+  List<String> readRecentReactions() => [..._recentReactions];
+
+  @override
+  Future<void> writeRecentReactions(List<String> emojis) async {
+    _recentReactions = [...emojis];
   }
 }

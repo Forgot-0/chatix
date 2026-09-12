@@ -84,7 +84,16 @@ class MessageEntity extends Equatable {
 
   bool get hasReactions => reactions.isNotEmpty;
 
-  bool get isForward => forwardedFromMessageId != null || forwardedFrom != null;
+  /// Whether this message was written somewhere else.
+  ///
+  /// Any one of the forward fields is enough. The server fills all three on a
+  /// forward (api-docs §5.4), but `forwarded_from` is only resolved when the
+  /// original still exists, and the header has something to say either way.
+  bool get isForward =>
+      forwardedFrom != null ||
+      forwardedFromMessageId != null ||
+      forwardedFromChatId != null ||
+      forwardedFromAuthorId != null;
 
   bool get isReply => replyToId != null || replyTo != null;
 

@@ -383,6 +383,76 @@
     "description": "Message action: delete"
   },
   "messageSelect": "Select",
+  "messageReact": "React",
+  "@messageReact": {
+    "description": "Context menu action that opens the reaction picker"
+  },
+  "messageCopy": "Copy text",
+  "@messageCopy": {
+    "description": "Context menu action that puts the message text on the clipboard"
+  },
+  "messageCopied": "Copied",
+  "@messageCopied": {
+    "description": "Confirmation after copying message text"
+  },
+  "linkOpenFailed": "Nothing here can open that link",
+  "@linkOpenFailed": {
+    "description": "Shown when a tapped link in a message has no app to handle it"
+  },
+  "messageDetails": "Details",
+  "@messageDetails": {
+    "description": "Context menu action that opens the message details sheet"
+  },
+  "replyingTo": "Replying to {author}",
+  "@replyingTo": {
+    "description": "Accessibility label on a quoted reply",
+    "placeholders": {
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "forwardedFrom": "Forwarded from {author}",
+  "@forwardedFrom": {
+    "description": "Header above a forwarded message whose original author is known",
+    "placeholders": {
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "forwardedMessage": "Forwarded message",
+  "@forwardedMessage": {
+    "description": "Header above a forwarded message whose origin the server could not resolve"
+  },
+  "detailsSentAt": "Sent",
+  "@detailsSentAt": {
+    "description": "Message details row: the full date and time"
+  },
+  "detailsAuthor": "From",
+  "@detailsAuthor": {
+    "description": "Message details row: who wrote it"
+  },
+  "detailsSequence": "Number in chat",
+  "@detailsSequence": {
+    "description": "Message details row: the per-chat seq, which deep links and read cursors count in"
+  },
+  "detailsEdited": "Edited",
+  "@detailsEdited": {
+    "description": "Message details row label for an edited message"
+  },
+  "detailsEditedYes": "Yes",
+  "@detailsEditedYes": {
+    "description": "Value of the edited row in message details"
+  },
+  "detailsDelivery": "Delivery",
+  "@detailsDelivery": {
+    "description": "Message details row: sending, sent or read"
+  },
+  "detailsAttachments": "Attachments",
+  "@detailsAttachments": {
+    "description": "Heading above the per-attachment status list in message details"
+  },
   "@messageSelect": {
     "description": "Message action: enter selection mode"
   },
@@ -421,6 +491,84 @@
   "scrollToBottom": "Jump to the newest messages",
   "@scrollToBottom": {
     "description": "Tooltip on the scroll-to-bottom button"
+  },
+  "newMessagesBelow": "{count, plural, =0{No new messages} =1{1 new message below} other{{count} new messages below}}",
+  "@newMessagesBelow": {
+    "description": "Badge on the jump-to-bottom button, counting what arrived while the reader was up in the history",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectionReconnecting": "Reconnecting\u2026",
+  "@connectionReconnecting": {
+    "description": "Banner while the realtime socket is coming back"
+  },
+  "connectionOffline": "Offline \u2014 pull to refresh",
+  "@connectionOffline": {
+    "description": "Banner while the realtime socket is down"
+  },
+  "attachmentFallbackLabel": "Attachment",
+  "@attachmentFallbackLabel": {
+    "description": "Stands in for the text of a message that has none, such as one that is only a file"
+  },
+  "composerJoinToSend": "Join this chat to send messages",
+  "@composerJoinToSend": {
+    "description": "Why the composer is disabled: the reader is not a member"
+  },
+  "composerBanned": "You are banned from this chat",
+  "@composerBanned": {
+    "description": "Why the composer is disabled"
+  },
+  "composerMuted": "You are muted in this chat",
+  "@composerMuted": {
+    "description": "Why the composer is disabled"
+  },
+  "composerAdminsOnly": "Only admins can post in this chat",
+  "@composerAdminsOnly": {
+    "description": "Why the composer is disabled"
+  },
+  "composerNoPermission": "You do not have permission to send messages here",
+  "@composerNoPermission": {
+    "description": "Why the composer is disabled, when no more specific reason applies"
+  },
+  "attachmentSelection": "{count, plural, =1{1 file} other{{count} files}}, {size}",
+  "@attachmentSelection": {
+    "description": "Summary of what is staged in the attachment bar",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentReady": "Ready to send",
+  "@attachmentReady": {
+    "description": "Attachment bar state: every slot confirmed"
+  },
+  "attachMediaLimits": "Up to {count}, {size} each",
+  "@attachMediaLimits": {
+    "description": "Limits shown under the photo and video option",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "attachDocumentLimits": "One file, up to {size}",
+  "@attachDocumentLimits": {
+    "description": "Limits shown under the document option",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
   },
   "messageDensity": "Message density",
   "@messageDensity": {

@@ -326,6 +326,55 @@ class AppLocalizationsBn extends AppLocalizations {
   String get messageSelect => 'নির্বাচন';
 
   @override
+  String get messageReact => 'React';
+
+  @override
+  String get messageCopy => 'Copy text';
+
+  @override
+  String get messageCopied => 'Copied';
+
+  @override
+  String get linkOpenFailed => 'Nothing here can open that link';
+
+  @override
+  String get messageDetails => 'Details';
+
+  @override
+  String replyingTo(String author) {
+    return 'Replying to $author';
+  }
+
+  @override
+  String forwardedFrom(String author) {
+    return 'Forwarded from $author';
+  }
+
+  @override
+  String get forwardedMessage => 'Forwarded message';
+
+  @override
+  String get detailsSentAt => 'Sent';
+
+  @override
+  String get detailsAuthor => 'From';
+
+  @override
+  String get detailsSequence => 'Number in chat';
+
+  @override
+  String get detailsEdited => 'Edited';
+
+  @override
+  String get detailsEditedYes => 'Yes';
+
+  @override
+  String get detailsDelivery => 'Delivery';
+
+  @override
+  String get detailsAttachments => 'Attachments';
+
+  @override
   String get backToLatest => 'সাম্প্রতিক বার্তায় ফিরুন';
 
   @override
@@ -351,6 +400,67 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get scrollToBottom => 'সাম্প্রতিক বার্তায় যান';
+
+  @override
+  String newMessagesBelow(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new messages below',
+      one: '1 new message below',
+      zero: 'No new messages',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get connectionReconnecting => 'Reconnecting…';
+
+  @override
+  String get connectionOffline => 'Offline — pull to refresh';
+
+  @override
+  String get attachmentFallbackLabel => 'Attachment';
+
+  @override
+  String get composerJoinToSend => 'Join this chat to send messages';
+
+  @override
+  String get composerBanned => 'You are banned from this chat';
+
+  @override
+  String get composerMuted => 'You are muted in this chat';
+
+  @override
+  String get composerAdminsOnly => 'Only admins can post in this chat';
+
+  @override
+  String get composerNoPermission =>
+      'You do not have permission to send messages here';
+
+  @override
+  String attachmentSelection(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0, $size';
+  }
+
+  @override
+  String get attachmentReady => 'Ready to send';
+
+  @override
+  String attachMediaLimits(int count, String size) {
+    return 'Up to $count, $size each';
+  }
+
+  @override
+  String attachDocumentLimits(String size) {
+    return 'One file, up to $size';
+  }
 
   @override
   String get messageDensity => 'বার্তার ঘনত্ব';

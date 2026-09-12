@@ -658,6 +658,96 @@ abstract class AppLocalizations {
   /// **'Select'**
   String get messageSelect;
 
+  /// Context menu action that opens the reaction picker
+  ///
+  /// In en, this message translates to:
+  /// **'React'**
+  String get messageReact;
+
+  /// Context menu action that puts the message text on the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Copy text'**
+  String get messageCopy;
+
+  /// Confirmation after copying message text
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get messageCopied;
+
+  /// Shown when a tapped link in a message has no app to handle it
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here can open that link'**
+  String get linkOpenFailed;
+
+  /// Context menu action that opens the message details sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get messageDetails;
+
+  /// Accessibility label on a quoted reply
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to {author}'**
+  String replyingTo(String author);
+
+  /// Header above a forwarded message whose original author is known
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded from {author}'**
+  String forwardedFrom(String author);
+
+  /// Header above a forwarded message whose origin the server could not resolve
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarded message'**
+  String get forwardedMessage;
+
+  /// Message details row: the full date and time
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get detailsSentAt;
+
+  /// Message details row: who wrote it
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get detailsAuthor;
+
+  /// Message details row: the per-chat seq, which deep links and read cursors count in
+  ///
+  /// In en, this message translates to:
+  /// **'Number in chat'**
+  String get detailsSequence;
+
+  /// Message details row label for an edited message
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get detailsEdited;
+
+  /// Value of the edited row in message details
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get detailsEditedYes;
+
+  /// Message details row: sending, sent or read
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get detailsDelivery;
+
+  /// Heading above the per-attachment status list in message details
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get detailsAttachments;
+
   /// Returns from a jumped-to history window to the live tail
   ///
   /// In en, this message translates to:
@@ -711,6 +801,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Jump to the newest messages'**
   String get scrollToBottom;
+
+  /// Badge on the jump-to-bottom button, counting what arrived while the reader was up in the history
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No new messages} =1{1 new message below} other{{count} new messages below}}'**
+  String newMessagesBelow(int count);
+
+  /// Banner while the realtime socket is coming back
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting…'**
+  String get connectionReconnecting;
+
+  /// Banner while the realtime socket is down
+  ///
+  /// In en, this message translates to:
+  /// **'Offline — pull to refresh'**
+  String get connectionOffline;
+
+  /// Stands in for the text of a message that has none, such as one that is only a file
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get attachmentFallbackLabel;
+
+  /// Why the composer is disabled: the reader is not a member
+  ///
+  /// In en, this message translates to:
+  /// **'Join this chat to send messages'**
+  String get composerJoinToSend;
+
+  /// Why the composer is disabled
+  ///
+  /// In en, this message translates to:
+  /// **'You are banned from this chat'**
+  String get composerBanned;
+
+  /// Why the composer is disabled
+  ///
+  /// In en, this message translates to:
+  /// **'You are muted in this chat'**
+  String get composerMuted;
+
+  /// Why the composer is disabled
+  ///
+  /// In en, this message translates to:
+  /// **'Only admins can post in this chat'**
+  String get composerAdminsOnly;
+
+  /// Why the composer is disabled, when no more specific reason applies
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to send messages here'**
+  String get composerNoPermission;
+
+  /// Summary of what is staged in the attachment bar
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}, {size}'**
+  String attachmentSelection(int count, String size);
+
+  /// Attachment bar state: every slot confirmed
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to send'**
+  String get attachmentReady;
+
+  /// Limits shown under the photo and video option
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {count}, {size} each'**
+  String attachMediaLimits(int count, String size);
+
+  /// Limits shown under the document option
+  ///
+  /// In en, this message translates to:
+  /// **'One file, up to {size}'**
+  String attachDocumentLimits(String size);
 
   /// Settings row for chat density
   ///

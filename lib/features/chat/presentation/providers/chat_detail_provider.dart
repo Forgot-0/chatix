@@ -94,6 +94,18 @@ class ChatDetailState extends Equatable {
   /// nothing new will arrive until the chat is reopened.
   final bool isRealtimeRejected;
 
+  /// Where reading had stopped when this chat was opened, taken once from
+  /// `ChatDTO.last_read.last_read_message_seq` (api-docs §5.2).
+  ///
+  /// Frozen on purpose. The live value moves as we report progress, and a
+  /// divider that follows it walks down the screen while the reader is still
+  /// looking at it.
+  final int? unreadAnchorSeq;
+
+  /// How many messages were unread when the chat was opened, frozen for the
+  /// same reason as [unreadAnchorSeq].
+  final int unreadAtOpen;
+
   const ChatDetailState({
     this.chat,
     this.messages = const [],
@@ -108,6 +120,8 @@ class ChatDetailState extends Equatable {
     this.highlightMessageId,
     this.isViewingHistory = false,
     this.isRealtimeRejected = false,
+    this.unreadAnchorSeq,
+    this.unreadAtOpen = 0,
   });
 
   bool get canLoadMore => hasNext && nextCursor != null;
@@ -161,6 +175,8 @@ class ChatDetailState extends Equatable {
     bool clearHighlight = false,
     bool? isViewingHistory,
     bool? isRealtimeRejected,
+    int? unreadAnchorSeq,
+    int? unreadAtOpen,
   }) {
     return ChatDetailState(
       chat: chat ?? this.chat,
@@ -178,6 +194,8 @@ class ChatDetailState extends Equatable {
           : (highlightMessageId ?? this.highlightMessageId),
       isViewingHistory: isViewingHistory ?? this.isViewingHistory,
       isRealtimeRejected: isRealtimeRejected ?? this.isRealtimeRejected,
+      unreadAnchorSeq: unreadAnchorSeq ?? this.unreadAnchorSeq,
+      unreadAtOpen: unreadAtOpen ?? this.unreadAtOpen,
     );
   }
 
@@ -196,6 +214,8 @@ class ChatDetailState extends Equatable {
     highlightMessageId,
     isViewingHistory,
     isRealtimeRejected,
+    unreadAnchorSeq,
+    unreadAtOpen,
   ];
 }
 
@@ -213,6 +233,22 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   int? _lastHistoryCursor;
   int _historyPagesFetched = 0;
   static const int _maxHistoryPages = 20;
+
+  /// At most one read report every this long, however fast the reader
+  /// scrolls. The furthest seq seen during the wait goes out when it ends, so
+  /// nothing is lost — only the requests in between.
+  static const Duration readThrottle = Duration(milliseconds: 1500);
+
+  int? _reportedReadSeq;
+  int? _queuedReadSeq;
+  DateTime? _lastReadSentAt;
+  Timer? _readCooldown;
+
+  /// Set once, on the first load: everything after it keeps the divider and
+  /// the opening scroll position still.
+  bool _unreadFrozen = false;
+  int? _unreadAnchorSeq;
+  int _unreadAtOpen = 0;
 
   @override
   Future<ChatDetailState> build() async {
@@ -250,6 +286,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   void _teardown() {
     _eventSubscription?.cancel();
     _eventSubscription = null;
+    _readCooldown?.cancel();
+    _readCooldown = null;
     _socket?.unsubscribe(_chatId);
     _socket = null;
   }
@@ -259,18 +297,20 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
 
     switch (event) {
       case NewMessage():
-        await _onNewMessage(event);
+        _onNewMessage(event);
 
       case MessageEdited():
         _upsertDecodedMessage(event.message);
 
       case MessageDeleted():
+        // Dropped outright rather than left as an empty shell. The bubble has
+        // no tombstone state to draw, and a row saying nothing is a row that
+        // still carries a timestamp, a reply target and a menu.
         _mutate(
           (s) => s.copyWith(
             messages: ChatRealtimeMerge.applyMessageDeleted(
               s.messages,
               event.messageId,
-              asTombstone: true,
             ),
             clearReplyTo: s.replyTo?.id == event.messageId,
             nextCursor: s.nextCursor,
@@ -356,11 +396,12 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     }
   }
 
-  Future<void> _onNewMessage(NewMessage event) async {
-    final message = _upsertDecodedMessage(event.message);
-    if (message == null) return;
-
-    await _markReadUpTo(message.seq);
+  void _onNewMessage(NewMessage event) {
+    // Not marked read here on purpose: a message that arrives while the
+    // reader is up in the history has not been read, and saying otherwise
+    // clears a badge they never looked at. The feed reports it once it is
+    // genuinely on screen.
+    _upsertDecodedMessage(event.message);
   }
 
   MessageEntity? _upsertDecodedMessage(Map<String, dynamic> raw) {
@@ -403,9 +444,6 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         }
         return s.copyWith(messages: messages, nextCursor: s.nextCursor);
       });
-
-      final newest = ChatRealtimeMerge.highestSeq(decoded);
-      if (newest != null) _markReadUpTo(newest);
     }
 
     _continueHistory(event);
@@ -819,6 +857,55 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     );
   }
 
+  /// Pulls the loaded window back to where reading stopped.
+  ///
+  /// Only needed when more went unread than one page holds: the freshest page
+  /// then starts above the boundary, so the divider has nowhere honest to go
+  /// and the opening scroll has nothing to aim at. One
+  /// `GET /messages/context/?target_seq=` around the frozen cursor puts both
+  /// back in the window.
+  ///
+  /// Returns false when the window already covers the boundary, or when there
+  /// is no boundary to find.
+  Future<bool> loadUnreadWindow() async {
+    final current = state.value;
+    if (current == null) return false;
+
+    final anchor = current.unreadAnchorSeq;
+    if (anchor == null || anchor < 1 || current.unreadAtOpen <= 0) return false;
+    if (current.messages.isEmpty) return false;
+
+    // `messages` runs newest first, so the last entry is the oldest loaded.
+    if (current.messages.last.seq <= anchor) return false;
+
+    final result = await ref
+        .read(getMessagesContextUseCaseProvider)
+        .execute(_chatId, anchor);
+
+    return result.match(
+      (failure) {
+        Logger.warning(
+          'ChatDetail($_chatId): unread window around seq $anchor failed '
+          '(${failure.message})',
+        );
+        return false;
+      },
+      (page) {
+        if (page.messages.isEmpty) return false;
+
+        _mutate(
+          (s) => s.copyWith(
+            messages: _cached(page.messages),
+            nextCursor: page.nextCursor,
+            hasNext: page.hasNext,
+            isViewingHistory: true,
+          ),
+        );
+        return true;
+      },
+    );
+  }
+
   static MessageEntity? _findBySeq(List<MessageEntity> messages, int seq) {
     for (final message in messages) {
       if (message.seq == seq) return message;
@@ -963,12 +1050,65 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       ref.read(chatSocketServiceProvider).subscribe(_chatId, lastSeq: sent.seq);
     }
 
-    await _markReadUpTo(sent?.seq);
+    // Sending is the one place the client may speak for the reader without
+    // asking the viewport: you have read what you are replying to.
+    final sentSeq = sent?.seq;
+    if (sentSeq != null) reportRead(sentSeq);
   }
 
-  Future<void> _markReadUpTo(int? seq) async {
-    if (seq == null) return;
-    await ref.read(markReadUseCaseProvider).execute(_chatId, seq);
+  /// Records how far the reader has actually got.
+  ///
+  /// Called with the highest seq the viewport has really shown, as often as
+  /// scrolling produces one. At most one `POST /messages/read/` leaves per
+  /// [readThrottle]; anything that arrives during the wait is collapsed into
+  /// a single trailing request with the furthest seq.
+  void reportRead(int seq) {
+    if (seq < 1) return;
+    if (_reportedReadSeq != null && seq <= _reportedReadSeq!) return;
+
+    final sentAt = _lastReadSentAt;
+    final since = sentAt == null ? null : DateTime.now().difference(sentAt);
+
+    if (since == null || since >= readThrottle) {
+      _sendRead(seq);
+      return;
+    }
+
+    // Inside the window: keep the furthest point and let one trailing request
+    // carry it out once the window closes. The timer exists only while there
+    // is something waiting for it.
+    final queued = _queuedReadSeq;
+    if (queued == null || seq > queued) _queuedReadSeq = seq;
+    _readCooldown ??= Timer(readThrottle - since, _flushRead);
+  }
+
+  void _sendRead(int seq) {
+    _reportedReadSeq = seq;
+    _queuedReadSeq = null;
+    _lastReadSentAt = DateTime.now();
+
+    unawaited(
+      ref.read(markReadUseCaseProvider).execute(_chatId, seq).then((result) {
+        result.match(
+          (failure) => Logger.warning(
+            'ChatDetail($_chatId): read up to $seq not recorded '
+            '(${failure.message})',
+          ),
+          (_) {},
+        );
+      }),
+    );
+  }
+
+  void _flushRead() {
+    _readCooldown = null;
+
+    final queued = _queuedReadSeq;
+    _queuedReadSeq = null;
+    if (queued == null) return;
+    if (_reportedReadSeq != null && queued <= _reportedReadSeq!) return;
+
+    _sendRead(queued);
   }
 
   Future<String?> deleteMessageReportingFailure(String messageId) async {
@@ -1026,8 +1166,13 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     final chat = (await chatFuture).getOrElse((failure) => throw failure);
     final page = (await messagesFuture).getOrElse((failure) => throw failure);
 
-    if (page.messages.isNotEmpty) {
-      await _markReadUpTo(page.messages.first.seq);
+    // Read state is taken from the chat exactly once. A refresh later in the
+    // session re-fetches a cursor we ourselves have moved, and adopting it
+    // would drag the divider down the screen mid-read.
+    if (!_unreadFrozen) {
+      _unreadFrozen = true;
+      _unreadAnchorSeq = chat.lastRead?.lastReadMessageSeq;
+      _unreadAtOpen = chat.unreadCount ?? 0;
     }
 
     _cache(page.messages);
@@ -1038,6 +1183,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       nextCursor: page.nextCursor,
       hasNext: page.hasNext,
       myUserId: myUserId,
+      unreadAnchorSeq: _unreadAnchorSeq,
+      unreadAtOpen: _unreadAtOpen,
     );
   }
 }
