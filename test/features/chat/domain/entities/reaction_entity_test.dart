@@ -144,8 +144,14 @@ void main() {
       ]);
 
       expect(after.groups.firstWhere((g) => g.emoji == '👍').count, 9);
-      expect(after.groups.firstWhere((g) => g.emoji == '👍').reactedByMe, isTrue);
-      expect(after.groups.firstWhere((g) => g.emoji == '🔥').reactedByMe, isFalse);
+      expect(
+        after.groups.firstWhere((g) => g.emoji == '👍').reactedByMe,
+        isTrue,
+      );
+      expect(
+        after.groups.firstWhere((g) => g.emoji == '🔥').reactedByMe,
+        isFalse,
+      );
     });
 
     test('replaces wholesale — a group absent from the snapshot is gone', () {
@@ -168,8 +174,22 @@ void main() {
     test('an equal or newer version is applied', () {
       final local = reactions([chip('👍', count: 10, version: 5)]);
 
-      expect(local.applySnapshot([chip('👍', count: 2, version: 5)]).groups.single.count, 2);
-      expect(local.applySnapshot([chip('👍', count: 2, version: 6)]).groups.single.count, 2);
+      expect(
+        local
+            .applySnapshot([chip('👍', count: 2, version: 5)])
+            .groups
+            .single
+            .count,
+        2,
+      );
+      expect(
+        local
+            .applySnapshot([chip('👍', count: 2, version: 6)])
+            .groups
+            .single
+            .count,
+        2,
+      );
     });
 
     test('our own action from another device is read off the snapshot', () {
@@ -184,14 +204,19 @@ void main() {
         myUserId: 7,
       );
 
-      expect(after.groups.firstWhere((g) => g.emoji == '🔥').reactedByMe, isTrue);
+      expect(
+        after.groups.firstWhere((g) => g.emoji == '🔥').reactedByMe,
+        isTrue,
+      );
     });
 
     test("someone else's recent_user_ids never marks a chip as ours", () {
       final local = reactions([chip('👍', count: 1)]);
 
       final after = local.applySnapshot(
-        [chip('👍', count: 2, version: 1, recentUserIds: const [7])],
+        [
+          chip('👍', count: 2, version: 1, recentUserIds: const [7]),
+        ],
         actorId: 8,
         myUserId: 7,
       );
@@ -203,7 +228,9 @@ void main() {
       final local = reactions([chip('👍', count: 50, reactedByMe: true)]);
 
       final after = local.applySnapshot(
-        [chip('👍', count: 51, version: 1, recentUserIds: const [1, 2, 3])],
+        [
+          chip('👍', count: 51, version: 1, recentUserIds: const [1, 2, 3]),
+        ],
         actorId: 7,
         myUserId: 7,
       );
@@ -230,6 +257,86 @@ void main() {
     });
   });
 
+  /// What the picker asks before it draws a button: a refusal worked out
+  /// here never becomes a TOO_MANY_REACTIONS the reader has to see.
+  group('blockFor — which cap stands in the way of one emoji', () {
+    test('nothing blocks a fresh emoji on an empty message', () {
+      expect(reactions([]).blockFor('👍'), isNull);
+      expect(reactions([]).canReactWith('👍'), isTrue);
+    });
+
+    test('a fourth emoji of ours is blocked by the per-user cap', () {
+      final full = reactions([
+        chip('👍', reactedByMe: true),
+        chip('🔥', reactedByMe: true),
+        chip('🎉', reactedByMe: true),
+      ]);
+
+      expect(full.blockFor('😢'), ReactionBlock.perUser);
+    });
+
+    test('taking one of ours back is never blocked', () {
+      final full = reactions([
+        chip('👍', reactedByMe: true),
+        chip('🔥', reactedByMe: true),
+        chip('🎉', reactedByMe: true),
+      ]);
+
+      expect(full.blockFor('👍'), isNull);
+      expect(full.canReactWith('👍'), isTrue);
+    });
+
+    test('a twenty-first distinct emoji is blocked by the message cap', () {
+      final crowded = reactions([
+        for (var i = 0; i < ReactionLimits.maxDistinctPerMessage; i++)
+          chip('e$i'),
+      ]);
+
+      expect(crowded.blockFor('👍'), ReactionBlock.perMessage);
+    });
+
+    test('joining a group the message already has is not blocked by it', () {
+      // It adds no new group, so MAX_DISTINCT_REACTIONS_PER_MESSAGE does not
+      // apply — only the per-user cap could.
+      final crowded = reactions([
+        for (var i = 0; i < ReactionLimits.maxDistinctPerMessage; i++)
+          chip('e$i'),
+      ]);
+
+      expect(crowded.blockFor('e0'), isNull);
+    });
+
+    test('the per-user cap outranks the message cap', () {
+      final both = reactions([
+        for (var i = 0; i < ReactionLimits.maxDistinctPerMessage; i++)
+          chip('e$i', reactedByMe: i < 3),
+      ]);
+
+      expect(both.blockFor('👍'), ReactionBlock.perUser);
+    });
+
+    test('nextBlock answers for one more emoji, whichever it is', () {
+      expect(reactions([]).nextBlock, isNull);
+
+      expect(
+        reactions([
+          chip('👍', reactedByMe: true),
+          chip('🔥', reactedByMe: true),
+          chip('🎉', reactedByMe: true),
+        ]).nextBlock,
+        ReactionBlock.perUser,
+      );
+
+      expect(
+        reactions([
+          for (var i = 0; i < ReactionLimits.maxDistinctPerMessage; i++)
+            chip('e$i'),
+        ]).nextBlock,
+        ReactionBlock.perMessage,
+      );
+    });
+  });
+
   group('ReactionAction', () {
     test('parses the four documented verbs', () {
       expect(ReactionAction.fromWire('add'), ReactionAction.add);
@@ -238,9 +345,12 @@ void main() {
       expect(ReactionAction.fromWire('update'), ReactionAction.update);
     });
 
-    test('an unknown verb degrades to update rather than dropping the event', () {
-      expect(ReactionAction.fromWire('exploded'), ReactionAction.update);
-      expect(ReactionAction.fromWire(null), ReactionAction.update);
-    });
+    test(
+      'an unknown verb degrades to update rather than dropping the event',
+      () {
+        expect(ReactionAction.fromWire('exploded'), ReactionAction.update);
+        expect(ReactionAction.fromWire(null), ReactionAction.update);
+      },
+    );
   });
 }

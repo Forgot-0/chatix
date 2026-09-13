@@ -56,7 +56,11 @@ class MessageAttachments extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (images.isNotEmpty)
-          _AttachmentImageGrid(messageId: messageId, images: images, onOpen: onOpen),
+          _AttachmentImageGrid(
+            messageId: messageId,
+            images: images,
+            onOpen: onOpen,
+          ),
         for (final attachment in playable)
           switch (attachment.attachmentType) {
             AttachmentType.voice => VoicePlayer(
@@ -222,4 +226,3 @@ class _AttachmentFileRow extends StatelessWidget {
     );
   }
 }
-

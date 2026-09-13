@@ -53,6 +53,10 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>ChatiX uses the microphone to record voice messages.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ChatiX shows your latest photos in the attachment panel so you can send one without leaving the chat.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ChatiX uses the camera to take photos and record video notes you send in a chat.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

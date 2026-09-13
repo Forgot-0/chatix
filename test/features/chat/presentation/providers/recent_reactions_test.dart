@@ -2,9 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/recent_reactions_provider.dart';
-import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 
 /// Which emoji someone reaches for is a habit, not chat data — there is no
 /// endpoint that stores it, so it lives on the device and drives both the
@@ -84,7 +84,10 @@ void main() {
     test('falls back to a default so it works before anyone reacts', () {
       final container = boot();
 
-      expect(shortcutOf(container, anything), kQuickReactions.first);
+      expect(
+        shortcutOf(container, anything),
+        ReactionCatalog.quickDefaults.first,
+      );
     });
 
     test('skips a recent the chat does not allow', () {
@@ -108,16 +111,37 @@ void main() {
 
       expect(ordered.first, '🎉');
       expect(ordered.where((e) => e == '🎉'), hasLength(1));
-      expect(ordered, containsAll(kQuickReactions));
+      // Everything the bar still has room for after the recent, in order.
+      expect(
+        ordered.skip(1),
+        ReactionCatalog.quickDefaults.take(ReactionCatalog.quickBarLength - 1),
+      );
+    });
+
+    test('never offers more than the bar can hold', () {
+      final container = boot(stored: ['🎉', '😢', '💯']);
+
+      expect(
+        notifierOf(container).ordered(anything),
+        hasLength(ReactionCatalog.quickBarLength),
+      );
+    });
+
+    test('offers only what the server would accept', () {
+      // A recent stored by an older build, or by a catalog that has since
+      // changed, would come back INVALID_REACTION.
+      final container = boot(stored: ['🫠', '🔥']);
+
+      expect(
+        notifierOf(container).ordered(ReactionCatalog.isKnown),
+        isNot(contains('🫠')),
+      );
     });
 
     test('drops everything the chat disallows', () {
       final container = boot(stored: ['🎉']);
 
-      expect(
-        notifierOf(container).ordered((emoji) => emoji == '👍'),
-        ['👍'],
-      );
+      expect(notifierOf(container).ordered((emoji) => emoji == '👍'), ['👍']);
     });
 
     test('an empty allow-list leaves no bar to draw', () {

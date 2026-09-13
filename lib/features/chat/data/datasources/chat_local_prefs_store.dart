@@ -113,8 +113,7 @@ class InMemoryChatLocalPrefsStore implements ChatLocalPrefsStore {
   List<String> _recentReactions = const <String>[];
 
   @override
-  Set<String> readFlag(ChatLocalFlag flag) =>
-      _flags[flag] ?? const <String>{};
+  Set<String> readFlag(ChatLocalFlag flag) => _flags[flag] ?? const <String>{};
 
   @override
   Future<void> writeFlag(ChatLocalFlag flag, Set<String> chatIds) async {

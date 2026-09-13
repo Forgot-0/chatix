@@ -119,7 +119,10 @@ void main() {
         myUserId: me,
       );
       final direct = chatPreviewOf(
-        chat(type: ChatType.direct, last: message(content: 'hi')),
+        chat(
+          type: ChatType.direct,
+          last: message(content: 'hi'),
+        ),
         l10n,
         myUserId: me,
       );
@@ -130,7 +133,9 @@ void main() {
 
     test('your own message in a group is credited to you', () {
       final preview = chatPreviewOf(
-        chat(last: message(content: 'hi', authorId: me)),
+        chat(
+          last: message(content: 'hi', authorId: me),
+        ),
         l10n,
         myUserId: me,
       );
@@ -140,7 +145,10 @@ void main() {
 
     test('a channel speaks with one voice, so it credits nobody', () {
       final preview = chatPreviewOf(
-        chat(type: ChatType.channel, last: message(content: 'Build 4.2 is out')),
+        chat(
+          type: ChatType.channel,
+          last: message(content: 'Build 4.2 is out'),
+        ),
         l10n,
         myUserId: me,
       );
@@ -151,7 +159,9 @@ void main() {
 
     test('a system message is credited to nobody', () {
       final preview = chatPreviewOf(
-        chat(last: message(content: 'Ann joined', type: MessageType.system)),
+        chat(
+          last: message(content: 'Ann joined', type: MessageType.system),
+        ),
         l10n,
         myUserId: me,
       );
@@ -191,9 +201,7 @@ void main() {
         chat(
           last: message(
             type: MessageType.voice,
-            attachments: [
-              attachment(type: AttachmentType.voice, duration: 14),
-            ],
+            attachments: [attachment(type: AttachmentType.voice, duration: 14)],
           ),
         ),
         l10n,

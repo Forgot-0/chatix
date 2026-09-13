@@ -13,23 +13,21 @@ void main() {
 
   final now = DateTime.utc(2026, 3, 10, 12);
 
-  MessageEntity message({
-    required int authorId,
-    DateTime? createdAt,
-  }) => MessageEntity(
-    id: 'm-1',
-    chatId: 'a',
-    seq: 4,
-    authorId: authorId,
-    type: MessageType.text,
-    content: 'hello',
-    replyToId: null,
-    forwardedFromChatId: null,
-    forwardedFromMessageId: null,
-    forwardedFromAuthorId: null,
-    isEdited: false,
-    createdAt: createdAt ?? now,
-  );
+  MessageEntity message({required int authorId, DateTime? createdAt}) =>
+      MessageEntity(
+        id: 'm-1',
+        chatId: 'a',
+        seq: 4,
+        authorId: authorId,
+        type: MessageType.text,
+        content: 'hello',
+        replyToId: null,
+        forwardedFromChatId: null,
+        forwardedFromMessageId: null,
+        forwardedFromAuthorId: null,
+        isEdited: false,
+        createdAt: createdAt ?? now,
+      );
 
   ChatEntity chat({
     String id = 'a',
@@ -58,21 +56,14 @@ void main() {
   );
 
   ChatRuleContext context({Set<String> pinned = const <String>{}}) =>
-      ChatRuleContext(
-        now: now,
-        myUserId: myUserId,
-        pinnedChatIds: pinned,
-      );
+      ChatRuleContext(now: now, myUserId: myUserId, pinnedChatIds: pinned);
 
   group('chat type rule', () {
     test('keeps the listed types and nothing else', () {
       const rule = ChatTypeRule({ChatType.group, ChatType.supergroup});
 
       expect(rule.evaluate(chat(), context()), isTrue);
-      expect(
-        rule.evaluate(chat(type: ChatType.supergroup), context()),
-        isTrue,
-      );
+      expect(rule.evaluate(chat(type: ChatType.supergroup), context()), isTrue);
       expect(rule.evaluate(chat(type: ChatType.direct), context()), isFalse);
     });
 
@@ -180,10 +171,7 @@ void main() {
     );
 
     test('finds a person in a roster the app has loaded', () {
-      expect(
-        rule.evaluate(chat(members: [member(peerId)]), context()),
-        isTrue,
-      );
+      expect(rule.evaluate(chat(members: [member(peerId)]), context()), isTrue);
     });
 
     test('falls back to the last sender and the chat\'s creator', () {
@@ -216,10 +204,7 @@ void main() {
       expect(unreadGroups.matches(chat(unread: 1), context()), isTrue);
       expect(unreadGroups.matches(chat(), context()), isFalse);
       expect(
-        unreadGroups.matches(
-          chat(type: ChatType.direct, unread: 1),
-          context(),
-        ),
+        unreadGroups.matches(chat(type: ChatType.direct, unread: 1), context()),
         isFalse,
       );
     });
@@ -232,10 +217,7 @@ void main() {
         either.matches(chat(type: ChatType.direct, unread: 1), context()),
         isTrue,
       );
-      expect(
-        either.matches(chat(type: ChatType.direct), context()),
-        isFalse,
-      );
+      expect(either.matches(chat(type: ChatType.direct), context()), isFalse);
     });
 
     test('a folder with no rules keeps nothing, rather than everything', () {
@@ -260,10 +242,7 @@ void main() {
       final personal = ChatFolder.fromPreset(FolderPreset.personal);
       final groups = ChatFolder.fromPreset(FolderPreset.groups);
 
-      expect(
-        personal.matches(chat(type: ChatType.direct), context()),
-        isTrue,
-      );
+      expect(personal.matches(chat(type: ChatType.direct), context()), isTrue);
       expect(personal.matches(chat(type: ChatType.group), context()), isFalse);
 
       expect(groups.matches(chat(type: ChatType.group), context()), isTrue);
@@ -271,10 +250,7 @@ void main() {
         groups.matches(chat(type: ChatType.supergroup), context()),
         isTrue,
       );
-      expect(
-        groups.matches(chat(type: ChatType.channel), context()),
-        isFalse,
-      );
+      expect(groups.matches(chat(type: ChatType.channel), context()), isFalse);
     });
   });
 }

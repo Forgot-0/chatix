@@ -130,6 +130,7 @@ class ChatMessageRow extends ConsumerWidget {
         chatId: chatId,
         messageId: message.id,
         emoji: emoji,
+        groups: state.reactionsFor(message.id).groups,
         members: state.chat?.members ?? const [],
       ),
       onReply: canSendMessage(state.chat, me)
@@ -218,30 +219,29 @@ class ChatMessageRow extends ConsumerWidget {
     );
   }
 
+  /// The full catalog, for when the quick bar does not have it.
+  ///
+  /// Recents lead the sheet for the same reason they lead the bar, and the
+  /// policy is handed down whole so a chat in `reactions_mode = "some"`
+  /// narrows the catalog rather than the sheet having to know about modes.
   Future<void> _pickReaction(
     BuildContext context,
     WidgetRef ref,
     MessageEntity message,
     ChatReactionPolicy policy,
   ) async {
-    final emoji = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ReactionPicker(
-          reactions: state.reactionsFor(message.id),
-          policy: policy,
-          onSelected: (value) => Navigator.of(sheetContext).pop(value),
-        ),
-      ),
+    final emoji = await ReactionPicker.show(
+      context,
+      reactions: state.reactionsFor(message.id),
+      policy: policy,
+      recent: ref.read(recentReactionsProvider),
     );
     if (emoji == null) return;
 
     ref.read(recentReactionsProvider.notifier).remember(emoji);
-    ref.read(chatDetailProvider(chatId).notifier).toggleReaction(
-      message.id,
-      emoji,
-    );
+    ref
+        .read(chatDetailProvider(chatId).notifier)
+        .toggleReaction(message.id, emoji);
   }
 
   Future<void> _forward(

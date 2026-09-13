@@ -63,10 +63,7 @@ void main() {
   testWidgets('dragging towards the end reveals the trailing actions', (
     tester,
   ) async {
-    await pumpRow(
-      tester,
-      trailing: [action('Read'), action('Archive')],
-    );
+    await pumpRow(tester, trailing: [action('Read'), action('Archive')]);
 
     await tester.drag(find.text('row'), const Offset(-160, 0));
     await tester.pumpAndSettle();

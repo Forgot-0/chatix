@@ -83,6 +83,11 @@ dependencies:
   # unattachable. Configured with `ChatAttachmentLimits.allowedExtensions` so
   # unsupported files can't be selected in the first place.
   file_picker: ^11.0.3
+  # The composer's own attachment sheet shows a strip of the newest photos
+  # from the device gallery (image_picker can only hand back what the system
+  # picker returns — it cannot enumerate the library). Degrades to no strip
+  # when the platform has no gallery or the grant is refused.
+  photo_manager: ^3.12.0
   livekit_client: ^2.9.0
   record: ^6.2.1
   just_audio: ^0.10.6

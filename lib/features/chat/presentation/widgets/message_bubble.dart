@@ -15,6 +15,7 @@ import 'package:chatix/features/chat/presentation/widgets/message_forward_header
 import 'package:chatix/features/chat/presentation/widgets/message_reply_quote.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_chip.dart';
+import 'package:chatix/features/chat/presentation/widgets/reaction_effects.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/features/chat/presentation/widgets/swipe_to_reply.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -194,9 +195,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     if (forOverlay) return content;
 
     final aligned = Align(
-      alignment: widget.isMine
-          ? Alignment.centerRight
-          : Alignment.centerLeft,
+      alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: KeyedSubtree(key: _bubbleKey, child: content),
     );
 
@@ -251,15 +250,25 @@ class _MessageBubbleState extends State<MessageBubble> {
     HapticFeedback.mediumImpact();
     setState(() => _menuOpen = true);
 
+    final reactions = widget.reactions;
+    final canReact = widget.onToggleReaction != null;
+
     final result = await MessageActionsOverlay.show(
       context,
       anchor: anchor,
       bubble: _buildBubble(context, forOverlay: true),
       actions: widget.actions,
-      reactions: widget.onToggleReaction == null
-          ? const []
-          : widget.quickReactions,
-      myReactions: widget.reactions?.myEmojis.toSet() ?? const {},
+      reactions: canReact ? widget.quickReactions : const [],
+      myReactions: reactions?.myEmojis.toSet() ?? const {},
+      // Worked out before the tap rather than after the 400: past either cap
+      // from api-docs §5.7.4 the emoji that would be refused go flat.
+      blockedReactions: reactions == null
+          ? const {}
+          : {
+              for (final emoji in widget.quickReactions)
+                if (!reactions.canReactWith(emoji)) emoji,
+            },
+      canOpenCatalog: canReact && widget.onShowReactionPicker != null,
       isMine: widget.isMine,
     );
 
@@ -337,9 +346,6 @@ class _BubbleBody extends StatelessWidget {
   final void Function(String emoji)? onToggleReaction;
   final void Function(String emoji)? onShowReactionUsers;
   final VoidCallback? onShowDetails;
-
-  bool get _hasReactions =>
-      reactions != null && reactions!.groups.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -429,13 +435,16 @@ class _BubbleBody extends StatelessWidget {
               deliveryStatus: deliveryStatus,
               onTap: onShowDetails,
             ),
-          if (_hasReactions)
-            _ReactionChips(
-              groups: reactions!.groups,
-              onTap: onToggleReaction,
-              onLongPress: onShowReactionUsers,
-              onSurface: isMine,
-            ),
+          // Always in the tree, empty or not: the burst fires on the frame
+          // a message goes from no reactions to one, and a row that is
+          // created along with its first chip never sees that happen.
+          _ReactionChips(
+            key: const ValueKey('reaction-chips'),
+            groups: reactions?.groups ?? const [],
+            onTap: onToggleReaction,
+            onLongPress: onShowReactionUsers,
+            onSurface: isMine,
+          ),
         ],
       ),
     );
@@ -576,10 +585,7 @@ class _SelectionRow extends StatelessWidget {
             : Colors.transparent,
         child: Row(
           children: [
-            Checkbox(
-              value: isSelected,
-              onChanged: (_) => onToggle?.call(),
-            ),
+            Checkbox(value: isSelected, onChanged: (_) => onToggle?.call()),
             Expanded(child: child),
           ],
         ),
@@ -589,8 +595,13 @@ class _SelectionRow extends StatelessWidget {
 }
 
 /// The row of reactions under a message.
-class _ReactionChips extends StatelessWidget {
+///
+/// Chips bloom in one at a time as they arrive, and the message's very first
+/// reaction throws a burst of particles — the moment worth marking is the
+/// one where a message stops being unanswered.
+class _ReactionChips extends StatefulWidget {
   const _ReactionChips({
+    super.key,
     required this.groups,
     required this.onSurface,
     this.onTap,
@@ -605,70 +616,75 @@ class _ReactionChips extends StatelessWidget {
   final void Function(String emoji)? onLongPress;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Wrap(
-        spacing: AppSpacing.x1,
-        runSpacing: AppSpacing.x1,
-        children: [
-          for (final summary in groups)
-            _BloomIn(
-              key: ValueKey(summary.emoji),
-              child: ReactionChip(
-                emoji: summary.emoji,
-                count: summary.count,
-                selected: summary.reactedByMe,
-                recentUserIds: summary.recentUserIds,
-                onSurface: onSurface,
-                onTap: onTap == null ? null : () => onTap!(summary.emoji),
-                onLongPress: onLongPress == null
-                    ? null
-                    : () => onLongPress!(summary.emoji),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  State<_ReactionChips> createState() => _ReactionChipsState();
 }
 
-class _BloomIn extends StatefulWidget {
-  const _BloomIn({super.key, required this.child});
+class _ReactionChipsState extends State<_ReactionChips> {
+  /// Whether this row was already carrying reactions last time it was built.
+  ///
+  /// A message scrolled into view with chips on it was not just reacted to;
+  /// only a row that was here and empty has a first reaction to celebrate.
+  bool _hadReactions = false;
 
-  final Widget child;
-
-  @override
-  State<_BloomIn> createState() => _BloomInState();
-}
-
-class _BloomInState extends State<_BloomIn>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _curved;
+  /// Latched on the frame the first chip appears, and released only if the
+  /// message goes back to having none.
+  bool _burst = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: ChatixTheme.duration,
-    );
-    _curved = CurvedAnimation(parent: _controller, curve: ChatixTheme.curve);
-    _controller.forward();
+    _hadReactions = widget.groups.isNotEmpty;
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void didUpdateWidget(_ReactionChips oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.groups.isEmpty) {
+      _hadReactions = false;
+      _burst = false;
+      return;
+    }
+
+    if (!_hadReactions) {
+      _hadReactions = true;
+      _burst = true;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: Tween<double>(begin: 0.6, end: 1).animate(_curved),
-      child: FadeTransition(opacity: _curved, child: widget.child),
+    if (widget.groups.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: ReactionBurst(
+        play: _burst,
+        fromRight: widget.onSurface,
+        child: Wrap(
+          spacing: AppSpacing.x1,
+          runSpacing: AppSpacing.x1,
+          children: [
+            for (final summary in widget.groups)
+              ReactionBloom(
+                key: ValueKey(summary.emoji),
+                child: ReactionChip(
+                  emoji: summary.emoji,
+                  count: summary.count,
+                  selected: summary.reactedByMe,
+                  recentUserIds: summary.recentUserIds,
+                  onSurface: widget.onSurface,
+                  onTap: widget.onTap == null
+                      ? null
+                      : () => widget.onTap!(summary.emoji),
+                  onLongPress: widget.onLongPress == null
+                      ? null
+                      : () => widget.onLongPress!(summary.emoji),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

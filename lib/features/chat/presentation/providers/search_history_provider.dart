@@ -54,9 +54,7 @@ class SearchHistoryController extends Notifier<SearchHistory> {
 
     final next = [
       trimmed,
-      ...state.queries.where(
-        (q) => q.toLowerCase() != trimmed.toLowerCase(),
-      ),
+      ...state.queries.where((q) => q.toLowerCase() != trimmed.toLowerCase()),
     ].take(maxQueries).toList();
 
     if (next.length == state.queries.length &&

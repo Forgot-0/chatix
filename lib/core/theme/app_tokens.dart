@@ -228,7 +228,8 @@ abstract final class AppContrast {
 
   /// The more readable of white and the darkest neutral on [background].
   static Color foregroundOn(Color background) =>
-      ratio(background, Colors.white) >= ratio(background, AppNeutrals.light[11])
+      ratio(background, Colors.white) >=
+          ratio(background, AppNeutrals.light[11])
       ? Colors.white
       : AppNeutrals.light[11];
 }

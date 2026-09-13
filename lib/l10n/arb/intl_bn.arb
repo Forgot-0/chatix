@@ -384,5 +384,226 @@
   "searchNewerMatch": "পরের মিল",
   "searchInChatHint": "এই চ্যাটে খুঁজুন",
   "searchChatDescriptionMatch": "বিবরণে মিলেছে",
-  "searchOpenChat": "চ্যাট খুলুন"
+  "searchOpenChat": "চ্যাট খুলুন",
+  "reactionSectionRecent": "সম্প্রতি ব্যবহৃত",
+  "@reactionSectionRecent": {
+    "description": "Catalog sheet: this device's own history"
+  },
+  "reactionSectionFaces": "স্মাইলি",
+  "@reactionSectionFaces": {
+    "description": "Catalog sheet section: faces"
+  },
+  "reactionSectionPeople": "মানুষ",
+  "@reactionSectionPeople": {
+    "description": "Catalog sheet section: hands and people"
+  },
+  "reactionSectionHearts": "হৃদয়",
+  "@reactionSectionHearts": {
+    "description": "Catalog sheet section: hearts"
+  },
+  "reactionSectionCelebration": "উদযাপন",
+  "@reactionSectionCelebration": {
+    "description": "Catalog sheet section: celebration"
+  },
+  "reactionSectionFood": "খাবার",
+  "@reactionSectionFood": {
+    "description": "Catalog sheet section: food"
+  },
+  "reactionSectionNature": "প্রকৃতি",
+  "@reactionSectionNature": {
+    "description": "Catalog sheet section: nature and animals"
+  },
+  "reactionSectionSymbols": "প্রতীক",
+  "@reactionSectionSymbols": {
+    "description": "Catalog sheet section: symbols"
+  },
+  "reactionsNoneAllowed": "এই চ্যাটে কোনো রিঅ্যাকশন নেই",
+  "@reactionsNoneAllowed": {
+    "description": "reactions_mode = some with a white list the catalog does not cover"
+  },
+  "reactionsUsed": "{limit}-এর মধ্যে {used}",
+  "@reactionsUsed": {
+    "description": "Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE",
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "reactionMessageLimitReached": "এই বার্তায় ইতিমধ্যে {limit}টি ভিন্ন রিঅ্যাকশন আছে",
+  "@reactionMessageLimitReached": {
+    "description": "MAX_DISTINCT_REACTIONS_PER_MESSAGE reached"
+  },
+  "moreReactions": "আরও রিঅ্যাকশন",
+  "@moreReactions": {
+    "description": "Quick bar button that opens the full catalog sheet"
+  },
+  "reactionFailed": "রিঅ্যাকশন সংরক্ষিত হয়নি",
+  "@reactionFailed": {
+    "description": "Quiet toast after an optimistic reaction was rolled back"
+  },
+  "reactionTooFast": "একসাথে অনেক বেশি রিঅ্যাকশন",
+  "@reactionTooFast": {
+    "description": "Quiet toast for 429 on the reactions endpoint"
+  },
+  "reactionNotAllowed": "এই রিঅ্যাকশন এখানে অনুমোদিত নয়",
+  "@reactionNotAllowed": {
+    "description": "Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION"
+  },
+  "reactionsNobody": "এখনো কেউ নয়",
+  "@reactionsNobody": {
+    "description": "Who-reacted sheet: a tab whose page came back empty"
+  },
+  "reactionUserFallback": "ব্যবহারকারী {id}",
+  "@reactionUserFallback": {
+    "description": "Who-reacted row for a user id the roster does not cover"
+  },
+  "composerCharactersLeft": "{count}টি বাকি",
+  "@composerCharactersLeft": {
+    "description": "Counter shown near the 4096-character cap (api-docs 5.4)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "composerSendLabel": "পাঠান",
+  "@composerSendLabel": {
+    "description": "Accessible label of the send button"
+  },
+  "composerSaveEditLabel": "পরিবর্তন সংরক্ষণ করুন",
+  "@composerSaveEditLabel": {
+    "description": "Accessible label of the send button while editing"
+  },
+  "composerRecordLabel": "ভয়েস বার্তা রেকর্ড করতে ধরে রাখুন",
+  "@composerRecordLabel": {
+    "description": "Accessible label of the microphone button"
+  },
+  "composerReplyingTo": "{name}-কে উত্তর",
+  "@composerReplyingTo": {
+    "description": "Context banner title while replying"
+  },
+  "composerSlowModeWait": "ধীর মোড: {seconds} সেকেন্ড বাকি",
+  "@composerSlowModeWait": {
+    "description": "Countdown on the send button while slow mode holds it",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "composerSlowModeHint": "এই চ্যাটে প্রতি {seconds} সেকেন্ডে একটি বার্তা পাঠানো যায়",
+  "@composerSlowModeHint": {
+    "description": "Explains why the send button counts down",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "attachSheetTitle": "সংযুক্ত করুন",
+  "@attachSheetTitle": {
+    "description": "Title of the composer attachment sheet"
+  },
+  "attachRecent": "সাম্প্রতিক",
+  "@attachRecent": {
+    "description": "Header of the recent-gallery strip"
+  },
+  "attachCamera": "ক্যামেরা",
+  "@attachCamera": {
+    "description": "Attachment sheet row that opens the camera"
+  },
+  "attachVoice": "ভয়েস বার্তা",
+  "@attachVoice": {
+    "description": "Attachment sheet row that records a voice message"
+  },
+  "attachVideoNote": "ভিডিও নোট",
+  "@attachVideoNote": {
+    "description": "Attachment sheet row that records a video note"
+  },
+  "attachVoiceHint": "আলাদাভাবে পাঠানো হয়, সর্বোচ্চ {seconds} সেকেন্ড",
+  "@attachVoiceHint": {
+    "description": "Subtitle of the voice row: it is exclusive (api-docs 5.5)",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "attachVideoNoteHint": "আলাদাভাবে পাঠানো হয়, সর্বোচ্চ {seconds} সেকেন্ড ও {pixels} পিক্সেল",
+  "@attachVideoNoteHint": {
+    "description": "Subtitle of the video note row",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      },
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "attachGalleryDenied": "এখান থেকে বেছে নিতে ছবির অ্যাক্সেস দিন",
+  "@attachGalleryDenied": {
+    "description": "Shown in place of the strip when photo access was refused"
+  },
+  "attachGalleryAllow": "অনুমতি দিন",
+  "@attachGalleryAllow": {
+    "description": "Button that asks for the photo grant again"
+  },
+  "attachMediaFull": "প্রতি বার্তায় সর্বোচ্চ {count}টি ছবি বা ভিডিও",
+  "@attachMediaFull": {
+    "description": "Tapping one more photo past MAX_MEDIA_PER_MESSAGE",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachSendCount": "{count}টি সংযুক্ত করুন",
+  "@attachSendCount": {
+    "description": "Confirm button of the attachment sheet",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachUnavailable": "ফাইলটি পড়া যায়নি",
+  "@attachUnavailable": {
+    "description": "A picked gallery item could not be read back"
+  },
+  "videoNoteTooLong": "ভিডিও নোট সর্বোচ্চ {seconds} সেকেন্ড হতে পারে",
+  "@videoNoteTooLong": {
+    "description": "Captured video note exceeds MAX duration",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "videoNoteTooLarge": "এই ক্যামেরা {pixels} পিক্সেলের বেশি রেকর্ড করে, যা ভিডিও নোটের জন্য সার্ভার গ্রহণ করে না",
+  "@videoNoteTooLarge": {
+    "description": "Captured video note exceeds the 640 px cap the server enforces",
+    "placeholders": {
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "videoNoteUnreadable": "এই রেকর্ডিং যাচাই করা যায়নি",
+  "@videoNoteUnreadable": {
+    "description": "The captured file could not be probed for duration/size"
+  },
+  "composerTooLongBy": "সীমার চেয়ে {count} বেশি",
+  "@composerTooLongBy": {
+    "description": "Counter once the message is past the 4096-character cap",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

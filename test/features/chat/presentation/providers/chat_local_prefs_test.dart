@@ -64,10 +64,9 @@ void main() {
 
   test('flags survive into the next session', () async {
     final first = boot();
-    first.read(chatLocalPrefsProvider.notifier).toggle(
-      ChatLocalFlag.muted,
-      'a',
-    );
+    first
+        .read(chatLocalPrefsProvider.notifier)
+        .toggle(ChatLocalFlag.muted, 'a');
 
     // The write is fired off, not awaited, so let it land.
     await Future<void>.delayed(Duration.zero);

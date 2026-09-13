@@ -235,7 +235,8 @@ void main() {
     test('a dead refresh session signs out', () async {
       wire(
         onMain: (_) => _bareJson(_envelope('EXPIRED_TOKEN'), 400),
-        onSide: (_) => _bareJson(_envelope('NOT_FOUND_OR_INACTIVE_SESSION'), 404),
+        onSide: (_) =>
+            _bareJson(_envelope('NOT_FOUND_OR_INACTIVE_SESSION'), 404),
       );
 
       await expectLater(
@@ -249,24 +250,27 @@ void main() {
   });
 
   group('errors that are none of the interceptor\'s business', () {
-    test('a 500 is passed through untouched — no refresh, no sign-out', () async {
-      wire(
-        onMain: (_) => _bareJson(_envelope('UNKNOWN_EXCEPTION'), 500),
-        onSide: (_) => _json({'access_token': 'never'}, 200),
-      );
+    test(
+      'a 500 is passed through untouched — no refresh, no sign-out',
+      () async {
+        wire(
+          onMain: (_) => _bareJson(_envelope('UNKNOWN_EXCEPTION'), 500),
+          onSide: (_) => _json({'access_token': 'never'}, 200),
+        );
 
-      await expectLater(
-        main.post<dynamic>('/profiles/avatar/presign/'),
-        throwsA(isA<DioException>()),
-      );
+        await expectLater(
+          main.post<dynamic>('/profiles/avatar/presign/'),
+          throwsA(isA<DioException>()),
+        );
 
-      expect(sideAdapter.requests, isEmpty);
-      expect(
-        await storage.read(key: AppConstants.accessTokenKey),
-        'expired-token',
-      );
-      expect(expiries, isEmpty);
-    });
+        expect(sideAdapter.requests, isEmpty);
+        expect(
+          await storage.read(key: AppConstants.accessTokenKey),
+          'expired-token',
+        );
+        expect(expiries, isEmpty);
+      },
+    );
 
     test('a 400 that is not EXPIRED_TOKEN does not refresh', () async {
       wire(
@@ -283,30 +287,33 @@ void main() {
       expect(expiries, isEmpty);
     });
 
-    test('a replay failing on its own merits does not sign the user out', () async {
-      wire(
-        onMain: (_) => _bareJson(_envelope('EXPIRED_TOKEN'), 400),
-        onSide: (options) => options.path.endsWith('/auth/refresh/')
-            ? _json({'access_token': 'fresh-token'}, 200)
-            : _bareJson(_envelope('UNKNOWN_EXCEPTION'), 500),
-      );
+    test(
+      'a replay failing on its own merits does not sign the user out',
+      () async {
+        wire(
+          onMain: (_) => _bareJson(_envelope('EXPIRED_TOKEN'), 400),
+          onSide: (options) => options.path.endsWith('/auth/refresh/')
+              ? _json({'access_token': 'fresh-token'}, 200)
+              : _bareJson(_envelope('UNKNOWN_EXCEPTION'), 500),
+        );
 
-      await expectLater(
-        main.get<dynamic>(protectedPath),
-        throwsA(
-          isA<DioException>().having(
-            (e) => e.response?.statusCode,
-            'statusCode',
-            500,
+        await expectLater(
+          main.get<dynamic>(protectedPath),
+          throwsA(
+            isA<DioException>().having(
+              (e) => e.response?.statusCode,
+              'statusCode',
+              500,
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(
-        await storage.read(key: AppConstants.accessTokenKey),
-        'fresh-token',
-      );
-      expect(expiries, isEmpty);
-    });
+        expect(
+          await storage.read(key: AppConstants.accessTokenKey),
+          'fresh-token',
+        );
+        expect(expiries, isEmpty);
+      },
+    );
   });
 }

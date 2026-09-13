@@ -68,10 +68,8 @@ class FolderTabsBar extends ConsumerWidget implements PreferredSizeWidget {
                             oldIndex: oldIndex,
                             newIndex: newIndex,
                           ),
-                      proxyDecorator: (child, index, animation) => Material(
-                        color: Colors.transparent,
-                        child: child,
-                      ),
+                      proxyDecorator: (child, index, animation) =>
+                          Material(color: Colors.transparent, child: child),
                       itemBuilder: (context, index) {
                         final folder = folders[index];
 
@@ -152,9 +150,7 @@ class _FolderTab extends StatelessWidget {
                   label,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: foreground,
-                    fontWeight: isSelected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
                 if (count > 0) ...[
@@ -181,7 +177,9 @@ class _TabCount extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final background = isSelected ? scheme.primary : scheme.surfaceContainerHighest;
+    final background = isSelected
+        ? scheme.primary
+        : scheme.surfaceContainerHighest;
     final foreground = isSelected ? scheme.onPrimary : scheme.onSurfaceVariant;
 
     return Container(

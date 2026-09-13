@@ -13,7 +13,9 @@ import 'package:chatix/core/ui/widgets/app_text_scale.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<ProviderContainer> boot([Map<String, Object> stored = const {}]) async {
+  Future<ProviderContainer> boot([
+    Map<String, Object> stored = const {},
+  ]) async {
     SharedPreferences.setMockInitialValues(stored);
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
@@ -50,10 +52,7 @@ void main() {
 
     final after = container.read(lightThemeProvider);
     expect(after.visualDensity, isNot(before.visualDensity));
-    expect(
-      after.extension<ChatixTheme>()!.density,
-      AppDensity.comfortable,
-    );
+    expect(after.extension<ChatixTheme>()!.density, AppDensity.comfortable);
   });
 
   test('an accent change reaches both themes', () async {
@@ -86,10 +85,7 @@ void main() {
 
     await container.read(appearanceProvider.notifier).setTextScale(4);
 
-    expect(
-      container.read(textScaleProvider),
-      AppearanceSettings.maxTextScale,
-    );
+    expect(container.read(textScaleProvider), AppearanceSettings.maxTextScale);
   });
 
   test('reset returns every field to its default', () async {
@@ -104,9 +100,7 @@ void main() {
     expect(container.read(appearanceProvider), const AppearanceSettings());
   });
 
-  testWidgets('the app text scale multiplies the platform one', (
-    tester,
-  ) async {
+  testWidgets('the app text scale multiplies the platform one', (tester) async {
     late TextScaler resolved;
 
     await tester.pumpWidget(

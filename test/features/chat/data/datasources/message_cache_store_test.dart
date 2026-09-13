@@ -21,7 +21,8 @@ void main() {
     forwardedFromMessageId: null,
     forwardedFromAuthorId: null,
     isEdited: false,
-    createdAt: createdAt ?? DateTime.utc(2026, 3, 10).add(Duration(minutes: seq)),
+    createdAt:
+        createdAt ?? DateTime.utc(2026, 3, 10).add(Duration(minutes: seq)),
   );
 
   test('remembers what it was given, per chat', () {
@@ -91,10 +92,7 @@ void main() {
       final store = InMemoryMessageCacheStore();
       store.remember('a', [message('a', 1), message('a', 2), message('a', 3)]);
 
-      store.remember('a', [
-        message('a', 1),
-        message('a', 3),
-      ], reconcile: true);
+      store.remember('a', [message('a', 1), message('a', 3)], reconcile: true);
 
       expect(store.messagesOf('a').map((m) => m.seq), unorderedEquals([1, 3]));
     });

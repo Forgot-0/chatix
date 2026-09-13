@@ -221,37 +221,43 @@ void main() {
   });
 
   group('chats — create (api-docs §6.2)', () {
-    test('rejects a direct chat with no member id before any request', () async {
-      final result = await dataSource.createChat(
-        chatType: ChatType.direct,
-        memberIds: const [],
-      );
+    test(
+      'rejects a direct chat with no member id before any request',
+      () async {
+        final result = await dataSource.createChat(
+          chatType: ChatType.direct,
+          memberIds: const [],
+        );
 
-      expect(result.getLeft().toNullable(), isA<InputFailure>());
-      verifyNever(
-        () => mockApiClient.post(
-          any(),
-          data: any(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      );
-    });
+        expect(result.getLeft().toNullable(), isA<InputFailure>());
+        verifyNever(
+          () => mockApiClient.post(
+            any(),
+            data: any(named: 'data'),
+            options: any(named: 'options'),
+          ),
+        );
+      },
+    );
 
-    test('rejects a direct chat with two member ids before any request', () async {
-      final result = await dataSource.createChat(
-        chatType: ChatType.direct,
-        memberIds: const [2, 3],
-      );
+    test(
+      'rejects a direct chat with two member ids before any request',
+      () async {
+        final result = await dataSource.createChat(
+          chatType: ChatType.direct,
+          memberIds: const [2, 3],
+        );
 
-      expect(result.getLeft().toNullable(), isA<InputFailure>());
-      verifyNever(
-        () => mockApiClient.post(
-          any(),
-          data: any(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      );
-    });
+        expect(result.getLeft().toNullable(), isA<InputFailure>());
+        verifyNever(
+          () => mockApiClient.post(
+            any(),
+            data: any(named: 'data'),
+            options: any(named: 'options'),
+          ),
+        );
+      },
+    );
 
     test('allows a direct chat with exactly one member id', () async {
       stubPost(tChatJson);
@@ -315,26 +321,37 @@ void main() {
       );
     });
 
-    test('reuses a caller-supplied key verbatim so a retry cannot duplicate', () async {
-      stubPost(tMessageJson);
-      const tKey = 'c5f3e4d6-0000-4000-8000-000000000003';
+    test(
+      'reuses a caller-supplied key verbatim so a retry cannot duplicate',
+      () async {
+        stubPost(tMessageJson);
+        const tKey = 'c5f3e4d6-0000-4000-8000-000000000003';
 
-      await dataSource.sendMessage(tChatId, content: 'hi', idempotencyKey: tKey);
-      await dataSource.sendMessage(tChatId, content: 'hi', idempotencyKey: tKey);
+        await dataSource.sendMessage(
+          tChatId,
+          content: 'hi',
+          idempotencyKey: tKey,
+        );
+        await dataSource.sendMessage(
+          tChatId,
+          content: 'hi',
+          idempotencyKey: tKey,
+        );
 
-      final captured = verify(
-        () => mockApiClient.post(
-          any(),
-          data: any(named: 'data'),
-          options: captureAny(named: 'options'),
-        ),
-      ).captured;
+        final captured = verify(
+          () => mockApiClient.post(
+            any(),
+            data: any(named: 'data'),
+            options: captureAny(named: 'options'),
+          ),
+        ).captured;
 
-      expect(
-        captured.map((o) => (o as Options).headers?['Idempotency-Key']),
-        [tKey, tKey],
-      );
-    });
+        expect(
+          captured.map((o) => (o as Options).headers?['Idempotency-Key']),
+          [tKey, tKey],
+        );
+      },
+    );
 
     test('generates a DIFFERENT key per call when none is supplied', () async {
       stubPost(tMessageJson);
@@ -404,32 +421,35 @@ void main() {
   });
 
   group('messages — forward (api-docs §6.4)', () {
-    test('puts the TARGET chat in the path and the source pair in the body', () async {
-      stubPost(tMessageJson);
-      const tTargetChatId = 'd6a4b5c7-0000-4000-8000-000000000004';
+    test(
+      'puts the TARGET chat in the path and the source pair in the body',
+      () async {
+        stubPost(tMessageJson);
+        const tTargetChatId = 'd6a4b5c7-0000-4000-8000-000000000004';
 
-      await dataSource.forwardMessage(
-        sourceChatId: tChatId,
-        sourceMessageId: tMessageId,
-        targetChatId: tTargetChatId,
-        comment: 'look',
-      );
+        await dataSource.forwardMessage(
+          sourceChatId: tChatId,
+          sourceMessageId: tMessageId,
+          targetChatId: tTargetChatId,
+          comment: 'look',
+        );
 
-      final captured = verify(
-        () => mockApiClient.post(
-          captureAny(),
-          data: captureAny(named: 'data'),
-          options: any(named: 'options'),
-        ),
-      ).captured;
+        final captured = verify(
+          () => mockApiClient.post(
+            captureAny(),
+            data: captureAny(named: 'data'),
+            options: any(named: 'options'),
+          ),
+        ).captured;
 
-      expect(captured[0], '/chats/$tTargetChatId/messages/forward/');
-      expect(captured[1], {
-        'source_chat_id': tChatId,
-        'source_message_id': tMessageId,
-        'comment': 'look',
-      });
-    });
+        expect(captured[0], '/chats/$tTargetChatId/messages/forward/');
+        expect(captured[1], {
+          'source_chat_id': tChatId,
+          'source_message_id': tMessageId,
+          'comment': 'look',
+        });
+      },
+    );
 
     test('always sends an Idempotency-Key header', () async {
       stubPost(tMessageJson);
@@ -451,8 +471,8 @@ void main() {
       // Â§6.4 supports the header for forward as well as send. Without it a
       // transport-level retry of a request the server already applied
       // duplicates the forwarded message.
-      final key = (captured.single as Options).headers?['Idempotency-Key']
-          as String?;
+      final key =
+          (captured.single as Options).headers?['Idempotency-Key'] as String?;
       expect(key, isNotNull);
       expect(
         RegExp(
@@ -463,57 +483,63 @@ void main() {
       );
     });
 
-    test('reuses a caller-supplied key verbatim so a retry cannot duplicate', () async {
-      stubPost(tMessageJson);
-      const tKey = 'f8c6d7e9-0000-4000-8000-000000000006';
+    test(
+      'reuses a caller-supplied key verbatim so a retry cannot duplicate',
+      () async {
+        stubPost(tMessageJson);
+        const tKey = 'f8c6d7e9-0000-4000-8000-000000000006';
 
-      for (var i = 0; i < 2; i++) {
-        await dataSource.forwardMessage(
-          sourceChatId: tChatId,
-          sourceMessageId: tMessageId,
-          targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
-          idempotencyKey: tKey,
+        for (var i = 0; i < 2; i++) {
+          await dataSource.forwardMessage(
+            sourceChatId: tChatId,
+            sourceMessageId: tMessageId,
+            targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
+            idempotencyKey: tKey,
+          );
+        }
+
+        final captured = verify(
+          () => mockApiClient.post(
+            any(),
+            data: any(named: 'data'),
+            options: captureAny(named: 'options'),
+          ),
+        ).captured;
+
+        expect(
+          captured.map((o) => (o as Options).headers?['Idempotency-Key']),
+          [tKey, tKey],
         );
-      }
+      },
+    );
 
-      final captured = verify(
-        () => mockApiClient.post(
-          any(),
-          data: any(named: 'data'),
-          options: captureAny(named: 'options'),
-        ),
-      ).captured;
+    test(
+      'generates a DIFFERENT key per forward when none is supplied',
+      () async {
+        stubPost(tMessageJson);
 
-      expect(
-        captured.map((o) => (o as Options).headers?['Idempotency-Key']),
-        [tKey, tKey],
-      );
-    });
+        for (var i = 0; i < 2; i++) {
+          await dataSource.forwardMessage(
+            sourceChatId: tChatId,
+            sourceMessageId: tMessageId,
+            targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
+          );
+        }
 
-    test('generates a DIFFERENT key per forward when none is supplied', () async {
-      stubPost(tMessageJson);
+        final captured = verify(
+          () => mockApiClient.post(
+            any(),
+            data: any(named: 'data'),
+            options: captureAny(named: 'options'),
+          ),
+        ).captured;
 
-      for (var i = 0; i < 2; i++) {
-        await dataSource.forwardMessage(
-          sourceChatId: tChatId,
-          sourceMessageId: tMessageId,
-          targetChatId: 'd6a4b5c7-0000-4000-8000-000000000004',
-        );
-      }
-
-      final captured = verify(
-        () => mockApiClient.post(
-          any(),
-          data: any(named: 'data'),
-          options: captureAny(named: 'options'),
-        ),
-      ).captured;
-
-      final keys = captured
-          .map((o) => (o as Options).headers?['Idempotency-Key'])
-          .toSet();
-      expect(keys, hasLength(2));
-    });
+        final keys = captured
+            .map((o) => (o as Options).headers?['Idempotency-Key'])
+            .toSet();
+        expect(keys, hasLength(2));
+      },
+    );
   });
 
   group('attachments (api-docs §6.5)', () {
@@ -538,8 +564,10 @@ void main() {
 
       final tickets = result.getRight().toNullable();
       expect(tickets, hasLength(1));
-      expect(tickets!.single.uploadToken,
-          'e7b5c6d8-0000-4000-8000-000000000005');
+      expect(
+        tickets!.single.uploadToken,
+        'e7b5c6d8-0000-4000-8000-000000000005',
+      );
 
       final captured = verify(
         () => mockApiClient.post(

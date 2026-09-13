@@ -23,14 +23,8 @@ void main() {
     });
 
     test('keeps the query string out of the decision', () {
-      expect(
-        isPublicLocation('/reset-password/confirm?token=abc123'),
-        isTrue,
-      );
-      expect(
-        isPublicLocation('/oauth-callback?code=xyz&state=nonce'),
-        isTrue,
-      );
+      expect(isPublicLocation('/reset-password/confirm?token=abc123'), isTrue);
+      expect(isPublicLocation('/oauth-callback?code=xyz&state=nonce'), isTrue);
     });
 
     test('matches whole segments only, never a bare prefix', () {

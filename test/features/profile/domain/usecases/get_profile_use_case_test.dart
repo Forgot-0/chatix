@@ -28,36 +28,49 @@ void main() {
     contacts: [],
   );
 
-  test('should return ProfileEntity from GET /profiles/{id}/ on success', () async {
-    when(() => mockProfileRepository.getProfile(42)).thenAnswer((_) async => const Right(tProfile));
+  test(
+    'should return ProfileEntity from GET /profiles/{id}/ on success',
+    () async {
+      when(
+        () => mockProfileRepository.getProfile(42),
+      ).thenAnswer((_) async => const Right(tProfile));
 
-    final result = await useCase.execute(42);
+      final result = await useCase.execute(42);
 
-    expect(result, const Right(tProfile));
-    verify(() => mockProfileRepository.getProfile(42)).called(1);
-  });
+      expect(result, const Right(tProfile));
+      verify(() => mockProfileRepository.getProfile(42)).called(1);
+    },
+  );
 
-  test('should return the repository Failure when the profile is not found', () async {
-    const tFailure = ApiFailure(
-      code: 'NOT_FOUND_PROFILE',
-      message: 'Profile not found',
-      detail: {'profile_id': 42},
-      status: 404,
-    );
-    when(() => mockProfileRepository.getProfile(42)).thenAnswer((_) async => const Left(tFailure));
+  test(
+    'should return the repository Failure when the profile is not found',
+    () async {
+      const tFailure = ApiFailure(
+        code: 'NOT_FOUND_PROFILE',
+        message: 'Profile not found',
+        detail: {'profile_id': 42},
+        status: 404,
+      );
+      when(
+        () => mockProfileRepository.getProfile(42),
+      ).thenAnswer((_) async => const Left(tFailure));
 
-    final result = await useCase.execute(42);
+      final result = await useCase.execute(42);
 
-    expect(result, const Left(tFailure));
-  });
+      expect(result, const Left(tFailure));
+    },
+  );
 
-  test('should return InputFailure and never hit the repository for a non-positive profileId', () async {
-    final result = await useCase.execute(0);
+  test(
+    'should return InputFailure and never hit the repository for a non-positive profileId',
+    () async {
+      final result = await useCase.execute(0);
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+    },
+  );
 }

@@ -6,7 +6,8 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/notification/domain/repositories/notification_repository.dart';
 import 'package:chatix/features/notification/domain/usecases/mark_all_as_read_use_case.dart';
 
-class MockNotificationRepository extends Mock implements NotificationRepository {}
+class MockNotificationRepository extends Mock
+    implements NotificationRepository {}
 
 void main() {
   late MarkAllAsReadUseCase useCase;
@@ -17,17 +18,24 @@ void main() {
     useCase = MarkAllAsReadUseCase(mockRepository);
   });
 
-  test('returns the number of notifications the server marked as read', () async {
-    when(() => mockRepository.markAllAsRead()).thenAnswer((_) async => const Right(7));
+  test(
+    'returns the number of notifications the server marked as read',
+    () async {
+      when(
+        () => mockRepository.markAllAsRead(),
+      ).thenAnswer((_) async => const Right(7));
 
-    final result = await useCase.execute();
+      final result = await useCase.execute();
 
-    expect(result, const Right<Failure, int>(7));
-    verify(() => mockRepository.markAllAsRead()).called(1);
-  });
+      expect(result, const Right<Failure, int>(7));
+      verify(() => mockRepository.markAllAsRead()).called(1);
+    },
+  );
 
   test('returns 0 when there was nothing unread', () async {
-    when(() => mockRepository.markAllAsRead()).thenAnswer((_) async => const Right(0));
+    when(
+      () => mockRepository.markAllAsRead(),
+    ).thenAnswer((_) async => const Right(0));
 
     final result = await useCase.execute();
 
@@ -42,7 +50,9 @@ void main() {
       detail: {},
       status: 500,
     );
-    when(() => mockRepository.markAllAsRead()).thenAnswer((_) async => const Left(tFailure));
+    when(
+      () => mockRepository.markAllAsRead(),
+    ).thenAnswer((_) async => const Left(tFailure));
 
     final result = await useCase.execute();
 
@@ -50,17 +60,24 @@ void main() {
     expect(result.isLeft(), isTrue);
   });
 
-  test('surfaces a network failure so the UI can keep the unread badge', () async {
-    const tFailure = NetworkFailure();
-    when(() => mockRepository.markAllAsRead()).thenAnswer((_) async => const Left(tFailure));
+  test(
+    'surfaces a network failure so the UI can keep the unread badge',
+    () async {
+      const tFailure = NetworkFailure();
+      when(
+        () => mockRepository.markAllAsRead(),
+      ).thenAnswer((_) async => const Left(tFailure));
 
-    final result = await useCase.execute();
+      final result = await useCase.execute();
 
-    expect(result, const Left<Failure, int>(tFailure));
-  });
+      expect(result, const Left<Failure, int>(tFailure));
+    },
+  );
 
   test('does not call the repository more than once per invocation', () async {
-    when(() => mockRepository.markAllAsRead()).thenAnswer((_) async => const Right(3));
+    when(
+      () => mockRepository.markAllAsRead(),
+    ).thenAnswer((_) async => const Right(3));
 
     await useCase.execute();
 

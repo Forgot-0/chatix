@@ -105,10 +105,7 @@ class BubbleShape extends ShapeBorder {
   @override
   void paint(Canvas canvas, Rect rect, {TextDirection? textDirection}) {
     if (side.style == BorderStyle.none || side.width == 0) return;
-    canvas.drawRRect(
-      _rrect(rect, inset: side.strokeInset / 2),
-      side.toPaint(),
-    );
+    canvas.drawRRect(_rrect(rect, inset: side.strokeInset / 2), side.toPaint());
   }
 
   @override

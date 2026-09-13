@@ -99,7 +99,11 @@ void main() {
 
     test('numeric styles ask for tabular figures so digits do not jump', () {
       final text = AppTheme.lightTheme.textTheme;
-      for (final style in [text.labelSmall, text.labelMedium, text.labelLarge]) {
+      for (final style in [
+        text.labelSmall,
+        text.labelMedium,
+        text.labelLarge,
+      ]) {
         expect(
           style?.fontFeatures,
           contains(const FontFeature.tabularFigures()),

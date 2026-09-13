@@ -65,10 +65,7 @@ class HighlightedText extends StatelessWidget {
         spans.add(TextSpan(text: text.substring(cursor, range.start)));
       }
       spans.add(
-        TextSpan(
-          text: text.substring(range.start, range.end),
-          style: accent,
-        ),
+        TextSpan(text: text.substring(range.start, range.end), style: accent),
       );
       cursor = range.end;
     }

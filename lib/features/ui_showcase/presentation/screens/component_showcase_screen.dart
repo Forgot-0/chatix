@@ -40,10 +40,7 @@ class ComponentShowcaseScreen extends ConsumerWidget {
           _Section(title: l10n.showcaseBubbles, child: const _Bubbles()),
           _Section(title: l10n.showcaseReactions, child: const _Reactions()),
           _Section(title: l10n.showcaseAuthors, child: const _Authors()),
-          _Section(
-            title: l10n.showcaseComponents,
-            child: const _Components(),
-          ),
+          _Section(title: l10n.showcaseComponents, child: const _Components()),
         ],
       ),
     );
@@ -505,9 +502,7 @@ class _Bubbles extends StatelessWidget {
             children: [
               Expanded(child: Divider(color: chatix.unreadDivider)),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.x2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
                 child: Text(
                   l10n.unreadMessages,
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -732,10 +727,7 @@ class _Components extends StatelessWidget {
             FilledButton(onPressed: () {}, child: Text(l10n.save)),
             OutlinedButton(onPressed: () {}, child: Text(l10n.cancel)),
             TextButton(onPressed: () {}, child: Text(l10n.retry)),
-            IconButton.filled(
-              onPressed: () {},
-              icon: const Icon(Icons.send),
-            ),
+            IconButton.filled(onPressed: () {}, icon: const Icon(Icons.send)),
           ],
         ),
         TextField(

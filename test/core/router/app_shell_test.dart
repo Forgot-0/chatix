@@ -193,9 +193,9 @@ void main() {
 
       final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
       expect(
-        bar.destinations
-            .cast<NavigationDestination>()
-            .map((destination) => destination.label),
+        bar.destinations.cast<NavigationDestination>().map(
+          (destination) => destination.label,
+        ),
         ['Chats', 'Contacts', 'Notifications', 'Settings'],
       );
     });
@@ -232,11 +232,7 @@ void main() {
     });
 
     testWidgets('caps a runaway count at 99+', (tester) async {
-      await pumpShell(
-        tester,
-        size: phone,
-        chats: [chat('a', unread: 120)],
-      );
+      await pumpShell(tester, size: phone, chats: [chat('a', unread: 120)]);
 
       expect(find.text('99+'), findsOneWidget);
     });
@@ -445,10 +441,7 @@ void main() {
       expect(find.text('settings-branch'), findsOneWidget);
       // The chats branch is still there, just not on top: its scroll position
       // and navigation stack come back untouched.
-      expect(
-        find.byType(ChatsListScreen, skipOffstage: false),
-        findsOneWidget,
-      );
+      expect(find.byType(ChatsListScreen, skipOffstage: false), findsOneWidget);
     });
 
     testWidgets('a tab returns to where it was left', (tester) async {

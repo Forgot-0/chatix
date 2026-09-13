@@ -52,7 +52,10 @@ void main() {
     final folder = ChatFolderModel(
       id: 'custom.2',
       title: 'Half known',
-      rules: const [unknown, FolderRuleModel(type: 'unread', expected: true)],
+      rules: const [
+        unknown,
+        FolderRuleModel(type: 'unread', expected: true),
+      ],
     ).toEntity();
 
     expect(folder?.rules, const [UnreadRule()]);

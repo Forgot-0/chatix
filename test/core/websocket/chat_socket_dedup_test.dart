@@ -13,7 +13,9 @@ import '../../helpers/fakes/fake_web_socket_channel.dart';
 void main() {
   const chatId = '550e8400-e29b-41d4-a716-446655440000';
 
-  setUpAll(() => dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com'));
+  setUpAll(
+    () => dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com'),
+  );
 
   Map<String, dynamic> newMessage({required String? eventId, int seq = 1}) => {
     'type': 'new_message',
@@ -83,24 +85,27 @@ void main() {
     expect(received.whereType<NewMessage>(), hasLength(2));
   });
 
-  test('a duplicate does not advance the resume cursor a second time', () async {
-    service.subscribe(chatId, lastSeq: 1);
-    channel.outbound.sent.clear();
+  test(
+    'a duplicate does not advance the resume cursor a second time',
+    () async {
+      service.subscribe(chatId, lastSeq: 1);
+      channel.outbound.sent.clear();
 
-    final frame = newMessage(eventId: 'evt-1', seq: 5);
-    channel
-      ..emit(frame)
-      ..emit(frame);
-    await Future<void>.delayed(Duration.zero);
+      final frame = newMessage(eventId: 'evt-1', seq: 5);
+      channel
+        ..emit(frame)
+        ..emit(frame);
+      await Future<void>.delayed(Duration.zero);
 
-    service.subscribe(chatId);
+      service.subscribe(chatId);
 
-    final subscribeFrame = channel.outbound.sent
-        .map((raw) => jsonDecode(raw! as String) as Map<String, dynamic>)
-        .lastWhere((frame) => frame['op'] == 'subscribe');
+      final subscribeFrame = channel.outbound.sent
+          .map((raw) => jsonDecode(raw! as String) as Map<String, dynamic>)
+          .lastWhere((frame) => frame['op'] == 'subscribe');
 
-    expect(subscribeFrame['last_seq'], 5);
-  });
+      expect(subscribeFrame['last_seq'], 5);
+    },
+  );
 
   test('service frames are exempt — they carry no event_id at all', () async {
     final received = <WSEvent>[];
@@ -115,32 +120,35 @@ void main() {
     expect(received.whereType<WsPong>(), hasLength(2));
   });
 
-  test('disconnect clears seen ids, so another account cannot be suppressed', () async {
-    final received = <WSEvent>[];
-    service.events.listen(received.add);
+  test(
+    'disconnect clears seen ids, so another account cannot be suppressed',
+    () async {
+      final received = <WSEvent>[];
+      service.events.listen(received.add);
 
-    channel.emit(newMessage(eventId: 'evt-1'));
-    await Future<void>.delayed(Duration.zero);
-    expect(received.whereType<NewMessage>(), hasLength(1));
+      channel.emit(newMessage(eventId: 'evt-1'));
+      await Future<void>.delayed(Duration.zero);
+      expect(received.whereType<NewMessage>(), hasLength(1));
 
-    await service.disconnect();
+      await service.disconnect();
 
-    final next = FakeWebSocketChannel();
-    final reconnected = ChatSocketService(
-      secureStorage: FakeSecureStorageService(
-        initialValues: {AppConstants.accessTokenKey: 'token'},
-      ),
-      channelFactory: (_) => next,
-    );
-    addTearDown(reconnected.dispose);
-    await reconnected.connect();
+      final next = FakeWebSocketChannel();
+      final reconnected = ChatSocketService(
+        secureStorage: FakeSecureStorageService(
+          initialValues: {AppConstants.accessTokenKey: 'token'},
+        ),
+        channelFactory: (_) => next,
+      );
+      addTearDown(reconnected.dispose);
+      await reconnected.connect();
 
-    final afterSwitch = <WSEvent>[];
-    reconnected.events.listen(afterSwitch.add);
+      final afterSwitch = <WSEvent>[];
+      reconnected.events.listen(afterSwitch.add);
 
-    next.emit(newMessage(eventId: 'evt-1'));
-    await Future<void>.delayed(Duration.zero);
+      next.emit(newMessage(eventId: 'evt-1'));
+      await Future<void>.delayed(Duration.zero);
 
-    expect(afterSwitch.whereType<NewMessage>(), hasLength(1));
-  });
+      expect(afterSwitch.whereType<NewMessage>(), hasLength(1));
+    },
+  );
 }

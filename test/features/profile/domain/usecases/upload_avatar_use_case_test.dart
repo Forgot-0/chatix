@@ -42,47 +42,58 @@ void main() {
     fileKey: '1/avatar.png',
   );
 
-  test('should emit presigning -> uploading -> confirming -> done on full success', () async {
-    when(
-      () => mockProfileRepository.presignAvatar(filename: tFilename),
-    ).thenAnswer((_) async => const Right(tPresign));
-    when(
-      () => mockAvatarUploader.upload(
-        url: tPresign.url,
-        bytes: tBytes,
-        contentType: tContentType,
-      ),
-    ).thenAnswer((_) async => const Right(null));
-    when(
-      () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
-    ).thenAnswer((_) async => const Right(null));
+  test(
+    'should emit presigning -> uploading -> confirming -> done on full success',
+    () async {
+      when(
+        () => mockProfileRepository.presignAvatar(filename: tFilename),
+      ).thenAnswer((_) async => const Right(tPresign));
+      when(
+        () => mockAvatarUploader.upload(
+          url: tPresign.url,
+          bytes: tBytes,
+          contentType: tContentType,
+        ),
+      ).thenAnswer((_) async => const Right(null));
+      when(
+        () => mockProfileRepository.completeAvatarUpload(
+          fileKey: tPresign.fileKey,
+        ),
+      ).thenAnswer((_) async => const Right(null));
 
-    final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: tContentType);
-
-    await expectLater(
-      stream,
-      emitsInOrder([
-        const Right<Failure, AvatarUploadStage>(AvatarUploadStage.presigning),
-        const Right<Failure, AvatarUploadStage>(AvatarUploadStage.uploading),
-        const Right<Failure, AvatarUploadStage>(AvatarUploadStage.confirming),
-        const Right<Failure, AvatarUploadStage>(AvatarUploadStage.done),
-        emitsDone,
-      ]),
-    );
-    verify(
-      () => mockProfileRepository.presignAvatar(filename: tFilename),
-    ).called(1);
-    verify(
-      () => mockAvatarUploader.upload(
-        url: tPresign.url,
+      final stream = useCase.execute(
         bytes: tBytes,
+        filename: tFilename,
         contentType: tContentType,
-      ),
-    ).called(1);
-    verify(
-      () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
-    ).called(1);
-  });
+      );
+
+      await expectLater(
+        stream,
+        emitsInOrder([
+          const Right<Failure, AvatarUploadStage>(AvatarUploadStage.presigning),
+          const Right<Failure, AvatarUploadStage>(AvatarUploadStage.uploading),
+          const Right<Failure, AvatarUploadStage>(AvatarUploadStage.confirming),
+          const Right<Failure, AvatarUploadStage>(AvatarUploadStage.done),
+          emitsDone,
+        ]),
+      );
+      verify(
+        () => mockProfileRepository.presignAvatar(filename: tFilename),
+      ).called(1);
+      verify(
+        () => mockAvatarUploader.upload(
+          url: tPresign.url,
+          bytes: tBytes,
+          contentType: tContentType,
+        ),
+      ).called(1);
+      verify(
+        () => mockProfileRepository.completeAvatarUpload(
+          fileKey: tPresign.fileKey,
+        ),
+      ).called(1);
+    },
+  );
 
   test(
     'should emit presigning then the Failure and stop, never calling the uploader, when presign fails',
@@ -97,7 +108,11 @@ void main() {
         () => mockProfileRepository.presignAvatar(filename: tFilename),
       ).thenAnswer((_) async => const Left(tFailure));
 
-      final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: tContentType);
+      final stream = useCase.execute(
+        bytes: tBytes,
+        filename: tFilename,
+        contentType: tContentType,
+      );
 
       await expectLater(
         stream,
@@ -109,50 +124,68 @@ void main() {
       );
       verifyNever(
         () => mockAvatarUploader.upload(
-        url: any(named: 'url'),
-        bytes: any(named: 'bytes'),
-        contentType: any(named: 'contentType'),
-      ),
+          url: any(named: 'url'),
+          bytes: any(named: 'bytes'),
+          contentType: any(named: 'contentType'),
+        ),
       );
       verifyNever(
-        () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
+        () => mockProfileRepository.completeAvatarUpload(
+          fileKey: tPresign.fileKey,
+        ),
       );
     },
   );
 
-  test('should stop after uploading fails, never calling completeAvatarUpload', () async {
-    const tFailure = ServerFailure(message: 'Avatar storage rejected the upload', statusCode: 403);
-    when(
-      () => mockProfileRepository.presignAvatar(filename: tFilename),
-    ).thenAnswer((_) async => const Right(tPresign));
-    when(
-      () => mockAvatarUploader.upload(
-        url: tPresign.url,
+  test(
+    'should stop after uploading fails, never calling completeAvatarUpload',
+    () async {
+      const tFailure = ServerFailure(
+        message: 'Avatar storage rejected the upload',
+        statusCode: 403,
+      );
+      when(
+        () => mockProfileRepository.presignAvatar(filename: tFilename),
+      ).thenAnswer((_) async => const Right(tPresign));
+      when(
+        () => mockAvatarUploader.upload(
+          url: tPresign.url,
+          bytes: tBytes,
+          contentType: tContentType,
+        ),
+      ).thenAnswer((_) async => const Left(tFailure));
+
+      final stream = useCase.execute(
         bytes: tBytes,
+        filename: tFilename,
         contentType: tContentType,
-      ),
-    ).thenAnswer((_) async => const Left(tFailure));
+      );
 
-    final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: tContentType);
-
-    await expectLater(
-      stream,
-      emitsInOrder([
-        const Right<Failure, AvatarUploadStage>(AvatarUploadStage.presigning),
-        const Right<Failure, AvatarUploadStage>(AvatarUploadStage.uploading),
-        const Left<Failure, AvatarUploadStage>(tFailure),
-        emitsDone,
-      ]),
-    );
-    verifyNever(
-      () => mockProfileRepository.completeAvatarUpload(fileKey: tPresign.fileKey),
-    );
-  });
+      await expectLater(
+        stream,
+        emitsInOrder([
+          const Right<Failure, AvatarUploadStage>(AvatarUploadStage.presigning),
+          const Right<Failure, AvatarUploadStage>(AvatarUploadStage.uploading),
+          const Left<Failure, AvatarUploadStage>(tFailure),
+          emitsDone,
+        ]),
+      );
+      verifyNever(
+        () => mockProfileRepository.completeAvatarUpload(
+          fileKey: tPresign.fileKey,
+        ),
+      );
+    },
+  );
 
   test(
     'should emit a single InputFailure and never call the repository when contentType is not an image',
     () async {
-      final stream = useCase.execute(bytes: tBytes, filename: tFilename, contentType: 'text/plain');
+      final stream = useCase.execute(
+        bytes: tBytes,
+        filename: tFilename,
+        contentType: 'text/plain',
+      );
 
       await expectLater(
         stream,
@@ -183,18 +216,21 @@ void main() {
     },
   );
 
-  test('should emit a single InputFailure and never call the repository for an empty file', () async {
-    final stream = useCase.execute(
-      bytes: Uint8List(0),
-      filename: tFilename,
-      contentType: tContentType,
-    );
+  test(
+    'should emit a single InputFailure and never call the repository for an empty file',
+    () async {
+      final stream = useCase.execute(
+        bytes: Uint8List(0),
+        filename: tFilename,
+        contentType: tContentType,
+      );
 
-    await expectLater(
-      stream,
-      emitsInOrder([isA<Left<Failure, AvatarUploadStage>>(), emitsDone]),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-    verifyZeroInteractions(mockAvatarUploader);
-  });
+      await expectLater(
+        stream,
+        emitsInOrder([isA<Left<Failure, AvatarUploadStage>>(), emitsDone]),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+      verifyZeroInteractions(mockAvatarUploader);
+    },
+  );
 }

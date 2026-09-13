@@ -165,7 +165,10 @@ void main() {
           event: const {'message_id': 'm1', 'seq': 5},
           message: messageDto,
         ),
-        envelope('message_deleted', event: const {'message_id': 'm1', 'seq': 5}),
+        envelope(
+          'message_deleted',
+          event: const {'message_id': 'm1', 'seq': 5},
+        ),
       ]) {
         final event = parseWsEvent(raw);
         expect(event, isA<WSMessageEvent>());
@@ -409,21 +412,24 @@ void main() {
       expect(updated.allowedReactions, ['👍', '🔥']);
     });
 
-    test('chat_updated leaves absent fields null — "unchanged", not cleared', () {
-      final event = parseWsEvent(
-        envelope('chat_updated', event: const {'name': 'Renamed'}),
-      );
+    test(
+      'chat_updated leaves absent fields null — "unchanged", not cleared',
+      () {
+        final event = parseWsEvent(
+          envelope('chat_updated', event: const {'name': 'Renamed'}),
+        );
 
-      final updated = event as ChatUpdated;
-      expect(updated.name, 'Renamed');
-      expect(updated.description, isNull);
-      expect(updated.isPublic, isNull);
-      expect(updated.adminOnly, isNull);
-      expect(updated.slowModeSeconds, isNull);
-      expect(updated.permissions, isNull);
-      expect(updated.reactionsMode, isNull);
-      expect(updated.allowedReactions, isNull);
-    });
+        final updated = event as ChatUpdated;
+        expect(updated.name, 'Renamed');
+        expect(updated.description, isNull);
+        expect(updated.isPublic, isNull);
+        expect(updated.adminOnly, isNull);
+        expect(updated.slowModeSeconds, isNull);
+        expect(updated.permissions, isNull);
+        expect(updated.reactionsMode, isNull);
+        expect(updated.allowedReactions, isNull);
+      },
+    );
 
     test('chat_deleted carries who deleted it', () {
       final event = parseWsEvent(
@@ -581,42 +587,48 @@ void main() {
   });
 
   group('ws.history', () {
-    test('keeps full MessageDTOs as raw maps for the feature layer to decode', () {
-      final event = parseWsEvent({
-        'type': 'ws.history',
-        'chat_id': chatId,
-        'payload': {
-          'after_seq': 40,
-          'messages': [
-            {'id': 'm1', 'chat_id': chatId, 'seq': 41, 'content': 'hi'},
-            {'id': 'm2', 'chat_id': chatId, 'seq': 42, 'content': 'there'},
-          ],
-          'has_more': true,
-          'next_last_seq': 42,
-        },
-        'ts': '2026-01-15T10:30:00Z',
-      });
+    test(
+      'keeps full MessageDTOs as raw maps for the feature layer to decode',
+      () {
+        final event = parseWsEvent({
+          'type': 'ws.history',
+          'chat_id': chatId,
+          'payload': {
+            'after_seq': 40,
+            'messages': [
+              {'id': 'm1', 'chat_id': chatId, 'seq': 41, 'content': 'hi'},
+              {'id': 'm2', 'chat_id': chatId, 'seq': 42, 'content': 'there'},
+            ],
+            'has_more': true,
+            'next_last_seq': 42,
+          },
+          'ts': '2026-01-15T10:30:00Z',
+        });
 
-      expect(event, isA<WsHistory>());
-      final history = event as WsHistory;
-      expect(history.afterSeq, 40);
-      expect(history.messages, hasLength(2));
-      expect(history.messages.first['content'], 'hi');
-      expect(history.hasMore, isTrue);
-      expect(history.nextLastSeq, 42);
-    });
+        expect(event, isA<WsHistory>());
+        final history = event as WsHistory;
+        expect(history.afterSeq, 40);
+        expect(history.messages, hasLength(2));
+        expect(history.messages.first['content'], 'hi');
+        expect(history.hasMore, isTrue);
+        expect(history.nextLastSeq, 42);
+      },
+    );
 
-    test('yields an empty batch rather than failing when messages is absent', () {
-      final event = parseWsEvent({
-        'type': 'ws.history',
-        'chat_id': chatId,
-        'payload': {'after_seq': 40, 'has_more': false},
-      });
+    test(
+      'yields an empty batch rather than failing when messages is absent',
+      () {
+        final event = parseWsEvent({
+          'type': 'ws.history',
+          'chat_id': chatId,
+          'payload': {'after_seq': 40, 'has_more': false},
+        });
 
-      expect((event as WsHistory).messages, isEmpty);
-      expect(event.hasMore, isFalse);
-      expect(event.nextLastSeq, isNull);
-    });
+        expect((event as WsHistory).messages, isEmpty);
+        expect(event.hasMore, isFalse);
+        expect(event.nextLastSeq, isNull);
+      },
+    );
 
     test('skips non-object entries but keeps the rest of the batch', () {
       final event = parseWsEvent({
@@ -637,21 +649,27 @@ void main() {
   });
 
   group('ws.ping / ws.pong', () {
-    test('ws.ping reads connection_id from the TOP LEVEL — it has no payload', () {
-      final event = parseWsEvent({
-        'type': 'ws.ping',
-        'connection_id': 'conn-1',
-        'ts': '2026-01-15T10:30:00Z',
-      });
+    test(
+      'ws.ping reads connection_id from the TOP LEVEL — it has no payload',
+      () {
+        final event = parseWsEvent({
+          'type': 'ws.ping',
+          'connection_id': 'conn-1',
+          'ts': '2026-01-15T10:30:00Z',
+        });
 
-      expect(event, isA<WsPing>());
-      final ping = event as WsPing;
-      expect(ping.connectionId, 'conn-1');
-      expect(ping.ts, DateTime.parse('2026-01-15T10:30:00Z'));
-    });
+        expect(event, isA<WsPing>());
+        final ping = event as WsPing;
+        expect(ping.connectionId, 'conn-1');
+        expect(ping.ts, DateTime.parse('2026-01-15T10:30:00Z'));
+      },
+    );
 
     test('ws.pong parses from its minimal frame', () {
-      final event = parseWsEvent({'type': 'ws.pong', 'payload': <String, dynamic>{}});
+      final event = parseWsEvent({
+        'type': 'ws.pong',
+        'payload': <String, dynamic>{},
+      });
       expect(event, isA<WsPong>());
     });
   });
@@ -697,8 +715,15 @@ void main() {
     });
 
     test('the two ws.error codes never decode to the same type', () {
-      final bad = parseWsEvent({'type': 'ws.error', 'code': 'BAD_COMMAND', 'detail': 'x'});
-      final notMember = parseWsEvent({'type': 'ws.error', 'code': 'NOT_CHAT_MEMBER'});
+      final bad = parseWsEvent({
+        'type': 'ws.error',
+        'code': 'BAD_COMMAND',
+        'detail': 'x',
+      });
+      final notMember = parseWsEvent({
+        'type': 'ws.error',
+        'code': 'NOT_CHAT_MEMBER',
+      });
 
       expect(bad, isA<WsErrorBadCommand>());
       expect(bad, isNot(isA<WsErrorNotChatMember>()));
@@ -741,7 +766,8 @@ void main() {
         expect(
           event,
           isA<WsUnimplementedEvent>(),
-          reason: '$type should be recognised so it does not pollute unknown logs',
+          reason:
+              '$type should be recognised so it does not pollute unknown logs',
         );
         expect((event as WsUnimplementedEvent).type, type);
         expect(event.chatId, chatId);
@@ -789,11 +815,25 @@ void main() {
 
     test('every documented type decodes without throwing', () {
       const types = [
-        'new_message', 'message_edited', 'message_deleted', 'messages_read',
-        'member_joined', 'member_left', 'member_kick', 'member_banned',
-        'chat_created', 'chat_updated', 'attachment_success', 'chat_deleted',
-        'ws.ready', 'ws.subscribed', 'ws.unsubscribed', 'ws.history',
-        'ws.pong', 'ws.ping', 'ws.error',
+        'new_message',
+        'message_edited',
+        'message_deleted',
+        'messages_read',
+        'member_joined',
+        'member_left',
+        'member_kick',
+        'member_banned',
+        'chat_created',
+        'chat_updated',
+        'attachment_success',
+        'chat_deleted',
+        'ws.ready',
+        'ws.subscribed',
+        'ws.unsubscribed',
+        'ws.history',
+        'ws.pong',
+        'ws.ping',
+        'ws.error',
       ];
 
       for (final type in types) {
@@ -806,7 +846,12 @@ void main() {
     });
 
     test('a mistyped payload never throws', () {
-      for (final payload in [null, 'string', 42, <int>[1, 2]]) {
+      for (final payload in [
+        null,
+        'string',
+        42,
+        <int>[1, 2],
+      ]) {
         expect(
           () => parseWsEvent({'type': 'new_message', 'payload': payload}),
           returnsNormally,
@@ -855,11 +900,14 @@ void main() {
       expect(parseWsFrame(bytes), isA<WsPong>());
     });
 
-    test('malformed JSON degrades to Unknown instead of killing the stream', () {
-      final event = parseWsFrame('{not json at all');
-      expect(event, isA<WsUnknown>());
-      expect(event.type, '<malformed>');
-    });
+    test(
+      'malformed JSON degrades to Unknown instead of killing the stream',
+      () {
+        final event = parseWsFrame('{not json at all');
+        expect(event, isA<WsUnknown>());
+        expect(event.type, '<malformed>');
+      },
+    );
 
     test('a JSON array (not an object) degrades to Unknown', () {
       final event = parseWsFrame('[1,2,3]');

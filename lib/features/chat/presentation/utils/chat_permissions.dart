@@ -5,10 +5,12 @@ export 'package:chatix/core/rbac/permission_helpers.dart'
         ChatPermissions,
         assignableChatRoles,
         canAssignChatRole,
+        canBypassSlowMode,
         canDeleteMessage,
         canEditMessage,
         canLeaveChat,
         canModerate,
         canSendMessage,
         hasAnyChatManagementAction,
-        hasChatPermission;
+        hasChatPermission,
+        slowModeInterval;

@@ -36,11 +36,7 @@ void main() {
   testWidgets('draws at most three faces, however many reacted', (
     tester,
   ) async {
-    await pumpChip(
-      tester,
-      count: 40,
-      recentUserIds: const [1, 2, 3, 4, 5],
-    );
+    await pumpChip(tester, count: 40, recentUserIds: const [1, 2, 3, 4, 5]);
 
     // `recent_user_ids` is capped at 3 by the API too (ReactionLimits), but
     // the chip does not trust that.
@@ -69,11 +65,7 @@ void main() {
     var taps = 0;
     var holds = 0;
 
-    await pumpChip(
-      tester,
-      onTap: () => taps++,
-      onLongPress: () => holds++,
-    );
+    await pumpChip(tester, onTap: () => taps++, onLongPress: () => holds++);
 
     await tester.tap(find.byType(ReactionChip));
     await tester.longPress(find.byType(ReactionChip));
@@ -145,11 +137,7 @@ void main() {
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 8,
                 children: [
-                  ReactionChip(
-                    emoji: '+',
-                    count: 3,
-                    recentUserIds: [1, 2, 3],
-                  ),
+                  ReactionChip(emoji: '+', count: 3, recentUserIds: [1, 2, 3]),
                   ReactionChip(
                     emoji: '*',
                     count: 9,

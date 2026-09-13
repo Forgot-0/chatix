@@ -274,7 +274,8 @@ void main() {
         idempotencyKey: any(named: 'idempotencyKey'),
       ),
     ).thenAnswer(
-      (_) async => const Left(ServerFailure(message: 'Slow mode', statusCode: 429)),
+      (_) async =>
+          const Left(ServerFailure(message: 'Slow mode', statusCode: 429)),
     );
 
     final result = await useCase.execute(tChatId, content: 'Hello');

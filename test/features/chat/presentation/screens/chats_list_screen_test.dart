@@ -205,9 +205,7 @@ void main() {
     expect(find.text(l10n.noChatsYet), findsNothing);
   });
 
-  testWidgets('more pages to come are announced at the bottom', (
-    tester,
-  ) async {
+  testWidgets('more pages to come are announced at the bottom', (tester) async {
     await pumpScreen(
       tester,
       state: ChatListState(
@@ -224,10 +222,7 @@ void main() {
   testWidgets('the folder strip stays away until there are folders', (
     tester,
   ) async {
-    await pumpScreen(
-      tester,
-      state: ChatListState(items: [chat('a')]),
-    );
+    await pumpScreen(tester, state: ChatListState(items: [chat('a')]));
 
     expect(find.byType(FolderTabsBar), findsNothing);
   });
@@ -253,21 +248,22 @@ void main() {
     expect(rows.map((row) => row.chat.id), ['b']);
   });
 
-  testWidgets('a folder that matches nothing says so instead of looking broken', (
-    tester,
-  ) async {
-    await pumpScreen(
-      tester,
-      state: ChatListState(items: [chat('a')]),
-      folders: [ChatFolder.fromPreset(FolderPreset.channels)],
-    );
+  testWidgets(
+    'a folder that matches nothing says so instead of looking broken',
+    (tester) async {
+      await pumpScreen(
+        tester,
+        state: ChatListState(items: [chat('a')]),
+        folders: [ChatFolder.fromPreset(FolderPreset.channels)],
+      );
 
-    await tester.tap(find.text(l10n.folderPresetChannels));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.folderPresetChannels));
+      await tester.pumpAndSettle();
 
-    expect(find.text(l10n.folderEmptyChats), findsOneWidget);
-    expect(find.byType(ChatListTile), findsNothing);
-  });
+      expect(find.text(l10n.folderEmptyChats), findsOneWidget);
+      expect(find.byType(ChatListTile), findsNothing);
+    },
+  );
 
   testWidgets('hiding the strip keeps the folders but takes the tabs away', (
     tester,

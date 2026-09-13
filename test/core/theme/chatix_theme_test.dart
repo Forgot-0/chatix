@@ -54,9 +54,10 @@ void main() {
         density: AppDensity.cozy,
       );
 
-      expect(crimson.bubbleOutgoingGradient.colors.first, isNot(
-        light.bubbleOutgoingGradient.colors.first,
-      ));
+      expect(
+        crimson.bubbleOutgoingGradient.colors.first,
+        isNot(light.bubbleOutgoingGradient.colors.first),
+      );
       expect(crimson.wallpaperSeed, isNot(light.wallpaperSeed));
       expect(crimson.unreadDivider, isNot(light.unreadDivider));
     });
@@ -77,9 +78,9 @@ void main() {
         ThemeData.estimateBrightnessForColor(
           light.bubbleOutgoingGradient.colors.first,
         ),
-        isNot(ThemeData.estimateBrightnessForColor(
-          light.bubbleOutgoingForeground,
-        )),
+        isNot(
+          ThemeData.estimateBrightnessForColor(light.bubbleOutgoingForeground),
+        ),
       );
 
       for (final theme in [light, dark]) {
@@ -95,14 +96,17 @@ void main() {
       }
     });
 
-    test('an incoming bubble is separated by a hairline in light and by lift in dark', () {
-      expect(light.bubbleIncomingBorder.a, greaterThan(0));
-      expect(dark.bubbleIncomingBorder, Colors.transparent);
-      expect(
-        HSLColor.fromColor(dark.bubbleIncoming).lightness,
-        greaterThan(HSLColor.fromColor(dark.chatBackground).lightness),
-      );
-    });
+    test(
+      'an incoming bubble is separated by a hairline in light and by lift in dark',
+      () {
+        expect(light.bubbleIncomingBorder.a, greaterThan(0));
+        expect(dark.bubbleIncomingBorder, Colors.transparent);
+        expect(
+          HSLColor.fromColor(dark.bubbleIncoming).lightness,
+          greaterThan(HSLColor.fromColor(dark.chatBackground).lightness),
+        );
+      },
+    );
 
     test('a selected reaction chip reads differently from an idle one', () {
       for (final theme in [light, dark]) {
@@ -149,8 +153,10 @@ void main() {
     });
 
     test('density reaches the extension', () {
-      expect(ChatixTheme.light(AppDensity.comfortable).density,
-          AppDensity.comfortable);
+      expect(
+        ChatixTheme.light(AppDensity.comfortable).density,
+        AppDensity.comfortable,
+      );
     });
   });
 

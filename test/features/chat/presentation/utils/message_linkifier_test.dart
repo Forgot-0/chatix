@@ -55,10 +55,10 @@ void main() {
 
   group('urls', () {
     test('http and https are picked up', () {
-      expect(
-        linksIn('http://a.test and https://b.test').map((l) => l.target),
-        ['http://a.test', 'https://b.test'],
-      );
+      expect(linksIn('http://a.test and https://b.test').map((l) => l.target), [
+        'http://a.test',
+        'https://b.test',
+      ]);
     });
 
     test('a bare www host gets a scheme to open with', () {
@@ -104,10 +104,7 @@ void main() {
     });
 
     test('an address is not read as a mention of its domain', () {
-      final links = linksIn(
-        'ada@example.com',
-        members: {'example', 'ada'},
-      );
+      final links = linksIn('ada@example.com', members: {'example', 'ada'});
 
       expect(links.single.kind, MessageLinkKind.email);
     });
@@ -135,10 +132,7 @@ void main() {
     });
 
     test('with no resolver at all, nothing is a mention', () {
-      expect(
-        MessageLinkifier.parse('hi @ada').whereType<LinkSpan>(),
-        isEmpty,
-      );
+      expect(MessageLinkifier.parse('hi @ada').whereType<LinkSpan>(), isEmpty);
     });
 
     test('an email address is not a mention', () {
@@ -158,8 +152,10 @@ void main() {
     });
 
     test('the visible text keeps the formatting it was typed with', () {
-      expect(linksIn('call +1 (555) 010-9999 today').single.text,
-          '+1 (555) 010-9999');
+      expect(
+        linksIn('call +1 (555) 010-9999 today').single.text,
+        '+1 (555) 010-9999',
+      );
     });
 
     test('a number without a plus is left alone', () {
@@ -183,15 +179,12 @@ void main() {
         members: {'ada'},
       );
 
-      expect(
-        spans.whereType<LinkSpan>().map((l) => l.kind),
-        [
-          MessageLinkKind.mention,
-          MessageLinkKind.url,
-          MessageLinkKind.email,
-          MessageLinkKind.phone,
-        ],
-      );
+      expect(spans.whereType<LinkSpan>().map((l) => l.kind), [
+        MessageLinkKind.mention,
+        MessageLinkKind.url,
+        MessageLinkKind.email,
+        MessageLinkKind.phone,
+      ]);
     });
 
     test('plain runs between links are merged, not split per match', () {

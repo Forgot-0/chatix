@@ -194,6 +194,43 @@ abstract final class ChatAttachmentLimits {
     return null;
   }
 
+  /// The MIME type the API expects for a file with this name.
+  ///
+  /// The server checks the type it is handed against the file's magic bytes
+  /// (api-docs §5.5), so a wrong guess here is a rejected upload rather than
+  /// a mislabelled file — hence a table of exactly what the documented
+  /// buckets accept, and `application/octet-stream` for anything else, which
+  /// is refused up front by [isAllowedMimeType].
+  static String mimeFromName(String name) {
+    final ext = name.split('.').last.toLowerCase();
+
+    return switch (ext) {
+      'jpg' || 'jpeg' => 'image/jpeg',
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      'heic' => 'image/heic',
+      'heif' => 'image/heif',
+      'mp4' => 'video/mp4',
+      'mov' => 'video/quicktime',
+      'webm' => 'video/webm',
+      'avi' => 'video/x-msvideo',
+      'pdf' => 'application/pdf',
+      'zip' => 'application/zip',
+      'txt' => 'text/plain',
+      'csv' => 'text/csv',
+      'doc' => 'application/msword',
+      'docx' =>
+        'application/vnd.openxmlformats-officedocument'
+            '.wordprocessingml.document',
+      'xls' => 'application/vnd.ms-excel',
+      'xlsx' =>
+        'application/vnd.openxmlformats-officedocument'
+            '.spreadsheetml.sheet',
+      _ => 'application/octet-stream',
+    };
+  }
+
   static String formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) {

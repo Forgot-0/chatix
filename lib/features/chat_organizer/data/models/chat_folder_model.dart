@@ -43,10 +43,9 @@ class ChatFolderModel extends Equatable {
   /// a folder whose every rule came from a newer build would otherwise show
   /// up as a tab that matches the entire list.
   ChatFolder? toEntity() {
-    final parsed = <FolderRuleModel>[...rules]
-        .map((rule) => rule.toEntity())
-        .nonNulls
-        .toList();
+    final parsed = <FolderRuleModel>[
+      ...rules,
+    ].map((rule) => rule.toEntity()).nonNulls.toList();
     if (parsed.isEmpty) return null;
 
     return ChatFolder(

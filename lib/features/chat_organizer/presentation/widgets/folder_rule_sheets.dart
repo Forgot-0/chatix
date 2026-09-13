@@ -85,10 +85,7 @@ Future<FolderRule?> editFolderRule(BuildContext context, FolderRule rule) {
   }
 }
 
-Future<T?> _showSheet<T>(
-  BuildContext context,
-  WidgetBuilder builder,
-) {
+Future<T?> _showSheet<T>(BuildContext context, WidgetBuilder builder) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
@@ -213,9 +210,7 @@ class _BoolRuleSheetState extends State<_BoolRuleSheet> {
     final l10n = AppLocalizations.of(context);
 
     final onLabel = _isUnread ? l10n.folderRuleUnread : l10n.folderRulePinned;
-    final offLabel = _isUnread
-        ? l10n.folderRuleRead
-        : l10n.folderRuleNotPinned;
+    final offLabel = _isUnread ? l10n.folderRuleRead : l10n.folderRuleNotPinned;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -257,9 +252,7 @@ class _NoReplyRuleSheet extends StatefulWidget {
 class _NoReplyRuleSheetState extends State<_NoReplyRuleSheet> {
   static const int _maxSliderDays = 30;
 
-  late double _days = widget.rule.days
-      .clamp(0, _maxSliderDays)
-      .toDouble();
+  late double _days = widget.rule.days.clamp(0, _maxSliderDays).toDouble();
 
   @override
   Widget build(BuildContext context) {
@@ -345,9 +338,9 @@ class _MemberRuleSheet extends ConsumerWidget {
                   trailing: isChosen
                       ? Icon(Icons.check, color: theme.colorScheme.primary)
                       : null,
-                  onTap: () => Navigator.of(context).pop(
-                    MemberRule(userId: person.userId, label: person.name),
-                  ),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).pop(MemberRule(userId: person.userId, label: person.name)),
                 );
               },
             ),

@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
@@ -24,6 +25,10 @@ class SetReactionUseCase {
 
     final validation = validateEmoji(emoji);
     if (validation != null) return _fail(validation);
+
+    if (!ReactionCatalog.isKnown(emoji)) {
+      return _fail('That emoji cannot be used as a reaction');
+    }
 
     if (policy != null) {
       if (!policy.enabled) {
@@ -68,6 +73,12 @@ class SetReactionUseCase {
       Future.value(Left(InputFailure(message: message)));
 }
 
+/// What this chat will accept, as `reactions_mode` and `allowed_reactions`
+/// describe it (api-docs §5.7.5).
+///
+/// The curated catalog is folded in here rather than checked separately:
+/// every surface that decides what to offer already asks the policy, so a
+/// chat that allows "any emoji" still means any emoji the server knows.
 class ChatReactionPolicy {
   final bool enabled;
 
@@ -81,9 +92,22 @@ class ChatReactionPolicy {
 
   bool isAllowed(String emoji) {
     if (!enabled) return false;
+    if (!ReactionCatalog.isKnown(emoji)) return false;
     final list = whitelist;
     return list == null || list.contains(emoji);
   }
+
+  /// Everything on offer here, in catalog order.
+  ///
+  /// `mode = "some"` keeps the catalog's ordering rather than the white
+  /// list's, so the sheet's sections stay in the same places whichever chat
+  /// it was opened from.
+  List<String> get available => enabled
+      ? [
+          for (final emoji in ReactionCatalog.all)
+            if (isAllowed(emoji)) emoji,
+        ]
+      : const <String>[];
 }
 
 extension ChatReactionPolicyX on ChatEntity {

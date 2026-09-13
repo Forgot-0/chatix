@@ -46,9 +46,7 @@ final knownPeopleProvider = Provider<List<KnownPerson>>((ref) {
       .map((entry) => KnownPerson(userId: entry.key, name: entry.value))
       .toList();
 
-  people.sort(
-    (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-  );
+  people.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
   return people;
 });

@@ -1,10 +1,11 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
 class SendMessageUseCase {
-  static const int maxContentLength = 4096;
+  static const int maxContentLength = MessageLimits.maxContentLength;
 
   final ChatRepository _repository;
 

@@ -124,9 +124,10 @@ abstract final class AppPageTransitions {
     return FadeTransition(
       opacity: CurvedAnimation(parent: animation, curve: _incomingFade),
       child: ScaleTransition(
-        scale: Tween<double>(begin: 0.92, end: 1).animate(
-          CurvedAnimation(parent: animation, curve: AppMotion.curve),
-        ),
+        scale: Tween<double>(
+          begin: 0.92,
+          end: 1,
+        ).animate(CurvedAnimation(parent: animation, curve: AppMotion.curve)),
         child: FadeTransition(
           opacity: Tween<double>(begin: 1, end: 0).animate(
             CurvedAnimation(parent: secondaryAnimation, curve: _outgoingFade),

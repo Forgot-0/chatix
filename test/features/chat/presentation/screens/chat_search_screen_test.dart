@@ -166,9 +166,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('an empty field with no history explains itself', (
-    tester,
-  ) async {
+  testWidgets('an empty field with no history explains itself', (tester) async {
     await pumpScreen(tester);
 
     expect(find.text(l10n.searchStartTitle), findsOneWidget);
@@ -178,10 +176,7 @@ void main() {
   testWidgets('an empty field offers what was searched and opened before', (
     tester,
   ) async {
-    history = InMemorySearchHistoryStore(
-      queries: ['design'],
-      chatIds: ['a'],
-    );
+    history = InMemorySearchHistoryStore(queries: ['design'], chatIds: ['a']);
 
     await pumpScreen(tester, chats: [chat('a', name: 'Design team')]);
 
@@ -221,7 +216,10 @@ void main() {
   ) async {
     await pumpScreen(
       tester,
-      chats: [chat('a', name: 'Design team'), chat('b', name: 'Marketing')],
+      chats: [
+        chat('a', name: 'Design team'),
+        chat('b', name: 'Marketing'),
+      ],
     );
 
     await search(tester, 'design');
@@ -402,7 +400,11 @@ void main() {
   });
 
   testWidgets('the screen is drawn on both grounds', (tester) async {
-    await pumpScreen(tester, chats: [chat('a', name: 'Design team')], dark: true);
+    await pumpScreen(
+      tester,
+      chats: [chat('a', name: 'Design team')],
+      dark: true,
+    );
     await search(tester, 'design');
 
     expect(tester.takeException(), isNull);

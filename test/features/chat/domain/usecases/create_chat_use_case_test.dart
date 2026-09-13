@@ -213,7 +213,10 @@ void main() {
       final result = await useCase.execute(
         name: 'Crowd',
         chatType: ChatType.group,
-        memberIds: List.generate(CreateChatUseCase.maxInitialMembers, (i) => i + 1),
+        memberIds: List.generate(
+          CreateChatUseCase.maxInitialMembers,
+          (i) => i + 1,
+        ),
       );
 
       expect(result.isRight(), isTrue);

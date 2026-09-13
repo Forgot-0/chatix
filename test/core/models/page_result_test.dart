@@ -20,8 +20,18 @@ void main() {
     });
 
     test('hasPrevious is false on page 1 and true afterwards', () {
-      const firstPage = PageResult<int>(items: [], total: 41, page: 1, pageSize: 20);
-      const secondPage = PageResult<int>(items: [], total: 41, page: 2, pageSize: 20);
+      const firstPage = PageResult<int>(
+        items: [],
+        total: 41,
+        page: 1,
+        pageSize: 20,
+      );
+      const secondPage = PageResult<int>(
+        items: [],
+        total: 41,
+        page: 2,
+        pageSize: 20,
+      );
       expect(firstPage.hasPrevious, isFalse);
       expect(secondPage.hasPrevious, isTrue);
     });
@@ -49,7 +59,12 @@ void main() {
     });
 
     test('map() transforms items and keeps pagination metadata', () {
-      const page = PageResult<int>(items: [1, 2, 3], total: 3, page: 1, pageSize: 20);
+      const page = PageResult<int>(
+        items: [1, 2, 3],
+        total: 3,
+        page: 1,
+        pageSize: 20,
+      );
 
       final mapped = page.map((item) => item.toString());
 

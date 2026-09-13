@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/websocket/chat_socket_service.dart';
-import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -144,97 +143,6 @@ class ChatRealtimeRejectedBanner extends StatelessWidget {
                 color: theme.colorScheme.onErrorContainer,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ChatReplyBanner extends StatelessWidget {
-  const ChatReplyBanner({
-    super.key,
-    required this.message,
-    required this.onCancel,
-  });
-
-  final MessageEntity message;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Icon(Icons.reply, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message.content ?? 'Attachment',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18),
-            onPressed: onCancel,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ChatEditBanner extends StatelessWidget {
-  const ChatEditBanner({
-    super.key,
-    required this.message,
-    required this.onCancel,
-  });
-
-  final MessageEntity message;
-  final VoidCallback onCancel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-
-    return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Icon(Icons.edit_outlined, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.editingMessage,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  message.content ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18),
-            onPressed: onCancel,
           ),
         ],
       ),

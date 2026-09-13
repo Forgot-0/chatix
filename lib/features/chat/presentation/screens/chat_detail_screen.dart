@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,24 +8,31 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_attachment_picker.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_banners.dart';
-import 'package:chatix/features/chat/presentation/widgets/chat_composer.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/chat_composer.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_sheet.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_tray.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_locked_notice.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/forward_target_dialog.dart';
@@ -61,6 +70,7 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
 
 class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _textController = TextEditingController();
+  final _composerFocus = FocusNode();
   final _searchController = TextEditingController();
 
   Set<String>? _selectedMessageIds;
@@ -72,12 +82,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// of searching inside one chat.
   bool _searchMode = false;
 
-  bool _hasText = false;
-
-  MessageEntity? _editing;
-
   String? _pendingFocusId;
   int? _pendingFocusSeq;
+
+  ComposerController get _composer =>
+      ref.read(composerProvider(widget.chatId).notifier);
 
   @override
   void initState() {
@@ -90,9 +99,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _textController.selection = TextSelection.collapsed(
       offset: _textController.text.length,
     );
-    _hasText = _textController.text.trim().isNotEmpty;
 
     _textController.addListener(_onTextChanged);
+
+    // The draft restored above is what the counter and the send button have
+    // to agree with before the first keystroke.
+    final restored = _textController.text.length;
+    if (restored > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _composer.setLength(restored);
+      });
+    }
 
     _pendingFocusId = widget.focusMessageId;
     _pendingFocusSeq = widget.focusMessageSeq;
@@ -101,7 +118,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   void dispose() {
     _textController.removeListener(_onTextChanged);
+
+    // Whatever is in the box goes to disk now rather than on the debounce:
+    // the screen is about to be gone, and a draft that only exists in memory
+    // is a draft the chat list will not show (api-docs has nowhere to put
+    // one, so this device is the only place it lives).
+    unawaited(ref.read(chatDraftsProvider.notifier).flush());
+
     _textController.dispose();
+    _composerFocus.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -110,6 +135,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Widget build(BuildContext context) {
     final detail = ref.watch(chatDetailProvider(widget.chatId));
     final myUserId = ref.watch(authProvider).value?.id;
+
+    // A reaction that the server refused has already been taken back off the
+    // message by the time this fires; all that is left is to say so, quietly.
+    ref.listen(reactionNoticeProvider, (previous, next) {
+      if (next == null || next == previous) return;
+      AppSnackbar.quiet(
+        context,
+        reactionNoticeText(AppLocalizations.of(context), next.reason),
+      );
+    });
 
     final pendingFocusId = _pendingFocusId;
     final pendingFocusSeq = _pendingFocusSeq;
@@ -139,7 +174,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Widget _buildBody(ChatDetailState state, int? myUserId) {
     final me = state.me;
-    final canSend = canSendMessage(state.chat, me);
+    final lockedBecause = ComposerLockedNotice.reasonFor(state.chat, me);
+
+    // Slow mode is re-read from the chat on every build, so a `chat_updated`
+    // that switches it on or off reaches the send button without a reload
+    // (api-docs §5.2, §6.4).
+    final interval = slowModeInterval(state.chat, me);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _composer.syncSlowMode(interval);
+    });
+
+    final composer = ref.watch(composerProvider(widget.chatId));
+    final attachments = ref.watch(chatAttachmentProvider(widget.chatId)).value;
 
     return Column(
       children: [
@@ -165,27 +211,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 .read(chatDetailProvider(widget.chatId).notifier)
                 .returnToLatest(),
           ),
-        if (_editing != null)
-          ChatEditBanner(message: _editing!, onCancel: _cancelEditing)
-        else if (state.replyTo != null)
-          ChatReplyBanner(
-            message: state.replyTo!,
-            onCancel: () => ref
-                .read(chatDetailProvider(widget.chatId).notifier)
-                .setReplyTo(null),
+        if (lockedBecause != null)
+          ComposerLockedNotice(reason: lockedBecause)
+        else ...[
+          ComposerAttachmentTray(chatId: widget.chatId),
+          ChatComposer(
+            controller: _textController,
+            focusNode: _composerFocus,
+            length: composer.length,
+            hasAttachments: attachments?.isReady ?? false,
+            isRecording: ref.watch(voiceRecordProvider).isRecording,
+            slowMode: composer.slowMode,
+            isSending: composer.isSending,
+            replyTo: state.replyTo,
+            editing: composer.editing,
+            onCancelContext: _cancelComposerContext,
+            // An edit gains no attachments: `PATCH .../messages/{id}/` only
+            // carries `content` (api-docs §5.4).
+            onAttach: composer.isEditing ? null : _openAttachmentSheet,
+            onSend: _send,
+            onVoiceRecorded: composer.isEditing ? null : _sendVoice,
           ),
-        ChatAttachmentBar(chatId: widget.chatId),
-        ChatComposer(
-          controller: _textController,
-          enabled: canSend,
-          isEditing: _editing != null,
-          hasText: _hasText,
-          isRecording: ref.watch(voiceRecordProvider).isRecording,
-          disabledReason: _disabledReason(state.chat, me),
-          onAttach: canSend && _editing == null ? _pickAttachments : null,
-          onSend: canSend ? _send : null,
-          onVoiceRecorded: canSend ? _sendVoice : null,
-        ),
+        ],
       ],
     );
   }
@@ -527,78 +574,74 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   // ---------------------------------------------------------------- composer
 
   void _startEditing(MessageEntity message) {
-    setState(() => _editing = message);
-    _textController.text = message.content ?? '';
-    _textController.selection = TextSelection.collapsed(
-      offset: _textController.text.length,
-    );
+    _composer.startEditing(message);
+    _setText(message.content ?? '');
+    _composerFocus.requestFocus();
+  }
+
+  /// Drops whatever the banner is showing — the edit if there is one, the
+  /// reply otherwise. One gesture, because the banner is one strip.
+  void _cancelComposerContext() {
+    if (ref.read(composerProvider(widget.chatId)).isEditing) {
+      _cancelEditing();
+      return;
+    }
+    ref.read(chatDetailProvider(widget.chatId).notifier).setReplyTo(null);
   }
 
   void _cancelEditing() {
-    setState(() => _editing = null);
+    _composer.cancelEditing();
 
     // Back to the draft the edit interrupted, so the composer and the chat
     // row agree about what is waiting to be sent.
-    _textController.text =
-        ref.read(chatDraftsProvider.notifier).of(widget.chatId) ?? '';
-    _textController.selection = TextSelection.collapsed(
-      offset: _textController.text.length,
-    );
+    _setText(ref.read(chatDraftsProvider.notifier).of(widget.chatId) ?? '');
+  }
+
+  void _setText(String text) {
+    _textController.text = text;
+    _textController.selection = TextSelection.collapsed(offset: text.length);
+    _composer.setLength(text.length);
   }
 
   void _onTextChanged() {
-    final has = _textController.text.trim().isNotEmpty;
-    if (has != _hasText) setState(() => _hasText = has);
+    final text = _textController.text;
+    _composer.setLength(text.length);
 
     // While an edit is in the composer the text belongs to that message, not
     // to a draft of the next one.
-    if (_editing == null) {
-      ref
-          .read(chatDraftsProvider.notifier)
-          .save(widget.chatId, _textController.text);
+    if (!ref.read(composerProvider(widget.chatId)).isEditing) {
+      ref.read(chatDraftsProvider.notifier).save(widget.chatId, text);
     }
   }
 
-  String _disabledReason(ChatEntity? chat, ChatMemberEntity? me) {
-    final l10n = AppLocalizations.of(context);
-
-    if (me == null) return l10n.composerJoinToSend;
-    if (me.isBanned) return l10n.composerBanned;
-    if (me.isMuted) return l10n.composerMuted;
-    if (chat?.adminOnly == true) return l10n.composerAdminsOnly;
-    return l10n.composerNoPermission;
-  }
-
   Future<void> _send() async {
-    final editing = _editing;
-    if (editing != null) {
-      final text = _textController.text.trim();
-      if (text.isEmpty || text == (editing.content ?? '')) {
-        _cancelEditing();
-        return;
-      }
+    final composer = ref.read(composerProvider(widget.chatId));
 
-      _cancelEditing();
-      try {
-        await ref
-            .read(chatDetailProvider(widget.chatId).notifier)
-            .editMessage(editing.id, text);
-      } on Failure catch (failure) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
-      }
+    // The clock is checked here as well as drawn on the button: a tap that
+    // lands in the same frame the countdown ends would otherwise go out and
+    // come back 429.
+    if (composer.slowMode.isWaitingAt(DateTime.now())) return;
+    if (composer.isSending) return;
+
+    final editing = composer.editing;
+    if (editing != null) {
+      await _commitEdit(editing);
       return;
     }
 
     final text = _textController.text.trim();
-    final attachments = ref.read(chatAttachmentProvider(widget.chatId)).value;
+    if (MessageLimits.isOverLimit(text.length)) return;
 
+    final attachments = ref.read(chatAttachmentProvider(widget.chatId)).value;
     if (text.isEmpty && !(attachments?.isReady ?? false)) return;
 
-    _textController.clear();
+    _setText('');
     ref.read(chatDraftsProvider.notifier).clear(widget.chatId);
+
+    // Optimistic, like the pending bubble it puts on screen: the wait starts
+    // now and a 429 replaces it with the server's own `retry_after`.
+    _composer.markSent();
+    _composer.setSending(value: true);
 
     await ref
         .read(chatDetailProvider(widget.chatId).notifier)
@@ -606,6 +649,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           content: text.isEmpty ? null : text,
           uploadTokens: attachments?.uploadTokens ?? const [],
         );
+
+    if (!mounted) return;
+    _composer.setSending(value: false);
 
     final spent = attachments?.uploadTokens ?? const <String>[];
     if (spent.isNotEmpty) {
@@ -615,46 +661,140 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     ref.read(chatAttachmentProvider(widget.chatId).notifier).clear();
   }
 
-  Future<void> _sendVoice(VoiceRecording recording) async {
-    final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
+  Future<void> _commitEdit(MessageEntity editing) async {
+    final text = _textController.text.trim();
 
-    notifier.select([
+    if (text.isEmpty ||
+        text == (editing.content ?? '') ||
+        MessageLimits.isOverLimit(text.length)) {
+      _cancelEditing();
+      return;
+    }
+
+    _cancelEditing();
+    try {
+      await ref
+          .read(chatDetailProvider(widget.chatId).notifier)
+          .editMessage(editing.id, text);
+    } on Failure catch (failure) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message)));
+    }
+  }
+
+  Future<void> _sendVoice(VoiceRecording recording) async {
+    await _sendExclusive(
       AttachmentUploadRequestEntity.voice(
         filename: recording.path.split('/').last,
         mimeType: recording.mimeType,
         fileSize: recording.sizeBytes,
         filePath: recording.path,
       ),
-    ]);
+      MessageType.voice,
+    );
+  }
 
-    final selection = ref.read(chatAttachmentProvider(widget.chatId)).value;
-    if (selection?.failure != null) return;
+  /// Uploads one attachment that travels alone and sends it on its own.
+  ///
+  /// `voice` and `video_note` cannot be mixed with anything, including each
+  /// other (api-docs §5.5), so they never join whatever is staged — they
+  /// replace it and go straight out.
+  Future<void> _sendExclusive(
+    AttachmentUploadRequestEntity upload,
+    MessageType type,
+  ) async {
+    final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
+
+    notifier.select([upload]);
+    if (ref.read(chatAttachmentProvider(widget.chatId)).value?.failure !=
+        null) {
+      return;
+    }
 
     await notifier.upload();
     if (!mounted) return;
 
-    final uploaded = ref.read(chatAttachmentProvider(widget.chatId)).value;
-    final tokens = uploaded?.uploadTokens ?? const <String>[];
+    final tokens =
+        ref.read(chatAttachmentProvider(widget.chatId)).value?.uploadTokens ??
+        const <String>[];
     if (tokens.isEmpty) return;
+
+    _composer.markSent();
 
     await ref
         .read(chatDetailProvider(widget.chatId).notifier)
-        .sendMessage(uploadTokens: tokens, messageType: MessageType.voice);
+        .sendMessage(uploadTokens: tokens, messageType: type);
 
     ref.read(confirmedAttachmentTokensProvider.notifier).release(tokens);
     notifier.clear();
   }
 
-  Future<void> _pickAttachments() async {
-    final uploads = await ChatAttachmentPicker.pick(context);
-    if (uploads.isEmpty || !mounted) return;
+  // ------------------------------------------------------------- attachments
+
+  Future<void> _openAttachmentSheet() async {
+    final result = await ComposerAttachmentSheet.show(context);
+    if (result == null || !mounted) return;
+
+    switch (result.kind) {
+      case ComposerAttachmentKind.uploads:
+        await _stageUploads(result.uploads);
+      case ComposerAttachmentKind.recordVoice:
+        // The same hands-free recording the send button's lock gesture
+        // reaches, started from the menu instead of by dragging.
+        await ref.read(voiceRecordProvider.notifier).start();
+        ref.read(voiceRecordProvider.notifier).lock();
+      case ComposerAttachmentKind.recordVideoNote:
+        await _captureVideoNote();
+    }
+  }
+
+  Future<void> _stageUploads(
+    List<AttachmentUploadRequestEntity> uploads,
+  ) async {
+    if (uploads.isEmpty) return;
 
     final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
     notifier.select(uploads);
 
-    final selection = ref.read(chatAttachmentProvider(widget.chatId)).value;
-    if (selection?.hasSelection ?? false) {
+    if (ref.read(chatAttachmentProvider(widget.chatId)).value?.hasSelection ??
+        false) {
       await notifier.upload();
+    }
+  }
+
+  /// Records a video note and sends it, or says why it cannot.
+  ///
+  /// The server checks 60 s and 640 px in a background worker and reports
+  /// nothing but `attachment_status: "error"` if either is broken (api-docs
+  /// §5.5), so the file is measured here while there is still a sentence
+  /// worth saying about it.
+  Future<void> _captureVideoNote() async {
+    final capture = await ChatAttachmentPicker.captureVideoNote();
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+
+    switch (capture.outcome) {
+      case VideoNoteOutcome.cancelled:
+        return;
+      case VideoNoteOutcome.ready:
+        await _sendExclusive(capture.upload!, MessageType.videoNote);
+      case VideoNoteOutcome.tooLong:
+        AppSnackbar.quiet(
+          context,
+          l10n.videoNoteTooLong(
+            ChatAttachmentLimits.maxVideoNoteDurationSeconds,
+          ),
+        );
+      case VideoNoteOutcome.tooLarge:
+        AppSnackbar.quiet(
+          context,
+          l10n.videoNoteTooLarge(ChatAttachmentLimits.maxVideoNoteResolutionPx),
+        );
+      case VideoNoteOutcome.unreadable:
+        AppSnackbar.quiet(context, l10n.videoNoteUnreadable);
     }
   }
 }

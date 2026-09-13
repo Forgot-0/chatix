@@ -81,10 +81,7 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
       body: query.isEmpty
           ? _SearchStart(onPickQuery: _useQuery, onOpenChat: _openChat)
           : switch (tab) {
-              SearchTab.chats => _ChatResults(
-                query: query,
-                onOpen: _openChat,
-              ),
+              SearchTab.chats => _ChatResults(query: query, onOpen: _openChat),
               SearchTab.people => _PeopleResults(
                 query: query,
                 isBusy: _isStartingChat,
@@ -256,9 +253,7 @@ class _SearchTabButton extends StatelessWidget {
         children: [
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.x2,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
               child: Text(
                 label,
                 maxLines: 1,
@@ -270,8 +265,7 @@ class _SearchTabButton extends StatelessWidget {
               ),
             ),
           ),
-          if (isSelected)
-            Container(height: 2, color: scheme.primary),
+          if (isSelected) Container(height: 2, color: scheme.primary),
         ],
       ),
     );
@@ -323,9 +317,8 @@ class _SearchStart extends ConsumerWidget {
               trailing: IconButton(
                 tooltip: l10n.searchRemoveFromHistory,
                 icon: const Icon(Icons.close, size: 18),
-                onPressed: () => ref
-                    .read(searchHistoryProvider.notifier)
-                    .removeQuery(query),
+                onPressed: () =>
+                    ref.read(searchHistoryProvider.notifier).removeQuery(query),
               ),
             ),
         ],

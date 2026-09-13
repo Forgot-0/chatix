@@ -5,7 +5,9 @@ import 'package:chatix/core/ui/typography/highlighted_text.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester, Widget child) => tester.pumpWidget(
-    MaterialApp(home: Scaffold(body: Center(child: child))),
+    MaterialApp(
+      home: Scaffold(body: Center(child: child)),
+    ),
   );
 
   /// The pieces the text was cut into, and whether each one is highlighted.
@@ -49,10 +51,7 @@ void main() {
       const HighlightedText(text: 'ann and anna', query: 'an'),
     );
 
-    expect(
-      spansOf(tester).where((span) => span.isHighlighted).length,
-      3,
-    );
+    expect(spansOf(tester).where((span) => span.isHighlighted).length, 3);
   });
 
   testWidgets('text with no match is drawn plainly', (tester) async {

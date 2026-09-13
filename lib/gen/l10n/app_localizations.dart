@@ -2715,6 +2715,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open chat'**
   String get searchOpenChat;
+
+  /// Catalog sheet: this device's own history
+  ///
+  /// In en, this message translates to:
+  /// **'Recently used'**
+  String get reactionSectionRecent;
+
+  /// Catalog sheet section: faces
+  ///
+  /// In en, this message translates to:
+  /// **'Smileys'**
+  String get reactionSectionFaces;
+
+  /// Catalog sheet section: hands and people
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get reactionSectionPeople;
+
+  /// Catalog sheet section: hearts
+  ///
+  /// In en, this message translates to:
+  /// **'Hearts'**
+  String get reactionSectionHearts;
+
+  /// Catalog sheet section: celebration
+  ///
+  /// In en, this message translates to:
+  /// **'Celebration'**
+  String get reactionSectionCelebration;
+
+  /// Catalog sheet section: food
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get reactionSectionFood;
+
+  /// Catalog sheet section: nature and animals
+  ///
+  /// In en, this message translates to:
+  /// **'Nature'**
+  String get reactionSectionNature;
+
+  /// Catalog sheet section: symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get reactionSectionSymbols;
+
+  /// reactions_mode = some with a white list the catalog does not cover
+  ///
+  /// In en, this message translates to:
+  /// **'No reactions are available in this chat'**
+  String get reactionsNoneAllowed;
+
+  /// Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {limit}'**
+  String reactionsUsed(int used, int limit);
+
+  /// MAX_DISTINCT_REACTIONS_PER_MESSAGE reached
+  ///
+  /// In en, this message translates to:
+  /// **'This message already has {limit} different reactions'**
+  String reactionMessageLimitReached(Object limit);
+
+  /// Quick bar button that opens the full catalog sheet
+  ///
+  /// In en, this message translates to:
+  /// **'More reactions'**
+  String get moreReactions;
+
+  /// Quiet toast after an optimistic reaction was rolled back
+  ///
+  /// In en, this message translates to:
+  /// **'Reaction not saved'**
+  String get reactionFailed;
+
+  /// Quiet toast for 429 on the reactions endpoint
+  ///
+  /// In en, this message translates to:
+  /// **'Too many reactions at once'**
+  String get reactionTooFast;
+
+  /// Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION
+  ///
+  /// In en, this message translates to:
+  /// **'That reaction is not allowed here'**
+  String get reactionNotAllowed;
+
+  /// Who-reacted sheet: a tab whose page came back empty
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody yet'**
+  String get reactionsNobody;
+
+  /// Who-reacted row for a user id the roster does not cover
+  ///
+  /// In en, this message translates to:
+  /// **'User {id}'**
+  String reactionUserFallback(Object id);
+
+  /// Counter shown near the 4096-character cap (api-docs 5.4)
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left'**
+  String composerCharactersLeft(int count);
+
+  /// Accessible label of the send button
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get composerSendLabel;
+
+  /// Accessible label of the send button while editing
+  ///
+  /// In en, this message translates to:
+  /// **'Save changes'**
+  String get composerSaveEditLabel;
+
+  /// Accessible label of the microphone button
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to record a voice message'**
+  String get composerRecordLabel;
+
+  /// Context banner title while replying
+  ///
+  /// In en, this message translates to:
+  /// **'Reply to {name}'**
+  String composerReplyingTo(Object name);
+
+  /// Countdown on the send button while slow mode holds it
+  ///
+  /// In en, this message translates to:
+  /// **'Slow mode: {seconds}s to wait'**
+  String composerSlowModeWait(int seconds);
+
+  /// Explains why the send button counts down
+  ///
+  /// In en, this message translates to:
+  /// **'This chat allows one message every {seconds} s'**
+  String composerSlowModeHint(int seconds);
+
+  /// Title of the composer attachment sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Attach'**
+  String get attachSheetTitle;
+
+  /// Header of the recent-gallery strip
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get attachRecent;
+
+  /// Attachment sheet row that opens the camera
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get attachCamera;
+
+  /// Attachment sheet row that records a voice message
+  ///
+  /// In en, this message translates to:
+  /// **'Voice message'**
+  String get attachVoice;
+
+  /// Attachment sheet row that records a video note
+  ///
+  /// In en, this message translates to:
+  /// **'Video note'**
+  String get attachVideoNote;
+
+  /// Subtitle of the voice row: it is exclusive (api-docs 5.5)
+  ///
+  /// In en, this message translates to:
+  /// **'Sent on its own, up to {seconds} s'**
+  String attachVoiceHint(int seconds);
+
+  /// Subtitle of the video note row
+  ///
+  /// In en, this message translates to:
+  /// **'Sent on its own, up to {seconds} s and {pixels} px'**
+  String attachVideoNoteHint(int seconds, int pixels);
+
+  /// Shown in place of the strip when photo access was refused
+  ///
+  /// In en, this message translates to:
+  /// **'Allow photo access to pick from here'**
+  String get attachGalleryDenied;
+
+  /// Button that asks for the photo grant again
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get attachGalleryAllow;
+
+  /// Tapping one more photo past MAX_MEDIA_PER_MESSAGE
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {count} photos or videos per message'**
+  String attachMediaFull(int count);
+
+  /// Confirm button of the attachment sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Attach {count}'**
+  String attachSendCount(int count);
+
+  /// A picked gallery item could not be read back
+  ///
+  /// In en, this message translates to:
+  /// **'That file could not be read'**
+  String get attachUnavailable;
+
+  /// Captured video note exceeds MAX duration
+  ///
+  /// In en, this message translates to:
+  /// **'A video note can be at most {seconds} s long'**
+  String videoNoteTooLong(int seconds);
+
+  /// Captured video note exceeds the 640 px cap the server enforces
+  ///
+  /// In en, this message translates to:
+  /// **'This camera records above {pixels} px, which the server rejects for video notes'**
+  String videoNoteTooLarge(int pixels);
+
+  /// The captured file could not be probed for duration/size
+  ///
+  /// In en, this message translates to:
+  /// **'That recording could not be checked'**
+  String get videoNoteUnreadable;
+
+  /// Counter once the message is past the 4096-character cap
+  ///
+  /// In en, this message translates to:
+  /// **'{count} over the limit'**
+  String composerTooLongBy(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -116,8 +116,7 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
           selectedChatId: widget.selectedChatId,
           scrollController: _scrollController,
           archiveOpen: _archiveOpen,
-          onToggleArchive: () =>
-              setState(() => _archiveOpen = !_archiveOpen),
+          onToggleArchive: () => setState(() => _archiveOpen = !_archiveOpen),
           onRefresh: _refresh,
         ),
       ),
@@ -215,8 +214,7 @@ class _ChatsList extends ConsumerWidget {
               ),
             ),
 
-          if (sections.active.isNotEmpty)
-            _rows(sections.active, isLast: true),
+          if (sections.active.isNotEmpty) _rows(sections.active, isLast: true),
           if (state.canLoadMore)
             const SliverToBoxAdapter(child: AppLoadMoreIndicator()),
 
@@ -252,8 +250,7 @@ class _ChatsList extends ConsumerWidget {
               isSelected: chat.id == selectedChatId,
               peerReadSeq: state.peerReadSeqOf(chat.id),
             ),
-            if (!isBlockEnd || !isLast)
-              const Divider(height: 1, indent: 80),
+            if (!isBlockEnd || !isLast) const Divider(height: 1, indent: 80),
           ],
         );
       },

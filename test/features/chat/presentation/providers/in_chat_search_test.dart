@@ -118,16 +118,20 @@ void main() {
         ),
       ),
     );
-    when(() => markRead.execute(any(), any())).thenAnswer(
-      (_) async => const Right(null),
-    );
+    when(
+      () => markRead.execute(any(), any()),
+    ).thenAnswer((_) async => const Right(null));
     when(
       () => getContext.execute(any(), any(), limit: any(named: 'limit')),
     ).thenAnswer(
       (invocation) async => Right(
         MessagesPage(
           messages: [
-            message(chatId, invocation.positionalArguments[1] as int, 'ship it'),
+            message(
+              chatId,
+              invocation.positionalArguments[1] as int,
+              'ship it',
+            ),
           ],
           nextCursor: null,
           hasNext: false,
@@ -176,9 +180,8 @@ void main() {
     return container;
   }
 
-  Future<void> settle() => Future<void>.delayed(
-    const Duration(milliseconds: 20),
-  );
+  Future<void> settle() =>
+      Future<void>.delayed(const Duration(milliseconds: 20));
 
   InChatSearchState stateOf(ProviderContainer container) =>
       container.read(inChatSearchProvider(chatId));
@@ -217,8 +220,9 @@ void main() {
     expect(stateOf(container).position, 1);
 
     // Opening a match the screen has not loaded is a context request.
-    verify(() => getContext.execute(chatId, 9, limit: any(named: 'limit')))
-        .called(1);
+    verify(
+      () => getContext.execute(chatId, 9, limit: any(named: 'limit')),
+    ).called(1);
   });
 
   test('the arrows walk the matches and take the chat with them', () async {
@@ -239,8 +243,9 @@ void main() {
 
     expect(stateOf(container).position, 2);
     expect(stateOf(container).canGoOlder, isFalse);
-    verify(() => getContext.execute(chatId, 4, limit: any(named: 'limit')))
-        .called(1);
+    verify(
+      () => getContext.execute(chatId, 4, limit: any(named: 'limit')),
+    ).called(1);
 
     await controller.goNewer();
     expect(stateOf(container).position, 1);

@@ -78,10 +78,14 @@ void main() {
   group('editing', () {
     test('only the author may edit, whatever else they can do', () {
       // api-docs §5.4: PATCH is author-only, with no permission-based bypass.
-      expect(actionsFor(forMessage: message(authorId: me)),
-          contains(MessageAction.edit));
-      expect(actionsFor(forMessage: message(authorId: someoneElse)),
-          isNot(contains(MessageAction.edit)));
+      expect(
+        actionsFor(forMessage: message(authorId: me)),
+        contains(MessageAction.edit),
+      );
+      expect(
+        actionsFor(forMessage: message(authorId: someoneElse)),
+        isNot(contains(MessageAction.edit)),
+      );
     });
 
     test('an owner still cannot edit somebody else', () {
@@ -107,8 +111,10 @@ void main() {
 
   group('deleting', () {
     test('the author may delete their own', () {
-      expect(actionsFor(forMessage: message(authorId: me)),
-          contains(MessageAction.delete));
+      expect(
+        actionsFor(forMessage: message(authorId: me)),
+        contains(MessageAction.delete),
+      );
     });
 
     test('a plain member may not delete somebody else', () {
@@ -171,7 +177,10 @@ void main() {
       );
 
       expect(
-        actionsFor(forChat: adminOnly, forMe: member(role: ChatRole.admin)),
+        actionsFor(
+          forChat: adminOnly,
+          forMe: member(role: ChatRole.admin),
+        ),
         contains(MessageAction.reply),
       );
       expect(
@@ -199,13 +208,14 @@ void main() {
     });
 
     test('reacting follows what the chat allows', () {
-      expect(actionsFor(canReact: false),
-          isNot(contains(MessageAction.react)));
+      expect(actionsFor(canReact: false), isNot(contains(MessageAction.react)));
     });
 
     test('select is dropped once selection is already running', () {
-      expect(actionsFor(canSelect: false),
-          isNot(contains(MessageAction.select)));
+      expect(
+        actionsFor(canSelect: false),
+        isNot(contains(MessageAction.select)),
+      );
     });
 
     test('pinning is never offered: no endpoint implements it', () {

@@ -1486,4 +1486,152 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get searchOpenChat => 'চ্যাট খুলুন';
+
+  @override
+  String get reactionSectionRecent => 'সম্প্রতি ব্যবহৃত';
+
+  @override
+  String get reactionSectionFaces => 'স্মাইলি';
+
+  @override
+  String get reactionSectionPeople => 'মানুষ';
+
+  @override
+  String get reactionSectionHearts => 'হৃদয়';
+
+  @override
+  String get reactionSectionCelebration => 'উদযাপন';
+
+  @override
+  String get reactionSectionFood => 'খাবার';
+
+  @override
+  String get reactionSectionNature => 'প্রকৃতি';
+
+  @override
+  String get reactionSectionSymbols => 'প্রতীক';
+
+  @override
+  String get reactionsNoneAllowed => 'এই চ্যাটে কোনো রিঅ্যাকশন নেই';
+
+  @override
+  String reactionsUsed(int used, int limit) {
+    return '$limit-এর মধ্যে $used';
+  }
+
+  @override
+  String reactionMessageLimitReached(Object limit) {
+    return 'এই বার্তায় ইতিমধ্যে $limitটি ভিন্ন রিঅ্যাকশন আছে';
+  }
+
+  @override
+  String get moreReactions => 'আরও রিঅ্যাকশন';
+
+  @override
+  String get reactionFailed => 'রিঅ্যাকশন সংরক্ষিত হয়নি';
+
+  @override
+  String get reactionTooFast => 'একসাথে অনেক বেশি রিঅ্যাকশন';
+
+  @override
+  String get reactionNotAllowed => 'এই রিঅ্যাকশন এখানে অনুমোদিত নয়';
+
+  @override
+  String get reactionsNobody => 'এখনো কেউ নয়';
+
+  @override
+  String reactionUserFallback(Object id) {
+    return 'ব্যবহারকারী $id';
+  }
+
+  @override
+  String composerCharactersLeft(int count) {
+    return '$countটি বাকি';
+  }
+
+  @override
+  String get composerSendLabel => 'পাঠান';
+
+  @override
+  String get composerSaveEditLabel => 'পরিবর্তন সংরক্ষণ করুন';
+
+  @override
+  String get composerRecordLabel => 'ভয়েস বার্তা রেকর্ড করতে ধরে রাখুন';
+
+  @override
+  String composerReplyingTo(Object name) {
+    return '$name-কে উত্তর';
+  }
+
+  @override
+  String composerSlowModeWait(int seconds) {
+    return 'ধীর মোড: $seconds সেকেন্ড বাকি';
+  }
+
+  @override
+  String composerSlowModeHint(int seconds) {
+    return 'এই চ্যাটে প্রতি $seconds সেকেন্ডে একটি বার্তা পাঠানো যায়';
+  }
+
+  @override
+  String get attachSheetTitle => 'সংযুক্ত করুন';
+
+  @override
+  String get attachRecent => 'সাম্প্রতিক';
+
+  @override
+  String get attachCamera => 'ক্যামেরা';
+
+  @override
+  String get attachVoice => 'ভয়েস বার্তা';
+
+  @override
+  String get attachVideoNote => 'ভিডিও নোট';
+
+  @override
+  String attachVoiceHint(int seconds) {
+    return 'আলাদাভাবে পাঠানো হয়, সর্বোচ্চ $seconds সেকেন্ড';
+  }
+
+  @override
+  String attachVideoNoteHint(int seconds, int pixels) {
+    return 'আলাদাভাবে পাঠানো হয়, সর্বোচ্চ $seconds সেকেন্ড ও $pixels পিক্সেল';
+  }
+
+  @override
+  String get attachGalleryDenied => 'এখান থেকে বেছে নিতে ছবির অ্যাক্সেস দিন';
+
+  @override
+  String get attachGalleryAllow => 'অনুমতি দিন';
+
+  @override
+  String attachMediaFull(int count) {
+    return 'প্রতি বার্তায় সর্বোচ্চ $countটি ছবি বা ভিডিও';
+  }
+
+  @override
+  String attachSendCount(int count) {
+    return '$countটি সংযুক্ত করুন';
+  }
+
+  @override
+  String get attachUnavailable => 'ফাইলটি পড়া যায়নি';
+
+  @override
+  String videoNoteTooLong(int seconds) {
+    return 'ভিডিও নোট সর্বোচ্চ $seconds সেকেন্ড হতে পারে';
+  }
+
+  @override
+  String videoNoteTooLarge(int pixels) {
+    return 'এই ক্যামেরা $pixels পিক্সেলের বেশি রেকর্ড করে, যা ভিডিও নোটের জন্য সার্ভার গ্রহণ করে না';
+  }
+
+  @override
+  String get videoNoteUnreadable => 'এই রেকর্ডিং যাচাই করা যায়নি';
+
+  @override
+  String composerTooLongBy(int count) {
+    return 'সীমার চেয়ে $count বেশি';
+  }
 }

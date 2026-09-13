@@ -24,7 +24,10 @@ void main() {
       () => mockAuthRepository.login(username: tUsername, password: tPassword),
     ).thenAnswer((_) async => const Right(null));
 
-    final result = await useCase.execute(username: tUsername, password: tPassword);
+    final result = await useCase.execute(
+      username: tUsername,
+      password: tPassword,
+    );
 
     expect(result, const Right<Failure, void>(null));
     verify(
@@ -43,7 +46,10 @@ void main() {
       () => mockAuthRepository.login(username: tUsername, password: tPassword),
     ).thenAnswer((_) async => const Left(tFailure));
 
-    final result = await useCase.execute(username: tUsername, password: tPassword);
+    final result = await useCase.execute(
+      username: tUsername,
+      password: tPassword,
+    );
 
     expect(result, const Left(tFailure));
     verify(
@@ -51,23 +57,29 @@ void main() {
     ).called(1);
   });
 
-  test('should return InputFailure and never hit the repository when username is empty', () async {
-    final result = await useCase.execute(username: '', password: tPassword);
+  test(
+    'should return InputFailure and never hit the repository when username is empty',
+    () async {
+      final result = await useCase.execute(username: '', password: tPassword);
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockAuthRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockAuthRepository);
+    },
+  );
 
-  test('should return InputFailure and never hit the repository when password is empty', () async {
-    final result = await useCase.execute(username: tUsername, password: '');
+  test(
+    'should return InputFailure and never hit the repository when password is empty',
+    () async {
+      final result = await useCase.execute(username: tUsername, password: '');
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockAuthRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockAuthRepository);
+    },
+  );
 }

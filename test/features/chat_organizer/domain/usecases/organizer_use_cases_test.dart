@@ -47,8 +47,10 @@ void main() {
         pinned: true,
       );
 
-      expect(pinned.getOrElse((_) => const ChatOrganizerData()).isPinned('a'),
-          isTrue);
+      expect(
+        pinned.getOrElse((_) => const ChatOrganizerData()).isPinned('a'),
+        isTrue,
+      );
       expect(await store.readPinned(), {'a'});
 
       final released = await useCase.execute(
@@ -64,8 +66,7 @@ void main() {
       expect(await store.readPinned(), isEmpty);
     });
 
-    test('refuses the sixth pin instead of dropping one of the five',
-        () async {
+    test('refuses the sixth pin instead of dropping one of the five', () async {
       final useCase = SetChatPinnedUseCase(repository);
       var data = const ChatOrganizerData();
 
@@ -303,10 +304,7 @@ void main() {
       data = result.getOrElse((_) => data);
 
       expect(data.folders.map((f) => f.id), ['f2', 'f1']);
-      expect(
-        (await store.readFolders()).map((f) => f.id),
-        ['f2', 'f1'],
-      );
+      expect((await store.readFolders()).map((f) => f.id), ['f2', 'f1']);
     });
   });
 
@@ -328,8 +326,7 @@ void main() {
     expect(data.settings.foldersHidden, isTrue);
   });
 
-  test('a load that fails comes back as a failure, not an exception',
-      () async {
+  test('a load that fails comes back as a failure, not an exception', () async {
     final broken = ChatOrganizerRepositoryImpl(_ThrowingDataSource());
 
     final result = await LoadOrganizerUseCase(broken).execute();

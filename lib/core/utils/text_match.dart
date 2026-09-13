@@ -95,7 +95,9 @@ TextSnippet snippetAround(
   final index = firstMatch(flat, needle);
   if (index < 0) {
     return TextSnippet(
-      text: flat.length <= maxLength ? flat : '${flat.substring(0, maxLength)}…',
+      text: flat.length <= maxLength
+          ? flat
+          : '${flat.substring(0, maxLength)}…',
       matchStart: -1,
       matchLength: 0,
     );

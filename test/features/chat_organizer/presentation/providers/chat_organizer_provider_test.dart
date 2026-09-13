@@ -101,10 +101,7 @@ void main() {
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
   test('what the store held is what the list starts from', () async {
-    store = InMemoryChatOrganizerDataSource(
-      pinned: {'a'},
-      archived: {'b'},
-    );
+    store = InMemoryChatOrganizerDataSource(pinned: {'a'}, archived: {'b'});
 
     final container = await boot();
     final data = container.read(organizerDataProvider);
@@ -113,21 +110,25 @@ void main() {
     expect(data.isArchived('b'), isTrue);
   });
 
-  test('the pinned limit reaches the caller as a failure it can explain',
-      () async {
-    final container = await boot();
-    final organizer = container.read(chatOrganizerProvider.notifier);
+  test(
+    'the pinned limit reaches the caller as a failure it can explain',
+    () async {
+      final container = await boot();
+      final organizer = container.read(chatOrganizerProvider.notifier);
 
-    for (var i = 0; i < OrganizerLimits.pinnedChats; i++) {
-      expect(await organizer.setPinned('chat-$i', pinned: true), isNull);
-    }
+      for (var i = 0; i < OrganizerLimits.pinnedChats; i++) {
+        expect(await organizer.setPinned('chat-$i', pinned: true), isNull);
+      }
 
-    final failure = await organizer.setPinned('one-too-many', pinned: true);
+      final failure = await organizer.setPinned('one-too-many', pinned: true);
 
-    expect(failure, isA<PinLimitFailure>());
-    expect(container.read(organizerDataProvider).isPinned('one-too-many'),
-        isFalse);
-  });
+      expect(failure, isA<PinLimitFailure>());
+      expect(
+        container.read(organizerDataProvider).isPinned('one-too-many'),
+        isFalse,
+      );
+    },
+  );
 
   test('a message from someone else brings an archived chat back', () async {
     store = InMemoryChatOrganizerDataSource(archived: {chatId});
@@ -182,19 +183,22 @@ void main() {
     expect(container.read(activeChatFolderProvider), isNull);
   });
 
-  test('the selected tab survives the list being reorganised around it', () async {
-    final container = await boot();
-    final organizer = container.read(chatOrganizerProvider.notifier);
-    const preset = FolderPreset.groups;
+  test(
+    'the selected tab survives the list being reorganised around it',
+    () async {
+      final container = await boot();
+      final organizer = container.read(chatOrganizerProvider.notifier);
+      const preset = FolderPreset.groups;
 
-    await organizer.saveFolder(ChatFolder.fromPreset(preset));
-    container.read(activeFolderProvider.notifier).select(preset.folderId);
+      await organizer.saveFolder(ChatFolder.fromPreset(preset));
+      container.read(activeFolderProvider.notifier).select(preset.folderId);
 
-    // Pinning rewrites the organizer's state, which the selection is
-    // computed from; it must not take the chosen tab down with it.
-    await organizer.setPinned('some-chat', pinned: true);
+      // Pinning rewrites the organizer's state, which the selection is
+      // computed from; it must not take the chosen tab down with it.
+      await organizer.setPinned('some-chat', pinned: true);
 
-    expect(container.read(activeFolderProvider), preset.folderId);
-    expect(container.read(activeChatFolderProvider)?.preset, preset);
-  });
+      expect(container.read(activeFolderProvider), preset.folderId);
+      expect(container.read(activeChatFolderProvider)?.preset, preset);
+    },
+  );
 }

@@ -11,6 +11,7 @@ import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_forward_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_reply_quote.dart';
+import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -50,8 +51,7 @@ void main() {
         ? null
         : 'other',
     forwardedFromMessageId: forwardedFrom?.id,
-    forwardedFromAuthorId:
-        forwardedFromAuthorId ?? forwardedFrom?.authorId,
+    forwardedFromAuthorId: forwardedFromAuthorId ?? forwardedFrom?.authorId,
     isEdited: isEdited,
     createdAt: DateTime(2026, 1, 1, 14, 30),
     attachments: attachments,
@@ -123,10 +123,7 @@ void main() {
       );
 
       expect(find.byType(MessageReplyQuote), findsOneWidget);
-      expect(
-        find.text('That message is no longer available'),
-        findsOneWidget,
-      );
+      expect(find.text('That message is no longer available'), findsOneWidget);
     });
 
     testWidgets('tapping a quote goes to the original', (tester) async {
@@ -212,14 +209,12 @@ void main() {
       );
 
       final text = tester.widget<Text>(
-        find.byWidgetPredicate(
-          (w) => w is Text && w.textSpan != null,
-        ),
+        find.byWidgetPredicate((w) => w is Text && w.textSpan != null),
       );
       final span = text.textSpan! as TextSpan;
-      final link = span.children!
-          .whereType<TextSpan>()
-          .firstWhere((s) => s.recognizer != null);
+      final link = span.children!.whereType<TextSpan>().firstWhere(
+        (s) => s.recognizer != null,
+      );
 
       expect(link.text, 'https://example.com');
 
@@ -402,6 +397,97 @@ void main() {
       expect(sent, ['👍']);
     });
 
+    testWidgets('the bar ends in a way into the full catalog', (tester) async {
+      var opened = false;
+
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(),
+          isMine: false,
+          actions: const [MessageAction.reply],
+          quickReactions: const ['🔥'],
+          onToggleReaction: (_) {},
+          onShowReactionPicker: () => opened = true,
+        ),
+      );
+
+      await tester.longPress(find.text('hello'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.expand_more));
+      await tester.pumpAndSettle();
+
+      expect(opened, isTrue);
+    });
+
+    testWidgets('without a catalog to open, the bar has no more button', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(),
+          isMine: false,
+          actions: const [MessageAction.reply],
+          quickReactions: const ['🔥'],
+          onToggleReaction: (_) {},
+        ),
+      );
+
+      await tester.longPress(find.text('hello'));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.expand_more), findsNothing);
+    });
+
+    testWidgets('at the per-user cap the bar stops taking new emoji', (
+      tester,
+    ) async {
+      final sent = <String>[];
+
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(),
+          isMine: false,
+          actions: const [MessageAction.reply],
+          quickReactions: const ['🔥', '👍', '❤️', '😁'],
+          // Three of ours already: a fourth would be TOO_MANY_REACTIONS
+          // (api-docs §5.7.4), so it is refused here rather than there.
+          reactions: const MessageReactionsEntity(
+            messageId: 'm1',
+            groups: [
+              ReactionGroupEntity(emoji: '🔥', count: 1, reactedByMe: true),
+              ReactionGroupEntity(emoji: '👍', count: 1, reactedByMe: true),
+              ReactionGroupEntity(emoji: '❤️', count: 1, reactedByMe: true),
+            ],
+          ),
+          onToggleReaction: sent.add,
+        ),
+      );
+
+      await tester.longPress(find.text('hello'));
+      await tester.pumpAndSettle();
+
+      // The bar's own buttons, not the chips under the message, which carry
+      // the same emoji.
+      Finder inBar(String emoji) => find.byWidgetPredicate(
+        (widget) => widget is ReactionEmojiButton && widget.emoji == emoji,
+      );
+
+      await tester.tap(inBar('😁'));
+      await tester.pumpAndSettle();
+      expect(sent, isEmpty);
+
+      // A refused tap is swallowed rather than closing the menu behind it.
+      expect(find.text('Reply'), findsOneWidget);
+
+      // Taking one back is still the way out.
+      await tester.tap(inBar('🔥'));
+      await tester.pumpAndSettle();
+      expect(sent, ['🔥']);
+    });
+
     testWidgets('no menu opens while selecting', (tester) async {
       await pump(
         tester,
@@ -514,9 +600,7 @@ void main() {
         await screenMatchesGolden(tester, 'message_bubble_${entry.key}');
       });
 
-      testGoldens('the context menu on the ${entry.key} theme', (
-        tester,
-      ) async {
+      testGoldens('the context menu on the ${entry.key} theme', (tester) async {
         await pump(
           tester,
           Padding(
@@ -537,8 +621,9 @@ void main() {
                 MessageAction.delete,
                 MessageAction.details,
               ],
-              quickReactions: const ['🔥', '👍', '❤️', '😁', '😮'],
+              quickReactions: const ['🔥', '👍', '❤️', '😁'],
               onToggleReaction: (_) {},
+              onShowReactionPicker: () {},
             ),
           ),
           dark: entry.value,

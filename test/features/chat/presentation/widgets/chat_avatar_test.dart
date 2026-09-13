@@ -56,7 +56,8 @@ void main() {
         tester,
         ChatAvatar.profile(profile(url: 'https://s3.example.com/a.jpg?sig=1')),
       );
-      final first = (providerOf(tester)! as CachedNetworkImageProvider).cacheKey;
+      final first =
+          (providerOf(tester)! as CachedNetworkImageProvider).cacheKey;
 
       await pumpAvatar(
         tester,
@@ -77,10 +78,7 @@ void main() {
         ChatAvatar.profile(profile(url: url, key: null)),
       );
 
-      expect(
-        (providerOf(tester)! as CachedNetworkImageProvider).cacheKey,
-        url,
-      );
+      expect((providerOf(tester)! as CachedNetworkImageProvider).cacheKey, url);
     });
 
     testWidgets('picks a variant for the size it is drawn at (api-docs §4.3)', (
@@ -107,10 +105,7 @@ void main() {
     testWidgets('an empty avatars object is not an image', (tester) async {
       await pumpAvatar(
         tester,
-        const ChatAvatar(
-          name: 'Ada',
-          source: AvatarSource.none,
-        ),
+        const ChatAvatar(name: 'Ada', source: AvatarSource.none),
       );
 
       expect(find.byType(Image), findsNothing);
@@ -216,11 +211,7 @@ void main() {
                 spacing: 12,
                 children: [
                   for (final size in ChatAvatarSize.values)
-                    ChatAvatar(
-                      size: size,
-                      userId: size.index,
-                      name: 'Ada',
-                    ),
+                    ChatAvatar(size: size, userId: size.index, name: 'Ada'),
                 ],
               ),
               const SizedBox(height: 16),
@@ -236,15 +227,11 @@ void main() {
                   ),
                   ChatAvatar(
                     size: ChatAvatarSize.md,
-                    source: AvatarSource.provider(
-                      MemoryImage(kStubImageBytes),
-                    ),
+                    source: AvatarSource.provider(MemoryImage(kStubImageBytes)),
                   ),
                   ChatAvatar(
                     size: ChatAvatarSize.md,
-                    source: AvatarSource.provider(
-                      MemoryImage(kStubImageBytes),
-                    ),
+                    source: AvatarSource.provider(MemoryImage(kStubImageBytes)),
                     isOnline: true,
                   ),
                 ],
@@ -262,10 +249,7 @@ void main() {
                           AvatarFace(userId: i, name: 'User $i'),
                       ],
                     ),
-                  const ChatAvatarMosaic(
-                    size: ChatAvatarSize.md,
-                    faces: [],
-                  ),
+                  const ChatAvatarMosaic(size: ChatAvatarSize.md, faces: []),
                 ],
               ),
             ],

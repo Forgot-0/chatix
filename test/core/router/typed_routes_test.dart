@@ -126,8 +126,11 @@ void main() {
 
     test('a seq wins when a caller supplies both', () {
       expect(
-        const ChatDetailRoute('9f8e', messageSeq: 42, messageId: 'm-77')
-            .location,
+        const ChatDetailRoute(
+          '9f8e',
+          messageSeq: 42,
+          messageId: 'm-77',
+        ).location,
         '/chats/9f8e?message=42',
       );
     });

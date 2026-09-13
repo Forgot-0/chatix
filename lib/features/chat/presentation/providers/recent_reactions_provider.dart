@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
-import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 
 /// The emoji this person actually uses, most recent first.
 ///
@@ -13,15 +13,14 @@ import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 /// reacted to anything it falls back to the default set, so the shortcut
 /// works on day one rather than doing nothing until primed.
 class RecentReactionsController extends Notifier<List<String>> {
-  /// A row of a handful is a row someone can aim at; a row of thirty is a
-  /// scroll.
-  static const int maxRemembered = 6;
+  /// A row someone can aim at, and the same eight the quick bar shows — a
+  /// longer memory would only ever surface through the full catalog, which
+  /// has its own order.
+  static const int maxRemembered = ReactionCatalog.quickBarLength;
 
   @override
   List<String> build() {
-    final stored = ref
-        .watch(chatLocalPrefsStoreProvider)
-        .readRecentReactions();
+    final stored = ref.watch(chatLocalPrefsStoreProvider).readRecentReactions();
 
     return stored.isEmpty
         ? const <String>[]
@@ -29,7 +28,7 @@ class RecentReactionsController extends Notifier<List<String>> {
   }
 
   /// The quick-reaction bar's order: recents first, then the rest of the
-  /// defaults, with nothing repeated.
+  /// defaults, with nothing repeated and never more than the bar can hold.
   ///
   /// The front of this list is also what a double tap sends, which is what
   /// makes the gesture match the habit instead of a fixed default. An empty
@@ -38,9 +37,9 @@ class RecentReactionsController extends Notifier<List<String>> {
   List<String> ordered(bool Function(String emoji) isAllowed) => [
     for (final emoji in state)
       if (isAllowed(emoji)) emoji,
-    for (final emoji in kQuickReactions)
+    for (final emoji in ReactionCatalog.quickDefaults)
       if (isAllowed(emoji) && !state.contains(emoji)) emoji,
-  ];
+  ].take(ReactionCatalog.quickBarLength).toList();
 
   void remember(String emoji) {
     if (emoji.isEmpty) return;

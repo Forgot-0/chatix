@@ -60,16 +60,14 @@ void main() {
   });
 
   group('StatusTicks', () {
-    Future<void> pumpTicks(
-      WidgetTester tester,
-      MessageDeliveryStatus status,
-    ) => tester.pumpWidgetBuilder(
-      StatusTicks(status: status),
-      wrapper: materialAppWrapper(
-        theme: chatGoldenTheme(dark: false),
-        localizations: AppLocalizations.localizationsDelegates,
-      ),
-    );
+    Future<void> pumpTicks(WidgetTester tester, MessageDeliveryStatus status) =>
+        tester.pumpWidgetBuilder(
+          StatusTicks(status: status),
+          wrapper: materialAppWrapper(
+            theme: chatGoldenTheme(dark: false),
+            localizations: AppLocalizations.localizationsDelegates,
+          ),
+        );
 
     testWidgets('each state draws its own glyph', (tester) async {
       await pumpTicks(tester, MessageDeliveryStatus.sending);

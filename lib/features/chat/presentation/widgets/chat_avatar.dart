@@ -44,7 +44,12 @@ enum ChatAvatarSize {
 /// three end up here so the widget itself only ever sees an [ImageProvider].
 @immutable
 class AvatarSource {
-  const AvatarSource._({this.directUrl, this.variants, this.cacheKey, this.provider});
+  const AvatarSource._({
+    this.directUrl,
+    this.variants,
+    this.cacheKey,
+    this.provider,
+  });
 
   /// A single URL — what `ChatProfileDTO.avatar_url` gives us.
   ///
@@ -86,9 +91,7 @@ class AvatarSource {
     final ready = provider;
     if (ready != null) return ready;
 
-    final url = _url(
-      preferredSize: (logicalSize * devicePixelRatio).ceil(),
-    );
+    final url = _url(preferredSize: (logicalSize * devicePixelRatio).ceil());
     if (url == null || url.isEmpty) return null;
 
     return CachedNetworkImageProvider(url, cacheKey: cacheKey ?? url);
@@ -411,7 +414,8 @@ class _PresenceNotchClipper extends CustomClipper<Path> {
       size.height - dotDiameter / 2,
     );
 
-    final hole = Path()..addOval(Rect.fromCircle(center: centre, radius: radius));
+    final hole = Path()
+      ..addOval(Rect.fromCircle(center: centre, radius: radius));
 
     return Path.combine(PathOperation.difference, circle, hole);
   }

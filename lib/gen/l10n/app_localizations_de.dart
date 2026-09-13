@@ -1503,4 +1503,156 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get searchOpenChat => 'Chat öffnen';
+
+  @override
+  String get reactionSectionRecent => 'Zuletzt benutzt';
+
+  @override
+  String get reactionSectionFaces => 'Smileys';
+
+  @override
+  String get reactionSectionPeople => 'Menschen';
+
+  @override
+  String get reactionSectionHearts => 'Herzen';
+
+  @override
+  String get reactionSectionCelebration => 'Feiern';
+
+  @override
+  String get reactionSectionFood => 'Essen';
+
+  @override
+  String get reactionSectionNature => 'Natur';
+
+  @override
+  String get reactionSectionSymbols => 'Symbole';
+
+  @override
+  String get reactionsNoneAllowed =>
+      'In diesem Chat sind keine Reaktionen verfügbar';
+
+  @override
+  String reactionsUsed(int used, int limit) {
+    return '$used von $limit';
+  }
+
+  @override
+  String reactionMessageLimitReached(Object limit) {
+    return 'Diese Nachricht hat bereits $limit verschiedene Reaktionen';
+  }
+
+  @override
+  String get moreReactions => 'Weitere Reaktionen';
+
+  @override
+  String get reactionFailed => 'Reaktion nicht gespeichert';
+
+  @override
+  String get reactionTooFast => 'Zu viele Reaktionen auf einmal';
+
+  @override
+  String get reactionNotAllowed => 'Diese Reaktion ist hier nicht erlaubt';
+
+  @override
+  String get reactionsNobody => 'Noch niemand';
+
+  @override
+  String reactionUserFallback(Object id) {
+    return 'Benutzer $id';
+  }
+
+  @override
+  String composerCharactersLeft(int count) {
+    return 'noch $count';
+  }
+
+  @override
+  String get composerSendLabel => 'Senden';
+
+  @override
+  String get composerSaveEditLabel => 'Änderungen speichern';
+
+  @override
+  String get composerRecordLabel =>
+      'Gedrückt halten, um eine Sprachnachricht aufzunehmen';
+
+  @override
+  String composerReplyingTo(Object name) {
+    return 'Antwort an $name';
+  }
+
+  @override
+  String composerSlowModeWait(int seconds) {
+    return 'Langsamer Modus: noch $seconds s';
+  }
+
+  @override
+  String composerSlowModeHint(int seconds) {
+    return 'In diesem Chat ist alle $seconds s eine Nachricht erlaubt';
+  }
+
+  @override
+  String get attachSheetTitle => 'Anhängen';
+
+  @override
+  String get attachRecent => 'Zuletzt';
+
+  @override
+  String get attachCamera => 'Kamera';
+
+  @override
+  String get attachVoice => 'Sprachnachricht';
+
+  @override
+  String get attachVideoNote => 'Videonachricht';
+
+  @override
+  String attachVoiceHint(int seconds) {
+    return 'Wird allein gesendet, bis zu $seconds s';
+  }
+
+  @override
+  String attachVideoNoteHint(int seconds, int pixels) {
+    return 'Wird allein gesendet, bis zu $seconds s und $pixels px';
+  }
+
+  @override
+  String get attachGalleryDenied =>
+      'Erlaube den Fotozugriff, um hier auszuwählen';
+
+  @override
+  String get attachGalleryAllow => 'Erlauben';
+
+  @override
+  String attachMediaFull(int count) {
+    return 'Bis zu $count Fotos oder Videos pro Nachricht';
+  }
+
+  @override
+  String attachSendCount(int count) {
+    return '$count anhängen';
+  }
+
+  @override
+  String get attachUnavailable => 'Diese Datei konnte nicht gelesen werden';
+
+  @override
+  String videoNoteTooLong(int seconds) {
+    return 'Eine Videonachricht darf höchstens $seconds s lang sein';
+  }
+
+  @override
+  String videoNoteTooLarge(int pixels) {
+    return 'Diese Kamera nimmt über $pixels px auf — das lehnt der Server für Videonachrichten ab';
+  }
+
+  @override
+  String get videoNoteUnreadable =>
+      'Diese Aufnahme konnte nicht geprüft werden';
+
+  @override
+  String composerTooLongBy(int count) {
+    return '$count über dem Limit';
+  }
 }

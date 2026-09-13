@@ -1490,4 +1490,152 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchOpenChat => 'Open chat';
+
+  @override
+  String get reactionSectionRecent => 'Recently used';
+
+  @override
+  String get reactionSectionFaces => 'Smileys';
+
+  @override
+  String get reactionSectionPeople => 'People';
+
+  @override
+  String get reactionSectionHearts => 'Hearts';
+
+  @override
+  String get reactionSectionCelebration => 'Celebration';
+
+  @override
+  String get reactionSectionFood => 'Food';
+
+  @override
+  String get reactionSectionNature => 'Nature';
+
+  @override
+  String get reactionSectionSymbols => 'Symbols';
+
+  @override
+  String get reactionsNoneAllowed => 'No reactions are available in this chat';
+
+  @override
+  String reactionsUsed(int used, int limit) {
+    return '$used of $limit';
+  }
+
+  @override
+  String reactionMessageLimitReached(Object limit) {
+    return 'This message already has $limit different reactions';
+  }
+
+  @override
+  String get moreReactions => 'More reactions';
+
+  @override
+  String get reactionFailed => 'Reaction not saved';
+
+  @override
+  String get reactionTooFast => 'Too many reactions at once';
+
+  @override
+  String get reactionNotAllowed => 'That reaction is not allowed here';
+
+  @override
+  String get reactionsNobody => 'Nobody yet';
+
+  @override
+  String reactionUserFallback(Object id) {
+    return 'User $id';
+  }
+
+  @override
+  String composerCharactersLeft(int count) {
+    return '$count left';
+  }
+
+  @override
+  String get composerSendLabel => 'Send';
+
+  @override
+  String get composerSaveEditLabel => 'Save changes';
+
+  @override
+  String get composerRecordLabel => 'Hold to record a voice message';
+
+  @override
+  String composerReplyingTo(Object name) {
+    return 'Reply to $name';
+  }
+
+  @override
+  String composerSlowModeWait(int seconds) {
+    return 'Slow mode: ${seconds}s to wait';
+  }
+
+  @override
+  String composerSlowModeHint(int seconds) {
+    return 'This chat allows one message every $seconds s';
+  }
+
+  @override
+  String get attachSheetTitle => 'Attach';
+
+  @override
+  String get attachRecent => 'Recent';
+
+  @override
+  String get attachCamera => 'Camera';
+
+  @override
+  String get attachVoice => 'Voice message';
+
+  @override
+  String get attachVideoNote => 'Video note';
+
+  @override
+  String attachVoiceHint(int seconds) {
+    return 'Sent on its own, up to $seconds s';
+  }
+
+  @override
+  String attachVideoNoteHint(int seconds, int pixels) {
+    return 'Sent on its own, up to $seconds s and $pixels px';
+  }
+
+  @override
+  String get attachGalleryDenied => 'Allow photo access to pick from here';
+
+  @override
+  String get attachGalleryAllow => 'Allow';
+
+  @override
+  String attachMediaFull(int count) {
+    return 'Up to $count photos or videos per message';
+  }
+
+  @override
+  String attachSendCount(int count) {
+    return 'Attach $count';
+  }
+
+  @override
+  String get attachUnavailable => 'That file could not be read';
+
+  @override
+  String videoNoteTooLong(int seconds) {
+    return 'A video note can be at most $seconds s long';
+  }
+
+  @override
+  String videoNoteTooLarge(int pixels) {
+    return 'This camera records above $pixels px, which the server rejects for video notes';
+  }
+
+  @override
+  String get videoNoteUnreadable => 'That recording could not be checked';
+
+  @override
+  String composerTooLongBy(int count) {
+    return '$count over the limit';
+  }
 }

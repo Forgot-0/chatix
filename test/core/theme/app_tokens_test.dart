@@ -67,11 +67,14 @@ void main() {
       }
     });
 
-    test('dark never casts one — a black shadow on near-black is invisible', () {
-      for (var level = 0; level <= AppElevations.levels; level++) {
-        expect(AppElevations.shadows(Brightness.dark, level), isEmpty);
-      }
-    });
+    test(
+      'dark never casts one — a black shadow on near-black is invisible',
+      () {
+        for (var level = 0; level <= AppElevations.levels; level++) {
+          expect(AppElevations.shadows(Brightness.dark, level), isEmpty);
+        }
+      },
+    );
 
     test('dark expresses lift by moving the surface towards white', () {
       final base = AppNeutrals.dark[9];
@@ -135,11 +138,14 @@ void main() {
       expect(AppAuthorPalette.dark, hasLength(AppAuthorPalette.size));
     });
 
-    test('the two ramps differ, so an accent stays readable on either ground', () {
-      for (var i = 0; i < AppAuthorPalette.size; i++) {
-        expect(AppAuthorPalette.light[i], isNot(AppAuthorPalette.dark[i]));
-      }
-    });
+    test(
+      'the two ramps differ, so an accent stays readable on either ground',
+      () {
+        for (var i = 0; i < AppAuthorPalette.size; i++) {
+          expect(AppAuthorPalette.light[i], isNot(AppAuthorPalette.dark[i]));
+        }
+      },
+    );
 
     test('accents inside a ramp are distinct', () {
       expect(AppAuthorPalette.light.toSet(), hasLength(AppAuthorPalette.size));

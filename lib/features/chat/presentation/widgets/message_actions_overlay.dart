@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
+import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What the caller gets back when the menu closes.
@@ -37,9 +38,14 @@ abstract final class MessageActionsOverlay {
     required List<MessageAction> actions,
     required List<String> reactions,
     required Set<String> myReactions,
+    required Set<String> blockedReactions,
+    required bool canOpenCatalog,
     required bool isMine,
   }) {
-    return Navigator.of(context, rootNavigator: true).push<MessageActionsResult>(
+    return Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push<MessageActionsResult>(
       PageRouteBuilder<MessageActionsResult>(
         opaque: false,
         barrierDismissible: true,
@@ -53,6 +59,8 @@ abstract final class MessageActionsOverlay {
           actions: actions,
           reactions: reactions,
           myReactions: myReactions,
+          blockedReactions: blockedReactions,
+          canOpenCatalog: canOpenCatalog,
           isMine: isMine,
         ),
       ),
@@ -68,6 +76,8 @@ class _MessageActionsLayer extends StatelessWidget {
     required this.actions,
     required this.reactions,
     required this.myReactions,
+    required this.blockedReactions,
+    required this.canOpenCatalog,
     required this.isMine,
   });
 
@@ -77,6 +87,13 @@ class _MessageActionsLayer extends StatelessWidget {
   final List<MessageAction> actions;
   final List<String> reactions;
   final Set<String> myReactions;
+
+  /// Emoji a cap from §5.7.4 stands in the way of: drawn flat, not tappable.
+  final Set<String> blockedReactions;
+
+  /// Whether the bar ends in a button that opens the full catalog.
+  final bool canOpenCatalog;
+
   final bool isMine;
 
   static const double _gap = AppSpacing.x3;
@@ -94,8 +111,8 @@ class _MessageActionsLayer extends StatelessWidget {
     final menuHeight = actions.length * _actionRow + AppSpacing.x2 * 2;
 
     final topLimit = safe.top + AppSpacing.x3 + reactionsHeight;
-    final bottomLimit = size.height - safe.bottom - AppSpacing.x3 - menuHeight -
-        _gap;
+    final bottomLimit =
+        size.height - safe.bottom - AppSpacing.x3 - menuHeight - _gap;
 
     // How tall the bubble may be before the panels have nowhere to go. A
     // message longer than that scrolls inside its own copy rather than
@@ -149,8 +166,15 @@ class _MessageActionsLayer extends StatelessWidget {
                           child: _QuickReactionBar(
                             reactions: reactions,
                             mine: myReactions,
-                            onSelected: (emoji) => Navigator.of(context).pop(
-                              MessageActionsResult.reaction(emoji),
+                            blocked: blockedReactions,
+                            canOpenCatalog: canOpenCatalog,
+                            onSelected: (emoji) => Navigator.of(
+                              context,
+                            ).pop(MessageActionsResult.reaction(emoji)),
+                            onMore: () => Navigator.of(context).pop(
+                              const MessageActionsResult.action(
+                                MessageAction.react,
+                              ),
                             ),
                           ),
                         ),
@@ -181,9 +205,9 @@ class _MessageActionsLayer extends StatelessWidget {
                         fromBelow: false,
                         child: _ActionList(
                           actions: actions,
-                          onSelected: (action) => Navigator.of(context).pop(
-                            MessageActionsResult.action(action),
-                          ),
+                          onSelected: (action) => Navigator.of(
+                            context,
+                          ).pop(MessageActionsResult.action(action)),
                         ),
                       ),
                     ),
@@ -261,16 +285,28 @@ class _PanelIn extends StatelessWidget {
   }
 }
 
+/// The eight most likely answers, and a way to the other sixty-five.
+///
+/// The order is this device's own history (api-docs has no endpoint for it,
+/// so it is device-local), and the trailing button opens the full catalog —
+/// which is the same [MessageAction.react] the menu below carries, so one
+/// handler serves both.
 class _QuickReactionBar extends StatelessWidget {
   const _QuickReactionBar({
     required this.reactions,
     required this.mine,
+    required this.blocked,
+    required this.canOpenCatalog,
     required this.onSelected,
+    required this.onMore,
   });
 
   final List<String> reactions;
   final Set<String> mine;
+  final Set<String> blocked;
+  final bool canOpenCatalog;
   final ValueChanged<String> onSelected;
+  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -293,11 +329,16 @@ class _QuickReactionBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (final emoji in reactions)
-                _QuickReaction(
-                  emoji: emoji,
-                  isMine: mine.contains(emoji),
-                  onTap: () => onSelected(emoji),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
+                  child: ReactionEmojiButton(
+                    emoji: emoji,
+                    isMine: mine.contains(emoji),
+                    enabled: !blocked.contains(emoji),
+                    onTap: () => onSelected(emoji),
+                  ),
                 ),
+              if (canOpenCatalog) _MoreReactions(onTap: onMore),
             ],
           ),
         ),
@@ -306,40 +347,43 @@ class _QuickReactionBar extends StatelessWidget {
   }
 }
 
-class _QuickReaction extends StatelessWidget {
-  const _QuickReaction({
-    required this.emoji,
-    required this.isMine,
-    required this.onTap,
-  });
+/// The way out of the bar and into the whole catalog.
+class _MoreReactions extends StatelessWidget {
+  const _MoreReactions({required this.onTap});
 
-  final String emoji;
-  final bool isMine;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final label = AppLocalizations.of(context).moreReactions;
 
     return Semantics(
       button: true,
-      selected: isMine,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          margin: const EdgeInsets.symmetric(
-            horizontal: 2,
-            vertical: AppSpacing.x1,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 44,
+            height: 44,
+            margin: const EdgeInsets.symmetric(
+              horizontal: 2,
+              vertical: AppSpacing.x1,
+            ),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scheme.surfaceContainerHighest,
+            ),
+            child: Icon(
+              Icons.expand_more,
+              size: 22,
+              color: scheme.onSurfaceVariant,
+            ),
           ),
-          padding: const EdgeInsets.all(AppSpacing.x2),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isMine
-                ? scheme.primary.withValues(alpha: 0.18)
-                : Colors.transparent,
-          ),
-          child: Text(emoji, style: const TextStyle(fontSize: 22)),
         ),
       ),
     );

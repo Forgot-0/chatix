@@ -143,14 +143,20 @@ class ApiClient {
 
     final data = response.data;
 
-    if (statusCode == 429) {
+    final error = readErrorEnvelope(data);
+
+    // 429 comes in two shapes (api-docs §2.2): the rate limiter's own bare
+    // `{"detail": "Too Many Requests"}`, and an ordinary error envelope for
+    // the application-level throttles — `SLOW_MODE_LIMIT` carries the
+    // `retry_after` the composer counts down from. Reading the envelope
+    // first is what keeps that code and its detail reachable.
+    if (statusCode == 429 && error == null) {
       final detail = decodeResponseBody(data)?['detail'];
       return RateLimitFailure(
         message: detail?.toString() ?? 'Too Many Requests',
       );
     }
 
-    final error = readErrorEnvelope(data);
     if (error != null) {
       return ApiFailure(
         code: error['code'] as String? ?? 'UNKNOWN',

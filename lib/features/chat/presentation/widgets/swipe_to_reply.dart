@@ -142,10 +142,7 @@ class _SwipeToReplyState extends State<SwipeToReply>
                     ),
                   ),
                 ),
-              Transform.translate(
-                offset: Offset(travel, 0),
-                child: child,
-              ),
+              Transform.translate(offset: Offset(travel, 0), child: child),
             ],
           );
         },

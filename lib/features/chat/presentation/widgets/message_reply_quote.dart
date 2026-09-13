@@ -101,11 +101,7 @@ class MessageReplyQuote extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (preview?.icon != null) ...[
-                            Icon(
-                              preview!.icon,
-                              size: 12,
-                              color: foreground,
-                            ),
+                            Icon(preview!.icon, size: 12, color: foreground),
                             const SizedBox(width: 3),
                           ],
                           Flexible(

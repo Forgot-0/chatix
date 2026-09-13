@@ -5,6 +5,17 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+ gates notifications behind a runtime grant. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The composer's attachment sheet shows the newest gallery photos
+         itself rather than handing off to the system picker, which needs a
+         read grant: READ_MEDIA_IMAGES/VIDEO on 13+, the legacy storage read
+         below it. Without the grant the strip is simply absent. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Camera shots and video notes are captured in place from that sheet. -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:label="flutter_riverpod_clean_architecture"

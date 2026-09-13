@@ -32,9 +32,7 @@ class SetChatArchivedUseCase {
     var next = data.copyWith(archivedChatIds: nextArchived);
 
     if (archived && data.isPinned(chatId)) {
-      final nextPinned = data.pinnedChatIds
-          .where((id) => id != chatId)
-          .toSet();
+      final nextPinned = data.pinnedChatIds.where((id) => id != chatId).toSet();
       final pinsSaved = await _repository.savePinned(nextPinned);
       if (pinsSaved.isRight()) {
         next = next.copyWith(pinnedChatIds: nextPinned);

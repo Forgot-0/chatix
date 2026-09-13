@@ -10,7 +10,8 @@ import 'package:chatix/features/chat/presentation/providers/typing_provider.dart
 
 /// A socket whose event stream we drive by hand.
 class _FakeSocket implements ChatSocketService {
-  final StreamController<WSEvent> _events = StreamController<WSEvent>.broadcast();
+  final StreamController<WSEvent> _events =
+      StreamController<WSEvent>.broadcast();
 
   @override
   Stream<WSEvent> get events => _events.stream;
@@ -51,9 +52,7 @@ void main() {
     // Every other frame the gateway does send must leave this alone.
     container.listen(typingUsersProvider('chat-1'), (_, _) {});
 
-    socket.emit(
-      const MessagesRead(chatId: 'chat-1', seq: 4, readerId: 7),
-    );
+    socket.emit(const MessagesRead(chatId: 'chat-1', seq: 4, readerId: 7));
     await pumpEventQueue();
 
     expect(container.read(typingUsersProvider('chat-1')), isEmpty);
@@ -104,10 +103,7 @@ void main() {
     // A missed typing_stop must not pin the indicator on forever; the
     // constant is the contract, the timer that uses it is trivial.
     expect(TypingUsersController.expiry, greaterThan(Duration.zero));
-    expect(
-      TypingUsersController.expiry,
-      lessThan(const Duration(seconds: 30)),
-    );
+    expect(TypingUsersController.expiry, lessThan(const Duration(seconds: 30)));
   });
 
   test('several people can type at once', () async {

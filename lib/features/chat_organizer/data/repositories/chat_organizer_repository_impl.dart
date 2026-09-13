@@ -56,9 +56,7 @@ class ChatOrganizerRepositoryImpl implements ChatOrganizerRepository {
   @override
   Future<Either<Failure, Unit>> saveSettings(OrganizerSettings settings) =>
       _guard(() async {
-        await _local.writeSettings(
-          OrganizerSettingsModel.fromEntity(settings),
-        );
+        await _local.writeSettings(OrganizerSettingsModel.fromEntity(settings));
         return unit;
       });
 

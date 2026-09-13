@@ -384,5 +384,226 @@
   "searchNewerMatch": "Neuerer Treffer",
   "searchInChatHint": "In diesem Chat suchen",
   "searchChatDescriptionMatch": "Treffer in der Beschreibung",
-  "searchOpenChat": "Chat öffnen"
+  "searchOpenChat": "Chat öffnen",
+  "reactionSectionRecent": "Zuletzt benutzt",
+  "@reactionSectionRecent": {
+    "description": "Catalog sheet: this device's own history"
+  },
+  "reactionSectionFaces": "Smileys",
+  "@reactionSectionFaces": {
+    "description": "Catalog sheet section: faces"
+  },
+  "reactionSectionPeople": "Menschen",
+  "@reactionSectionPeople": {
+    "description": "Catalog sheet section: hands and people"
+  },
+  "reactionSectionHearts": "Herzen",
+  "@reactionSectionHearts": {
+    "description": "Catalog sheet section: hearts"
+  },
+  "reactionSectionCelebration": "Feiern",
+  "@reactionSectionCelebration": {
+    "description": "Catalog sheet section: celebration"
+  },
+  "reactionSectionFood": "Essen",
+  "@reactionSectionFood": {
+    "description": "Catalog sheet section: food"
+  },
+  "reactionSectionNature": "Natur",
+  "@reactionSectionNature": {
+    "description": "Catalog sheet section: nature and animals"
+  },
+  "reactionSectionSymbols": "Symbole",
+  "@reactionSectionSymbols": {
+    "description": "Catalog sheet section: symbols"
+  },
+  "reactionsNoneAllowed": "In diesem Chat sind keine Reaktionen verfügbar",
+  "@reactionsNoneAllowed": {
+    "description": "reactions_mode = some with a white list the catalog does not cover"
+  },
+  "reactionsUsed": "{used} von {limit}",
+  "@reactionsUsed": {
+    "description": "Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE",
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "reactionMessageLimitReached": "Diese Nachricht hat bereits {limit} verschiedene Reaktionen",
+  "@reactionMessageLimitReached": {
+    "description": "MAX_DISTINCT_REACTIONS_PER_MESSAGE reached"
+  },
+  "moreReactions": "Weitere Reaktionen",
+  "@moreReactions": {
+    "description": "Quick bar button that opens the full catalog sheet"
+  },
+  "reactionFailed": "Reaktion nicht gespeichert",
+  "@reactionFailed": {
+    "description": "Quiet toast after an optimistic reaction was rolled back"
+  },
+  "reactionTooFast": "Zu viele Reaktionen auf einmal",
+  "@reactionTooFast": {
+    "description": "Quiet toast for 429 on the reactions endpoint"
+  },
+  "reactionNotAllowed": "Diese Reaktion ist hier nicht erlaubt",
+  "@reactionNotAllowed": {
+    "description": "Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION"
+  },
+  "reactionsNobody": "Noch niemand",
+  "@reactionsNobody": {
+    "description": "Who-reacted sheet: a tab whose page came back empty"
+  },
+  "reactionUserFallback": "Benutzer {id}",
+  "@reactionUserFallback": {
+    "description": "Who-reacted row for a user id the roster does not cover"
+  },
+  "composerCharactersLeft": "noch {count}",
+  "@composerCharactersLeft": {
+    "description": "Counter shown near the 4096-character cap (api-docs 5.4)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "composerSendLabel": "Senden",
+  "@composerSendLabel": {
+    "description": "Accessible label of the send button"
+  },
+  "composerSaveEditLabel": "Änderungen speichern",
+  "@composerSaveEditLabel": {
+    "description": "Accessible label of the send button while editing"
+  },
+  "composerRecordLabel": "Gedrückt halten, um eine Sprachnachricht aufzunehmen",
+  "@composerRecordLabel": {
+    "description": "Accessible label of the microphone button"
+  },
+  "composerReplyingTo": "Antwort an {name}",
+  "@composerReplyingTo": {
+    "description": "Context banner title while replying"
+  },
+  "composerSlowModeWait": "Langsamer Modus: noch {seconds} s",
+  "@composerSlowModeWait": {
+    "description": "Countdown on the send button while slow mode holds it",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "composerSlowModeHint": "In diesem Chat ist alle {seconds} s eine Nachricht erlaubt",
+  "@composerSlowModeHint": {
+    "description": "Explains why the send button counts down",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "attachSheetTitle": "Anhängen",
+  "@attachSheetTitle": {
+    "description": "Title of the composer attachment sheet"
+  },
+  "attachRecent": "Zuletzt",
+  "@attachRecent": {
+    "description": "Header of the recent-gallery strip"
+  },
+  "attachCamera": "Kamera",
+  "@attachCamera": {
+    "description": "Attachment sheet row that opens the camera"
+  },
+  "attachVoice": "Sprachnachricht",
+  "@attachVoice": {
+    "description": "Attachment sheet row that records a voice message"
+  },
+  "attachVideoNote": "Videonachricht",
+  "@attachVideoNote": {
+    "description": "Attachment sheet row that records a video note"
+  },
+  "attachVoiceHint": "Wird allein gesendet, bis zu {seconds} s",
+  "@attachVoiceHint": {
+    "description": "Subtitle of the voice row: it is exclusive (api-docs 5.5)",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "attachVideoNoteHint": "Wird allein gesendet, bis zu {seconds} s und {pixels} px",
+  "@attachVideoNoteHint": {
+    "description": "Subtitle of the video note row",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      },
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "attachGalleryDenied": "Erlaube den Fotozugriff, um hier auszuwählen",
+  "@attachGalleryDenied": {
+    "description": "Shown in place of the strip when photo access was refused"
+  },
+  "attachGalleryAllow": "Erlauben",
+  "@attachGalleryAllow": {
+    "description": "Button that asks for the photo grant again"
+  },
+  "attachMediaFull": "Bis zu {count} Fotos oder Videos pro Nachricht",
+  "@attachMediaFull": {
+    "description": "Tapping one more photo past MAX_MEDIA_PER_MESSAGE",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachSendCount": "{count} anhängen",
+  "@attachSendCount": {
+    "description": "Confirm button of the attachment sheet",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "attachUnavailable": "Diese Datei konnte nicht gelesen werden",
+  "@attachUnavailable": {
+    "description": "A picked gallery item could not be read back"
+  },
+  "videoNoteTooLong": "Eine Videonachricht darf höchstens {seconds} s lang sein",
+  "@videoNoteTooLong": {
+    "description": "Captured video note exceeds MAX duration",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "videoNoteTooLarge": "Diese Kamera nimmt über {pixels} px auf — das lehnt der Server für Videonachrichten ab",
+  "@videoNoteTooLarge": {
+    "description": "Captured video note exceeds the 640 px cap the server enforces",
+    "placeholders": {
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "videoNoteUnreadable": "Diese Aufnahme konnte nicht geprüft werden",
+  "@videoNoteUnreadable": {
+    "description": "The captured file could not be probed for duration/size"
+  },
+  "composerTooLongBy": "{count} über dem Limit",
+  "@composerTooLongBy": {
+    "description": "Counter once the message is past the 4096-character cap",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

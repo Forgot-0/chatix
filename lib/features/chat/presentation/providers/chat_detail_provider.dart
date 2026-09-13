@@ -20,6 +20,8 @@ import 'package:chatix/features/chat/presentation/providers/chat_members_provide
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/search_providers.dart';
 
 const _pageSize = 30;
@@ -628,7 +630,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         'ChatDetail($_chatId): reaction $emoji on $messageId failed '
         '(${failure.message})',
       );
-      _rollbackReactions(messageId, before);
+      _rollbackReactions(messageId, before, failure);
     }, (_) {});
   }
 
@@ -667,11 +669,20 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         'ChatDetail($_chatId): replacing reactions on $messageId failed '
         '(${failure.message})',
       );
-      _rollbackReactions(messageId, before);
+      _rollbackReactions(messageId, before, failure);
     }, (_) {});
   }
 
-  void _rollbackReactions(String messageId, MessageReactionsEntity before) {
+  /// Puts the message back the way it was, and says so once.
+  ///
+  /// The chip appeared the instant it was tapped; taking it away again with
+  /// no explanation reads as the app losing the tap, so the screen gets a
+  /// reason to show — quietly, since nothing here is worth interrupting for.
+  void _rollbackReactions(
+    String messageId,
+    MessageReactionsEntity before,
+    Failure failure,
+  ) {
     _mutate(
       (s) => s.copyWith(
         messages: ChatRealtimeMerge.setReactionGroups(
@@ -682,6 +693,9 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         nextCursor: s.nextCursor,
       ),
     );
+
+    if (failure is CancelledFailure) return;
+    ref.read(reactionNoticeProvider.notifier).report(failure);
   }
 
   void _mutate(ChatDetailState Function(ChatDetailState state) transform) {
@@ -1012,6 +1026,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
           idempotencyKey: pending.idempotencyKey,
         );
 
+    result.match(_reportSlowMode, (_) {});
+
     final current = state.value;
     if (current == null) return;
 
@@ -1054,6 +1070,30 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     // asking the viewport: you have read what you are replying to.
     final sentSeq = sent?.seq;
     if (sentSeq != null) reportRead(sentSeq);
+  }
+
+  /// Hands a slow-mode refusal to the composer, which owns the clock.
+  ///
+  /// `429 SLOW_MODE_LIMIT` carries `detail.retry_after` in seconds (api-docs
+  /// §2.6), and it outranks whatever the local countdown believed — the
+  /// client's clock is a convenience, the server's is the rule. The message
+  /// stays pending with its idempotency key, so the retry is the same
+  /// message rather than a second one.
+  void _reportSlowMode(Failure failure) {
+    if (failure is! ApiFailure) return;
+    if (failure.code != 'SLOW_MODE_LIMIT') return;
+
+    final detail = failure.detail;
+    final retryAfter = detail is Map ? detail['retry_after'] : null;
+
+    final seconds = switch (retryAfter) {
+      final int value => value,
+      final num value => value.ceil(),
+      final String value => int.tryParse(value) ?? 0,
+      _ => 0,
+    };
+
+    ref.read(composerProvider(_chatId).notifier).applyRetryAfter(seconds);
   }
 
   /// Records how far the reader has actually got.

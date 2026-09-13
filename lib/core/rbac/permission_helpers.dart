@@ -35,6 +35,22 @@ bool canSendMessage(ChatEntity? chat, ChatMemberEntity? me) {
   return hasChatPermission(chat, me, ChatPermissions.messageSend);
 }
 
+/// Whether slow mode lets this reader straight through.
+///
+/// `slowmode:bypass` belongs to owner, admin and editor (api-docs §8.1);
+/// everyone else waits out `slow_mode_seconds` between messages.
+bool canBypassSlowMode(ChatEntity? chat, ChatMemberEntity? me) =>
+    hasChatPermission(chat, me, ChatPermissions.slowmodeBypass);
+
+/// How long this reader must wait between messages here, zero when nothing
+/// is throttling them (api-docs §5.2 `slow_mode_seconds`).
+Duration slowModeInterval(ChatEntity? chat, ChatMemberEntity? me) {
+  final seconds = chat?.slowModeSeconds ?? 0;
+  if (seconds <= 0) return Duration.zero;
+  if (canBypassSlowMode(chat, me)) return Duration.zero;
+  return Duration(seconds: seconds);
+}
+
 bool canDeleteMessage(ChatEntity? chat, ChatMemberEntity? me, int? authorId) {
   if (me == null) return false;
   if (authorId != null && authorId == me.userId) return true;

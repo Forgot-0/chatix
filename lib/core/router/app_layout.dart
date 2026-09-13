@@ -52,9 +52,8 @@ class AppLayoutScope extends InheritedWidget {
   static AppLayoutMode of(BuildContext context) =>
       maybeOf(context) ?? AppLayoutMode.compact;
 
-  static AppLayoutMode? maybeOf(BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<AppLayoutScope>()
-      ?.mode;
+  static AppLayoutMode? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppLayoutScope>()?.mode;
 
   @override
   bool updateShouldNotify(AppLayoutScope oldWidget) => mode != oldWidget.mode;

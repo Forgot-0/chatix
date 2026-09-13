@@ -6,7 +6,12 @@ import 'package:chatix/core/router/app_page_transitions.dart';
 void main() {
   Widget harness({
     required bool reduceMotion,
-    required Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)
+    required Widget Function(
+      BuildContext,
+      Animation<double>,
+      Animation<double>,
+      Widget,
+    )
     builder,
   }) {
     return MediaQuery(
@@ -93,7 +98,10 @@ void main() {
   group('fade through', () {
     testWidgets('fades and scales, but never slides', (tester) async {
       await tester.pumpWidget(
-        harness(reduceMotion: false, builder: AppPageTransitions.buildFadeThrough),
+        harness(
+          reduceMotion: false,
+          builder: AppPageTransitions.buildFadeThrough,
+        ),
       );
 
       expect(find.byType(FadeTransition), findsWidgets);
@@ -103,7 +111,10 @@ void main() {
 
     testWidgets('reduced motion hands the page back untouched', (tester) async {
       await tester.pumpWidget(
-        harness(reduceMotion: true, builder: AppPageTransitions.buildFadeThrough),
+        harness(
+          reduceMotion: true,
+          builder: AppPageTransitions.buildFadeThrough,
+        ),
       );
 
       expect(find.byType(FadeTransition), findsNothing);

@@ -109,7 +109,10 @@ void main() {
     );
 
     final rest = tester.getTopLeft(find.byKey(const ValueKey('bubble')));
-    await tester.drag(find.byKey(const ValueKey('bubble')), const Offset(80, 0));
+    await tester.drag(
+      find.byKey(const ValueKey('bubble')),
+      const Offset(80, 0),
+    );
     await tester.pumpAndSettle();
 
     expect(tester.getTopLeft(find.byKey(const ValueKey('bubble'))), rest);

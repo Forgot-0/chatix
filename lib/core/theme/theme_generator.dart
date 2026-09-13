@@ -177,27 +177,29 @@ abstract final class ThemeGenerator {
     final isDark = brightness == Brightness.dark;
     final primary = isDark ? _liftForDark(seed) : seed;
 
-    return ColorScheme.fromSeed(seedColor: seed, brightness: brightness)
-        .copyWith(
-          primary: primary,
-          onPrimary: _foregroundOn(primary),
-          secondary: AppPalette.mint,
-          onSecondary: _foregroundOn(AppPalette.mint),
-          tertiary: AppPalette.amber,
-          onTertiary: _foregroundOn(AppPalette.amber),
-          error: AppPalette.coral,
-          onError: _foregroundOn(AppPalette.coral),
-          surface: AppNeutrals.canvas(brightness),
-          onSurface: AppNeutrals.text(brightness),
-          onSurfaceVariant: AppNeutrals.textMuted(brightness),
-          surfaceContainerLowest: AppNeutrals.step(brightness, isDark ? 11 : 0),
-          surfaceContainerLow: AppNeutrals.step(brightness, isDark ? 10 : 1),
-          surfaceContainer: AppNeutrals.step(brightness, isDark ? 9 : 2),
-          surfaceContainerHigh: AppNeutrals.step(brightness, isDark ? 8 : 3),
-          surfaceContainerHighest: AppNeutrals.step(brightness, isDark ? 7 : 4),
-          outline: AppNeutrals.outline(brightness),
-          outlineVariant: AppNeutrals.border(brightness),
-        );
+    return ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: brightness,
+    ).copyWith(
+      primary: primary,
+      onPrimary: _foregroundOn(primary),
+      secondary: AppPalette.mint,
+      onSecondary: _foregroundOn(AppPalette.mint),
+      tertiary: AppPalette.amber,
+      onTertiary: _foregroundOn(AppPalette.amber),
+      error: AppPalette.coral,
+      onError: _foregroundOn(AppPalette.coral),
+      surface: AppNeutrals.canvas(brightness),
+      onSurface: AppNeutrals.text(brightness),
+      onSurfaceVariant: AppNeutrals.textMuted(brightness),
+      surfaceContainerLowest: AppNeutrals.step(brightness, isDark ? 11 : 0),
+      surfaceContainerLow: AppNeutrals.step(brightness, isDark ? 10 : 1),
+      surfaceContainer: AppNeutrals.step(brightness, isDark ? 9 : 2),
+      surfaceContainerHigh: AppNeutrals.step(brightness, isDark ? 8 : 3),
+      surfaceContainerHighest: AppNeutrals.step(brightness, isDark ? 7 : 4),
+      outline: AppNeutrals.outline(brightness),
+      outlineVariant: AppNeutrals.border(brightness),
+    );
   }
 
   /// Digits that do not shuffle: every style that carries a clock, a counter

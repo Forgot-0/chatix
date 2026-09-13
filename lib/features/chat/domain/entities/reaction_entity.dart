@@ -24,6 +24,21 @@ enum ReactionAction {
   }
 }
 
+/// Why one more emoji cannot go on a message right now.
+///
+/// Both caps come from §5.7.4 and both are enforced server-side with
+/// `TOO_MANY_REACTIONS`. Working them out before the tap is what keeps the
+/// picker honest: an emoji that would be refused is drawn as refused rather
+/// than accepted, sent, and taken back a moment later.
+enum ReactionBlock {
+  /// `MAX_REACTIONS_PER_USER_PER_MESSAGE` — this reader already holds three.
+  perUser,
+
+  /// `MAX_DISTINCT_REACTIONS_PER_MESSAGE` — the message already carries
+  /// twenty different emoji, so only the ones already there can be joined.
+  perMessage,
+}
+
 class ReactionGroupEntity extends Equatable {
   final String emoji;
 
@@ -110,6 +125,45 @@ class MessageReactionsEntity extends Equatable {
   bool get canAddMore =>
       myEmojis.length < ReactionLimits.maxPerUserPerMessage &&
       groups.length < ReactionLimits.maxDistinctPerMessage;
+
+  /// What stands between this reader and this emoji, or null if nothing does.
+  ///
+  /// Taking one of ours back is never blocked, whichever cap has been hit —
+  /// that is the only way out of a full set.
+  ReactionBlock? blockFor(String emoji) {
+    if (isMine(emoji)) return null;
+
+    if (myEmojis.length >= ReactionLimits.maxPerUserPerMessage) {
+      return ReactionBlock.perUser;
+    }
+
+    // Joining an emoji the message already carries adds no new group, so the
+    // distinct cap does not apply to it.
+    final joinsExisting = groups.any((g) => g.emoji == emoji);
+    if (!joinsExisting &&
+        groups.length >= ReactionLimits.maxDistinctPerMessage) {
+      return ReactionBlock.perMessage;
+    }
+
+    return null;
+  }
+
+  /// Whether tapping [emoji] would do something the server accepts.
+  bool canReactWith(String emoji) => blockFor(emoji) == null;
+
+  /// What stands in the way of one more emoji — any emoji not already here.
+  ///
+  /// This is what a picker needs to explain itself: [blockFor] answers for
+  /// one emoji at a time, and the footer has to name the cap once.
+  ReactionBlock? get nextBlock {
+    if (myEmojis.length >= ReactionLimits.maxPerUserPerMessage) {
+      return ReactionBlock.perUser;
+    }
+    if (groups.length >= ReactionLimits.maxDistinctPerMessage) {
+      return ReactionBlock.perMessage;
+    }
+    return null;
+  }
 
   MessageReactionsEntity copyWith({
     List<ReactionGroupEntity>? groups,

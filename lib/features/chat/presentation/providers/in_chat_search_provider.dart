@@ -163,15 +163,10 @@ class InChatSearchController extends Notifier<InChatSearchState> {
         Logger.warning(
           'InChatSearch($_chatId): search failed (${failure.message})',
         );
-        state = state.copyWith(
-          hits: const [],
-          index: 0,
-          isSearching: false,
-        );
+        state = state.copyWith(hits: const [], index: 0, isSearching: false);
       },
       (found) {
-        final hits = [...found.hits]
-          ..sort((a, b) => b.seq.compareTo(a.seq));
+        final hits = [...found.hits]..sort((a, b) => b.seq.compareTo(a.seq));
 
         state = state.copyWith(
           hits: hits,
@@ -202,9 +197,7 @@ class InChatSearchController extends Notifier<InChatSearchState> {
 
     if (revealed) return;
 
-    Logger.warning(
-      'InChatSearch($_chatId): could not open message ${hit.seq}',
-    );
+    Logger.warning('InChatSearch($_chatId): could not open message ${hit.seq}');
   }
 }
 

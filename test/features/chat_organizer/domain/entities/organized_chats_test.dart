@@ -38,11 +38,8 @@ void main() {
     chat('d', unread: 5),
   ];
 
-  ChatRuleContext contextFor(ChatOrganizerData data) => ChatRuleContext(
-    now: now,
-    myUserId: 7,
-    pinnedChatIds: data.pinnedChatIds,
-  );
+  ChatRuleContext contextFor(ChatOrganizerData data) =>
+      ChatRuleContext(now: now, myUserId: 7, pinnedChatIds: data.pinnedChatIds);
 
   OrganizedChats organize(ChatOrganizerData data, {ChatFolder? folder}) =>
       organizeChats(
@@ -72,10 +69,7 @@ void main() {
 
   test('archiving wins over pinning', () {
     final sections = organize(
-      const ChatOrganizerData(
-        pinnedChatIds: {'a'},
-        archivedChatIds: {'a'},
-      ),
+      const ChatOrganizerData(pinnedChatIds: {'a'}, archivedChatIds: {'a'}),
     );
 
     expect(sections.pinned, isEmpty);
@@ -89,17 +83,20 @@ void main() {
     expect(sections.unreadInArchive(const {'d'}), 3);
   });
 
-  test('a list with rows only in the archive is not empty, just not visible', () {
-    final sections = organizeChats(
-      chats: [chat('a')],
-      organizer: const ChatOrganizerData(archivedChatIds: {'a'}),
-      context: contextFor(const ChatOrganizerData()),
-    );
+  test(
+    'a list with rows only in the archive is not empty, just not visible',
+    () {
+      final sections = organizeChats(
+        chats: [chat('a')],
+        organizer: const ChatOrganizerData(archivedChatIds: {'a'}),
+        context: contextFor(const ChatOrganizerData()),
+      );
 
-    expect(sections.isEmpty, isFalse);
-    expect(sections.visible, isEmpty);
-    expect(sections.hasArchive, isTrue);
-  });
+      expect(sections.isEmpty, isFalse);
+      expect(sections.visible, isEmpty);
+      expect(sections.hasArchive, isTrue);
+    },
+  );
 
   group('with a folder selected', () {
     final unread = ChatFolder.fromPreset(FolderPreset.unread);
@@ -114,14 +111,17 @@ void main() {
       expect(sections.active.map((c) => c.id), ['b']);
     });
 
-    test('the archive is left whole, since a tab should not hide half of it', () {
-      final sections = organize(
-        const ChatOrganizerData(archivedChatIds: {'a', 'b'}),
-        folder: unread,
-      );
+    test(
+      'the archive is left whole, since a tab should not hide half of it',
+      () {
+        final sections = organize(
+          const ChatOrganizerData(archivedChatIds: {'a', 'b'}),
+          folder: unread,
+        );
 
-      expect(sections.archived.map((c) => c.id), ['a', 'b']);
-    });
+        expect(sections.archived.map((c) => c.id), ['a', 'b']);
+      },
+    );
 
     test('a folder nothing matches leaves the visible list empty', () {
       final sections = organize(
@@ -152,20 +152,23 @@ void main() {
       expect(counts[FolderPreset.personal.folderId], 0);
     });
 
-    test('skip what is archived or silenced, which is not asking to be read', () {
-      final withArchive = ChatOrganizerData(
-        folders: data.folders,
-        archivedChatIds: const {'d'},
-      );
+    test(
+      'skip what is archived or silenced, which is not asking to be read',
+      () {
+        final withArchive = ChatOrganizerData(
+          folders: data.folders,
+          archivedChatIds: const {'d'},
+        );
 
-      final counts = folderUnreadCounts(
-        chats: chats,
-        organizer: withArchive,
-        context: contextFor(withArchive),
-        mutedChatIds: const {'b'},
-      );
+        final counts = folderUnreadCounts(
+          chats: chats,
+          organizer: withArchive,
+          context: contextFor(withArchive),
+          mutedChatIds: const {'b'},
+        );
 
-      expect(counts[FolderPreset.unread.folderId], 0);
-    });
+        expect(counts[FolderPreset.unread.folderId], 0);
+      },
+    );
   });
 }

@@ -49,11 +49,19 @@ void main() {
     test('owner may delete the chat, admin may not', () {
       final chat = chatWith();
       expect(
-        hasChatPermission(chat, memberWith(roleId: 1), ChatPermissions.chatDelete),
+        hasChatPermission(
+          chat,
+          memberWith(roleId: 1),
+          ChatPermissions.chatDelete,
+        ),
         isTrue,
       );
       expect(
-        hasChatPermission(chat, memberWith(roleId: 2), ChatPermissions.chatDelete),
+        hasChatPermission(
+          chat,
+          memberWith(roleId: 2),
+          ChatPermissions.chatDelete,
+        ),
         isFalse,
       );
     });
@@ -77,11 +85,19 @@ void main() {
       final chat = chatWith(type: ChatType.direct);
 
       expect(
-        hasChatPermission(chat, memberWith(roleId: 4), ChatPermissions.chatUpdate),
+        hasChatPermission(
+          chat,
+          memberWith(roleId: 4),
+          ChatPermissions.chatUpdate,
+        ),
         isTrue,
       );
       expect(
-        hasChatPermission(chat, memberWith(roleId: 5), ChatPermissions.chatUpdate),
+        hasChatPermission(
+          chat,
+          memberWith(roleId: 5),
+          ChatPermissions.chatUpdate,
+        ),
         isFalse,
       );
     });
@@ -120,7 +136,10 @@ void main() {
 
     test('a non-member is denied everything', () {
       final chat = chatWith();
-      expect(hasChatPermission(chat, null, ChatPermissions.messageRead), isFalse);
+      expect(
+        hasChatPermission(chat, null, ChatPermissions.messageRead),
+        isFalse,
+      );
       expect(canSendMessage(chat, null), isFalse);
     });
   });
@@ -169,7 +188,10 @@ void main() {
       expect(
         hasChatPermission(
           grantingChat,
-          memberWith(roleId: 5, overrides: {ChatPermissions.messageSend: false}),
+          memberWith(
+            roleId: 5,
+            overrides: {ChatPermissions.messageSend: false},
+          ),
           ChatPermissions.messageSend,
         ),
         isFalse,
@@ -202,7 +224,10 @@ void main() {
 
     test('a muted member cannot post regardless of role', () {
       final chat = chatWith();
-      expect(canSendMessage(chat, memberWith(roleId: 1, isMuted: true)), isFalse);
+      expect(
+        canSendMessage(chat, memberWith(roleId: 1, isMuted: true)),
+        isFalse,
+      );
     });
   });
 
@@ -214,8 +239,10 @@ void main() {
     });
 
     test('a muted author may not edit', () {
-      expect(canEditMessage(memberWith(userId: 2, roleId: 1, isMuted: true), 2),
-          isFalse);
+      expect(
+        canEditMessage(memberWith(userId: 2, roleId: 1, isMuted: true), 2),
+        isFalse,
+      );
     });
 
     test('anyone may delete their own message', () {
@@ -227,7 +254,10 @@ void main() {
 
     test("message:delete allows removing someone else's", () {
       final chat = chatWith();
-      expect(canDeleteMessage(chat, memberWith(userId: 2, roleId: 3), 7), isTrue);
+      expect(
+        canDeleteMessage(chat, memberWith(userId: 2, roleId: 3), 7),
+        isTrue,
+      );
     });
   });
 

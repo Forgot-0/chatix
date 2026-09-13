@@ -389,31 +389,34 @@ void main() {
       expect(state.highlightMessageId, isNull);
     });
 
-    test('reports failure when the slice misses the seq it asked for', () async {
-      final container = await boot();
+    test(
+      'reports failure when the slice misses the seq it asked for',
+      () async {
+        final container = await boot();
 
-      when(
-        () => getContext.execute(chatId, 11, limit: any(named: 'limit')),
-      ).thenAnswer(
-        (_) async => Right(
-          MessagesPage(
-            messages: [message('m12', 12)],
-            nextCursor: null,
-            hasNext: false,
+        when(
+          () => getContext.execute(chatId, 11, limit: any(named: 'limit')),
+        ).thenAnswer(
+          (_) async => Right(
+            MessagesPage(
+              messages: [message('m12', 12)],
+              nextCursor: null,
+              hasNext: false,
+            ),
           ),
-        ),
-      );
+        );
 
-      final ok = await container
-          .read(chatDetailProvider(chatId).notifier)
-          .revealSeq(11);
+        final ok = await container
+            .read(chatDetailProvider(chatId).notifier)
+            .revealSeq(11);
 
-      expect(ok, isFalse);
-      expect(
-        container.read(chatDetailProvider(chatId)).value!.isViewingHistory,
-        isFalse,
-      );
-    });
+        expect(ok, isFalse);
+        expect(
+          container.read(chatDetailProvider(chatId)).value!.isViewingHistory,
+          isFalse,
+        );
+      },
+    );
   });
 
   group('clearHighlight', () {

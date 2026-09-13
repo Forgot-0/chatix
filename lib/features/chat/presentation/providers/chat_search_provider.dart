@@ -88,7 +88,8 @@ final chatSearchResultsProvider = Provider<List<ChatSearchHit>>((ref) {
   final query = ref.watch(searchQueryProvider);
   if (query.isEmpty) return const <ChatSearchHit>[];
 
-  final chats = ref.watch(chatListProvider).value?.items ?? const <ChatEntity>[];
+  final chats =
+      ref.watch(chatListProvider).value?.items ?? const <ChatEntity>[];
 
   return searchLoadedChats(
     chats,
@@ -103,24 +104,28 @@ final chatSearchResultsProvider = Provider<List<ChatSearchHit>>((ref) {
 /// `last_message` (api-docs §5.2), so the newest message of every chat is
 /// searchable from a cold start, before any conversation has been opened.
 final messageSearchProvider =
-    FutureProvider.family<MessageSearchResult, String>((ref, query) async {
-      if (query.trim().isEmpty) return MessageSearchResult.empty;
+    FutureProvider.family<MessageSearchResult, String>(
+      (ref, query) async {
+        if (query.trim().isEmpty) return MessageSearchResult.empty;
 
-      final store = ref.watch(messageCacheStoreProvider);
-      final chats =
-          ref.watch(chatListProvider).value?.items ?? const <ChatEntity>[];
+        final store = ref.watch(messageCacheStoreProvider);
+        final chats =
+            ref.watch(chatListProvider).value?.items ?? const <ChatEntity>[];
 
-      for (final chat in chats) {
-        final last = chat.lastMessage;
-        if (last != null) store.remember(chat.id, [last]);
-      }
+        for (final chat in chats) {
+          final last = chat.lastMessage;
+          if (last != null) store.remember(chat.id, [last]);
+        }
 
-      final result = await ref
-          .watch(searchMessagesUseCaseProvider)
-          .execute(query);
+        final result = await ref
+            .watch(searchMessagesUseCaseProvider)
+            .execute(query);
 
-      return result.getOrElse((failure) => throw failure);
-    }, isAutoDispose: true, retry: _neverRetry);
+        return result.getOrElse((failure) => throw failure);
+      },
+      isAutoDispose: true,
+      retry: _neverRetry,
+    );
 
 /// A page of people, merged out of the two fields the endpoint can filter on.
 class PeopleSearchState extends Equatable {
@@ -303,10 +308,7 @@ class PeopleSearchController extends AsyncNotifier<PeopleSearchState> {
   ) {
     final seen = {for (final profile in first) profile.id};
 
-    return [
-      ...first,
-      ...second.where((profile) => seen.add(profile.id)),
-    ];
+    return [...first, ...second.where((profile) => seen.add(profile.id))];
   }
 }
 

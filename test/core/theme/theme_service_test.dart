@@ -73,9 +73,7 @@ void main() {
 
   test('clearing returns the store to the defaults', () async {
     final service = await serviceWith({});
-    await service.save(
-      const AppearanceSettings(themeMode: AppThemeMode.dark),
-    );
+    await service.save(const AppearanceSettings(themeMode: AppThemeMode.dark));
 
     await service.clear();
 

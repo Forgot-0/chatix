@@ -10,7 +10,8 @@ import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_
 
 class MockChatRepository extends Mock implements ChatRepository {}
 
-class MockChatAttachmentUploader extends Mock implements ChatAttachmentUploader {}
+class MockChatAttachmentUploader extends Mock
+    implements ChatAttachmentUploader {}
 
 void main() {
   late UploadChatAttachmentUseCase useCase;
@@ -174,25 +175,28 @@ void main() {
       verifyNever(() => mockRepository.confirmAttachmentUpload(any(), any()));
     });
 
-    test('aborts when the server returns a ticket/file count mismatch', () async {
-      final uploads = [image(filename: 'a.jpg'), image(filename: 'b.jpg')];
-      when(
-        () => mockRepository.requestAttachmentUpload(tChatId, uploads),
-      ).thenAnswer((_) async => Right([ticket('token-a')]));
+    test(
+      'aborts when the server returns a ticket/file count mismatch',
+      () async {
+        final uploads = [image(filename: 'a.jpg'), image(filename: 'b.jpg')];
+        when(
+          () => mockRepository.requestAttachmentUpload(tChatId, uploads),
+        ).thenAnswer((_) async => Right([ticket('token-a')]));
 
-      final events = await useCase.execute(tChatId, uploads).toList();
+        final events = await useCase.execute(tChatId, uploads).toList();
 
-      expect(events.last.getLeft().toNullable(), isA<ServerFailure>());
-      verifyNever(
-        () => mockUploader.upload(
-          uploadUrl: any(named: 'uploadUrl'),
-          mimeType: any(named: 'mimeType'),
-          contentLength: any(named: 'contentLength'),
-          filePath: any(named: 'filePath'),
-          bytes: any(named: 'bytes'),
-        ),
-      );
-    });
+        expect(events.last.getLeft().toNullable(), isA<ServerFailure>());
+        verifyNever(
+          () => mockUploader.upload(
+            uploadUrl: any(named: 'uploadUrl'),
+            mimeType: any(named: 'mimeType'),
+            contentLength: any(named: 'contentLength'),
+            filePath: any(named: 'filePath'),
+            bytes: any(named: 'bytes'),
+          ),
+        );
+      },
+    );
 
     test('surfaces a confirm failure', () async {
       final uploads = [image()];
@@ -227,16 +231,14 @@ void main() {
     });
 
     test('rejects a disallowed MIME type', () async {
-      final events = await useCase
-          .execute(tChatId, [
-            const AttachmentUploadRequestEntity(
-              filename: 'malware.exe',
-              mimeType: 'application/x-msdownload',
-              fileSize: 100,
-              filePath: '/tmp/malware.exe',
-            ),
-          ])
-          .toList();
+      final events = await useCase.execute(tChatId, [
+        const AttachmentUploadRequestEntity(
+          filename: 'malware.exe',
+          mimeType: 'application/x-msdownload',
+          fileSize: 100,
+          filePath: '/tmp/malware.exe',
+        ),
+      ]).toList();
 
       final failure = events.single.getLeft().toNullable();
       expect(failure, isA<InputFailure>());
@@ -245,11 +247,9 @@ void main() {
     });
 
     test('rejects an image above the 50 MB media cap', () async {
-      final events = await useCase
-          .execute(tChatId, [
-            image(size: ChatAttachmentLimits.maxMediaSizeBytes + 1),
-          ])
-          .toList();
+      final events = await useCase.execute(tChatId, [
+        image(size: ChatAttachmentLimits.maxMediaSizeBytes + 1),
+      ]).toList();
 
       final failure = events.single.getLeft().toNullable();
       expect(failure, isA<InputFailure>());
@@ -262,11 +262,9 @@ void main() {
     });
 
     test('rejects a document above the 100 MB file cap', () async {
-      final events = await useCase
-          .execute(tChatId, [
-            document(size: ChatAttachmentLimits.maxFileSizeBytes + 1),
-          ])
-          .toList();
+      final events = await useCase.execute(tChatId, [
+        document(size: ChatAttachmentLimits.maxFileSizeBytes + 1),
+      ]).toList();
 
       expect(events.single.getLeft().toNullable(), isA<InputFailure>());
     });
@@ -303,20 +301,16 @@ void main() {
     });
 
     test('rejects more than one document', () async {
-      final events = await useCase
-          .execute(tChatId, [
-            document(filename: 'a.pdf'),
-            document(filename: 'b.pdf'),
-          ])
-          .toList();
+      final events = await useCase.execute(tChatId, [
+        document(filename: 'a.pdf'),
+        document(filename: 'b.pdf'),
+      ]).toList();
 
       expect(events.single.getLeft().toNullable(), isA<InputFailure>());
     });
 
     test('rejects an empty file', () async {
-      final events = await useCase
-          .execute(tChatId, [image(size: 0)])
-          .toList();
+      final events = await useCase.execute(tChatId, [image(size: 0)]).toList();
 
       expect(events.single.getLeft().toNullable(), isA<InputFailure>());
     });

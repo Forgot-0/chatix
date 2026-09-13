@@ -16,16 +16,21 @@ void main() {
     useCase = RemoveContactUseCase(mockProfileRepository);
   });
 
-  test('should call ProfileRepository.removeContact and return void on success', () async {
-    when(
-      () => mockProfileRepository.removeContact(1, provider: 'telegram'),
-    ).thenAnswer((_) async => const Right(null));
+  test(
+    'should call ProfileRepository.removeContact and return void on success',
+    () async {
+      when(
+        () => mockProfileRepository.removeContact(1, provider: 'telegram'),
+      ).thenAnswer((_) async => const Right(null));
 
-    final result = await useCase.execute(1, provider: 'telegram');
+      final result = await useCase.execute(1, provider: 'telegram');
 
-    expect(result, const Right<Failure, void>(null));
-    verify(() => mockProfileRepository.removeContact(1, provider: 'telegram')).called(1);
-  });
+      expect(result, const Right<Failure, void>(null));
+      verify(
+        () => mockProfileRepository.removeContact(1, provider: 'telegram'),
+      ).called(1);
+    },
+  );
 
   test('should return the repository Failure when the call fails', () async {
     const tFailure = ApiFailure(
@@ -43,23 +48,29 @@ void main() {
     expect(result, const Left(tFailure));
   });
 
-  test('should return InputFailure and never hit the repository for a non-positive profileId', () async {
-    final result = await useCase.execute(0, provider: 'telegram');
+  test(
+    'should return InputFailure and never hit the repository for a non-positive profileId',
+    () async {
+      final result = await useCase.execute(0, provider: 'telegram');
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+    },
+  );
 
-  test('should return InputFailure and never hit the repository when provider is empty', () async {
-    final result = await useCase.execute(1, provider: '');
+  test(
+    'should return InputFailure and never hit the repository when provider is empty',
+    () async {
+      final result = await useCase.execute(1, provider: '');
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+    },
+  );
 }

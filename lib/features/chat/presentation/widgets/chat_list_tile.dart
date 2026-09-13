@@ -111,9 +111,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final preview = chatPreviewOf(chat, l10n, draft: draft, myUserId: myUserId);
 
     final row = Material(
-      color: widget.isSelected
-          ? scheme.secondaryContainer
-          : Colors.transparent,
+      color: widget.isSelected ? scheme.secondaryContainer : Colors.transparent,
       child: InkWell(
         onTap: () => openChat(context, ref, chat.id),
         onLongPress: widget.enableActions
@@ -144,9 +142,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: _PreviewLine(preview: preview),
-                        ),
+                        Expanded(child: _PreviewLine(preview: preview)),
                         const SizedBox(width: AppSpacing.x2),
                         _RowMarkers(
                           unread: unread,
@@ -178,18 +174,14 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
             onPressed: _markRead,
           ),
         SwipeAction(
-          icon: isArchived
-              ? Icons.unarchive_outlined
-              : Icons.archive_outlined,
+          icon: isArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
           label: isArchived ? l10n.unarchiveChat : l10n.archiveChat,
           background: chatix.attention,
           foreground: AppContrast.foregroundOn(chatix.attention),
           onPressed: _toggleArchive,
         ),
         SwipeAction(
-          icon: isPinned
-              ? Icons.push_pin
-              : Icons.push_pin_outlined,
+          icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
           label: isPinned ? l10n.unpinChat : l10n.pinChat,
           background: scheme.primaryContainer,
           foreground: scheme.onPrimaryContainer,
@@ -466,11 +458,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
 /// Public because the search results draw the same rows and should not
 /// invent a second way of picturing a chat.
 class ChatRowAvatar extends ConsumerWidget {
-  const ChatRowAvatar({
-    super.key,
-    required this.chat,
-    required this.myUserId,
-  });
+  const ChatRowAvatar({super.key, required this.chat, required this.myUserId});
 
   final ChatEntity chat;
   final int? myUserId;

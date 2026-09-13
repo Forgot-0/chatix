@@ -8,7 +8,8 @@ import 'package:chatix/features/notification/domain/entities/notification_entity
 import 'package:chatix/features/notification/domain/repositories/notification_repository.dart';
 import 'package:chatix/features/notification/domain/usecases/get_notifications_use_case.dart';
 
-class MockNotificationRepository extends Mock implements NotificationRepository {}
+class MockNotificationRepository extends Mock
+    implements NotificationRepository {}
 
 void main() {
   late GetNotificationsUseCase useCase;
@@ -102,7 +103,10 @@ void main() {
 
     final result = await useCase.execute();
 
-    expect(result, const Left<Failure, PageResult<NotificationEntity>>(tFailure));
+    expect(
+      result,
+      const Left<Failure, PageResult<NotificationEntity>>(tFailure),
+    );
   });
 
   group('clamps pagination input to the documented server bounds', () {

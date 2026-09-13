@@ -50,59 +50,68 @@ void main() {
     ).called(1);
   });
 
-  test('should return the repository Failure when registration fails (e.g. duplicate)', () async {
-    const tFailure = ApiFailure(
-      code: 'DUPLICATE_USER',
-      message: 'Username already taken',
-      detail: {'field': 'username', 'value': tUsername},
-      status: 409,
-    );
-    when(
-      () => mockAuthRepository.register(
+  test(
+    'should return the repository Failure when registration fails (e.g. duplicate)',
+    () async {
+      const tFailure = ApiFailure(
+        code: 'DUPLICATE_USER',
+        message: 'Username already taken',
+        detail: {'field': 'username', 'value': tUsername},
+        status: 409,
+      );
+      when(
+        () => mockAuthRepository.register(
+          username: tUsername,
+          email: tEmail,
+          password: tPassword,
+          passwordRepeat: tPassword,
+        ),
+      ).thenAnswer((_) async => const Left(tFailure));
+
+      final result = await useCase.execute(
         username: tUsername,
         email: tEmail,
         password: tPassword,
         passwordRepeat: tPassword,
-      ),
-    ).thenAnswer((_) async => const Left(tFailure));
+      );
 
-    final result = await useCase.execute(
-      username: tUsername,
-      email: tEmail,
-      password: tPassword,
-      passwordRepeat: tPassword,
-    );
+      expect(result, const Left(tFailure));
+    },
+  );
 
-    expect(result, const Left(tFailure));
-  });
+  test(
+    'should return InputFailure and never hit the repository when a field is empty',
+    () async {
+      final result = await useCase.execute(
+        username: '',
+        email: tEmail,
+        password: tPassword,
+        passwordRepeat: tPassword,
+      );
 
-  test('should return InputFailure and never hit the repository when a field is empty', () async {
-    final result = await useCase.execute(
-      username: '',
-      email: tEmail,
-      password: tPassword,
-      passwordRepeat: tPassword,
-    );
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockAuthRepository);
+    },
+  );
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockAuthRepository);
-  });
+  test(
+    'should return InputFailure and never hit the repository when passwords do not match',
+    () async {
+      final result = await useCase.execute(
+        username: tUsername,
+        email: tEmail,
+        password: tPassword,
+        passwordRepeat: 'SomethingElse123!',
+      );
 
-  test('should return InputFailure and never hit the repository when passwords do not match', () async {
-    final result = await useCase.execute(
-      username: tUsername,
-      email: tEmail,
-      password: tPassword,
-      passwordRepeat: 'SomethingElse123!',
-    );
-
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockAuthRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockAuthRepository);
+    },
+  );
 }

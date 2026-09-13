@@ -4,7 +4,16 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 
 /// Everything the context menu can offer on one message.
-enum MessageAction { reply, react, copy, forward, edit, select, delete, details }
+enum MessageAction {
+  reply,
+  react,
+  copy,
+  forward,
+  edit,
+  select,
+  delete,
+  details,
+}
 
 /// Which of those this reader may actually do, here, to this message.
 ///

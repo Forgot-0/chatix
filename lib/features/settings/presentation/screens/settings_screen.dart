@@ -150,10 +150,7 @@ class SettingsScreen extends ConsumerWidget {
                 ButtonSegment(value: 0.85, label: Text(l10n.textSizeSmall)),
                 ButtonSegment(value: 1, label: Text(l10n.textSizeDefault)),
                 ButtonSegment(value: 1.15, label: Text(l10n.textSizeLarge)),
-                ButtonSegment(
-                  value: 1.3,
-                  label: Text(l10n.textSizeExtraLarge),
-                ),
+                ButtonSegment(value: 1.3, label: Text(l10n.textSizeExtraLarge)),
               ],
               selected: {appearance.textScale},
               onSelectionChanged: (selection) =>

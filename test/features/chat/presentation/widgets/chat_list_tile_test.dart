@@ -206,7 +206,11 @@ void main() {
 
     await pumpTile(
       tester,
-      chat(type: ChatType.direct, name: 'Ann', last: message(content: 'hi')),
+      chat(
+        type: ChatType.direct,
+        name: 'Ann',
+        last: message(content: 'hi'),
+      ),
     );
     expect(find.byType(ChatTypeGlyph), findsNothing);
   });
@@ -261,9 +265,7 @@ void main() {
       expect(find.byType(StatusTicks), findsNothing);
     });
 
-    testWidgets('one tick on my own message with no read news', (
-      tester,
-    ) async {
+    testWidgets('one tick on my own message with no read news', (tester) async {
       await pumpTile(
         tester,
         chat(
@@ -301,7 +303,9 @@ void main() {
     testWidgets('a group never claims more than sent', (tester) async {
       await pumpTile(
         tester,
-        chat(last: message(content: 'hi', authorId: myUserId, seq: 5)),
+        chat(
+          last: message(content: 'hi', authorId: myUserId, seq: 5),
+        ),
         peerReadSeq: 5,
       );
 
@@ -317,7 +321,11 @@ void main() {
   ) async {
     await pumpTile(
       tester,
-      chat(type: ChatType.direct, name: 'Ann', last: message(content: 'hi')),
+      chat(
+        type: ChatType.direct,
+        name: 'Ann',
+        last: message(content: 'hi'),
+      ),
     );
 
     await tester.pump();
@@ -367,7 +375,10 @@ void main() {
     ) async {
       await pumpTile(
         tester,
-        chat(last: message(content: 'hi'), membership: membership(ChatRole.member)),
+        chat(
+          last: message(content: 'hi'),
+          membership: membership(ChatRole.member),
+        ),
       );
 
       await tester.longPress(find.text('Design team'));
@@ -379,7 +390,10 @@ void main() {
 
       await pumpTile(
         tester,
-        chat(last: message(content: 'hi'), membership: membership(ChatRole.owner)),
+        chat(
+          last: message(content: 'hi'),
+          membership: membership(ChatRole.owner),
+        ),
       );
 
       await tester.longPress(find.text('Design team'));

@@ -50,11 +50,9 @@ class SharedPrefsSearchHistoryStore implements SearchHistoryStore {
 /// The fallback for where shared preferences were never wired up — widget
 /// tests, mostly.
 class InMemorySearchHistoryStore implements SearchHistoryStore {
-  InMemorySearchHistoryStore({
-    List<String>? queries,
-    List<String>? chatIds,
-  }) : _queries = [...?queries],
-       _chatIds = [...?chatIds];
+  InMemorySearchHistoryStore({List<String>? queries, List<String>? chatIds})
+    : _queries = [...?queries],
+      _chatIds = [...?chatIds];
 
   List<String> _queries;
   List<String> _chatIds;

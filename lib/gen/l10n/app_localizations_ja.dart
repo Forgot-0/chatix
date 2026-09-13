@@ -1464,4 +1464,152 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get searchOpenChat => 'チャットを開く';
+
+  @override
+  String get reactionSectionRecent => '最近使った絵文字';
+
+  @override
+  String get reactionSectionFaces => 'スマイリー';
+
+  @override
+  String get reactionSectionPeople => '人';
+
+  @override
+  String get reactionSectionHearts => 'ハート';
+
+  @override
+  String get reactionSectionCelebration => 'お祝い';
+
+  @override
+  String get reactionSectionFood => '食べ物';
+
+  @override
+  String get reactionSectionNature => '自然';
+
+  @override
+  String get reactionSectionSymbols => '記号';
+
+  @override
+  String get reactionsNoneAllowed => 'このチャットで使えるリアクションはありません';
+
+  @override
+  String reactionsUsed(int used, int limit) {
+    return '$used/$limit';
+  }
+
+  @override
+  String reactionMessageLimitReached(Object limit) {
+    return 'このメッセージにはすでに$limit種類のリアクションがあります';
+  }
+
+  @override
+  String get moreReactions => 'その他のリアクション';
+
+  @override
+  String get reactionFailed => 'リアクションを保存できませんでした';
+
+  @override
+  String get reactionTooFast => 'リアクションが多すぎます';
+
+  @override
+  String get reactionNotAllowed => 'このリアクションはここでは使えません';
+
+  @override
+  String get reactionsNobody => 'まだ誰もいません';
+
+  @override
+  String reactionUserFallback(Object id) {
+    return 'ユーザー $id';
+  }
+
+  @override
+  String composerCharactersLeft(int count) {
+    return '残り$count';
+  }
+
+  @override
+  String get composerSendLabel => '送信';
+
+  @override
+  String get composerSaveEditLabel => '変更を保存';
+
+  @override
+  String get composerRecordLabel => '長押しで音声メッセージを録音';
+
+  @override
+  String composerReplyingTo(Object name) {
+    return '$nameに返信';
+  }
+
+  @override
+  String composerSlowModeWait(int seconds) {
+    return '低速モード：あと$seconds秒';
+  }
+
+  @override
+  String composerSlowModeHint(int seconds) {
+    return 'このチャットでは$seconds秒に1通まで送信できます';
+  }
+
+  @override
+  String get attachSheetTitle => '添付';
+
+  @override
+  String get attachRecent => '最近';
+
+  @override
+  String get attachCamera => 'カメラ';
+
+  @override
+  String get attachVoice => '音声メッセージ';
+
+  @override
+  String get attachVideoNote => 'ビデオメッセージ';
+
+  @override
+  String attachVoiceHint(int seconds) {
+    return '単独で送信、最大$seconds秒';
+  }
+
+  @override
+  String attachVideoNoteHint(int seconds, int pixels) {
+    return '単独で送信、最大$seconds秒・${pixels}px';
+  }
+
+  @override
+  String get attachGalleryDenied => 'ここから選ぶには写真へのアクセスを許可してください';
+
+  @override
+  String get attachGalleryAllow => '許可';
+
+  @override
+  String attachMediaFull(int count) {
+    return '1通につき写真・動画は$count件までです';
+  }
+
+  @override
+  String attachSendCount(int count) {
+    return '$count件を添付';
+  }
+
+  @override
+  String get attachUnavailable => 'このファイルを読み込めませんでした';
+
+  @override
+  String videoNoteTooLong(int seconds) {
+    return 'ビデオメッセージは最大$seconds秒です';
+  }
+
+  @override
+  String videoNoteTooLarge(int pixels) {
+    return 'このカメラは${pixels}pxを超えて録画するため、ビデオメッセージとして受け付けられません';
+  }
+
+  @override
+  String get videoNoteUnreadable => 'この録画を確認できませんでした';
+
+  @override
+  String composerTooLongBy(int count) {
+    return '上限を$count超過';
+  }
 }

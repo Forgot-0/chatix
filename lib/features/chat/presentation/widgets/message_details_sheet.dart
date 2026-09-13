@@ -33,10 +33,8 @@ class MessageDetailsSheet extends StatelessWidget {
     return showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (sheetContext) => MessageDetailsSheet(
-        message: message,
-        deliveryStatus: deliveryStatus,
-      ),
+      builder: (sheetContext) =>
+          MessageDetailsSheet(message: message, deliveryStatus: deliveryStatus),
     );
   }
 
@@ -61,10 +59,7 @@ class MessageDetailsSheet extends StatelessWidget {
             AppSpacing.x4,
           ),
           children: [
-            Text(
-              l10n.messageDetails,
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(l10n.messageDetails, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.x3),
             _DetailRow(
               label: l10n.detailsSentAt,
@@ -73,10 +68,7 @@ class MessageDetailsSheet extends StatelessWidget {
                   '${material.formatTimeOfDay(TimeOfDay.fromDateTime(local))}',
             ),
             _DetailRow(label: l10n.detailsAuthor, value: message.authorLabel),
-            _DetailRow(
-              label: l10n.detailsSequence,
-              value: '#${message.seq}',
-            ),
+            _DetailRow(label: l10n.detailsSequence, value: '#${message.seq}'),
             if (message.isEdited)
               _DetailRow(
                 label: l10n.detailsEdited,
@@ -94,10 +86,7 @@ class MessageDetailsSheet extends StatelessWidget {
               ),
             if (message.attachments.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.x3),
-              Text(
-                l10n.detailsAttachments,
-                style: theme.textTheme.labelLarge,
-              ),
+              Text(l10n.detailsAttachments, style: theme.textTheme.labelLarge),
               const SizedBox(height: AppSpacing.x1),
               for (final attachment in message.attachments)
                 _AttachmentStatusRow(attachment: attachment),
@@ -110,11 +99,7 @@ class MessageDetailsSheet extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    this.trailing,
-  });
+  const _DetailRow({required this.label, required this.value, this.trailing});
 
   final String label;
   final String value;
@@ -138,9 +123,7 @@ class _DetailRow extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Text(value, style: theme.textTheme.bodyMedium),
-          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
           if (trailing != null) ...[
             const SizedBox(width: AppSpacing.x2),
             trailing!,

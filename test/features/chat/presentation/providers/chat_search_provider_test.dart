@@ -308,46 +308,49 @@ void main() {
       );
     });
 
-    test('the request for a query nobody is waiting for is cancelled', () async {
-      final tokens = <RequestCancellation>[];
+    test(
+      'the request for a query nobody is waiting for is cancelled',
+      () async {
+        final tokens = <RequestCancellation>[];
 
-      when(
-        () => getProfiles.execute(
-          username: any(named: 'username'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).thenAnswer((invocation) async {
-        tokens.add(
-          invocation.namedArguments[#cancellation] as RequestCancellation,
+        when(
+          () => getProfiles.execute(
+            username: any(named: 'username'),
+            page: any(named: 'page'),
+            pageSize: any(named: 'pageSize'),
+            cancellation: any(named: 'cancellation'),
+          ),
+        ).thenAnswer((invocation) async {
+          tokens.add(
+            invocation.namedArguments[#cancellation] as RequestCancellation,
+          );
+          return Right(page([profile(1, 'Ann')]));
+        });
+        when(
+          () => getProfiles.execute(
+            displayName: any(named: 'displayName'),
+            page: any(named: 'page'),
+            pageSize: any(named: 'pageSize'),
+            cancellation: any(named: 'cancellation'),
+          ),
+        ).thenAnswer((_) async => Right(page(const [])));
+
+        final container = boot();
+        final subscription = container.listen(
+          peopleSearchProvider('an'),
+          (_, _) {},
         );
-        return Right(page([profile(1, 'Ann')]));
-      });
-      when(
-        () => getProfiles.execute(
-          displayName: any(named: 'displayName'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).thenAnswer((_) async => Right(page(const [])));
+        await container.read(peopleSearchProvider('an').future);
 
-      final container = boot();
-      final subscription = container.listen(
-        peopleSearchProvider('an'),
-        (_, _) {},
-      );
-      await container.read(peopleSearchProvider('an').future);
+        expect(tokens, hasLength(1));
+        expect(tokens.single.isCancelled, isFalse);
 
-      expect(tokens, hasLength(1));
-      expect(tokens.single.isCancelled, isFalse);
+        // The next keystroke makes a new query, and nothing holds the old one.
+        subscription.close();
+        await Future<void>.delayed(Duration.zero);
 
-      // The next keystroke makes a new query, and nothing holds the old one.
-      subscription.close();
-      await Future<void>.delayed(Duration.zero);
-
-      expect(tokens.single.isCancelled, isTrue);
-    });
+        expect(tokens.single.isCancelled, isTrue);
+      },
+    );
   });
 }

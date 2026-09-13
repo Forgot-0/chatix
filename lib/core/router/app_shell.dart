@@ -313,8 +313,7 @@ class _ChatQuickActionsSheet extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.person_add_alt),
             title: Text(l10n.newDirectChat),
-            onTap: () =>
-                Navigator.of(context).pop(CreateChatRoute.directType),
+            onTap: () => Navigator.of(context).pop(CreateChatRoute.directType),
           ),
           ListTile(
             leading: const Icon(Icons.group_add_outlined),

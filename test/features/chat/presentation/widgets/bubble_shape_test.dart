@@ -119,11 +119,7 @@ void main() {
 
     test('lerp between two of them stays a bubble', () {
       final from = shape(isOutgoing: true);
-      const to = BubbleShape(
-        radius: 30,
-        anchorRadius: 2,
-        isOutgoing: true,
-      );
+      const to = BubbleShape(radius: 30, anchorRadius: 2, isOutgoing: true);
 
       final middle = to.lerpFrom(from, 0.5)! as BubbleShape;
       expect(middle.radius, 25);
@@ -158,9 +154,7 @@ void main() {
 
   group('goldens', () {
     for (final entry in chatGoldenThemes.entries) {
-      testGoldens('a run of bubbles on the ${entry.key} theme', (
-        tester,
-      ) async {
+      testGoldens('a run of bubbles on the ${entry.key} theme', (tester) async {
         Widget bubble({
           required bool outgoing,
           required bool first,

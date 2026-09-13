@@ -16,11 +16,14 @@ void main() {
   }
 
   group('ProfileEntity.bestAvatarUrl', () {
-    test('returns null when avatars is empty ("no avatar" per api-docs §4.3)', () {
-      final profile = profileWithAvatars(const {});
-      expect(profile.bestAvatarUrl(64), isNull);
-      expect(profile.hasAvatar, isFalse);
-    });
+    test(
+      'returns null when avatars is empty ("no avatar" per api-docs §4.3)',
+      () {
+        final profile = profileWithAvatars(const {});
+        expect(profile.bestAvatarUrl(64), isNull);
+        expect(profile.hasAvatar, isFalse);
+      },
+    );
 
     test('picks the exact requested size when present, preferring webp', () {
       final profile = profileWithAvatars({
@@ -43,32 +46,41 @@ void main() {
       expect(profileWithOnlyAvif.bestAvatarUrl(64), 'avif64');
     });
 
-    test('prefers the nearest larger size over a smaller one when exact size is missing', () {
-      final profile = profileWithAvatars({
-        '32': {'webp': 'webp32'},
-        '256': {'webp': 'webp256'},
-        '512': {'webp': 'webp512'},
-      });
+    test(
+      'prefers the nearest larger size over a smaller one when exact size is missing',
+      () {
+        final profile = profileWithAvatars({
+          '32': {'webp': 'webp32'},
+          '256': {'webp': 'webp256'},
+          '512': {'webp': 'webp512'},
+        });
 
-      expect(profile.bestAvatarUrl(64), 'webp256');
-    });
+        expect(profile.bestAvatarUrl(64), 'webp256');
+      },
+    );
 
-    test('falls back to the nearest smaller size when nothing larger is available', () {
-      final profile = profileWithAvatars({
-        '32': {'webp': 'webp32'},
-        '64': {'webp': 'webp64'},
-      });
+    test(
+      'falls back to the nearest smaller size when nothing larger is available',
+      () {
+        final profile = profileWithAvatars({
+          '32': {'webp': 'webp32'},
+          '64': {'webp': 'webp64'},
+        });
 
-      expect(profile.bestAvatarUrl(512), 'webp64');
-    });
+        expect(profile.bestAvatarUrl(512), 'webp64');
+      },
+    );
 
-    test('skips a size whose format map is empty and uses the next best size', () {
-      final profile = profileWithAvatars({
-        '64': {},
-        '256': {'webp': 'webp256'},
-      });
+    test(
+      'skips a size whose format map is empty and uses the next best size',
+      () {
+        final profile = profileWithAvatars({
+          '64': {},
+          '256': {'webp': 'webp256'},
+        });
 
-      expect(profile.bestAvatarUrl(64), 'webp256');
-    });
+        expect(profile.bestAvatarUrl(64), 'webp256');
+      },
+    );
   });
 }

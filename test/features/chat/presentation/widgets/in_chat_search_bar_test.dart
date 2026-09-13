@@ -54,9 +54,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          inChatSearchProvider(chatId).overrideWith(
-            () => _StubSearchController(chatId, state),
-          ),
+          inChatSearchProvider(
+            chatId,
+          ).overrideWith(() => _StubSearchController(chatId, state)),
         ],
         child: MaterialApp(
           theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
@@ -82,9 +82,7 @@ void main() {
     expect(find.text(l10n.searchLoadedHistoryOnly), findsOneWidget);
   });
 
-  testWidgets('it counts the matches and which one you are on', (
-    tester,
-  ) async {
+  testWidgets('it counts the matches and which one you are on', (tester) async {
     await pumpBar(
       tester,
       InChatSearchState(query: 'ship', hits: [hit(9), hit(4)], index: 1),
@@ -117,9 +115,7 @@ void main() {
     expect(find.text(l10n.searchNoMatches), findsOneWidget);
   });
 
-  testWidgets('a search in flight shows progress, not a count', (
-    tester,
-  ) async {
+  testWidgets('a search in flight shows progress, not a count', (tester) async {
     await pumpBar(
       tester,
       const InChatSearchState(query: 'ship', isSearching: true),

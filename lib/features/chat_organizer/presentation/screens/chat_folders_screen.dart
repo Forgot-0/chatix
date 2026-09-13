@@ -30,8 +30,7 @@ class ChatFoldersScreen extends ConsumerWidget {
         title: Text(l10n.chatFolders),
         actions: [
           IconButton(
-            onPressed: () =>
-                context.push(FolderEditorRoute.locationOf(null)),
+            onPressed: () => context.push(FolderEditorRoute.locationOf(null)),
             icon: const Icon(Icons.add),
             tooltip: l10n.newFolder,
           ),
@@ -144,11 +143,7 @@ class ChatFoldersScreen extends ConsumerWidget {
 /// One folder in the list: what it is called, what it keeps, and a handle to
 /// drag it by.
 class _FolderRow extends ConsumerWidget {
-  const _FolderRow({
-    super.key,
-    required this.folder,
-    required this.index,
-  });
+  const _FolderRow({super.key, required this.folder, required this.index});
 
   final ChatFolder folder;
   final int index;

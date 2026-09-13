@@ -44,10 +44,7 @@ void main() {
       matching: find.byWidgetPredicate((w) => w.runtimeType == type),
     );
 
-    expect(
-      tester.widget<AnimatedOpacity>(inChip(AnimatedOpacity)).opacity,
-      0,
-    );
+    expect(tester.widget<AnimatedOpacity>(inChip(AnimatedOpacity)).opacity, 0);
     expect(
       tester.widget<IgnorePointer>(inChip(IgnorePointer)).ignoring,
       isTrue,

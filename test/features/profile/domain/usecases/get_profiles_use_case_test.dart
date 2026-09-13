@@ -29,37 +29,50 @@ void main() {
     contacts: [],
   );
 
-  const tPage = PageResult<ProfileEntity>(items: [tProfile], total: 1, page: 1, pageSize: 20);
+  const tPage = PageResult<ProfileEntity>(
+    items: [tProfile],
+    total: 1,
+    page: 1,
+    pageSize: 20,
+  );
 
-  test('should call ProfileRepository.getProfiles and return the page on success', () async {
-    when(
-      () => mockProfileRepository.getProfiles(
-        username: any(named: 'username'),
-        displayName: any(named: 'displayName'),
-        skills: any(named: 'skills'),
-        page: any(named: 'page'),
-        pageSize: any(named: 'pageSize'),
-        sort: any(named: 'sort'),
-      ),
-    ).thenAnswer((_) async => const Right(tPage));
+  test(
+    'should call ProfileRepository.getProfiles and return the page on success',
+    () async {
+      when(
+        () => mockProfileRepository.getProfiles(
+          username: any(named: 'username'),
+          displayName: any(named: 'displayName'),
+          skills: any(named: 'skills'),
+          page: any(named: 'page'),
+          pageSize: any(named: 'pageSize'),
+          sort: any(named: 'sort'),
+        ),
+      ).thenAnswer((_) async => const Right(tPage));
 
-    final result = await useCase.execute(username: 'jane');
+      final result = await useCase.execute(username: 'jane');
 
-    expect(result, const Right(tPage));
-    verify(
-      () => mockProfileRepository.getProfiles(
-        username: 'jane',
-        displayName: null,
-        skills: null,
-        page: 1,
-        pageSize: 20,
-        sort: null,
-      ),
-    ).called(1);
-  });
+      expect(result, const Right(tPage));
+      verify(
+        () => mockProfileRepository.getProfiles(
+          username: 'jane',
+          displayName: null,
+          skills: null,
+          page: 1,
+          pageSize: 20,
+          sort: null,
+        ),
+      ).called(1);
+    },
+  );
 
   test('should return the repository Failure when the call fails', () async {
-    const tFailure = ApiFailure(code: 'UNKNOWN', message: 'Something broke', detail: {}, status: 500);
+    const tFailure = ApiFailure(
+      code: 'UNKNOWN',
+      message: 'Something broke',
+      detail: {},
+      status: 500,
+    );
     when(
       () => mockProfileRepository.getProfiles(
         username: any(named: 'username'),
@@ -76,33 +89,42 @@ void main() {
     expect(result, const Left(tFailure));
   });
 
-  test('should return InputFailure and never hit the repository when page is less than 1', () async {
-    final result = await useCase.execute(page: 0);
+  test(
+    'should return InputFailure and never hit the repository when page is less than 1',
+    () async {
+      final result = await useCase.execute(page: 0);
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+    },
+  );
 
-  test('should return InputFailure and never hit the repository when pageSize is 0', () async {
-    final result = await useCase.execute(pageSize: 0);
+  test(
+    'should return InputFailure and never hit the repository when pageSize is 0',
+    () async {
+      final result = await useCase.execute(pageSize: 0);
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+    },
+  );
 
-  test('should return InputFailure and never hit the repository when pageSize exceeds 100', () async {
-    final result = await useCase.execute(pageSize: 101);
+  test(
+    'should return InputFailure and never hit the repository when pageSize exceeds 100',
+    () async {
+      final result = await useCase.execute(pageSize: 101);
 
-    result.fold(
-      (failure) => expect(failure, isA<InputFailure>()),
-      (_) => fail('Should have returned a failure'),
-    );
-    verifyZeroInteractions(mockProfileRepository);
-  });
+      result.fold(
+        (failure) => expect(failure, isA<InputFailure>()),
+        (_) => fail('Should have returned a failure'),
+      );
+      verifyZeroInteractions(mockProfileRepository);
+    },
+  );
 }

@@ -161,9 +161,9 @@ void main() {
 
   group('markChatRead', () {
     test('clears the badge and reads up to the last message', () async {
-      when(() => markRead.execute(any(), any())).thenAnswer(
-        (_) async => const Right(null),
-      );
+      when(
+        () => markRead.execute(any(), any()),
+      ).thenAnswer((_) async => const Right(null));
 
       final container = await boot([
         chat(unread: 3, last: lastMessage(seq: 11, authorId: peerId)),
@@ -176,9 +176,9 @@ void main() {
     });
 
     test('falls back to the chat seq counter without a preview', () async {
-      when(() => markRead.execute(any(), any())).thenAnswer(
-        (_) async => const Right(null),
-      );
+      when(
+        () => markRead.execute(any(), any()),
+      ).thenAnswer((_) async => const Right(null));
 
       final container = await boot([chat(unread: 2)]);
       await container.read(chatListProvider.notifier).markChatRead(chatId);

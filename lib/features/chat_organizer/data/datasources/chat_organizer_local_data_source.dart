@@ -47,7 +47,8 @@ class SharedPrefsChatOrganizerDataSource
   Future<Set<String>> readPinned() async => _readIds(pinnedKey);
 
   @override
-  Future<void> writePinned(Set<String> chatIds) => _writeIds(pinnedKey, chatIds);
+  Future<void> writePinned(Set<String> chatIds) =>
+      _writeIds(pinnedKey, chatIds);
 
   @override
   Future<Set<String>> readArchived() async => _readIds(archivedKey);
@@ -147,8 +148,7 @@ class InMemoryChatOrganizerDataSource implements ChatOrganizerLocalDataSource {
   Future<Set<String>> readPinned() async => {..._pinned};
 
   @override
-  Future<void> writePinned(Set<String> chatIds) async =>
-      _pinned = {...chatIds};
+  Future<void> writePinned(Set<String> chatIds) async => _pinned = {...chatIds};
 
   @override
   Future<Set<String>> readArchived() async => {..._archived};

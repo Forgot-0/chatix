@@ -49,7 +49,9 @@ abstract final class MessageLinkifier {
   /// from firing on the tail of an address that somehow got past the email
   /// branch.
   static final RegExp _pattern = RegExp(
-    r'(?<url>(?:https?://|www\.)[^\s<>"' "'" r']+)'
+    r'(?<url>(?:https?://|www\.)[^\s<>"'
+    "'"
+    r']+)'
     r'|(?<email>[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z]{2,})+)'
     r'|(?<mention>(?<![A-Za-z0-9_@.])@[A-Za-z0-9][A-Za-z0-9._-]{0,99})'
     r'|(?<phone>(?<![\d+])\+\d[\d  ()\-]{5,20}\d)',
@@ -153,7 +155,11 @@ abstract final class MessageLinkifier {
       final digits = text.replaceAll(RegExp(r'[^\d]'), '');
       // Short enough to be a price or a score rather than a number to dial.
       if (digits.length < 7 || digits.length > 15) return null;
-      return LinkSpan(text, kind: MessageLinkKind.phone, target: 'tel:+$digits');
+      return LinkSpan(
+        text,
+        kind: MessageLinkKind.phone,
+        target: 'tel:+$digits',
+      );
     }
 
     return null;
