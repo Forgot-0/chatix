@@ -2932,29 +2932,101 @@ abstract class AppLocalizations {
   /// **'That file could not be read'**
   String get attachUnavailable;
 
-  /// Captured video note exceeds MAX duration
-  ///
-  /// In en, this message translates to:
-  /// **'A video note can be at most {seconds} s long'**
-  String videoNoteTooLong(int seconds);
-
   /// Captured video note exceeds the 640 px cap the server enforces
   ///
   /// In en, this message translates to:
   /// **'This camera records above {pixels} px, which the server rejects for video notes'**
   String videoNoteTooLarge(int pixels);
 
-  /// The captured file could not be probed for duration/size
-  ///
-  /// In en, this message translates to:
-  /// **'That recording could not be checked'**
-  String get videoNoteUnreadable;
-
   /// Counter once the message is past the 4096-character cap
   ///
   /// In en, this message translates to:
   /// **'{count} over the limit'**
   String composerTooLongBy(int count);
+
+  /// Video note recorder: what the shutter does
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to record'**
+  String get videoNoteTapToRecord;
+
+  /// Video note recorder: the device has no camera
+  ///
+  /// In en, this message translates to:
+  /// **'This device has no camera to record with'**
+  String get videoNoteNoCamera;
+
+  /// Video note recorder: camera or mic grant refused
+  ///
+  /// In en, this message translates to:
+  /// **'Allow camera and microphone access to record a video note'**
+  String get videoNoteCameraDenied;
+
+  /// Video note recorder: the camera would not open
+  ///
+  /// In en, this message translates to:
+  /// **'The camera could not be started'**
+  String get videoNoteCameraFailed;
+
+  /// Quiet toast when a take was too short or unusable
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was recorded'**
+  String get videoNoteDiscarded;
+
+  /// Action on a document attachment: hand it to the platform
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get attachmentOpen;
+
+  /// Confirmation after an attachment was copied to the device, with the full path
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {path}'**
+  String attachmentSavedTo(String path);
+
+  /// The attachment could not be downloaded or copied to the device
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this file'**
+  String get attachmentSaveFailed;
+
+  /// Label on the progress ring of a file whose bytes are going out
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get attachmentUploading;
+
+  /// Where the open photo sits in the chat’s media, shown in the viewer
+  ///
+  /// In en, this message translates to:
+  /// **'{index} of {count}'**
+  String mediaViewerCounter(int index, int count);
+
+  /// The viewer was opened on media that is no longer in the loaded history
+  ///
+  /// In en, this message translates to:
+  /// **'This media is no longer available'**
+  String get mediaViewerUnavailable;
+
+  /// Explains that tiles can be dropped on the pre-send preview screen
+  ///
+  /// In en, this message translates to:
+  /// **'Remove anything you did not mean to send'**
+  String get mediaPreviewHint;
+
+  /// Placeholder of the album caption field; the caption becomes the message content
+  ///
+  /// In en, this message translates to:
+  /// **'Add a caption'**
+  String get mediaPreviewCaptionHint;
+
+  /// Tooltip on the button that drops one file from a staged album
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get mediaPreviewRemove;
 }
 
 class _AppLocalizationsDelegate

@@ -23,6 +23,8 @@ abstract final class RouteNames {
   static const String chatMembers = 'chatMembers';
   static const String chatInfo = 'chatInfo';
   static const String chatCall = 'chatCall';
+  static const String chatMedia = 'chatMedia';
+  static const String chatAttach = 'chatAttach';
   static const String chatFolders = 'chatFolders';
   static const String folderEditor = 'folderEditor';
 
@@ -231,6 +233,55 @@ abstract final class ChatCallRoute {
   static const String path = 'call';
   static String locationOf(String chatId) => '/chats/$chatId/call';
 }
+
+/// `/chats/{chatId}/media?message={id}&attachment={id}` — one photo or video
+/// full screen, with the rest of the chat's media a swipe away.
+///
+/// Both ids travel in the URL rather than only in `extra` so the screen can
+/// stand on its own: `extra` carries the strip already built from the loaded
+/// feed when there is one, and without it the viewer fetches that single
+/// message and shows it alone.
+class ChatMediaRoute {
+  const ChatMediaRoute(
+    this.chatId, {
+    required this.messageId,
+    required this.attachmentId,
+  });
+
+  final String chatId;
+  final String messageId;
+  final String attachmentId;
+
+  static const String path = 'media';
+  static const String messageQueryParam = 'message';
+  static const String attachmentQueryParam = 'attachment';
+
+  String get location =>
+      '/chats/$chatId/$path'
+      '?$messageQueryParam=${Uri.encodeQueryComponent(messageId)}'
+      '&$attachmentQueryParam=${Uri.encodeQueryComponent(attachmentId)}';
+
+  static String? messageIdFrom(GoRouterState state) =>
+      _nonEmpty(state.uri.queryParameters[messageQueryParam]);
+
+  static String? attachmentIdFrom(GoRouterState state) =>
+      _nonEmpty(state.uri.queryParameters[attachmentQueryParam]);
+}
+
+/// `/chats/{chatId}/attach` — what was picked, before it is sent.
+///
+/// The files themselves travel in `extra`; there is nothing to put in a URL
+/// for a handful of paths on this device, and a link to someone else's
+/// gallery would mean nothing. Reached with an empty `extra`, the screen has
+/// nothing to show and closes.
+abstract final class ChatAttachRoute {
+  static const String path = 'attach';
+
+  static String locationOf(String chatId) => '/chats/$chatId/$path';
+}
+
+String? _nonEmpty(String? value) =>
+    value == null || value.isEmpty ? null : value;
 
 abstract final class ProfileEditRoute {
   static const String path = 'edit';

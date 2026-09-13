@@ -1,14 +1,24 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
-import 'package:chatix/gen/l10n/app_localizations.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
 
-class VideoPreview extends ConsumerStatefulWidget {
+/// A video played from the file cache.
+///
+/// The file rather than the link: a presigned URL is good for 300 seconds
+/// (api-docs §5.5), which is not long enough to survive a video note being
+/// watched twice, while the cached copy under its `s3_key` is good forever.
+/// A video note is small by construction (≤ 40 MB, ≤ 60 s), so having the
+/// whole file before the first frame costs little and buys playback that
+/// cannot expire mid-way.
+class VideoPreview extends ConsumerWidget {
   const VideoPreview({
     super.key,
     required this.attachment,
@@ -19,20 +29,87 @@ class VideoPreview extends ConsumerStatefulWidget {
   final AttachmentEntity attachment;
   final String messageId;
 
+  /// Video notes are round and loop; ordinary videos are neither.
   final bool isCircular;
 
   @override
-  ConsumerState<VideoPreview> createState() => _VideoPreviewState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chatix = ChatixTheme.of(context);
+
+    final radius = isCircular
+        ? BorderRadius.circular(1000)
+        : BorderRadius.circular(chatix.bubbleAnchorRadius * 2);
+
+    final aspect = isCircular ? 1.0 : _aspectOf(attachment);
+    final key = attachmentFileKey(attachment, messageId: messageId);
+
+    final body = ref
+        .watch(attachmentFileProvider(key))
+        .when(
+          loading: () => const AttachmentImagePlaceholder(),
+          error: (_, _) => AttachmentImageFailure(
+            onRetry: () => ref.invalidate(attachmentFileProvider(key)),
+          ),
+          data: (file) => _VideoSurface(
+            file: file,
+            isCircular: isCircular,
+            duration: attachment.durationSeconds,
+          ),
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: SizedBox(
+          width: isCircular ? 200 : null,
+          child: AspectRatio(aspectRatio: aspect, child: body),
+        ),
+      ),
+    );
+  }
+
+  static double _aspectOf(AttachmentEntity attachment) {
+    final width = attachment.width;
+    final height = attachment.height;
+    if (width == null || height == null || height <= 0) return 1.4;
+
+    return (width / height).clamp(0.6, 1.8).toDouble();
+  }
 }
 
-class _VideoPreviewState extends ConsumerState<VideoPreview> {
+class _VideoSurface extends StatefulWidget {
+  const _VideoSurface({
+    required this.file,
+    required this.isCircular,
+    required this.duration,
+  });
+
+  final File file;
+  final bool isCircular;
+  final int? duration;
+
+  @override
+  State<_VideoSurface> createState() => _VideoSurfaceState();
+}
+
+class _VideoSurfaceState extends State<_VideoSurface> {
   VideoPlayerController? _controller;
   bool _failed = false;
-  bool _initialising = false;
 
   @override
   void initState() {
     super.initState();
+    _prepare();
+  }
+
+  @override
+  void didUpdateWidget(_VideoSurface oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.file.path == widget.file.path) return;
+
+    _controller?.dispose();
+    _controller = null;
     _prepare();
   }
 
@@ -43,24 +120,7 @@ class _VideoPreviewState extends ConsumerState<VideoPreview> {
   }
 
   Future<void> _prepare() async {
-    if (_initialising) return;
-    _initialising = true;
-
-    final result = await ref
-        .read(getAttachmentDownloadUrlUseCaseProvider)
-        .execute(
-          widget.attachment.chatId,
-          widget.messageId,
-          widget.attachment.id,
-        );
-
-    final url = result.getRight().toNullable()?.url ?? widget.attachment.url;
-    if (url == null || url.isEmpty) {
-      if (mounted) setState(() => _failed = true);
-      return;
-    }
-
-    final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+    final controller = VideoPlayerController.file(widget.file);
     try {
       await controller.initialize();
       await controller.setLooping(widget.isCircular);
@@ -80,6 +140,7 @@ class _VideoPreviewState extends ConsumerState<VideoPreview> {
   void _togglePlay() {
     final controller = _controller;
     if (controller == null) return;
+
     setState(() {
       controller.value.isPlaying ? controller.pause() : controller.play();
     });
@@ -87,49 +148,19 @@ class _VideoPreviewState extends ConsumerState<VideoPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final chatix = ChatixTheme.of(context);
-
-    final radius = widget.isCircular
-        ? BorderRadius.circular(1000)
-        : BorderRadius.circular(chatix.bubbleAnchorRadius * 2);
-
-    final aspect = widget.isCircular
-        ? 1.0
-        : (widget.attachment.width != null &&
-                  widget.attachment.height != null &&
-                  widget.attachment.height! > 0
-              ? (widget.attachment.width! / widget.attachment.height!).clamp(
-                  0.6,
-                  1.8,
-                )
-              : 1.4);
+    if (_failed) return const AttachmentImageFailure();
 
     final controller = _controller;
+    if (controller == null) return const AttachmentImagePlaceholder();
 
-    Widget body;
-    if (_failed) {
-      body = Container(
-        color: theme.colorScheme.surfaceContainerHighest,
-        alignment: Alignment.center,
-        child: Text(
-          AppLocalizations.of(context).imageLoadFailed,
-          style: theme.textTheme.labelSmall,
-          textAlign: TextAlign.center,
-        ),
-      );
-    } else if (controller == null) {
-      body = Container(
-        color: theme.colorScheme.surfaceContainerHighest,
-        alignment: Alignment.center,
-        child: const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    } else {
-      body = Stack(
+    final seconds = widget.duration;
+    final duration = controller.value.duration.inSeconds > 0
+        ? controller.value.duration
+        : Duration(seconds: seconds ?? 0);
+
+    return GestureDetector(
+      onTap: _togglePlay,
+      child: Stack(
         fit: StackFit.expand,
         children: [
           FittedBox(
@@ -149,105 +180,26 @@ class _VideoPreviewState extends ConsumerState<VideoPreview> {
                 child: Icon(Icons.play_arrow, color: Colors.white, size: 26),
               ),
             ),
-          Positioned(
-            right: 6,
-            bottom: 6,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _duration(controller.value.duration),
-                style: const TextStyle(color: Colors.white, fontSize: 11),
+          if (duration > Duration.zero)
+            Positioned(
+              right: 6,
+              bottom: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  formatMediaDuration(duration),
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
               ),
             ),
-          ),
         ],
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: GestureDetector(
-        onTap: controller == null ? null : _togglePlay,
-        child: ClipRRect(
-          borderRadius: radius,
-          child: SizedBox(
-            width: widget.isCircular ? 200 : null,
-            child: AspectRatio(aspectRatio: aspect.toDouble(), child: body),
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _duration(Duration value) {
-    final minutes = value.inMinutes;
-    final seconds = value.inSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
-}
-
-class VideoViewer extends StatelessWidget {
-  const VideoViewer({
-    super.key,
-    required this.attachment,
-    required this.messageId,
-  });
-
-  final AttachmentEntity attachment;
-  final String messageId;
-
-  static Future<void> open(
-    BuildContext context, {
-    required AttachmentEntity attachment,
-    required String messageId,
-  }) {
-    return Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) =>
-            VideoViewer(attachment: attachment, messageId: messageId),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(
-          attachment.originalFilename,
-          style: const TextStyle(fontSize: 15),
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          IconButton(
-            tooltip: l10n.close,
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: VideoPreview(attachment: attachment, messageId: messageId),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            ChatAttachmentLimits.formatBytes(attachment.size),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ),
       ),
     );
   }

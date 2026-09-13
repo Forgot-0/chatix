@@ -21,6 +21,13 @@ abstract final class ChatAttachmentLimits {
 
   static const int maxVideoNoteDurationSeconds = 60;
 
+  /// The video-note frame cap, measured on the **short** side.
+  ///
+  /// Which side the server measures is what decides whether an ordinary
+  /// 480p capture is usable at all: 720×480 is over 640 on its long side
+  /// and comfortably under it on its short one. It is the short side, so a
+  /// landscape 480p frame passes and only genuinely large captures are
+  /// refused with `resolution_limit_exceeded` (api-docs §5.5).
   static const int maxVideoNoteResolutionPx = 640;
 
   static const Set<String> imageMimeTypes = {
@@ -153,6 +160,19 @@ abstract final class ChatAttachmentLimits {
       case AttachmentType.file:
         return null;
     }
+  }
+
+  /// Whether a frame of this size may be sent as a `video_note`.
+  ///
+  /// The rule lives here rather than in whatever is holding the camera, so
+  /// the recorder picking a resolution and the check on the finished file
+  /// cannot drift apart. Orientation does not matter — a portrait 480×720
+  /// and a landscape 720×480 are the same frame turned sideways.
+  static bool fitsVideoNoteFrame(int width, int height) {
+    if (width <= 0 || height <= 0) return false;
+
+    final shortSide = width < height ? width : height;
+    return shortSide <= maxVideoNoteResolutionPx;
   }
 
   static const Set<AttachmentType> exclusiveTypes = {

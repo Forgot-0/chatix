@@ -1638,21 +1638,61 @@ class AppLocalizationsDe extends AppLocalizations {
   String get attachUnavailable => 'Diese Datei konnte nicht gelesen werden';
 
   @override
-  String videoNoteTooLong(int seconds) {
-    return 'Eine Videonachricht darf höchstens $seconds s lang sein';
-  }
-
-  @override
   String videoNoteTooLarge(int pixels) {
     return 'Diese Kamera nimmt über $pixels px auf — das lehnt der Server für Videonachrichten ab';
   }
 
   @override
-  String get videoNoteUnreadable =>
-      'Diese Aufnahme konnte nicht geprüft werden';
-
-  @override
   String composerTooLongBy(int count) {
     return '$count über dem Limit';
   }
+
+  @override
+  String get videoNoteTapToRecord => 'Zum Aufnehmen tippen';
+
+  @override
+  String get videoNoteNoCamera => 'Dieses Gerät hat keine Kamera zum Aufnehmen';
+
+  @override
+  String get videoNoteCameraDenied =>
+      'Erlaube Kamera- und Mikrofonzugriff, um eine Videonachricht aufzunehmen';
+
+  @override
+  String get videoNoteCameraFailed =>
+      'Die Kamera konnte nicht gestartet werden';
+
+  @override
+  String get videoNoteDiscarded => 'Es wurde nichts aufgenommen';
+
+  @override
+  String get attachmentOpen => 'Öffnen';
+
+  @override
+  String attachmentSavedTo(String path) {
+    return 'Gespeichert unter $path';
+  }
+
+  @override
+  String get attachmentSaveFailed =>
+      'Diese Datei konnte nicht gespeichert werden';
+
+  @override
+  String get attachmentUploading => 'Wird hochgeladen';
+
+  @override
+  String mediaViewerCounter(int index, int count) {
+    return '$index von $count';
+  }
+
+  @override
+  String get mediaViewerUnavailable => 'Dieses Medium ist nicht mehr verfügbar';
+
+  @override
+  String get mediaPreviewHint => 'Entfernen Sie, was nicht mitgehen soll';
+
+  @override
+  String get mediaPreviewCaptionHint => 'Bildunterschrift hinzufügen';
+
+  @override
+  String get mediaPreviewRemove => 'Entfernen';
 }

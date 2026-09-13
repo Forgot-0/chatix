@@ -2125,15 +2125,6 @@
   "@attachUnavailable": {
     "description": "A picked gallery item could not be read back"
   },
-  "videoNoteTooLong": "A video note can be at most {seconds} s long",
-  "@videoNoteTooLong": {
-    "description": "Captured video note exceeds MAX duration",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "videoNoteTooLarge": "This camera records above {pixels} px, which the server rejects for video notes",
   "@videoNoteTooLarge": {
     "description": "Captured video note exceeds the 640 px cap the server enforces",
@@ -2143,10 +2134,6 @@
       }
     }
   },
-  "videoNoteUnreadable": "That recording could not be checked",
-  "@videoNoteUnreadable": {
-    "description": "The captured file could not be probed for duration/size"
-  },
   "composerTooLongBy": "{count} over the limit",
   "@composerTooLongBy": {
     "description": "Counter once the message is past the 4096-character cap",
@@ -2155,5 +2142,74 @@
         "type": "int"
       }
     }
+  },
+  "videoNoteTapToRecord": "Tap to record",
+  "@videoNoteTapToRecord": {
+    "description": "Video note recorder: what the shutter does"
+  },
+  "videoNoteNoCamera": "This device has no camera to record with",
+  "@videoNoteNoCamera": {
+    "description": "Video note recorder: the device has no camera"
+  },
+  "videoNoteCameraDenied": "Allow camera and microphone access to record a video note",
+  "@videoNoteCameraDenied": {
+    "description": "Video note recorder: camera or mic grant refused"
+  },
+  "videoNoteCameraFailed": "The camera could not be started",
+  "@videoNoteCameraFailed": {
+    "description": "Video note recorder: the camera would not open"
+  },
+  "videoNoteDiscarded": "Nothing was recorded",
+  "@videoNoteDiscarded": {
+    "description": "Quiet toast when a take was too short or unusable"
+  },
+  "attachmentOpen": "Open",
+  "@attachmentOpen": {
+    "description": "Action on a document attachment: hand it to the platform"
+  },
+  "attachmentSavedTo": "Saved to {path}",
+  "@attachmentSavedTo": {
+    "description": "Confirmation after an attachment was copied to the device, with the full path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentSaveFailed": "Could not save this file",
+  "@attachmentSaveFailed": {
+    "description": "The attachment could not be downloaded or copied to the device"
+  },
+  "attachmentUploading": "Uploading",
+  "@attachmentUploading": {
+    "description": "Label on the progress ring of a file whose bytes are going out"
+  },
+  "mediaViewerCounter": "{index} of {count}",
+  "@mediaViewerCounter": {
+    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaViewerUnavailable": "This media is no longer available",
+  "@mediaViewerUnavailable": {
+    "description": "The viewer was opened on media that is no longer in the loaded history"
+  },
+  "mediaPreviewHint": "Remove anything you did not mean to send",
+  "@mediaPreviewHint": {
+    "description": "Explains that tiles can be dropped on the pre-send preview screen"
+  },
+  "mediaPreviewCaptionHint": "Add a caption",
+  "@mediaPreviewCaptionHint": {
+    "description": "Placeholder of the album caption field; the caption becomes the message content"
+  },
+  "mediaPreviewRemove": "Remove",
+  "@mediaPreviewRemove": {
+    "description": "Tooltip on the button that drops one file from a staged album"
   }
 }

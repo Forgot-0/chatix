@@ -1618,20 +1618,59 @@ class AppLocalizationsBn extends AppLocalizations {
   String get attachUnavailable => 'ফাইলটি পড়া যায়নি';
 
   @override
-  String videoNoteTooLong(int seconds) {
-    return 'ভিডিও নোট সর্বোচ্চ $seconds সেকেন্ড হতে পারে';
-  }
-
-  @override
   String videoNoteTooLarge(int pixels) {
     return 'এই ক্যামেরা $pixels পিক্সেলের বেশি রেকর্ড করে, যা ভিডিও নোটের জন্য সার্ভার গ্রহণ করে না';
   }
 
   @override
-  String get videoNoteUnreadable => 'এই রেকর্ডিং যাচাই করা যায়নি';
-
-  @override
   String composerTooLongBy(int count) {
     return 'সীমার চেয়ে $count বেশি';
   }
+
+  @override
+  String get videoNoteTapToRecord => 'রেকর্ড করতে ট্যাপ করুন';
+
+  @override
+  String get videoNoteNoCamera => 'এই ডিভাইসে রেকর্ড করার ক্যামেরা নেই';
+
+  @override
+  String get videoNoteCameraDenied =>
+      'ভিডিও নোট রেকর্ড করতে ক্যামেরা ও মাইক্রোফোনের অনুমতি দিন';
+
+  @override
+  String get videoNoteCameraFailed => 'ক্যামেরা চালু করা যায়নি';
+
+  @override
+  String get videoNoteDiscarded => 'কিছু রেকর্ড হয়নি';
+
+  @override
+  String get attachmentOpen => 'খুলুন';
+
+  @override
+  String attachmentSavedTo(String path) {
+    return '$path-এ সংরক্ষণ করা হয়েছে';
+  }
+
+  @override
+  String get attachmentSaveFailed => 'এই ফাইলটি সংরক্ষণ করা যায়নি';
+
+  @override
+  String get attachmentUploading => 'আপলোড হচ্ছে';
+
+  @override
+  String mediaViewerCounter(int index, int count) {
+    return '$countটির মধ্যে $index';
+  }
+
+  @override
+  String get mediaViewerUnavailable => 'এই মিডিয়াটি আর উপলব্ধ নেই';
+
+  @override
+  String get mediaPreviewHint => 'যা পাঠাতে চান না তা সরিয়ে ফেলুন';
+
+  @override
+  String get mediaPreviewCaptionHint => 'ক্যাপশন যোগ করুন';
+
+  @override
+  String get mediaPreviewRemove => 'সরান';
 }

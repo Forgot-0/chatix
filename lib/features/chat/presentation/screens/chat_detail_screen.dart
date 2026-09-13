@@ -13,7 +13,6 @@ import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
@@ -25,7 +24,7 @@ import 'package:chatix/features/chat/presentation/providers/in_chat_search_provi
 import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_attachment_picker.dart';
+import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_banners.dart';
@@ -33,6 +32,7 @@ import 'package:chatix/features/chat/presentation/widgets/composer/chat_composer
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_tray.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_locked_notice.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/video_note_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/forward_target_dialog.dart';
@@ -750,11 +750,45 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
+  /// Takes what was picked and decides what happens to it next.
+  ///
+  /// Photos and videos go through the preview screen first: an album is
+  /// worth looking at before it is sent, something picked by accident is
+  /// worth dropping, and the caption typed there becomes the message's
+  /// `content` (api-docs §5.4). A document has nothing to arrange — one
+  /// file, no caption of its own — so it is simply staged.
   Future<void> _stageUploads(
     List<AttachmentUploadRequestEntity> uploads,
   ) async {
     if (uploads.isEmpty) return;
 
+    final isAlbum = uploads.every((upload) {
+      final type = upload.resolvedType;
+      return type == AttachmentType.image || type == AttachmentType.video;
+    });
+
+    if (!isAlbum) {
+      await _stageAndUpload(uploads);
+      return;
+    }
+
+    final draft = _textController.text.trim();
+    final result = await context.push<MediaPreviewResult>(
+      ChatAttachRoute.locationOf(widget.chatId),
+      extra: MediaPreviewArgs(
+        uploads: uploads,
+        caption: draft.isEmpty ? null : draft,
+      ),
+    );
+
+    if (!mounted || result == null || result.uploads.isEmpty) return;
+    await _sendAlbum(result);
+  }
+
+  /// Stages files and starts their upload, leaving the send to the composer.
+  Future<void> _stageAndUpload(
+    List<AttachmentUploadRequestEntity> uploads,
+  ) async {
     final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
     notifier.select(uploads);
 
@@ -764,37 +798,67 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
-  /// Records a video note and sends it, or says why it cannot.
+  /// Uploads an album and sends it with its caption.
   ///
-  /// The server checks 60 s and 640 px in a background worker and reports
-  /// nothing but `attachment_status: "error"` if either is broken (api-docs
-  /// §5.5), so the file is measured here while there is still a sentence
-  /// worth saying about it.
-  Future<void> _captureVideoNote() async {
-    final capture = await ChatAttachmentPicker.captureVideoNote();
+  /// The send button in the preview means "send", so there is nothing left
+  /// to press afterwards — the tray shows the upload, and the message goes
+  /// out as soon as the slots are in hand. An upload that was cancelled or
+  /// refused leaves no tokens and no message; the tray says which.
+  Future<void> _sendAlbum(MediaPreviewResult result) async {
+    final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
+    notifier.select(result.uploads);
+
+    if (ref.read(chatAttachmentProvider(widget.chatId)).value?.failure !=
+        null) {
+      return;
+    }
+
+    // The caption has left the box for the message.
+    _setText('');
+    ref.read(chatDraftsProvider.notifier).clear(widget.chatId);
+
+    await notifier.upload();
     if (!mounted) return;
 
-    final l10n = AppLocalizations.of(context);
+    final tokens =
+        ref.read(chatAttachmentProvider(widget.chatId)).value?.uploadTokens ??
+        const <String>[];
 
-    switch (capture.outcome) {
-      case VideoNoteOutcome.cancelled:
-        return;
-      case VideoNoteOutcome.ready:
-        await _sendExclusive(capture.upload!, MessageType.videoNote);
-      case VideoNoteOutcome.tooLong:
-        AppSnackbar.quiet(
-          context,
-          l10n.videoNoteTooLong(
-            ChatAttachmentLimits.maxVideoNoteDurationSeconds,
-          ),
-        );
-      case VideoNoteOutcome.tooLarge:
-        AppSnackbar.quiet(
-          context,
-          l10n.videoNoteTooLarge(ChatAttachmentLimits.maxVideoNoteResolutionPx),
-        );
-      case VideoNoteOutcome.unreadable:
-        AppSnackbar.quiet(context, l10n.videoNoteUnreadable);
+    if (tokens.isEmpty) {
+      // Cancelled, or the upload gave up. The caption goes back in the box
+      // so a second attempt from the tray still has it.
+      final caption = result.caption;
+      if (caption != null) _setText(caption);
+      return;
     }
+
+    _composer.markSent();
+    _composer.setSending(value: true);
+
+    await ref
+        .read(chatDetailProvider(widget.chatId).notifier)
+        .sendMessage(content: result.caption, uploadTokens: tokens);
+
+    if (!mounted) return;
+    _composer.setSending(value: false);
+
+    ref.read(confirmedAttachmentTokensProvider.notifier).release(tokens);
+    notifier.clear();
+  }
+
+  /// Records a video note and sends it.
+  ///
+  /// The recorder owns the camera rather than borrowing the system one: a
+  /// `video_note` must come in under 640 px and 60 s (api-docs §5.5), and
+  /// nothing downstream will resize it — so it is recorded at a size the
+  /// server already accepts. A take that comes back empty was too short or
+  /// unreadable, which is worth a word and nothing more.
+  Future<void> _captureVideoNote() async {
+    final take = await VideoNoteSheet.show(context);
+    if (!mounted) return;
+
+    if (take == null) return;
+
+    await _sendExclusive(take.upload, MessageType.videoNote);
   }
 }

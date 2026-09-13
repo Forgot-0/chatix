@@ -1596,20 +1596,58 @@ class AppLocalizationsJa extends AppLocalizations {
   String get attachUnavailable => 'このファイルを読み込めませんでした';
 
   @override
-  String videoNoteTooLong(int seconds) {
-    return 'ビデオメッセージは最大$seconds秒です';
-  }
-
-  @override
   String videoNoteTooLarge(int pixels) {
     return 'このカメラは${pixels}pxを超えて録画するため、ビデオメッセージとして受け付けられません';
   }
 
   @override
-  String get videoNoteUnreadable => 'この録画を確認できませんでした';
-
-  @override
   String composerTooLongBy(int count) {
     return '上限を$count超過';
   }
+
+  @override
+  String get videoNoteTapToRecord => 'タップして録画';
+
+  @override
+  String get videoNoteNoCamera => 'この端末には録画できるカメラがありません';
+
+  @override
+  String get videoNoteCameraDenied => 'ビデオメッセージの録画にはカメラとマイクへのアクセスを許可してください';
+
+  @override
+  String get videoNoteCameraFailed => 'カメラを起動できませんでした';
+
+  @override
+  String get videoNoteDiscarded => '録画されませんでした';
+
+  @override
+  String get attachmentOpen => '開く';
+
+  @override
+  String attachmentSavedTo(String path) {
+    return '$path に保存しました';
+  }
+
+  @override
+  String get attachmentSaveFailed => 'このファイルを保存できませんでした';
+
+  @override
+  String get attachmentUploading => 'アップロード中';
+
+  @override
+  String mediaViewerCounter(int index, int count) {
+    return '$count 件中 $index 件目';
+  }
+
+  @override
+  String get mediaViewerUnavailable => 'このメディアは利用できません';
+
+  @override
+  String get mediaPreviewHint => '送りたくないものは削除できます';
+
+  @override
+  String get mediaPreviewCaptionHint => 'キャプションを追加';
+
+  @override
+  String get mediaPreviewRemove => '削除';
 }

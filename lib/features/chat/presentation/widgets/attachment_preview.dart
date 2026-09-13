@@ -1,13 +1,20 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
-import 'package:chatix/features/chat/presentation/providers/attachment_url_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-class AttachmentImage extends ConsumerStatefulWidget {
+/// An image attachment, drawn from the file cache.
+///
+/// Never from `AttachmentDTO.url` directly: that link is dead 300 seconds
+/// after it was minted (api-docs §5.5), so what is cached is the file under
+/// its `s3_key` and the link is re-requested behind the scenes whenever it
+/// has gone stale. From here that is invisible — there is a file, or there
+/// is a failure with a way to try again.
+class AttachmentImage extends ConsumerWidget {
   const AttachmentImage({
     super.key,
     required this.attachment,
@@ -21,60 +28,51 @@ class AttachmentImage extends ConsumerStatefulWidget {
   final BoxFit fit;
   final BorderRadius? borderRadius;
 
-  @override
-  ConsumerState<AttachmentImage> createState() => _AttachmentImageState();
-}
-
-class _AttachmentImageState extends ConsumerState<AttachmentImage> {
-  bool _refreshed = false;
-
-  AttachmentRef get _ref => (
-    chatId: widget.attachment.chatId,
-    messageId: widget.messageId,
-    attachmentId: widget.attachment.id,
-  );
+  AttachmentFileKey get _key =>
+      attachmentFileKey(attachment, messageId: messageId);
 
   @override
-  Widget build(BuildContext context) {
-    final inline = widget.attachment.url;
-
-    if (inline != null && inline.isNotEmpty && !_refreshed) {
-      return _image(inline);
-    }
-
-    return ref
-        .watch(attachmentDownloadUrlProvider(_ref))
-        .when(loading: _placeholder, error: (_, _) => _failed(), data: _image);
-  }
-
-  Widget _image(String url) {
-    final radius = widget.borderRadius ?? BorderRadius.circular(12);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final radius = borderRadius ?? BorderRadius.circular(12);
 
     return ClipRRect(
       borderRadius: radius,
-      child: CachedNetworkImage(
-        imageUrl: url,
-        cacheKey: widget.attachment.s3Key,
-        fit: widget.fit,
-        width: double.infinity,
-        placeholder: (_, _) => _placeholder(),
-        errorWidget: (_, _, _) {
-          if (!_refreshed) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!mounted || _refreshed) return;
-              setState(() => _refreshed = true);
-              ref.invalidate(attachmentDownloadUrlProvider(_ref));
-            });
-            return _placeholder();
-          }
-          return _failed();
-        },
-      ),
+      child: ref
+          .watch(attachmentFileProvider(_key))
+          .when(
+            loading: () => const AttachmentImagePlaceholder(),
+            error: (_, _) => AttachmentImageFailure(
+              onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+            ),
+            data: (file) => _image(context, ref, file),
+          ),
     );
   }
 
-  Widget _placeholder() {
+  Widget _image(BuildContext context, WidgetRef ref, File file) {
+    return Image.file(
+      file,
+      fit: fit,
+      width: double.infinity,
+      height: double.infinity,
+      // The bytes behind an `s3_key` never change, so a frame already
+      // decoded is always the right one to keep showing.
+      gaplessPlayback: true,
+      errorBuilder: (_, _, _) => AttachmentImageFailure(
+        onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+      ),
+    );
+  }
+}
+
+/// The grey ground an image sits on while it is being fetched.
+class AttachmentImagePlaceholder extends StatelessWidget {
+  const AttachmentImagePlaceholder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+
     return Container(
       color: scheme.surfaceContainerHighest,
       alignment: Alignment.center,
@@ -85,12 +83,27 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
       ),
     );
   }
+}
 
-  Widget _failed() {
+/// What is drawn instead of an image that would not come down.
+///
+/// The API says nothing about why a file is unavailable — a signature that
+/// expired, a gateway hiccup and a genuinely broken object all look the same
+/// (api-docs §5.5) — so the wording stays neutral and the only offer is to
+/// try again.
+class AttachmentImageFailure extends StatelessWidget {
+  const AttachmentImageFailure({super.key, this.onRetry});
+
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       color: theme.colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       alignment: Alignment.center,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -98,89 +111,30 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
           Icon(
             Icons.broken_image_outlined,
             color: theme.colorScheme.outline,
-            size: 28,
+            size: 24,
           ),
-          const SizedBox(height: 6),
-          Text(
-            AppLocalizations.of(context).imageLoadFailed,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.outline,
+          const SizedBox(height: 4),
+          Flexible(
+            child: Text(
+              l10n.imageLoadFailed,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
           ),
+          if (onRetry != null)
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: Text(l10n.retry),
+            ),
         ],
-      ),
-    );
-  }
-}
-
-class AttachmentViewer extends StatelessWidget {
-  const AttachmentViewer({
-    super.key,
-    required this.attachment,
-    required this.messageId,
-  });
-
-  final AttachmentEntity attachment;
-  final String messageId;
-
-  static Future<void> open(
-    BuildContext context, {
-    required AttachmentEntity attachment,
-    required String messageId,
-  }) {
-    return Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) =>
-            AttachmentViewer(attachment: attachment, messageId: messageId),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(
-          attachment.originalFilename,
-          style: const TextStyle(fontSize: 15),
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          IconButton(
-            tooltip: l10n.close,
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: InteractiveViewer(
-          minScale: 1,
-          maxScale: 5,
-          child: AttachmentImage(
-            attachment: attachment,
-            messageId: messageId,
-            fit: BoxFit.contain,
-            borderRadius: BorderRadius.zero,
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            ChatAttachmentLimits.formatBytes(attachment.size),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ),
       ),
     );
   }

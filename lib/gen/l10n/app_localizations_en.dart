@@ -1622,20 +1622,59 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attachUnavailable => 'That file could not be read';
 
   @override
-  String videoNoteTooLong(int seconds) {
-    return 'A video note can be at most $seconds s long';
-  }
-
-  @override
   String videoNoteTooLarge(int pixels) {
     return 'This camera records above $pixels px, which the server rejects for video notes';
   }
 
   @override
-  String get videoNoteUnreadable => 'That recording could not be checked';
-
-  @override
   String composerTooLongBy(int count) {
     return '$count over the limit';
   }
+
+  @override
+  String get videoNoteTapToRecord => 'Tap to record';
+
+  @override
+  String get videoNoteNoCamera => 'This device has no camera to record with';
+
+  @override
+  String get videoNoteCameraDenied =>
+      'Allow camera and microphone access to record a video note';
+
+  @override
+  String get videoNoteCameraFailed => 'The camera could not be started';
+
+  @override
+  String get videoNoteDiscarded => 'Nothing was recorded';
+
+  @override
+  String get attachmentOpen => 'Open';
+
+  @override
+  String attachmentSavedTo(String path) {
+    return 'Saved to $path';
+  }
+
+  @override
+  String get attachmentSaveFailed => 'Could not save this file';
+
+  @override
+  String get attachmentUploading => 'Uploading';
+
+  @override
+  String mediaViewerCounter(int index, int count) {
+    return '$index of $count';
+  }
+
+  @override
+  String get mediaViewerUnavailable => 'This media is no longer available';
+
+  @override
+  String get mediaPreviewHint => 'Remove anything you did not mean to send';
+
+  @override
+  String get mediaPreviewCaptionHint => 'Add a caption';
+
+  @override
+  String get mediaPreviewRemove => 'Remove';
 }

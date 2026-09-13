@@ -1,6 +1,8 @@
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/core/storage/cache/attachment_file_cache.dart';
+import 'package:chatix/features/chat/data/datasources/chat_attachment_downloader_impl.dart';
 import 'package:chatix/features/chat/data/datasources/chat_attachment_uploader_impl.dart';
 import 'package:chatix/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';
@@ -11,6 +13,7 @@ import 'package:chatix/features/chat/domain/usecases/delete_message_use_case.dar
 import 'package:chatix/features/chat/domain/usecases/edit_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/forward_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_attachment_download_url_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_attachment_file_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_chats_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
@@ -127,6 +130,16 @@ final getAttachmentDownloadUrlUseCaseProvider =
     Provider<GetAttachmentDownloadUrlUseCase>((ref) {
       return GetAttachmentDownloadUrlUseCase(ref.watch(chatRepositoryProvider));
     });
+
+final getAttachmentFileUseCaseProvider = Provider<GetAttachmentFileUseCase>((
+  ref,
+) {
+  return GetAttachmentFileUseCase(
+    ref.watch(chatRepositoryProvider),
+    ref.watch(chatAttachmentDownloaderProvider),
+    ref.watch(attachmentFileCacheProvider),
+  );
+});
 
 final joinCallUseCaseProvider = Provider<JoinCallUseCase>((ref) {
   return JoinCallUseCase(ref.watch(chatRepositoryProvider));

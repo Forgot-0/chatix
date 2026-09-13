@@ -42,6 +42,7 @@ class MessageBubble extends StatefulWidget {
     this.onCopy,
     this.onShowDetails,
     this.onOpenAttachment,
+    this.onRetryAttachment,
     this.onOpenLink,
     this.isKnownMention,
     this.reactions,
@@ -77,6 +78,10 @@ class MessageBubble extends StatefulWidget {
   final VoidCallback? onShowDetails;
 
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
+
+  /// Re-reads the message, the only retry an attachment that came back
+  /// `attachment_status: error` has (api-docs §5.5).
+  final VoidCallback? onRetryAttachment;
 
   /// Opening a url, an address or a phone number found in the text, or
   /// visiting the person a mention names.
@@ -182,6 +187,7 @@ class _MessageBubbleState extends State<MessageBubble> {
       isLastInGroup: widget.isLastInGroup,
       onJumpToOriginal: forOverlay ? null : widget.onJumpToOriginal,
       onOpenAttachment: forOverlay ? null : widget.onOpenAttachment,
+      onRetryAttachment: forOverlay ? null : widget.onRetryAttachment,
       onOpenLink: forOverlay ? null : widget.onOpenLink,
       isKnownMention: widget.isKnownMention,
       onToggleReaction: forOverlay ? null : widget.onToggleReaction,
@@ -324,6 +330,7 @@ class _BubbleBody extends StatelessWidget {
     required this.isLastInGroup,
     required this.onJumpToOriginal,
     required this.onOpenAttachment,
+    required this.onRetryAttachment,
     required this.onOpenLink,
     required this.isKnownMention,
     required this.onToggleReaction,
@@ -341,6 +348,7 @@ class _BubbleBody extends StatelessWidget {
   final bool isLastInGroup;
   final VoidCallback? onJumpToOriginal;
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
+  final VoidCallback? onRetryAttachment;
   final void Function(LinkSpan link)? onOpenLink;
   final bool Function(String handle)? isKnownMention;
   final void Function(String emoji)? onToggleReaction;
@@ -416,6 +424,7 @@ class _BubbleBody extends StatelessWidget {
               messageId: message.id,
               attachments: message.attachments,
               onOpen: onOpenAttachment,
+              onRetry: onRetryAttachment,
               foreground: foreground,
             ),
           if (hasText)

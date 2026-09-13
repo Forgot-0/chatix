@@ -575,15 +575,6 @@
   "@attachUnavailable": {
     "description": "A picked gallery item could not be read back"
   },
-  "videoNoteTooLong": "ビデオメッセージは最大{seconds}秒です",
-  "@videoNoteTooLong": {
-    "description": "Captured video note exceeds MAX duration",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "videoNoteTooLarge": "このカメラは{pixels}pxを超えて録画するため、ビデオメッセージとして受け付けられません",
   "@videoNoteTooLarge": {
     "description": "Captured video note exceeds the 640 px cap the server enforces",
@@ -593,10 +584,6 @@
       }
     }
   },
-  "videoNoteUnreadable": "この録画を確認できませんでした",
-  "@videoNoteUnreadable": {
-    "description": "The captured file could not be probed for duration/size"
-  },
   "composerTooLongBy": "上限を{count}超過",
   "@composerTooLongBy": {
     "description": "Counter once the message is past the 4096-character cap",
@@ -605,5 +592,74 @@
         "type": "int"
       }
     }
+  },
+  "videoNoteTapToRecord": "タップして録画",
+  "@videoNoteTapToRecord": {
+    "description": "Video note recorder: what the shutter does"
+  },
+  "videoNoteNoCamera": "この端末には録画できるカメラがありません",
+  "@videoNoteNoCamera": {
+    "description": "Video note recorder: the device has no camera"
+  },
+  "videoNoteCameraDenied": "ビデオメッセージの録画にはカメラとマイクへのアクセスを許可してください",
+  "@videoNoteCameraDenied": {
+    "description": "Video note recorder: camera or mic grant refused"
+  },
+  "videoNoteCameraFailed": "カメラを起動できませんでした",
+  "@videoNoteCameraFailed": {
+    "description": "Video note recorder: the camera would not open"
+  },
+  "videoNoteDiscarded": "録画されませんでした",
+  "@videoNoteDiscarded": {
+    "description": "Quiet toast when a take was too short or unusable"
+  },
+  "attachmentOpen": "開く",
+  "@attachmentOpen": {
+    "description": "Action on a document attachment: hand it to the platform"
+  },
+  "attachmentSavedTo": "{path} に保存しました",
+  "@attachmentSavedTo": {
+    "description": "Confirmation after an attachment was copied to the device, with the full path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentSaveFailed": "このファイルを保存できませんでした",
+  "@attachmentSaveFailed": {
+    "description": "The attachment could not be downloaded or copied to the device"
+  },
+  "attachmentUploading": "アップロード中",
+  "@attachmentUploading": {
+    "description": "Label on the progress ring of a file whose bytes are going out"
+  },
+  "mediaViewerCounter": "{count} 件中 {index} 件目",
+  "@mediaViewerCounter": {
+    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaViewerUnavailable": "このメディアは利用できません",
+  "@mediaViewerUnavailable": {
+    "description": "The viewer was opened on media that is no longer in the loaded history"
+  },
+  "mediaPreviewHint": "送りたくないものは削除できます",
+  "@mediaPreviewHint": {
+    "description": "Explains that tiles can be dropped on the pre-send preview screen"
+  },
+  "mediaPreviewCaptionHint": "キャプションを追加",
+  "@mediaPreviewCaptionHint": {
+    "description": "Placeholder of the album caption field; the caption becomes the message content"
+  },
+  "mediaPreviewRemove": "削除",
+  "@mediaPreviewRemove": {
+    "description": "Tooltip on the button that drops one file from a staged album"
   }
 }

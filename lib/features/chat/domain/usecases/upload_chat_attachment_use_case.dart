@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:chatix/features/chat/data/repositories/chat_attachment_uploader.dart';
 import 'package:equatable/equatable.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/network/transfer_cancellation.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
@@ -20,6 +23,13 @@ class ChatAttachmentUploadProgress extends Equatable {
 
   final List<String> uploadTokens;
 
+  /// How far each selected file has got, 0..1, in selection order.
+  ///
+  /// The ring on a thumbnail is per file, not per batch: an album uploads
+  /// one file at a time and the person watching wants to know which one is
+  /// moving. Empty before the first byte goes out.
+  final List<double> fileFractions;
+
   const ChatAttachmentUploadProgress({
     required this.stage,
     this.currentIndex = 0,
@@ -27,6 +37,7 @@ class ChatAttachmentUploadProgress extends Equatable {
     this.sentBytes = 0,
     this.totalBytes = 0,
     this.uploadTokens = const [],
+    this.fileFractions = const [],
   });
 
   double? get fraction {
@@ -37,6 +48,13 @@ class ChatAttachmentUploadProgress extends Equatable {
     return (currentIndex * perFile + withinFile * perFile).clamp(0.0, 1.0);
   }
 
+  /// How far the file at [index] has got, or null when nothing is known
+  /// about it yet.
+  double? fractionOf(int index) {
+    if (index < 0 || index >= fileFractions.length) return null;
+    return fileFractions[index];
+  }
+
   @override
   List<Object?> get props => [
     stage,
@@ -45,6 +63,7 @@ class ChatAttachmentUploadProgress extends Equatable {
     sentBytes,
     totalBytes,
     uploadTokens,
+    fileFractions,
   ];
 }
 
@@ -54,20 +73,58 @@ class UploadChatAttachmentUseCase {
 
   UploadChatAttachmentUseCase(this._repository, this._uploader);
 
+  /// Runs the three steps of api-docs §5.5 and reports on them as it goes.
+  ///
+  /// Progress arrives from the HTTP client as a callback rather than in
+  /// step with the awaits, so the stream is driven by a controller instead
+  /// of `async*`: a byte counter that only surfaced between files would be
+  /// no counter at all.
+  ///
+  /// [cancellation] is passed straight through to the transfer in flight. A
+  /// cancelled upload ends the stream with a `CancelledFailure`, which the
+  /// UI reads as "the person pressed the button", not as an error.
   Stream<Either<Failure, ChatAttachmentUploadProgress>> execute(
     String chatId,
+    List<AttachmentUploadRequestEntity> uploads, {
+    TransferCancellation? cancellation,
+  }) {
+    final controller =
+        StreamController<Either<Failure, ChatAttachmentUploadProgress>>();
+
+    controller.onListen = () {
+      _run(chatId, uploads, controller, cancellation).whenComplete(() {
+        if (!controller.isClosed) controller.close();
+      });
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> _run(
+    String chatId,
     List<AttachmentUploadRequestEntity> uploads,
-  ) async* {
+    StreamController<Either<Failure, ChatAttachmentUploadProgress>> controller,
+    TransferCancellation? cancellation,
+  ) async {
+    void emit(Either<Failure, ChatAttachmentUploadProgress> event) {
+      if (!controller.isClosed) controller.add(event);
+    }
+
     final validation = validate(uploads);
     if (validation != null) {
-      yield Left(validation);
+      emit(Left(validation));
       return;
     }
 
-    yield Right(
-      ChatAttachmentUploadProgress(
-        stage: ChatAttachmentUploadStage.requesting,
-        totalFiles: uploads.length,
+    final fractions = List<double>.filled(uploads.length, 0);
+
+    emit(
+      Right(
+        ChatAttachmentUploadProgress(
+          stage: ChatAttachmentUploadStage.requesting,
+          totalFiles: uploads.length,
+          fileFractions: List<double>.unmodifiable(fractions),
+        ),
       ),
     );
 
@@ -77,31 +134,41 @@ class UploadChatAttachmentUseCase {
     );
     final tickets = ticketsResult.getRight().toNullable();
     if (tickets == null) {
-      yield Left(ticketsResult.getLeft().toNullable()!);
+      emit(Left(ticketsResult.getLeft().toNullable()!));
       return;
     }
 
     if (tickets.length != uploads.length) {
-      yield Left(
-        ServerFailure(
-          message:
-              'Upload could not be started: asked for ${uploads.length} '
-              'upload slots but received ${tickets.length}',
+      emit(
+        Left(
+          ServerFailure(
+            message:
+                'Upload could not be started: asked for ${uploads.length} '
+                'upload slots but received ${tickets.length}',
+          ),
         ),
       );
       return;
     }
 
     for (var i = 0; i < uploads.length; i++) {
+      if (cancellation?.isCancelled ?? false) {
+        emit(const Left(CancelledFailure(message: 'Upload cancelled')));
+        return;
+      }
+
       final upload = uploads[i];
       final ticket = tickets[i];
 
-      yield Right(
-        ChatAttachmentUploadProgress(
-          stage: ChatAttachmentUploadStage.uploading,
-          currentIndex: i,
-          totalFiles: uploads.length,
-          totalBytes: upload.fileSize,
+      emit(
+        Right(
+          ChatAttachmentUploadProgress(
+            stage: ChatAttachmentUploadStage.uploading,
+            currentIndex: i,
+            totalFiles: uploads.length,
+            totalBytes: upload.fileSize,
+            fileFractions: List<double>.unmodifiable(fractions),
+          ),
         ),
       );
 
@@ -111,19 +178,42 @@ class UploadChatAttachmentUseCase {
         contentLength: upload.fileSize,
         filePath: upload.filePath,
         bytes: upload.bytes,
+        cancellation: cancellation,
+        onProgress: (sent, total) {
+          final of = total > 0 ? total : upload.fileSize;
+          fractions[i] = of > 0 ? (sent / of).clamp(0.0, 1.0) : 0.0;
+
+          emit(
+            Right(
+              ChatAttachmentUploadProgress(
+                stage: ChatAttachmentUploadStage.uploading,
+                currentIndex: i,
+                totalFiles: uploads.length,
+                sentBytes: sent,
+                totalBytes: of,
+                fileFractions: List<double>.unmodifiable(fractions),
+              ),
+            ),
+          );
+        },
       );
 
       if (putResult.isLeft()) {
-        yield Left(putResult.getLeft().toNullable()!);
+        emit(Left(putResult.getLeft().toNullable()!));
         return;
       }
+
+      fractions[i] = 1;
     }
 
-    yield Right(
-      ChatAttachmentUploadProgress(
-        stage: ChatAttachmentUploadStage.confirming,
-        currentIndex: uploads.length,
-        totalFiles: uploads.length,
+    emit(
+      Right(
+        ChatAttachmentUploadProgress(
+          stage: ChatAttachmentUploadStage.confirming,
+          currentIndex: uploads.length,
+          totalFiles: uploads.length,
+          fileFractions: List<double>.unmodifiable(fractions),
+        ),
       ),
     );
 
@@ -133,16 +223,19 @@ class UploadChatAttachmentUseCase {
       tokens,
     );
     if (confirmResult.isLeft()) {
-      yield Left(confirmResult.getLeft().toNullable()!);
+      emit(Left(confirmResult.getLeft().toNullable()!));
       return;
     }
 
-    yield Right(
-      ChatAttachmentUploadProgress(
-        stage: ChatAttachmentUploadStage.done,
-        currentIndex: uploads.length,
-        totalFiles: uploads.length,
-        uploadTokens: tokens,
+    emit(
+      Right(
+        ChatAttachmentUploadProgress(
+          stage: ChatAttachmentUploadStage.done,
+          currentIndex: uploads.length,
+          totalFiles: uploads.length,
+          uploadTokens: tokens,
+          fileFractions: List<double>.unmodifiable(fractions),
+        ),
       ),
     );
   }

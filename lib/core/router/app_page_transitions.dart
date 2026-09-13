@@ -62,6 +62,30 @@ abstract final class AppPageTransitions {
     );
   }
 
+  /// A page that fades in over the one below without covering it.
+  ///
+  /// For surfaces that are meant to read as an overlay — the media viewer,
+  /// which dims the conversation rather than replacing it, and lets the
+  /// reader drag it back down. Not opaque, so the route underneath keeps
+  /// being painted and a Hero has something to fly from.
+  static CustomTransitionPage<T> transparentFade<T>({
+    required LocalKey key,
+    required Widget child,
+    String? name,
+  }) {
+    return CustomTransitionPage<T>(
+      key: key,
+      name: name,
+      child: child,
+      opaque: false,
+      barrierColor: null,
+      transitionDuration: AppMotion.base,
+      reverseTransitionDuration: AppMotion.base,
+      transitionsBuilder: (context, animation, secondary, child) =>
+          FadeTransition(opacity: animation, child: child),
+    );
+  }
+
   /// Exposed separately so a `Navigator` outside go_router — a dialog route, a
   /// test harness — can reuse the same motion.
   static Widget buildSharedAxisHorizontal(

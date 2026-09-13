@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/network/transfer_cancellation.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
@@ -66,6 +67,8 @@ void main() {
         contentLength: any(named: 'contentLength'),
         filePath: any(named: 'filePath'),
         bytes: any(named: 'bytes'),
+        onProgress: any(named: 'onProgress'),
+        cancellation: any(named: 'cancellation'),
       ),
     ).thenAnswer((_) async => const Right(null));
   }
@@ -114,6 +117,8 @@ void main() {
             contentLength: 1024,
             filePath: '/tmp/a.jpg',
             bytes: null,
+            onProgress: any(named: 'onProgress'),
+            cancellation: any(named: 'cancellation'),
           ),
           () => mockUploader.upload(
             uploadUrl: 'https://minio.example.com/upload/token-b?sig=abc',
@@ -121,6 +126,8 @@ void main() {
             contentLength: 1024,
             filePath: '/tmp/b.jpg',
             bytes: null,
+            onProgress: any(named: 'onProgress'),
+            cancellation: any(named: 'cancellation'),
           ),
           () => mockRepository.confirmAttachmentUpload(tChatId, [
             'token-a',
@@ -129,6 +136,97 @@ void main() {
         ]);
       },
     );
+
+    test('reports each file\'s own share as its bytes go out', () async {
+      final uploads = [image(filename: 'a.jpg'), image(filename: 'b.jpg')];
+      when(
+        () => mockRepository.requestAttachmentUpload(tChatId, uploads),
+      ).thenAnswer((_) async => Right([ticket('token-a'), ticket('token-b')]));
+      when(
+        () => mockRepository.confirmAttachmentUpload(tChatId, any()),
+      ).thenAnswer((_) async => const Right(null));
+
+      // A client that actually calls back as it sends.
+      when(
+        () => mockUploader.upload(
+          uploadUrl: any(named: 'uploadUrl'),
+          mimeType: any(named: 'mimeType'),
+          contentLength: any(named: 'contentLength'),
+          filePath: any(named: 'filePath'),
+          bytes: any(named: 'bytes'),
+          onProgress: any(named: 'onProgress'),
+          cancellation: any(named: 'cancellation'),
+        ),
+      ).thenAnswer((invocation) async {
+        final onProgress =
+            invocation.namedArguments[#onProgress]
+                as void Function(int, int)?;
+        onProgress?.call(512, 1024);
+        onProgress?.call(1024, 1024);
+        return const Right(null);
+      });
+
+      final events = await useCase.execute(tChatId, uploads).toList();
+      final progress = events
+          .map((e) => e.getRight().toNullable())
+          .nonNulls
+          .toList();
+
+      // Halfway through the first file: that file alone is at 50%, the
+      // second has not started.
+      final half = progress.firstWhere((p) => p.fractionOf(0) == 0.5);
+      expect(half.currentIndex, 0);
+      expect(half.fractionOf(1), 0);
+
+      // And by the end both are whole.
+      expect(progress.last.stage, ChatAttachmentUploadStage.done);
+      expect(progress.last.fractionOf(0), 1);
+      expect(progress.last.fractionOf(1), 1);
+      expect(progress.last.fractionOf(2), isNull);
+    });
+
+    test('a cancelled upload stops between files and confirms nothing',
+        () async {
+      final uploads = [image(filename: 'a.jpg'), image(filename: 'b.jpg')];
+      final cancellation = TransferCancellation();
+
+      when(
+        () => mockRepository.requestAttachmentUpload(tChatId, uploads),
+      ).thenAnswer((_) async => Right([ticket('token-a'), ticket('token-b')]));
+      when(
+        () => mockUploader.upload(
+          uploadUrl: any(named: 'uploadUrl'),
+          mimeType: any(named: 'mimeType'),
+          contentLength: any(named: 'contentLength'),
+          filePath: any(named: 'filePath'),
+          bytes: any(named: 'bytes'),
+          onProgress: any(named: 'onProgress'),
+          cancellation: any(named: 'cancellation'),
+        ),
+      ).thenAnswer((_) async {
+        // The first PUT is the one the reader cancels.
+        cancellation.cancel();
+        return const Right(null);
+      });
+
+      final events = await useCase
+          .execute(tChatId, uploads, cancellation: cancellation)
+          .toList();
+
+      expect(events.last.getLeft().toNullable(), isA<CancelledFailure>());
+      verify(
+        () => mockUploader.upload(
+          uploadUrl: any(named: 'uploadUrl'),
+          mimeType: any(named: 'mimeType'),
+          contentLength: any(named: 'contentLength'),
+          filePath: any(named: 'filePath'),
+          bytes: any(named: 'bytes'),
+          onProgress: any(named: 'onProgress'),
+          cancellation: any(named: 'cancellation'),
+        ),
+      ).called(1);
+      verifyNever(() => mockRepository.confirmAttachmentUpload(any(), any()));
+    });
 
     test('stops at step 1 and never uploads if tickets fail', () async {
       final uploads = [image()];
@@ -146,6 +244,8 @@ void main() {
           contentLength: any(named: 'contentLength'),
           filePath: any(named: 'filePath'),
           bytes: any(named: 'bytes'),
+          onProgress: any(named: 'onProgress'),
+          cancellation: any(named: 'cancellation'),
         ),
       );
       verifyNever(() => mockRepository.confirmAttachmentUpload(any(), any()));
@@ -163,6 +263,8 @@ void main() {
           contentLength: any(named: 'contentLength'),
           filePath: any(named: 'filePath'),
           bytes: any(named: 'bytes'),
+          onProgress: any(named: 'onProgress'),
+          cancellation: any(named: 'cancellation'),
         ),
       ).thenAnswer(
         (_) async =>
@@ -193,6 +295,8 @@ void main() {
             contentLength: any(named: 'contentLength'),
             filePath: any(named: 'filePath'),
             bytes: any(named: 'bytes'),
+            onProgress: any(named: 'onProgress'),
+            cancellation: any(named: 'cancellation'),
           ),
         );
       },

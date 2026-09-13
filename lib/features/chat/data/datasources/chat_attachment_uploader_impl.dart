@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/network/transfer_cancellation.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 
 class ChatAttachmentUploaderImpl implements ChatAttachmentUploader {
@@ -23,11 +24,23 @@ class ChatAttachmentUploaderImpl implements ChatAttachmentUploader {
     String? filePath,
     List<int>? bytes,
     void Function(int sent, int total)? onProgress,
+    TransferCancellation? cancellation,
   }) async {
     if (filePath == null && bytes == null) {
       return const Left(
         InputFailure(message: 'Nothing to upload: no file path and no bytes'),
       );
+    }
+
+    // The cancel button is a plain domain handle (see
+    // `TransferCancellation`); this is the one place that knows it means a
+    // dio `CancelToken`.
+    final token = CancelToken();
+    cancellation?.whenCancelled.then((_) {
+      if (!token.isCancelled) token.cancel('cancelled by the sender');
+    });
+    if (cancellation?.isCancelled ?? false) {
+      return const Left(CancelledFailure(message: 'Upload cancelled'));
     }
 
     try {
@@ -42,6 +55,7 @@ class ChatAttachmentUploaderImpl implements ChatAttachmentUploader {
       await _dio.put<dynamic>(
         uploadUrl,
         data: body,
+        cancelToken: token,
         onSendProgress: onProgress,
         options: Options(
           headers: {
@@ -70,7 +84,9 @@ class ChatAttachmentUploaderImpl implements ChatAttachmentUploader {
       case DioExceptionType.receiveTimeout:
         return TimeoutFailure(statusCode: e.response?.statusCode);
       case DioExceptionType.cancel:
-        return const ServerFailure(message: 'Upload cancelled');
+        // Not a failure of the upload so much as the answer to a tap: a
+        // `CancelledFailure` is never shown, so the tray simply empties.
+        return const CancelledFailure(message: 'Upload cancelled');
       case DioExceptionType.connectionError:
         return const NetworkFailure();
       case DioExceptionType.badResponse:

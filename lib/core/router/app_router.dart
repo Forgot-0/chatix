@@ -23,6 +23,8 @@ import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dar
 import 'package:chatix/features/chat/presentation/screens/chat_info_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/media_viewer_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
@@ -190,6 +192,66 @@ final routerProvider = Provider<GoRouter>((ref) {
                               return _push(
                                 state,
                                 ChatInfoScreen(chatId: chatId),
+                              );
+                            },
+                          ),
+                          // Full screen over the conversation rather than
+                          // beside it: the viewer dims the chat and drags
+                          // back down onto it, which needs the root
+                          // navigator and a page that is not opaque.
+                          GoRoute(
+                            path: ChatMediaRoute.path,
+                            name: RouteNames.chatMedia,
+                            parentNavigatorKey: _rootNavigatorKey,
+                            pageBuilder: (context, state) {
+                              final chatId = ChatDetailRoute.idFrom(state);
+                              final messageId = ChatMediaRoute.messageIdFrom(
+                                state,
+                              );
+                              final attachmentId =
+                                  ChatMediaRoute.attachmentIdFrom(state);
+
+                              if (chatId == null ||
+                                  messageId == null ||
+                                  attachmentId == null) {
+                                return _push(state, const _UnknownChatScreen());
+                              }
+
+                              return AppPageTransitions.transparentFade<void>(
+                                key: state.pageKey,
+                                name: state.name ?? state.fullPath,
+                                child: MediaViewerScreen(
+                                  chatId: chatId,
+                                  messageId: messageId,
+                                  attachmentId: attachmentId,
+                                ),
+                              );
+                            },
+                          ),
+                          // The picked files travel in `extra`; there is
+                          // nothing about them to put in a URL, so a cold
+                          // link here has nothing to preview.
+                          GoRoute(
+                            path: ChatAttachRoute.path,
+                            name: RouteNames.chatAttach,
+                            parentNavigatorKey: _rootNavigatorKey,
+                            pageBuilder: (context, state) {
+                              final chatId = ChatDetailRoute.idFrom(state);
+                              final args = state.extra;
+
+                              if (chatId == null ||
+                                  args is! MediaPreviewArgs ||
+                                  args.uploads.isEmpty) {
+                                return _push(state, const _UnknownChatScreen());
+                              }
+
+                              return _push(
+                                state,
+                                MediaPreviewScreen(
+                                  chatId: chatId,
+                                  uploads: args.uploads,
+                                  initialCaption: args.caption,
+                                ),
                               );
                             },
                           ),

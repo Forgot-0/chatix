@@ -575,15 +575,6 @@
   "@attachUnavailable": {
     "description": "A picked gallery item could not be read back"
   },
-  "videoNoteTooLong": "ভিডিও নোট সর্বোচ্চ {seconds} সেকেন্ড হতে পারে",
-  "@videoNoteTooLong": {
-    "description": "Captured video note exceeds MAX duration",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "videoNoteTooLarge": "এই ক্যামেরা {pixels} পিক্সেলের বেশি রেকর্ড করে, যা ভিডিও নোটের জন্য সার্ভার গ্রহণ করে না",
   "@videoNoteTooLarge": {
     "description": "Captured video note exceeds the 640 px cap the server enforces",
@@ -593,10 +584,6 @@
       }
     }
   },
-  "videoNoteUnreadable": "এই রেকর্ডিং যাচাই করা যায়নি",
-  "@videoNoteUnreadable": {
-    "description": "The captured file could not be probed for duration/size"
-  },
   "composerTooLongBy": "সীমার চেয়ে {count} বেশি",
   "@composerTooLongBy": {
     "description": "Counter once the message is past the 4096-character cap",
@@ -605,5 +592,74 @@
         "type": "int"
       }
     }
+  },
+  "videoNoteTapToRecord": "রেকর্ড করতে ট্যাপ করুন",
+  "@videoNoteTapToRecord": {
+    "description": "Video note recorder: what the shutter does"
+  },
+  "videoNoteNoCamera": "এই ডিভাইসে রেকর্ড করার ক্যামেরা নেই",
+  "@videoNoteNoCamera": {
+    "description": "Video note recorder: the device has no camera"
+  },
+  "videoNoteCameraDenied": "ভিডিও নোট রেকর্ড করতে ক্যামেরা ও মাইক্রোফোনের অনুমতি দিন",
+  "@videoNoteCameraDenied": {
+    "description": "Video note recorder: camera or mic grant refused"
+  },
+  "videoNoteCameraFailed": "ক্যামেরা চালু করা যায়নি",
+  "@videoNoteCameraFailed": {
+    "description": "Video note recorder: the camera would not open"
+  },
+  "videoNoteDiscarded": "কিছু রেকর্ড হয়নি",
+  "@videoNoteDiscarded": {
+    "description": "Quiet toast when a take was too short or unusable"
+  },
+  "attachmentOpen": "খুলুন",
+  "@attachmentOpen": {
+    "description": "Action on a document attachment: hand it to the platform"
+  },
+  "attachmentSavedTo": "{path}-এ সংরক্ষণ করা হয়েছে",
+  "@attachmentSavedTo": {
+    "description": "Confirmation after an attachment was copied to the device, with the full path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentSaveFailed": "এই ফাইলটি সংরক্ষণ করা যায়নি",
+  "@attachmentSaveFailed": {
+    "description": "The attachment could not be downloaded or copied to the device"
+  },
+  "attachmentUploading": "আপলোড হচ্ছে",
+  "@attachmentUploading": {
+    "description": "Label on the progress ring of a file whose bytes are going out"
+  },
+  "mediaViewerCounter": "{count}টির মধ্যে {index}",
+  "@mediaViewerCounter": {
+    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaViewerUnavailable": "এই মিডিয়াটি আর উপলব্ধ নেই",
+  "@mediaViewerUnavailable": {
+    "description": "The viewer was opened on media that is no longer in the loaded history"
+  },
+  "mediaPreviewHint": "যা পাঠাতে চান না তা সরিয়ে ফেলুন",
+  "@mediaPreviewHint": {
+    "description": "Explains that tiles can be dropped on the pre-send preview screen"
+  },
+  "mediaPreviewCaptionHint": "ক্যাপশন যোগ করুন",
+  "@mediaPreviewCaptionHint": {
+    "description": "Placeholder of the album caption field; the caption becomes the message content"
+  },
+  "mediaPreviewRemove": "সরান",
+  "@mediaPreviewRemove": {
+    "description": "Tooltip on the button that drops one file from a staged album"
   }
 }

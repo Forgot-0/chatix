@@ -778,6 +778,31 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     );
   }
 
+  /// Re-reads one message off the API and puts it back in the feed.
+  ///
+  /// The way out of an attachment that came back `attachment_status: error`
+  /// (api-docs §5.5). The backend never says why one failed and offers
+  /// nothing to re-run, so "try again" can only mean asking what the status
+  /// is now — which is the honest answer when the failure was the gateway
+  /// still working rather than the file being bad, and which also picks up
+  /// a `pending` slot that finished while the socket was down.
+  Future<bool> refreshMessage(String messageId) async {
+    final result = await ref
+        .read(getMessageUseCaseProvider)
+        .execute(_chatId, messageId);
+
+    final message = result.getRight().toNullable();
+    if (message == null) return false;
+
+    _mutate(
+      (s) => s.copyWith(
+        messages: ChatRealtimeMerge.upsertMessage(s.messages, message),
+        nextCursor: s.nextCursor,
+      ),
+    );
+    return true;
+  }
+
   Future<bool> revealMessage(String messageId, {int? seq}) async {
     final current = state.value;
     if (current == null) return false;

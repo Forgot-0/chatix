@@ -12,16 +12,15 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/recent_reactions_provider.dart';
+import 'package:chatix/features/chat/presentation/utils/attachment_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_feed_items.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/utils/forward_flow.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
-import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_date_separator.dart';
-import 'package:chatix/features/chat/presentation/widgets/forward_target_dialog.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_details_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
@@ -151,6 +150,7 @@ class ChatMessageRow extends ConsumerWidget {
           : null,
       onOpenAttachment: (attachment) =>
           _openAttachment(context, ref, message, attachment),
+      onRetryAttachment: () => notifier.refreshMessage(message.id),
     );
 
     // Its own layer: a bubble redraws when its reactions or ticks change, and
@@ -248,32 +248,7 @@ class ChatMessageRow extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     MessageEntity message,
-  ) async {
-    final target = await ForwardTargetDialog.pick(
-      context,
-      excludeChatId: message.chatId,
-    );
-    if (target == null) return;
-
-    final result = await ref
-        .read(forwardMessageUseCaseProvider)
-        .execute(
-          sourceChatId: message.chatId,
-          sourceMessageId: message.id,
-          targetChatId: target.chatId,
-          comment: target.comment,
-        );
-
-    if (!context.mounted) return;
-    result.match(
-      (failure) => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (_) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).messageForwarded)),
-      ),
-    );
-  }
+  ) => ForwardFlow.start(context, ref, message: message);
 
   Future<void> _jumpToOriginal(
     BuildContext context,
@@ -293,43 +268,37 @@ class ChatMessageRow extends ConsumerWidget {
     );
   }
 
+  /// Opens what was tapped.
+  ///
+  /// Photos and videos go to the viewer, which carries the tile across with
+  /// a Hero and lets the rest of the chat's media be swiped through.
+  /// Anything else is handed to the platform.
   Future<void> _openAttachment(
     BuildContext context,
     WidgetRef ref,
     MessageEntity message,
     AttachmentEntity attachment,
   ) async {
-    if (attachment.attachmentType == AttachmentType.image) {
-      await AttachmentViewer.open(
-        context,
-        attachment: attachment,
-        messageId: message.id,
+    final isMedia =
+        attachment.attachmentType == AttachmentType.image ||
+        attachment.attachmentType == AttachmentType.video;
+
+    if (isMedia) {
+      await context.push<void>(
+        ChatMediaRoute(
+          message.chatId,
+          messageId: message.id,
+          attachmentId: attachment.id,
+        ).location,
       );
       return;
     }
 
-    final result = await ref
-        .read(getAttachmentDownloadUrlUseCaseProvider)
-        .execute(message.chatId, message.id, attachment.id);
-
-    if (!context.mounted) return;
-
-    final failureMessage = AppLocalizations.of(context).attachmentOpenFailed;
-
-    await result.match(
-      (failure) async => ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(failure.message))),
-      (download) async {
-        final uri = Uri.tryParse(download.url);
-        final opened =
-            uri != null &&
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (opened || !context.mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failureMessage)));
-      },
+    await AttachmentActions.open(
+      context,
+      ref,
+      attachment: attachment,
+      messageId: message.id,
     );
   }
 }

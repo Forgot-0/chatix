@@ -88,6 +88,11 @@ dependencies:
   # picker returns — it cannot enumerate the library). Degrades to no strip
   # when the platform has no gallery or the grant is refused.
   photo_manager: ^3.12.0
+  # Video notes are recorded in place rather than handed to the system
+  # camera: api-docs §5.5 caps `video_note` at 640 px and there is no
+  # transcoder on either side, so the only way to stay under it is to record
+  # at a preset that is already small enough (see video_note_recorder.dart).
+  camera: ^0.12.0
   livekit_client: ^2.9.0
   record: ^6.2.1
   just_audio: ^0.10.6

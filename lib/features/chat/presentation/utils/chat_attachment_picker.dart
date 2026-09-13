@@ -78,52 +78,6 @@ abstract final class ChatAttachmentPicker {
     ];
   }
 
-  /// Records a video note, and checks it against what the server will take.
-  ///
-  /// `video_note` is capped at 60 seconds and 640 px (api-docs §5.5), and a
-  /// capture that breaks either is rejected in the background with nothing
-  /// but `attachment_status: "error"` to show for it — no reason reaches the
-  /// client. So the file is measured here, where there is still something
-  /// useful to say about it.
-  static Future<VideoNoteCapture> captureVideoNote() async {
-    final file = await ImagePicker().pickVideo(
-      source: ImageSource.camera,
-      preferredCameraDevice: CameraDevice.front,
-      maxDuration: const Duration(
-        seconds: ChatAttachmentLimits.maxVideoNoteDurationSeconds,
-      ),
-    );
-    if (file == null) return const VideoNoteCapture.cancelled();
-
-    final probe = await probeVideo(file.path);
-    if (probe == null) return const VideoNoteCapture.unreadable();
-
-    if (probe.duration.inSeconds >
-        ChatAttachmentLimits.maxVideoNoteDurationSeconds) {
-      Logger.warning('Video note: ${probe.duration.inSeconds}s is too long');
-      return VideoNoteCapture.tooLong(probe.duration);
-    }
-
-    final longest = probe.width > probe.height ? probe.width : probe.height;
-    if (longest > ChatAttachmentLimits.maxVideoNoteResolutionPx) {
-      // Most phone cameras record well above 640 px and there is no
-      // transcoder here, so this is the common outcome rather than the rare
-      // one — hence a message that names the cap instead of a silent
-      // `attachment_status: "error"` some minutes later.
-      Logger.warning('Video note: ${longest}px is over the 640px cap');
-      return VideoNoteCapture.tooLarge(longest);
-    }
-
-    return VideoNoteCapture.ready(
-      AttachmentUploadRequestEntity.videoNote(
-        filename: file.name,
-        mimeType: file.mimeType ?? mimeFromName(file.name),
-        fileSize: await file.length(),
-        filePath: file.path,
-      ),
-    );
-  }
-
   /// Reads a local video's duration and frame size, or null if it will not
   /// open. Exposed so the video-note rules can be checked without a camera.
   static Future<VideoProbe?> probeVideo(String path) async {
@@ -163,33 +117,4 @@ class VideoProbe {
   final Duration duration;
   final int width;
   final int height;
-}
-
-/// What came back from pointing the camera at someone.
-enum VideoNoteOutcome { cancelled, ready, tooLong, tooLarge, unreadable }
-
-class VideoNoteCapture {
-  const VideoNoteCapture._(this.outcome, {this.upload, this.measured = 0});
-
-  const VideoNoteCapture.cancelled() : this._(VideoNoteOutcome.cancelled);
-
-  const VideoNoteCapture.unreadable() : this._(VideoNoteOutcome.unreadable);
-
-  const VideoNoteCapture.ready(AttachmentUploadRequestEntity upload)
-    : this._(VideoNoteOutcome.ready, upload: upload);
-
-  /// [recorded] is how long the capture actually ran.
-  VideoNoteCapture.tooLong(Duration recorded)
-    : this._(VideoNoteOutcome.tooLong, measured: recorded.inSeconds);
-
-  /// [pixels] is the longest side of the frame the camera produced.
-  const VideoNoteCapture.tooLarge(int pixels)
-    : this._(VideoNoteOutcome.tooLarge, measured: pixels);
-
-  final VideoNoteOutcome outcome;
-  final AttachmentUploadRequestEntity? upload;
-
-  /// Seconds for [VideoNoteOutcome.tooLong], pixels for
-  /// [VideoNoteOutcome.tooLarge], and meaningless otherwise.
-  final int measured;
 }

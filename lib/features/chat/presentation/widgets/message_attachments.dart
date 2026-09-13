@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
-import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
+import 'package:chatix/features/chat/presentation/widgets/document_attachment_row.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
 import 'package:chatix/features/chat/presentation/widgets/video_preview.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_player.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What a message carries besides its text.
 ///
-/// Images go into a grid, anything playable gets its own player, and the rest
-/// become rows naming the file. A slot the gateway has not confirmed yet
-/// (`attachment_success`, api-docs §5.5) says so rather than pretending to be
-/// openable.
+/// Photos and videos become an album — a mosaic, not a column, see
+/// [MessageAlbum]. A voice message and a video note each get their own
+/// player; those two never travel with anything else (api-docs §5.5), so
+/// they are always alone here. Documents are a row naming the file.
+///
+/// Slots the gateway has not confirmed yet say so rather than pretending to
+/// be openable, and each kind says it in its own way.
 class MessageAttachments extends StatelessWidget {
   const MessageAttachments({
     super.key,
@@ -21,6 +25,7 @@ class MessageAttachments extends StatelessWidget {
     required this.attachments,
     required this.foreground,
     this.onOpen,
+    this.onRetry,
   });
 
   final String messageId;
@@ -28,26 +33,43 @@ class MessageAttachments extends StatelessWidget {
   final Color foreground;
   final void Function(AttachmentEntity attachment)? onOpen;
 
+  /// Re-reads the message. The only "try again" an attachment that came back
+  /// `attachment_status: error` can be given (api-docs §5.5).
+  final VoidCallback? onRetry;
+
   @override
   Widget build(BuildContext context) {
-    bool ready(AttachmentEntity a) =>
-        a.attachmentStatus == AttachmentStatus.success;
-
-    final images = [
+    final album = [
       for (final a in attachments)
-        if (a.attachmentType == AttachmentType.image && ready(a)) a,
-    ];
-    final playable = [
-      for (final a in attachments)
-        if (ready(a) &&
-            (a.attachmentType == AttachmentType.video ||
-                a.attachmentType == AttachmentType.videoNote ||
-                a.attachmentType == AttachmentType.voice))
+        if (a.attachmentType == AttachmentType.image ||
+            a.attachmentType == AttachmentType.video)
           a,
     ];
-    final rest = [
+
+    final voice = [
       for (final a in attachments)
-        if (!images.contains(a) && !playable.contains(a)) a,
+        if (a.attachmentType == AttachmentType.voice && _ready(a)) a,
+    ];
+
+    final videoNotes = [
+      for (final a in attachments)
+        if (a.attachmentType == AttachmentType.videoNote && _ready(a)) a,
+    ];
+
+    final documents = [
+      for (final a in attachments)
+        if (a.attachmentType == AttachmentType.file) a,
+    ];
+
+    // A voice message or a video note the gateway has not finished with has
+    // no player to draw — but it still has to say what became of it, rather
+    // than leaving a message that looks empty.
+    final stalled = [
+      for (final a in attachments)
+        if (!_ready(a) &&
+            (a.attachmentType == AttachmentType.voice ||
+                a.attachmentType == AttachmentType.videoNote))
+          a,
     ];
 
     final accent = ChatixTheme.of(context).success;
@@ -55,174 +77,54 @@ class MessageAttachments extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (images.isNotEmpty)
-          _AttachmentImageGrid(
+        if (album.isNotEmpty)
+          MessageAlbum(
             messageId: messageId,
-            images: images,
+            attachments: album,
             onOpen: onOpen,
+            onRetry: onRetry,
           ),
-        for (final attachment in playable)
-          switch (attachment.attachmentType) {
-            AttachmentType.voice => VoicePlayer(
-              attachment: attachment,
-              messageId: messageId,
-              foreground: foreground,
-              accent: accent,
-            ),
-            AttachmentType.videoNote => VideoPreview(
-              attachment: attachment,
-              messageId: messageId,
-              isCircular: true,
-            ),
-            _ => GestureDetector(
-              onTap: () => onOpen?.call(attachment),
-              child: VideoPreview(attachment: attachment, messageId: messageId),
-            ),
-          },
-        for (final attachment in rest)
-          _AttachmentFileRow(
+        for (final attachment in voice)
+          VoicePlayer(
             attachment: attachment,
-            onOpen: onOpen,
+            messageId: messageId,
             foreground: foreground,
+            accent: accent,
+          ),
+        for (final attachment in videoNotes)
+          VideoPreview(
+            attachment: attachment,
+            messageId: messageId,
+            isCircular: true,
+          ),
+        for (final attachment in stalled)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: TransferProgressBadge(
+              state: attachment.attachmentStatus == AttachmentStatus.error
+                  ? TransferRingState.failed
+                  : TransferRingState.waiting,
+              progress: 1,
+              onPressed: attachment.attachmentStatus == AttachmentStatus.error
+                  ? onRetry
+                  : null,
+              label: attachment.attachmentStatus == AttachmentStatus.error
+                  ? AppLocalizations.of(context).attachmentFailed
+                  : AppLocalizations.of(context).attachmentProcessing,
+            ),
+          ),
+        for (final attachment in documents)
+          DocumentAttachmentRow(
+            attachment: attachment,
+            messageId: messageId,
+            foreground: foreground,
+            onRetry: onRetry,
           ),
         const SizedBox(height: 4),
       ],
     );
   }
-}
 
-class _AttachmentImageGrid extends StatelessWidget {
-  const _AttachmentImageGrid({
-    required this.messageId,
-    required this.images,
-    this.onOpen,
-  });
-
-  final String messageId;
-  final List<AttachmentEntity> images;
-  final void Function(AttachmentEntity attachment)? onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    if (images.length == 1) {
-      final only = images.first;
-      final ratio =
-          (only.width != null && only.height != null && only.height! > 0)
-          ? (only.width! / only.height!).clamp(0.6, 1.8)
-          : 1.4;
-
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: GestureDetector(
-          onTap: () => onOpen?.call(only),
-          child: AspectRatio(
-            aspectRatio: ratio.toDouble(),
-            child: AttachmentImage(attachment: only, messageId: messageId),
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: images.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 3,
-          mainAxisSpacing: 3,
-        ),
-        itemBuilder: (context, index) {
-          final attachment = images[index];
-          return GestureDetector(
-            onTap: () => onOpen?.call(attachment),
-            child: AttachmentImage(
-              attachment: attachment,
-              messageId: messageId,
-              borderRadius: BorderRadius.circular(8),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _AttachmentFileRow extends StatelessWidget {
-  const _AttachmentFileRow({
-    required this.attachment,
-    required this.foreground,
-    this.onOpen,
-  });
-
-  final AttachmentEntity attachment;
-  final Color foreground;
-  final void Function(AttachmentEntity attachment)? onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    final l10n = AppLocalizations.of(context);
-
-    final (icon, label) = switch (attachment.attachmentStatus) {
-      AttachmentStatus.pending => (
-        Icons.hourglass_empty,
-        l10n.attachmentProcessing,
-      ),
-      AttachmentStatus.error => (Icons.error_outline, l10n.attachmentFailed),
-      AttachmentStatus.success => (
-        switch (attachment.attachmentType) {
-          AttachmentType.image => Icons.image_outlined,
-          AttachmentType.video => Icons.videocam_outlined,
-          AttachmentType.file => Icons.attach_file,
-          AttachmentType.voice => Icons.mic_outlined,
-          AttachmentType.videoNote => Icons.videocam_rounded,
-        },
-        ChatAttachmentLimits.formatBytes(attachment.size),
-      ),
-    };
-
-    return InkWell(
-      onTap: attachment.attachmentStatus == AttachmentStatus.success
-          ? () => onOpen?.call(attachment)
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: foreground),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    attachment.originalFilename,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: foreground,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color:
-                          attachment.attachmentStatus == AttachmentStatus.error
-                          ? ChatixTheme.of(context).danger
-                          : foreground.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  static bool _ready(AttachmentEntity attachment) =>
+      attachment.attachmentStatus == AttachmentStatus.success;
 }
