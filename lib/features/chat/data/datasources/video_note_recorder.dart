@@ -1,4 +1,4 @@
-import 'dart:io' show File, Platform;
+import 'dart:io' show File, FileSystemException, Platform;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -26,13 +26,28 @@ enum VideoNoteReadiness {
   failed,
 }
 
+/// Which way the camera is pointing.
+///
+/// Ours rather than the plugin's [CameraLensDirection] so the sheet, which
+/// only wants to know which glyph to draw, does not have to import a camera
+/// plugin to find out.
+enum VideoNoteLens { front, back }
+
 /// A finished recording, ready to be uploaded as `attachment_type:
 /// "video_note"`.
 class VideoNoteTake {
-  const VideoNoteTake({required this.upload, required this.duration});
+  const VideoNoteTake({
+    required this.upload,
+    required this.duration,
+    this.side = 0,
+  });
 
   final AttachmentUploadRequestEntity upload;
   final Duration duration;
+
+  /// The side of the square this note is shown as, in pixels — the shorter
+  /// side of what was captured, capped. 0 when it was never measured.
+  final int side;
 }
 
 /// Records the round video the API calls a `video_note`.
@@ -57,6 +72,16 @@ abstract interface class VideoNoteRecorder {
   /// squashing anyone. 1 when there is nothing to go on.
   double get aspectRatio;
 
+  /// Which way the camera in hand is pointing.
+  VideoNoteLens get lens;
+
+  /// Whether there is another camera to turn to at all.
+  bool get canSwitchLens;
+
+  /// Turns the camera around, keeping the resolution the server will accept.
+  /// A no-op where [canSwitchLens] is false.
+  Future<void> switchLens();
+
   bool get isRecording;
 
   Future<void> start();
@@ -76,13 +101,16 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
   /// Tried in order, best first.
   ///
   /// `medium` is 640×480 on iOS and 720×480 on Android — 480 on the short
-  /// side either way, which is what the cap is measured on, so it is the
+  /// side either way, which is the side the cap is measured on, so it is the
   /// one that normally wins. `high` is 720p, whose 720 short side is over
-  /// the cap, so there is nothing above `medium` to try. `low` (352×288,
-  /// ~240p) is there for cameras that cannot do 480p at all.
+  /// the cap, so there is nothing above `medium` to try. `low` (352×288 on
+  /// iOS, 320×240 on Android) is there for cameras that cannot do 480p at
+  /// all.
   ///
   /// Which one a device actually gives is read back after initialising
-  /// rather than assumed from the platform: a preset is a request.
+  /// rather than assumed from the platform: a preset is a request, and this
+  /// is the only check standing between the reader and a note that uploads,
+  /// says nothing, and never appears.
   static const List<ResolutionPreset> presets = [
     ResolutionPreset.medium,
     ResolutionPreset.low,
@@ -106,6 +134,12 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
   CameraController? _controller;
   bool _isRecording = false;
 
+  /// Every camera this device has, in the order it reported them, kept from
+  /// the first [prepare] so turning the camera around is not another
+  /// round-trip to the platform.
+  List<CameraDescription> _cameras = const [];
+  CameraDescription? _camera;
+
   @override
   bool get isRecording => _isRecording;
 
@@ -117,25 +151,93 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
   }
 
   @override
+  VideoNoteLens get lens =>
+      _camera?.lensDirection == CameraLensDirection.front
+      ? VideoNoteLens.front
+      : VideoNoteLens.back;
+
+  @override
+  bool get canSwitchLens => _next != null;
+
+  /// The camera the other way round, or null when there is only one.
+  ///
+  /// Front and back rather than "the next in the list": a phone with three
+  /// rear cameras would otherwise cycle through all of them, and the gesture
+  /// means "show me my face" or "show me what I am looking at".
+  CameraDescription? get _next {
+    final wanted = lens == VideoNoteLens.front
+        ? CameraLensDirection.back
+        : CameraLensDirection.front;
+
+    for (final camera in _cameras) {
+      if (camera.lensDirection == wanted) return camera;
+    }
+    return null;
+  }
+
+  @override
   Future<VideoNoteReadiness> prepare() async {
     if (!isSupportedPlatform) return VideoNoteReadiness.noCamera;
     if (_controller != null) return VideoNoteReadiness.ready;
 
-    final List<CameraDescription> cameras;
     try {
-      cameras = await availableCameras();
+      _cameras = await availableCameras();
     } on CameraException catch (error) {
       return _readinessOf(error);
     }
 
-    if (cameras.isEmpty) return VideoNoteReadiness.noCamera;
+    if (_cameras.isEmpty) return VideoNoteReadiness.noCamera;
 
     // A video note is a face, so the selfie camera unless there is none.
-    final camera = cameras.firstWhere(
+    final camera = _cameras.firstWhere(
       (c) => c.lensDirection == CameraLensDirection.front,
-      orElse: () => cameras.first,
+      orElse: () => _cameras.first,
     );
 
+    return _open(camera);
+  }
+
+  @override
+  Future<void> switchLens() async {
+    final next = _next;
+    final controller = _controller;
+    final previous = _camera;
+    if (next == null || controller == null || previous == null) return;
+
+    // `setDescription` rather than a new controller: mid-take it hands the
+    // open encoder to the other sensor (`setDescriptionWhileRecording`), so
+    // turning the camera around during a recording keeps one file rather
+    // than ending it and starting another.
+    try {
+      await controller.setDescription(next);
+    } on CameraException catch (error) {
+      Logger.warning('Video note: could not turn the camera around ($error)');
+      return;
+    }
+
+    _camera = next;
+
+    final size = controller.value.previewSize;
+    if (size == null || fits(size)) return;
+
+    // The other camera is over the cap at this preset. Nothing sent from it
+    // would survive the gateway, so going back beats a view that cannot be
+    // used (api-docs §5.5).
+    Logger.warning(
+      'Video note: the other camera gives ${size.width}×${size.height}, '
+      'over the cap — going back',
+    );
+
+    try {
+      await controller.setDescription(previous);
+      _camera = previous;
+    } on CameraException catch (error) {
+      Logger.warning('Video note: could not turn back ($error)');
+    }
+  }
+
+  /// Opens one camera at the largest resolution the server will take.
+  Future<VideoNoteReadiness> _open(CameraDescription camera) async {
     for (final preset in presets) {
       final controller = CameraController(
         camera,
@@ -158,6 +260,7 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
       final size = controller.value.previewSize;
       if (size == null || fits(size)) {
         _controller = controller;
+        _camera = camera;
         Logger.info('Video note: recording at ${size?.width}×${size?.height}');
         return VideoNoteReadiness.ready;
       }
@@ -224,12 +327,26 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
       return null;
     }
 
+    if (probe.duration.inSeconds >
+        ChatAttachmentLimits.maxVideoNoteDurationSeconds) {
+      Logger.warning('Video note: ${probe.duration} is over the 60-second cap');
+      return null;
+    }
+
+    final size = await File(file.path).length();
+    if (size > ChatAttachmentLimits.maxVideoNoteSizeBytes) {
+      Logger.warning('Video note: ${ChatAttachmentLimits.formatBytes(size)} '
+          'is over the cap');
+      return null;
+    }
+
     return VideoNoteTake(
       duration: probe.duration,
+      side: ChatAttachmentLimits.videoNoteSquareSide(probe.width, probe.height),
       upload: AttachmentUploadRequestEntity.videoNote(
         filename: file.name,
         mimeType: file.mimeType ?? 'video/mp4',
-        fileSize: await File(file.path).length(),
+        fileSize: size,
         filePath: file.path,
       ),
     );
@@ -241,9 +358,14 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
     _isRecording = false;
 
     try {
-      await _controller?.stopVideoRecording();
+      final file = await _controller?.stopVideoRecording();
+      // Stopping is the only way to close the encoder, so a cancelled take
+      // still leaves a file behind. It is nobody's now.
+      if (file != null) await File(file.path).delete();
     } on CameraException catch (error) {
       Logger.warning('Video note: could not discard ($error)');
+    } on FileSystemException catch (error) {
+      Logger.warning('Video note: discarded take left behind ($error)');
     }
   }
 
@@ -252,6 +374,7 @@ class CameraVideoNoteRecorder implements VideoNoteRecorder {
     await cancel();
     await _controller?.dispose();
     _controller = null;
+    _camera = null;
   }
 
   /// Whether a preview of this size is one the server will take, by the
@@ -293,6 +416,15 @@ class UnavailableVideoNoteRecorder implements VideoNoteRecorder {
 
   @override
   double get aspectRatio => 1;
+
+  @override
+  VideoNoteLens get lens => VideoNoteLens.front;
+
+  @override
+  bool get canSwitchLens => false;
+
+  @override
+  Future<void> switchLens() async {}
 
   @override
   bool get isRecording => false;

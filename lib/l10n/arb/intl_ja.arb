@@ -82,8 +82,18 @@
   "voiceSlideToCancel": "左にスワイプで取消、上で固定",
   "voiceReleaseToCancel": "離すと取り消し",
   "voiceRecordingLocked": "録音中 — 完了したら送信をタップ",
+  "voiceLimitReached": "最大の長さに達しました",
   "voicePermissionDenied": "マイクへのアクセスが無効です",
   "voiceMessage": "ボイスメッセージ",
+  "voicePlay": "ボイスメッセージを再生",
+  "voicePause": "ボイスメッセージを一時停止",
+  "voiceUnavailable": "利用できません",
+  "voiceNotListened": "未再生",
+  "voiceSpeedLabel": "再生速度 {speed}",
+  "voiceRecording": "録音中",
+  "voiceTimeLeft": "残り {time}",
+  "voiceCancelRecording": "キャンセル",
+  "voiceSendRecording": "ボイスメッセージを送信",
   "attach": "添付",
   "messageHint": "メッセージ",
   "unknownChat": "不明なチャット",
@@ -661,5 +671,90 @@
   "mediaPreviewRemove": "削除",
   "@mediaPreviewRemove": {
     "description": "Tooltip on the button that drops one file from a staged album"
+  },
+  "composerRecordVideoNoteLabel": "長押しでビデオメッセージを録画",
+  "@composerRecordVideoNoteLabel": {
+    "description": "Accessible label of the composer button while it is in video-note mode"
+  },
+  "composerSwitchToVideoNote": "ビデオメッセージに切り替え",
+  "@composerSwitchToVideoNote": {
+    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
+  },
+  "composerSwitchToVoice": "ボイスメッセージに切り替え",
+  "@composerSwitchToVoice": {
+    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
+  },
+  "videoNoteSwitchCamera": "カメラを切り替え",
+  "@videoNoteSwitchCamera": {
+    "description": "Turns the camera around while framing a video note"
+  },
+  "videoNoteDoubleTapToSwitch": "ダブルタップでカメラを切り替え",
+  "@videoNoteDoubleTapToSwitch": {
+    "description": "Says that a double tap on the circle turns the camera around"
+  },
+  "videoNoteOpeningCamera": "カメラを起動しています…",
+  "@videoNoteOpeningCamera": {
+    "description": "Shown for the moment between the thumb going down and the camera waking"
+  },
+  "videoNoteHoldToRecord": "長押しで録画",
+  "@videoNoteHoldToRecord": {
+    "description": "Hint under the composer circle before a take starts"
+  },
+  "videoNoteSend": "ビデオメッセージを送信",
+  "@videoNoteSend": {
+    "description": "Button that sends a finished video note"
+  },
+  "videoNoteRecordingLabel": "ビデオメッセージを録画中",
+  "@videoNoteRecordingLabel": {
+    "description": "Accessible label of the live circle while a video note is being recorded"
+  },
+  "videoNoteTapForSound": "タップで音声をオン",
+  "@videoNoteTapForSound": {
+    "description": "Hint on a video note playing silently in the feed"
+  },
+  "videoNoteTapToMute": "タップでミュート",
+  "@videoNoteTapToMute": {
+    "description": "Hint on a video note that currently has sound"
+  },
+  "videoNoteHoldForFullScreen": "長押しで全画面表示",
+  "@videoNoteHoldForFullScreen": {
+    "description": "Hint that a long press opens the video note full screen"
+  },
+  "videoNotePlayerLabel": "ビデオメッセージ、{duration}",
+  "@videoNotePlayerLabel": {
+    "description": "Accessible label of a video note in the feed",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoNoteAutoplayOff": "タップで再生",
+  "@videoNoteAutoplayOff": {
+    "description": "Shown on a video note that will not start on its own"
+  },
+  "mediaAutoplay": "ビデオメッセージの自動再生",
+  "@mediaAutoplay": {
+    "description": "Settings section: when video notes may start playing by themselves"
+  },
+  "mediaAutoplayHint": "画面に入るとビデオメッセージが無音で再生されます。タップすると音声が出ます。",
+  "@mediaAutoplayHint": {
+    "description": "Explains what autoplay does and how sound is turned on"
+  },
+  "mediaAutoplayAlways": "常に",
+  "@mediaAutoplayAlways": {
+    "description": "Autoplay on any connection"
+  },
+  "mediaAutoplayWifi": "Wi-Fi のときのみ",
+  "@mediaAutoplayWifi": {
+    "description": "Autoplay only on an unmetered connection"
+  },
+  "mediaAutoplayNever": "しない",
+  "@mediaAutoplayNever": {
+    "description": "Never autoplay"
+  },
+  "videoNotePreview": "カメラのプレビュー",
+  "@videoNotePreview": {
+    "description": "Accessible label of the live camera circle before a take starts"
   }
 }

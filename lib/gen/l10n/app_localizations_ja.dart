@@ -480,10 +480,44 @@ class AppLocalizationsJa extends AppLocalizations {
   String get voiceRecordingLocked => '録音中 — 完了したら送信をタップ';
 
   @override
+  String get voiceLimitReached => '最大の長さに達しました';
+
+  @override
   String get voicePermissionDenied => 'マイクへのアクセスが無効です';
 
   @override
   String get voiceMessage => 'ボイスメッセージ';
+
+  @override
+  String get voicePlay => 'ボイスメッセージを再生';
+
+  @override
+  String get voicePause => 'ボイスメッセージを一時停止';
+
+  @override
+  String get voiceUnavailable => '利用できません';
+
+  @override
+  String get voiceNotListened => '未再生';
+
+  @override
+  String voiceSpeedLabel(String speed) {
+    return '再生速度 $speed';
+  }
+
+  @override
+  String get voiceRecording => '録音中';
+
+  @override
+  String voiceTimeLeft(String time) {
+    return '残り $time';
+  }
+
+  @override
+  String get voiceCancelRecording => 'キャンセル';
+
+  @override
+  String get voiceSendRecording => 'ボイスメッセージを送信';
 
   @override
   String get attach => '添付';
@@ -1650,4 +1684,66 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mediaPreviewRemove => '削除';
+
+  @override
+  String get composerRecordVideoNoteLabel => '長押しでビデオメッセージを録画';
+
+  @override
+  String get composerSwitchToVideoNote => 'ビデオメッセージに切り替え';
+
+  @override
+  String get composerSwitchToVoice => 'ボイスメッセージに切り替え';
+
+  @override
+  String get videoNoteSwitchCamera => 'カメラを切り替え';
+
+  @override
+  String get videoNoteDoubleTapToSwitch => 'ダブルタップでカメラを切り替え';
+
+  @override
+  String get videoNoteOpeningCamera => 'カメラを起動しています…';
+
+  @override
+  String get videoNoteHoldToRecord => '長押しで録画';
+
+  @override
+  String get videoNoteSend => 'ビデオメッセージを送信';
+
+  @override
+  String get videoNoteRecordingLabel => 'ビデオメッセージを録画中';
+
+  @override
+  String get videoNoteTapForSound => 'タップで音声をオン';
+
+  @override
+  String get videoNoteTapToMute => 'タップでミュート';
+
+  @override
+  String get videoNoteHoldForFullScreen => '長押しで全画面表示';
+
+  @override
+  String videoNotePlayerLabel(String duration) {
+    return 'ビデオメッセージ、$duration';
+  }
+
+  @override
+  String get videoNoteAutoplayOff => 'タップで再生';
+
+  @override
+  String get mediaAutoplay => 'ビデオメッセージの自動再生';
+
+  @override
+  String get mediaAutoplayHint => '画面に入るとビデオメッセージが無音で再生されます。タップすると音声が出ます。';
+
+  @override
+  String get mediaAutoplayAlways => '常に';
+
+  @override
+  String get mediaAutoplayWifi => 'Wi-Fi のときのみ';
+
+  @override
+  String get mediaAutoplayNever => 'しない';
+
+  @override
+  String get videoNotePreview => 'カメラのプレビュー';
 }

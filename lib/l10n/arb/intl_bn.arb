@@ -82,8 +82,18 @@
   "voiceSlideToCancel": "বাতিলে বামে, লক করতে উপরে সোয়াইপ",
   "voiceReleaseToCancel": "ছাড়লে বাতিল",
   "voiceRecordingLocked": "রেকর্ডিং — শেষ হলে পাঠান চাপুন",
+  "voiceLimitReached": "সর্বোচ্চ দৈর্ঘ্যে পৌঁছেছে",
   "voicePermissionDenied": "মাইক্রোফোন অ্যাক্সেস বন্ধ",
   "voiceMessage": "ভয়েস বার্তা",
+  "voicePlay": "ভয়েস মেসেজ চালান",
+  "voicePause": "ভয়েস মেসেজ থামান",
+  "voiceUnavailable": "পাওয়া যাচ্ছে না",
+  "voiceNotListened": "এখনও শোনা হয়নি",
+  "voiceSpeedLabel": "প্লেব্যাক গতি {speed}",
+  "voiceRecording": "রেকর্ড করা হচ্ছে",
+  "voiceTimeLeft": "{time} বাকি",
+  "voiceCancelRecording": "বাতিল",
+  "voiceSendRecording": "ভয়েস মেসেজ পাঠান",
   "attach": "সংযুক্ত করুন",
   "messageHint": "বার্তা",
   "unknownChat": "অজানা চ্যাট",
@@ -661,5 +671,90 @@
   "mediaPreviewRemove": "সরান",
   "@mediaPreviewRemove": {
     "description": "Tooltip on the button that drops one file from a staged album"
+  },
+  "composerRecordVideoNoteLabel": "ভিডিও বার্তা রেকর্ড করতে চেপে ধরুন",
+  "@composerRecordVideoNoteLabel": {
+    "description": "Accessible label of the composer button while it is in video-note mode"
+  },
+  "composerSwitchToVideoNote": "ভিডিও বার্তায় যান",
+  "@composerSwitchToVideoNote": {
+    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
+  },
+  "composerSwitchToVoice": "ভয়েস বার্তায় যান",
+  "@composerSwitchToVoice": {
+    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
+  },
+  "videoNoteSwitchCamera": "ক্যামেরা বদলান",
+  "@videoNoteSwitchCamera": {
+    "description": "Turns the camera around while framing a video note"
+  },
+  "videoNoteDoubleTapToSwitch": "ক্যামেরা বদলাতে দুবার আলতো চাপুন",
+  "@videoNoteDoubleTapToSwitch": {
+    "description": "Says that a double tap on the circle turns the camera around"
+  },
+  "videoNoteOpeningCamera": "ক্যামেরা চালু হচ্ছে…",
+  "@videoNoteOpeningCamera": {
+    "description": "Shown for the moment between the thumb going down and the camera waking"
+  },
+  "videoNoteHoldToRecord": "রেকর্ড করতে চেপে ধরুন",
+  "@videoNoteHoldToRecord": {
+    "description": "Hint under the composer circle before a take starts"
+  },
+  "videoNoteSend": "ভিডিও বার্তা পাঠান",
+  "@videoNoteSend": {
+    "description": "Button that sends a finished video note"
+  },
+  "videoNoteRecordingLabel": "ভিডিও বার্তা রেকর্ড হচ্ছে",
+  "@videoNoteRecordingLabel": {
+    "description": "Accessible label of the live circle while a video note is being recorded"
+  },
+  "videoNoteTapForSound": "শব্দ চালু করতে আলতো চাপুন",
+  "@videoNoteTapForSound": {
+    "description": "Hint on a video note playing silently in the feed"
+  },
+  "videoNoteTapToMute": "নিঃশব্দ করতে আলতো চাপুন",
+  "@videoNoteTapToMute": {
+    "description": "Hint on a video note that currently has sound"
+  },
+  "videoNoteHoldForFullScreen": "পূর্ণ পর্দায় দেখতে চেপে ধরুন",
+  "@videoNoteHoldForFullScreen": {
+    "description": "Hint that a long press opens the video note full screen"
+  },
+  "videoNotePlayerLabel": "ভিডিও বার্তা, {duration}",
+  "@videoNotePlayerLabel": {
+    "description": "Accessible label of a video note in the feed",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoNoteAutoplayOff": "চালাতে আলতো চাপুন",
+  "@videoNoteAutoplayOff": {
+    "description": "Shown on a video note that will not start on its own"
+  },
+  "mediaAutoplay": "ভিডিও বার্তা নিজে থেকে চালু",
+  "@mediaAutoplay": {
+    "description": "Settings section: when video notes may start playing by themselves"
+  },
+  "mediaAutoplayHint": "পর্দায় এলে ভিডিও বার্তা নিঃশব্দে চলতে শুরু করে। আলতো চাপলে শব্দ চালু হয়।",
+  "@mediaAutoplayHint": {
+    "description": "Explains what autoplay does and how sound is turned on"
+  },
+  "mediaAutoplayAlways": "সবসময়",
+  "@mediaAutoplayAlways": {
+    "description": "Autoplay on any connection"
+  },
+  "mediaAutoplayWifi": "শুধু Wi-Fi-তে",
+  "@mediaAutoplayWifi": {
+    "description": "Autoplay only on an unmetered connection"
+  },
+  "mediaAutoplayNever": "কখনও নয়",
+  "@mediaAutoplayNever": {
+    "description": "Never autoplay"
+  },
+  "videoNotePreview": "ক্যামেরার প্রিভিউ",
+  "@videoNotePreview": {
+    "description": "Accessible label of the live camera circle before a take starts"
   }
 }

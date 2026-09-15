@@ -19,15 +19,25 @@ abstract final class ChatAttachmentLimits {
 
   static const int maxVoiceDurationSeconds = 600;
 
+  /// When the recorder starts saying out loud how little is left.
+  ///
+  /// Thirty seconds before the cap: long enough to finish a sentence and
+  /// send deliberately, rather than being cut off mid-word at 600 and left
+  /// holding a recording that ends where the limit did.
+  static const int voiceWarnAfterSeconds = 570;
+
   static const int maxVideoNoteDurationSeconds = 60;
 
   /// The video-note frame cap, measured on the **short** side.
   ///
-  /// Which side the server measures is what decides whether an ordinary
-  /// 480p capture is usable at all: 720×480 is over 640 on its long side
-  /// and comfortably under it on its short one. It is the short side, so a
-  /// landscape 480p frame passes and only genuinely large captures are
-  /// refused with `resolution_limit_exceeded` (api-docs §5.5).
+  /// Which side is not in api-docs §5.5 — it says only "≤ 640 px" — and it
+  /// is the whole difference between an ordinary Android 480p capture being
+  /// usable and being thrown away: 720×480 is over 640 lengthways and
+  /// comfortably under it across. It is the short side, confirmed against
+  /// the backend, and it is written down here because getting it wrong is
+  /// not a 400 with a code to read but `attachment_status: "error"` with
+  /// `resolution_limit_exceeded` kept server-side, arriving after the
+  /// message has been sent.
   static const int maxVideoNoteResolutionPx = 640;
 
   static const Set<String> imageMimeTypes = {
@@ -167,12 +177,30 @@ abstract final class ChatAttachmentLimits {
   /// The rule lives here rather than in whatever is holding the camera, so
   /// the recorder picking a resolution and the check on the finished file
   /// cannot drift apart. Orientation does not matter — a portrait 480×720
-  /// and a landscape 720×480 are the same frame turned sideways.
+  /// and a landscape 720×480 are the same frame turned sideways, and both
+  /// are inside the cap.
   static bool fitsVideoNoteFrame(int width, int height) {
     if (width <= 0 || height <= 0) return false;
 
     final shortSide = width < height ? width : height;
     return shortSide <= maxVideoNoteResolutionPx;
+  }
+
+  /// The square a frame of this size becomes once the circle is cut out of
+  /// it: the shorter side, never more than the cap.
+  ///
+  /// What the reader sees of a video note is the inscribed circle, so the
+  /// square around that circle is the whole of the useful picture — the rest
+  /// of a 4:3 frame is thrown away by every player on both sides of the
+  /// wire. Sizing by it is what lets the capture be judged on the picture
+  /// that survives rather than on the letterbox it arrived in.
+  static int videoNoteSquareSide(int width, int height) {
+    if (width <= 0 || height <= 0) return 0;
+
+    final shortSide = width < height ? width : height;
+    return shortSide < maxVideoNoteResolutionPx
+        ? shortSide
+        : maxVideoNoteResolutionPx;
   }
 
   static const Set<AttachmentType> exclusiveTypes = {

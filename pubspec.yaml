@@ -94,7 +94,17 @@ dependencies:
   # at a preset that is already small enough (see video_note_recorder.dart).
   camera: ^0.12.0
   livekit_client: ^2.9.0
+  # Voice messages (api-docs §5.5 `attachment_type: "voice"`). Records opus
+  # into an ogg container where the platform has an encoder for it, falling
+  # back to AAC-LC in MPEG-4 otherwise — both are on the allowed MIME list,
+  # both are mono at a speech bitrate, and neither is wav, which would blow
+  # past the 20 MB cap long before the 600-second one. Also the source of the
+  # live amplitude readings the waveform is built from (voice_recorder.dart).
   record: ^6.2.1
+  # Playback for those voice messages, from one app-wide player
+  # (voice_playback_provider.dart) rather than one per bubble: that is what
+  # keeps playback going after the chat is left, stops two messages talking
+  # over each other, and makes 1x/1.5x/2x a single setting.
   just_audio: ^0.10.6
   video_player: ^2.11.1
   firebase_core: ^4.14.0

@@ -8,6 +8,7 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
+import 'package:chatix/features/chat/presentation/widgets/video_note_lens_view.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// Recording a video note, in the shape it will be sent in.
@@ -57,6 +58,10 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
   /// closing the sheet: losing the camera because a tap was too quick is a
   /// worse answer than saying so and staying put.
   bool _discarded = false;
+
+  /// A camera swap is in flight. There is no preview to draw while the old
+  /// controller is closed and the new one is waking.
+  bool _isSwitchingLens = false;
 
   /// Taken once and closed in [dispose]: the camera belongs to this sheet,
   /// not to whatever else happens to be listening.
@@ -133,6 +138,22 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
     Navigator.of(context).pop(take);
   }
 
+  /// Turns the camera around, on a double tap on the circle.
+  ///
+  /// Guarded rather than re-entrant: opening a camera is not instant, and
+  /// two taps landing during the first switch would leave two controllers
+  /// racing for one sensor.
+  Future<void> _switchLens() async {
+    if (_isSwitchingLens || _recorder.isRecording) return;
+
+    setState(() => _isSwitchingLens = true);
+    HapticFeedback.selectionClick();
+
+    await _recorder.switchLens();
+    if (!mounted) return;
+    setState(() => _isSwitchingLens = false);
+  }
+
   Future<void> _close() async {
     _ticker?.cancel();
     _ticker = null;
@@ -170,13 +191,22 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
             else if (readiness != VideoNoteReadiness.ready)
               _Unavailable(readiness: readiness)
             else ...[
-              _Lens(
-                recorder: _recorder,
-                progress:
-                    _elapsed.inMilliseconds /
-                    VideoNoteSheet.limit.inMilliseconds,
-                isRecording: _recorder.isRecording,
-              ),
+              if (_isSwitchingLens)
+                const SizedBox(
+                  height: VideoNoteSheet.diameter,
+                  width: VideoNoteSheet.diameter,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                VideoNoteLensView(
+                  recorder: _recorder,
+                  diameter: VideoNoteSheet.diameter,
+                  progress:
+                      _elapsed.inMilliseconds /
+                      VideoNoteSheet.limit.inMilliseconds,
+                  isRecording: _recorder.isRecording,
+                  onSwitchLens: _recorder.canSwitchLens ? _switchLens : null,
+                ),
               const SizedBox(height: AppSpacing.x4),
               Text(
                 switch ((_recorder.isRecording, _discarded)) {
@@ -193,6 +223,19 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
               ),
               const SizedBox(height: AppSpacing.x4),
               _Shutter(isRecording: _recorder.isRecording, onTap: _toggle),
+              // Said once, quietly, and only while it is true: a double tap
+              // does nothing on a phone with one camera, and nothing at all
+              // once the take is running.
+              if (_recorder.canSwitchLens) ...[
+                const SizedBox(height: AppSpacing.x3),
+                Text(
+                  l10n.videoNoteDoubleTapToSwitch,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: AppSpacing.x4),
           ],
@@ -205,108 +248,6 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
     final seconds = value.inSeconds;
     return '0:${(seconds % 60).toString().padLeft(2, '0')}';
   }
-}
-
-/// The camera, cropped to the circle it will be sent as.
-class _Lens extends StatelessWidget {
-  const _Lens({
-    required this.recorder,
-    required this.progress,
-    required this.isRecording,
-  });
-
-  final VideoNoteRecorder recorder;
-  final double progress;
-  final bool isRecording;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final chatix = ChatixTheme.of(context);
-
-    return SizedBox(
-      width: VideoNoteSheet.diameter,
-      height: VideoNoteSheet.diameter,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          ClipOval(
-            child: ColoredBox(
-              color: scheme.surfaceContainerHighest,
-              // The preview is whatever shape the sensor is; the circle takes
-              // the middle of it rather than squashing it to fit.
-              child: FittedBox(
-                fit: BoxFit.cover,
-                clipBehavior: Clip.hardEdge,
-                child: SizedBox(
-                  width: VideoNoteSheet.diameter * recorder.aspectRatio,
-                  height: VideoNoteSheet.diameter,
-                  child: recorder.buildPreview(),
-                ),
-              ),
-            ),
-          ),
-          // The ring is the sixty seconds, not decoration.
-          CustomPaint(
-            painter: _RingPainter(
-              progress: progress.clamp(0.0, 1.0),
-              colour: isRecording ? chatix.danger : scheme.outlineVariant,
-              track: scheme.outlineVariant.withValues(alpha: 0.4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RingPainter extends CustomPainter {
-  const _RingPainter({
-    required this.progress,
-    required this.colour,
-    required this.track,
-  });
-
-  final double progress;
-  final Color colour;
-  final Color track;
-
-  static const double stroke = 4;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final inset = rect.deflate(stroke / 2);
-
-    canvas.drawArc(
-      inset,
-      0,
-      6.2831853,
-      false,
-      Paint()
-        ..color = track
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke,
-    );
-
-    if (progress <= 0) return;
-
-    canvas.drawArc(
-      inset,
-      -1.5707963,
-      6.2831853 * progress,
-      false,
-      Paint()
-        ..color = colour
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..strokeCap = StrokeCap.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter old) =>
-      old.progress != progress || old.colour != colour || old.track != track;
 }
 
 /// Start, then stop and send. One button, because there is one decision.

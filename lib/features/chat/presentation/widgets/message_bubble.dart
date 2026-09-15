@@ -426,6 +426,9 @@ class _BubbleBody extends StatelessWidget {
               onOpen: onOpenAttachment,
               onRetry: onRetryAttachment,
               foreground: foreground,
+              author: message.profile,
+              authorId: message.authorId,
+              isMine: isMine,
             ),
           if (hasText)
             MessageText(

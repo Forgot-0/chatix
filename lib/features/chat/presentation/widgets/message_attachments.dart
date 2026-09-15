@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/presentation/widgets/document_attachment_row.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
-import 'package:chatix/features/chat/presentation/widgets/video_preview.dart';
+import 'package:chatix/features/chat/presentation/widgets/video_note_player.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_player.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -24,6 +25,9 @@ class MessageAttachments extends StatelessWidget {
     required this.messageId,
     required this.attachments,
     required this.foreground,
+    this.author,
+    this.authorId,
+    this.isMine = false,
     this.onOpen,
     this.onRetry,
   });
@@ -31,6 +35,13 @@ class MessageAttachments extends StatelessWidget {
   final String messageId;
   final List<AttachmentEntity> attachments;
   final Color foreground;
+
+  /// Who sent it. Only a voice message draws them — it puts the speaker's
+  /// face beside the waveform, the way a voice note is attributed.
+  final ChatProfileEntity? author;
+  final int? authorId;
+
+  final bool isMine;
   final void Function(AttachmentEntity attachment)? onOpen;
 
   /// Re-reads the message. The only "try again" an attachment that came back
@@ -90,13 +101,12 @@ class MessageAttachments extends StatelessWidget {
             messageId: messageId,
             foreground: foreground,
             accent: accent,
+            author: author,
+            authorId: authorId,
+            isMine: isMine,
           ),
         for (final attachment in videoNotes)
-          VideoPreview(
-            attachment: attachment,
-            messageId: messageId,
-            isCircular: true,
-          ),
+          VideoNotePlayer(attachment: attachment, messageId: messageId),
         for (final attachment in stalled)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),

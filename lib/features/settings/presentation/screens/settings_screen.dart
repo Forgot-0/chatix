@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
+import 'package:chatix/core/settings/media_settings.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
@@ -137,6 +139,51 @@ class SettingsScreen extends ConsumerWidget {
               selected: {appearance.wallpaper},
               onSelectionChanged: (selection) =>
                   controller.setWallpaper(selection.first),
+            ),
+          ),
+
+          const Divider(height: AppSpacing.x8),
+
+          _SectionLabel(label: l10n.mediaAutoplay),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4,
+              0,
+              AppSpacing.x4,
+              AppSpacing.x3,
+            ),
+            child: Text(
+              l10n.mediaAutoplayHint,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+            child: SegmentedButton<MediaAutoplay>(
+              segments: [
+                ButtonSegment(
+                  value: MediaAutoplay.always,
+                  label: Text(l10n.mediaAutoplayAlways),
+                ),
+                ButtonSegment(
+                  value: MediaAutoplay.wifiOnly,
+                  label: Text(l10n.mediaAutoplayWifi),
+                ),
+                ButtonSegment(
+                  value: MediaAutoplay.never,
+                  label: Text(l10n.mediaAutoplayNever),
+                ),
+              ],
+              selected: {
+                ref.watch(
+                  mediaSettingsProvider.select((s) => s.videoNoteAutoplay),
+                ),
+              },
+              onSelectionChanged: (selection) => ref
+                  .read(mediaSettingsProvider.notifier)
+                  .setVideoNoteAutoplay(selection.first),
             ),
           ),
 

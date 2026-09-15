@@ -10,70 +10,7 @@ import 'package:chatix/features/chat/presentation/widgets/composer/video_note_sh
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 import '../../../../../helpers/chat_golden.dart';
-
-/// A camera that answers from fields instead of hardware.
-class FakeVideoNoteRecorder implements VideoNoteRecorder {
-  FakeVideoNoteRecorder({
-    this.readiness = VideoNoteReadiness.ready,
-    VideoNoteTake? take,
-  }) : take = take ?? usable();
-
-  VideoNoteReadiness readiness;
-
-  /// What [stop] hands back. Null stands for a take too short to keep.
-  VideoNoteTake? take;
-
-  bool _recording = false;
-  int starts = 0;
-  int stops = 0;
-  int cancels = 0;
-  int disposals = 0;
-
-  /// A take the composer would accept.
-  static VideoNoteTake usable() => const VideoNoteTake(
-    duration: Duration(seconds: 4),
-    upload: AttachmentUploadRequestEntity.videoNote(
-      filename: 'note.mp4',
-      mimeType: 'video/mp4',
-      fileSize: 2048,
-      filePath: '/tmp/note.mp4',
-    ),
-  );
-
-  @override
-  Future<VideoNoteReadiness> prepare() async => readiness;
-
-  @override
-  Widget buildPreview() => const ColoredBox(color: Color(0xFF223344));
-
-  @override
-  double get aspectRatio => 4 / 3;
-
-  @override
-  bool get isRecording => _recording;
-
-  @override
-  Future<void> start() async {
-    starts++;
-    _recording = true;
-  }
-
-  @override
-  Future<VideoNoteTake?> stop() async {
-    stops++;
-    _recording = false;
-    return take;
-  }
-
-  @override
-  Future<void> cancel() async {
-    cancels++;
-    _recording = false;
-  }
-
-  @override
-  Future<void> dispose() async => disposals++;
-}
+import '../../../../../helpers/fakes/fake_video_note_recorder.dart';
 
 /// The recorder is the client's own because the server will not resize
 /// anything: `video_note` is capped at 640 px and 60 s (api-docs §5.5), and

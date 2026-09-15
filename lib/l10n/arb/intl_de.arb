@@ -82,8 +82,18 @@
   "voiceSlideToCancel": "Nach links wischen zum Abbrechen, nach oben zum Fixieren",
   "voiceReleaseToCancel": "Loslassen zum Abbrechen",
   "voiceRecordingLocked": "Aufnahme läuft — zum Beenden auf Senden tippen",
+  "voiceLimitReached": "Maximale Länge erreicht",
   "voicePermissionDenied": "Mikrofonzugriff ist deaktiviert",
   "voiceMessage": "Sprachnachricht",
+  "voicePlay": "Sprachnachricht abspielen",
+  "voicePause": "Sprachnachricht pausieren",
+  "voiceUnavailable": "Nicht verfügbar",
+  "voiceNotListened": "Noch nicht angehört",
+  "voiceSpeedLabel": "Wiedergabegeschwindigkeit {speed}",
+  "voiceRecording": "Aufnahme läuft",
+  "voiceTimeLeft": "Noch {time}",
+  "voiceCancelRecording": "Abbrechen",
+  "voiceSendRecording": "Sprachnachricht senden",
   "attach": "Anhängen",
   "messageHint": "Nachricht",
   "unknownChat": "Unbekannter Chat",
@@ -661,5 +671,90 @@
   "mediaPreviewRemove": "Entfernen",
   "@mediaPreviewRemove": {
     "description": "Tooltip on the button that drops one file from a staged album"
+  },
+  "composerRecordVideoNoteLabel": "Halten, um eine Videonachricht aufzunehmen",
+  "@composerRecordVideoNoteLabel": {
+    "description": "Accessible label of the composer button while it is in video-note mode"
+  },
+  "composerSwitchToVideoNote": "Zu Videonachricht wechseln",
+  "@composerSwitchToVideoNote": {
+    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
+  },
+  "composerSwitchToVoice": "Zu Sprachnachricht wechseln",
+  "@composerSwitchToVoice": {
+    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
+  },
+  "videoNoteSwitchCamera": "Kamera wechseln",
+  "@videoNoteSwitchCamera": {
+    "description": "Turns the camera around while framing a video note"
+  },
+  "videoNoteDoubleTapToSwitch": "Zum Kamerawechsel doppeltippen",
+  "@videoNoteDoubleTapToSwitch": {
+    "description": "Says that a double tap on the circle turns the camera around"
+  },
+  "videoNoteOpeningCamera": "Kamera wird geöffnet …",
+  "@videoNoteOpeningCamera": {
+    "description": "Shown for the moment between the thumb going down and the camera waking"
+  },
+  "videoNoteHoldToRecord": "Zum Aufnehmen halten",
+  "@videoNoteHoldToRecord": {
+    "description": "Hint under the composer circle before a take starts"
+  },
+  "videoNoteSend": "Videonachricht senden",
+  "@videoNoteSend": {
+    "description": "Button that sends a finished video note"
+  },
+  "videoNoteRecordingLabel": "Videonachricht wird aufgenommen",
+  "@videoNoteRecordingLabel": {
+    "description": "Accessible label of the live circle while a video note is being recorded"
+  },
+  "videoNoteTapForSound": "Für Ton tippen",
+  "@videoNoteTapForSound": {
+    "description": "Hint on a video note playing silently in the feed"
+  },
+  "videoNoteTapToMute": "Zum Stummschalten tippen",
+  "@videoNoteTapToMute": {
+    "description": "Hint on a video note that currently has sound"
+  },
+  "videoNoteHoldForFullScreen": "Für Vollbild halten",
+  "@videoNoteHoldForFullScreen": {
+    "description": "Hint that a long press opens the video note full screen"
+  },
+  "videoNotePlayerLabel": "Videonachricht, {duration}",
+  "@videoNotePlayerLabel": {
+    "description": "Accessible label of a video note in the feed",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "videoNoteAutoplayOff": "Zum Abspielen tippen",
+  "@videoNoteAutoplayOff": {
+    "description": "Shown on a video note that will not start on its own"
+  },
+  "mediaAutoplay": "Videonachrichten automatisch abspielen",
+  "@mediaAutoplay": {
+    "description": "Settings section: when video notes may start playing by themselves"
+  },
+  "mediaAutoplayHint": "Videonachrichten starten stumm, sobald sie sichtbar werden. Ton gibt es per Tippen.",
+  "@mediaAutoplayHint": {
+    "description": "Explains what autoplay does and how sound is turned on"
+  },
+  "mediaAutoplayAlways": "Immer",
+  "@mediaAutoplayAlways": {
+    "description": "Autoplay on any connection"
+  },
+  "mediaAutoplayWifi": "Nur über WLAN",
+  "@mediaAutoplayWifi": {
+    "description": "Autoplay only on an unmetered connection"
+  },
+  "mediaAutoplayNever": "Nie",
+  "@mediaAutoplayNever": {
+    "description": "Never autoplay"
+  },
+  "videoNotePreview": "Kameravorschau",
+  "@videoNotePreview": {
+    "description": "Accessible label of the live camera circle before a take starts"
   }
 }

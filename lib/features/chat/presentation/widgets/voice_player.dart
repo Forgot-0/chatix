@@ -1,238 +1,332 @@
-import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:just_audio/just_audio.dart';
 
-import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/presentation/providers/attachment_url_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
+import 'package:chatix/features/chat/domain/entities/voice_waveform.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/voice_playback_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/voice_waveform_bars.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
-class VoicePlayer extends ConsumerStatefulWidget {
+/// A voice message in a bubble: who said it, what it looks like, how long it
+/// is, and whether it has been heard.
+///
+/// Owns no player of its own. The audio lives in [voicePlaybackProvider], one
+/// for the whole app, which is what lets playback carry on after this widget
+/// scrolls away or the chat is left — and what stops two bubbles talking over
+/// each other.
+class VoicePlayer extends ConsumerWidget {
   const VoicePlayer({
     super.key,
     required this.attachment,
     required this.messageId,
     required this.foreground,
     required this.accent,
+    this.author,
+    this.authorId,
+    this.isMine = false,
   });
 
   final AttachmentEntity attachment;
   final String messageId;
+
+  /// The bubble's text colour, which everything here is drawn against.
   final Color foreground;
+
+  /// What the played part of the waveform is filled with.
   final Color accent;
 
-  @override
-  ConsumerState<VoicePlayer> createState() => _VoicePlayerState();
-}
+  final ChatProfileEntity? author;
+  final int? authorId;
 
-class _VoicePlayerState extends ConsumerState<VoicePlayer> {
-  final AudioPlayer _player = AudioPlayer();
+  /// Outgoing messages show no "heard" mark: whether the other side has
+  /// listened is not something the API reports — `AttachmentDTO` has no
+  /// per-listener state and read receipts are per message (api-docs §5.5).
+  /// The mark here is this device's own memory of what it has played.
+  final bool isMine;
 
-  bool _loaded = false;
-  bool _failed = false;
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  AttachmentRef get _ref => (
-    chatId: widget.attachment.chatId,
-    messageId: widget.messageId,
-    attachmentId: widget.attachment.id,
-  );
-
-  Future<void> _toggle() async {
-    if (_player.playing) {
-      await _player.pause();
-      return;
-    }
-
-    if (!_loaded) {
-      final url = widget.attachment.url?.isNotEmpty == true
-          ? widget.attachment.url!
-          : await _resolveUrl();
-      if (url == null) {
-        if (mounted) setState(() => _failed = true);
-        return;
-      }
-
-      try {
-        await _player.setUrl(url);
-        _loaded = true;
-      } catch (_) {
-        if (mounted) setState(() => _failed = true);
-        return;
-      }
-    }
-
-    if (_player.processingState == ProcessingState.completed) {
-      await _player.seek(Duration.zero);
-    }
-    await _player.play();
-  }
-
-  Future<String?> _resolveUrl() async {
-    final result = await ref
-        .read(getAttachmentDownloadUrlUseCaseProvider)
-        .execute(_ref.chatId, _ref.messageId, _ref.attachmentId);
-    return result.getRight().toNullable()?.url;
-  }
+  static const double _waveformWidth = 128;
+  static const double _waveformHeight = 30;
 
   @override
-  Widget build(BuildContext context) {
-    final total =
-        widget.attachment.durationSeconds != null &&
-            widget.attachment.durationSeconds! > 0
-        ? Duration(seconds: widget.attachment.durationSeconds!)
-        : null;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
-    return StreamBuilder<Duration>(
-      stream: _player.positionStream,
-      builder: (context, snapshot) {
-        final position = snapshot.data ?? Duration.zero;
-        final duration = _player.duration ?? total ?? Duration.zero;
-        final progress = duration.inMilliseconds == 0
-            ? 0.0
-            : (position.inMilliseconds / duration.inMilliseconds).clamp(
-                0.0,
-                1.0,
-              );
+    final playback = ref.watch(voicePlaybackProvider);
+    final isCurrent = playback.isCurrent(attachment.id);
+    final isPlaying = playback.isPlayingNow(attachment.id);
+    final failed = isCurrent && playback.failed;
 
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            StreamBuilder<PlayerState>(
-              stream: _player.playerStateStream,
-              builder: (context, stateSnapshot) {
-                final playing = stateSnapshot.data?.playing ?? false;
-                return IconButton(
-                  visualDensity: VisualDensity.compact,
-                  onPressed: _failed ? null : _toggle,
-                  icon: Icon(
-                    _failed
-                        ? Icons.error_outline
-                        : (playing
-                              ? Icons.pause_circle_filled
-                              : Icons.play_circle_fill),
-                    size: 34,
-                    color: widget.foreground,
-                  ),
-                );
-              },
-            ),
-            SizedBox(
-              width: 132,
-              height: 32,
-              child: GestureDetector(
-                onTapDown: (details) {
-                  if (duration.inMilliseconds == 0) return;
-                  final box = context.findRenderObject() as RenderBox?;
-                  if (box == null) return;
-                  final fraction = (details.localPosition.dx / box.size.width)
-                      .clamp(0.0, 1.0);
-                  _player.seek(duration * fraction);
-                },
-                child: CustomPaint(
-                  painter: _WaveformPainter(
-                    seed: widget.attachment.id.hashCode,
-                    progress: progress,
-                    played: widget.accent,
-                    remaining: widget.foreground.withValues(alpha: 0.35),
-                  ),
+    // Recorded here, or a stable stand-in for somebody else's recording.
+    final waveform =
+        ref.watch(voiceLocalStoreProvider).readWaveform(attachment.id) ??
+        VoiceWaveform.placeholder(attachment.id);
+
+    final total = _total(playback, isCurrent);
+    final shown = isCurrent && playback.position > Duration.zero
+        ? playback.position
+        : total;
+
+    final progress = isCurrent ? playback.progress : 0.0;
+    final heard = playback.hasBeenHeard(attachment.id);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ChatAvatar.profile(
+            author,
+            userId: authorId,
+            size: ChatAvatarSize.xs,
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          _PlayButton(
+            isPlaying: isPlaying,
+            isLoading: isCurrent && playback.isLoading,
+            failed: failed,
+            foreground: foreground,
+            accent: accent,
+            label: isPlaying ? l10n.voicePause : l10n.voicePlay,
+            // A failed fetch is worth another try rather than a dead
+            // button: the link it was after is regenerated on demand.
+            onPressed: () => _toggle(ref),
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: _waveformWidth,
+                height: _waveformHeight,
+                child: VoiceWaveformBars(
+                  bars: waveform.bars,
+                  progress: progress,
+                  playedColor: accent,
+                  remainingColor: foreground.withValues(alpha: 0.35),
+                  semanticsLabel: l10n.voiceMessage,
+                  // Scrubbing only makes sense once there is something
+                  // loaded to scrub through.
+                  onSeek: isCurrent
+                      ? (fraction) => unawaited(
+                          ref
+                              .read(voicePlaybackProvider.notifier)
+                              .seekFraction(attachment.id, fraction),
+                        )
+                      : null,
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _format(
-                _player.playing || position > Duration.zero
-                    ? position
-                    : duration,
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    failed ? l10n.voiceUnavailable : formatVoiceDuration(shown),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: foreground.withValues(alpha: 0.75),
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  // The unheard dot, on incoming messages only, and only
+                  // until it has been played through.
+                  if (!isMine && !heard) ...[
+                    const SizedBox(width: 6),
+                    Semantics(
+                      label: l10n.voiceNotListened,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: widget.foreground.withValues(alpha: 0.75),
+            ],
+          ),
+          // The speed control belongs to the message being played, not to
+          // every bubble in the chat.
+          if (isCurrent) ...[
+            const SizedBox(width: AppSpacing.x1),
+            _SpeedChip(
+              speed: playback.speed,
+              foreground: foreground,
+              onTap: () => unawaited(
+                ref.read(voicePlaybackProvider.notifier).cycleSpeed(),
               ),
             ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 
-  static String _format(Duration value) {
-    final minutes = value.inMinutes;
-    final seconds = value.inSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
-}
-
-class _WaveformPainter extends CustomPainter {
-  _WaveformPainter({
-    required this.seed,
-    required this.progress,
-    required this.played,
-    required this.remaining,
-  });
-
-  final int seed;
-  final double progress;
-  final Color played;
-  final Color remaining;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rng = math.Random(seed);
-    const barWidth = 3.0;
-    const gap = 2.0;
-    final count = (size.width / (barWidth + gap)).floor();
-
-    for (var i = 0; i < count; i++) {
-      final height = size.height * (0.25 + rng.nextDouble() * 0.75);
-      final x = i * (barWidth + gap);
-      final isPlayed = i / count <= progress;
-
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x, (size.height - height) / 2, barWidth, height),
-          const Radius.circular(2),
-        ),
-        Paint()..color = isPlayed ? played : remaining,
-      );
+  Duration _total(VoicePlaybackState playback, bool isCurrent) {
+    if (isCurrent && playback.duration > Duration.zero) {
+      return playback.duration;
     }
+
+    final seconds = attachment.durationSeconds;
+    return seconds != null && seconds > 0
+        ? Duration(seconds: seconds)
+        : Duration.zero;
   }
 
-  @override
-  bool shouldRepaint(_WaveformPainter old) =>
-      old.progress != progress ||
-      old.seed != seed ||
-      old.played != played ||
-      old.remaining != remaining;
+  void _toggle(WidgetRef ref) {
+    final track = VoiceTrack(
+      chatId: attachment.chatId,
+      messageId: messageId,
+      attachment: attachment,
+    );
+
+    unawaited(
+      ref
+          .read(voicePlaybackProvider.notifier)
+          .toggle(track, upNext: _queue(ref)),
+    );
+  }
+
+  /// Every voice message in this chat, oldest first.
+  ///
+  /// Read at the moment play is pressed rather than watched: it decides
+  /// where playback goes when this one ends, and by then the feed may have
+  /// grown — but a bubble that rebuilds whenever any message arrives is a
+  /// feed that rebuilds every bubble.
+  List<VoiceTrack> _queue(WidgetRef ref) {
+    final messages = ref
+        .read(chatDetailProvider(attachment.chatId))
+        .value
+        ?.messages;
+
+    return messages == null ? const [] : voiceTracksIn(messages);
+  }
 }
 
-class RecordingWaveform extends StatelessWidget {
-  const RecordingWaveform({
-    super.key,
-    required this.amplitude,
-    required this.color,
+/// `m:ss`, the way a voice message is always written.
+String formatVoiceDuration(Duration value) {
+  final minutes = value.inMinutes;
+  final seconds = value.inSeconds % 60;
+  return '$minutes:${seconds.toString().padLeft(2, '0')}';
+}
+
+class _PlayButton extends StatelessWidget {
+  const _PlayButton({
+    required this.isPlaying,
+    required this.isLoading,
+    required this.failed,
+    required this.foreground,
+    required this.accent,
+    required this.label,
+    required this.onPressed,
   });
 
-  final double amplitude;
-  final Color color;
+  final bool isPlaying;
+  final bool isLoading;
+  final bool failed;
+  final Color foreground;
+  final Color accent;
+  final String label;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 24,
-      child: AnimatedContainer(
-        duration: ChatixTheme.fastDuration,
-        curve: ChatixTheme.curve,
-        width: 6 + amplitude * 18,
-        height: 6 + amplitude * 18,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return Semantics(
+      button: true,
+      label: label,
+      child: ExcludeSemantics(
+        child: InkResponse(
+          onTap: onPressed,
+          radius: 22,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: isLoading
+                ? Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: foreground,
+                      ),
+                    ),
+                  )
+                : AnimatedSwitcher(
+                    duration: AppMotion.fast,
+                    transitionBuilder: (child, animation) => ScaleTransition(
+                      scale: animation,
+                      child: FadeTransition(opacity: animation, child: child),
+                    ),
+                    child: Icon(
+                      failed
+                          ? Icons.error_outline_rounded
+                          : (isPlaying
+                                ? Icons.pause_rounded
+                                : Icons.play_arrow_rounded),
+                      key: ValueKey<int>(
+                        failed ? 2 : (isPlaying ? 1 : 0),
+                      ),
+                      size: 30,
+                      color: foreground,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// `1x` / `1.5x` / `2x`, cycled by tapping.
+class _SpeedChip extends StatelessWidget {
+  const _SpeedChip({
+    required this.speed,
+    required this.foreground,
+    required this.onTap,
+  });
+
+  final VoiceSpeed speed;
+  final Color foreground;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Semantics(
+      button: true,
+      label: l10n.voiceSpeedLabel(speed.label),
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.sm),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: foreground.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(AppRadii.sm),
+            ),
+            child: Text(
+              speed.label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

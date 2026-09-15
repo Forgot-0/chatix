@@ -485,10 +485,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceRecordingLocked => 'Recording — tap send when you are done';
 
   @override
+  String get voiceLimitReached => 'Maximum length reached';
+
+  @override
   String get voicePermissionDenied => 'Microphone access is off';
 
   @override
   String get voiceMessage => 'Voice message';
+
+  @override
+  String get voicePlay => 'Play voice message';
+
+  @override
+  String get voicePause => 'Pause voice message';
+
+  @override
+  String get voiceUnavailable => 'Unavailable';
+
+  @override
+  String get voiceNotListened => 'Not listened to yet';
+
+  @override
+  String voiceSpeedLabel(String speed) {
+    return 'Playback speed $speed';
+  }
+
+  @override
+  String get voiceRecording => 'Recording';
+
+  @override
+  String voiceTimeLeft(String time) {
+    return '$time left';
+  }
+
+  @override
+  String get voiceCancelRecording => 'Cancel';
+
+  @override
+  String get voiceSendRecording => 'Send voice message';
 
   @override
   String get attach => 'Attach';
@@ -1677,4 +1711,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mediaPreviewRemove => 'Remove';
+
+  @override
+  String get composerRecordVideoNoteLabel => 'Hold to record a video note';
+
+  @override
+  String get composerSwitchToVideoNote => 'Switch to video note';
+
+  @override
+  String get composerSwitchToVoice => 'Switch to voice message';
+
+  @override
+  String get videoNoteSwitchCamera => 'Switch camera';
+
+  @override
+  String get videoNoteDoubleTapToSwitch => 'Double-tap to switch camera';
+
+  @override
+  String get videoNoteOpeningCamera => 'Opening the camera…';
+
+  @override
+  String get videoNoteHoldToRecord => 'Hold to record';
+
+  @override
+  String get videoNoteSend => 'Send video note';
+
+  @override
+  String get videoNoteRecordingLabel => 'Recording a video note';
+
+  @override
+  String get videoNoteTapForSound => 'Tap for sound';
+
+  @override
+  String get videoNoteTapToMute => 'Tap to mute';
+
+  @override
+  String get videoNoteHoldForFullScreen => 'Hold for full screen';
+
+  @override
+  String videoNotePlayerLabel(String duration) {
+    return 'Video note, $duration';
+  }
+
+  @override
+  String get videoNoteAutoplayOff => 'Tap to play';
+
+  @override
+  String get mediaAutoplay => 'Autoplay video notes';
+
+  @override
+  String get mediaAutoplayHint =>
+      'Video notes start silently when they scroll into view. Sound comes on when you tap one.';
+
+  @override
+  String get mediaAutoplayAlways => 'Always';
+
+  @override
+  String get mediaAutoplayWifi => 'Wi-Fi only';
+
+  @override
+  String get mediaAutoplayNever => 'Never';
+
+  @override
+  String get videoNotePreview => 'Camera preview';
 }

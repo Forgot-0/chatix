@@ -7,6 +7,7 @@ import 'package:livekit_client/livekit_client.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat/data/datasources/call_room_service.dart';
 import 'package:chatix/features/chat/domain/entities/call_token_entity.dart';
+import 'package:chatix/features/chat/presentation/providers/active_call_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 
 class CallParticipant extends Equatable {
@@ -108,6 +109,7 @@ class CallController extends AsyncNotifier<CallState> {
   Future<CallState> build() async {
     ref.onDispose(() {
       _roomSubscription?.cancel();
+      ref.read(activeCallsProvider.notifier).left(_chatId);
     });
     return const CallState();
   }
@@ -144,6 +146,9 @@ class CallController extends AsyncNotifier<CallState> {
           },
           (_) {
             _listenToRoom();
+            // Anything that makes noise of its own needs to know — voice
+            // playback pauses itself while this is set.
+            ref.read(activeCallsProvider.notifier).joined(_chatId);
             state = AsyncData(
               current.copyWith(
                 stage: CallStage.connected,
@@ -164,6 +169,7 @@ class CallController extends AsyncNotifier<CallState> {
     await _roomSubscription?.cancel();
     _roomSubscription = null;
     await _service.disconnect();
+    ref.read(activeCallsProvider.notifier).left(_chatId);
 
     final current = state.value ?? const CallState();
     state = AsyncData(

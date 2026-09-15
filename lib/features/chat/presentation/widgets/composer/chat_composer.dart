@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
@@ -11,6 +12,7 @@ import 'package:chatix/features/chat/presentation/widgets/composer/composer_cont
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_field.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_recording_bar.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_send_button.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_video_note_stage.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The bottom of a conversation: what is being written, what it is attached
@@ -36,6 +38,7 @@ class ChatComposer extends StatelessWidget {
     this.onAttach,
     this.onSend,
     this.onVoiceRecorded,
+    this.onVideoNoteRecorded,
   });
 
   final TextEditingController controller;
@@ -71,6 +74,10 @@ class ChatComposer extends StatelessWidget {
   /// takes its microphone shape.
   final void Function(VoiceRecording recording)? onVoiceRecorded;
 
+  /// Null where video notes are not on offer; the send button then has
+  /// nothing to swap the microphone for.
+  final void Function(VideoNoteTake take)? onVideoNoteRecorded;
+
   /// Which of its four shapes this is, most specific first.
   ///
   /// An edit claims the box and its text; a reply only adds a banner; staged
@@ -105,9 +112,9 @@ class ChatComposer extends StatelessWidget {
     if (_isEditing) return ComposerAction.save;
     if (_canSend) return ComposerAction.send;
 
-    // Nothing to send: the microphone, unless voice is not on offer here —
-    // then the plane stays, greyed, so the control does not vanish.
-    return onVoiceRecorded == null
+    // Nothing to send: the microphone, unless neither recorder is on offer
+    // here — then the plane stays, greyed, so the control does not vanish.
+    return onVoiceRecorded == null && onVideoNoteRecorded == null
         ? ComposerAction.send
         : ComposerAction.record;
   }
@@ -135,6 +142,10 @@ class ChatComposer extends StatelessWidget {
               editing: editing,
               onCancel: onCancelContext ?? () {},
             ),
+            // The circle a video note is being recorded in, above the row
+            // rather than inside it: it is what is being sent, and it has to
+            // be big enough to frame a face by.
+            const ComposerVideoNoteStage(),
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.x2,
@@ -172,7 +183,7 @@ class ChatComposer extends StatelessWidget {
                       ),
                       child: Center(
                         child: isRecording
-                            ? const VoiceRecordingBar()
+                            ? const ComposerRecordingBar()
                             : ComposerField(
                                 controller: controller,
                                 focusNode: focusNode,
@@ -189,6 +200,7 @@ class ChatComposer extends StatelessWidget {
                     slowMode: slowMode,
                     onSend: onSend,
                     onVoiceRecorded: onVoiceRecorded,
+                    onVideoNoteRecorded: onVideoNoteRecorded,
                   ),
                 ],
               ),

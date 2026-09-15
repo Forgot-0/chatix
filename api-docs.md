@@ -47,6 +47,11 @@
 | 19 | **Поиска по email нет и не будет.** Идентификаторы адресной книги хранятся только как HMAC-SHA256 с серверным pepper (`user_identifiers`, `pending_contacts`), сырой email в базу не попадает. Сопоставление возможно лишь точным совпадением: клиент шлёт email в `POST /contacts/import/`, сервер сравнивает хеши. `GET /contacts/search/` ищет по `@username` и по префиксу имени, но не по почте. |
 | 20 | **Большой импорт отвечает `202`.** Батч свыше 100 записей уходит в фоновую задачу: тело ответа `{status: "queued", accepted}` без списка контактов, итог приходит WS-событием `contacts_import_completed`. Батч до 100 записей обрабатывается синхронно и отвечает `200` со `status: "done"`. Оба варианта принимают заголовок `Idempotency-Key`. |
 | 21 | **Список контактов — курсорная пагинация, не `PageResult`.** `GET /contacts/` отдаёт `{contacts, has_next, next_contact_id, version}`; `total` нет вообще. `version` приходит **только на последней странице** и является отметкой для дельта-синка: следующий запуск шлёт её в `updated_after` и получает только изменившееся. Удаления через дельту не видны, полный список нужно перечитывать периодически. |
+| 22 | **Запиненные чаты не участвуют в курсоре `GET /chats/`.** Они вырезаны из keyset-тела на **всех** страницах (`ChatMember.pinned_at IS NULL`) и приклеиваются отдельным запросом в начало **первой** страницы (курсор не передан), отсортированные по `pinned_at DESC`. Следствия для клиента: на второй и последующих страницах пинов не будет вообще — это не баг; `has_next`/`next_date`/`next_chat_id` считаются только по непинованной части, поэтому пины в лимит страницы не входят и страница может вернуть до `limit + 5` чатов. Порядок пинов задаётся `pinned_at DESC`, поля `pin_order` нет. |
+| 23 | **В чате два разных «мьюта», и путать их нельзя.** `me.is_muted` (колонка `muted_until`) — **модераторский**: участника заглушил админ, он не может писать. `is_muted_by_me` (колонка `notifications_muted_until`) — **личный мьют уведомлений**, ставится самим пользователем через `PATCH /chats/{chat_id}/state/` и режет только push: WebSocket-доставка замьютившему идёт как обычно, realtime мьют не трогает. |
+| 24 | **Серверный поиск по сообщениям ищет только `messages.content`.** `GET /chats/messages/search/` не ищет ни по именам файлов вложений, ни по названиям и описаниям чатов, ни по именам участников — только по тексту сообщения. Индекс полнотекстовый с конфигурацией `simple` (без стемминга, только нижний регистр), последний терм запроса матчится по префиксу, остальные точно: `догов кон` найдёт «договор» + «кон*», но не найдёт «договоры» по запросу «договор». Подстрочный поиск («*юдже*») не поддерживается. Ранжирования нет — порядок строго от новых к старым. Подсветку совпадений клиент делает сам. |
+| 25 | **У direct-чата собеседник приходит только в `GET /chats/`, полем `ChatDTO.peer`.** `name` и `avatar_s3_key` у direct не заполняются никогда, а `last_message` у пустого диалога `null` — без `peer` строку списка нечем отрисовать. У group/supergroup вместо него `members_preview` (до 3 участников кроме себя, по возрастанию `user_id`); у channel пусто и то и другое. В ответах `POST /chats/` и `PATCH /chats/{id}/` оба поля приходят пустыми — это не баг, они наполняются только в списке. См. 5.2. |
+| 25 | **`GET /profiles/` перестал быть публичным.** Списку и поиску профилей теперь нужен `Authorization`, и он ограничен 20 запросами в минуту. Поиск по одному полю ввода — параметр `q`: он ищет по `username` **ИЛИ** `display_name` одним запросом (минимум 2 символа). Старые `username`/`display_name` остались и по-прежнему комбинируются через **AND**; передать `q` вместе с любым из них — `422`, а не тихий приоритет. Форма ответа прежняя — `PageResult<ProfileDTO>`. См. 4.2. |
 
 ---
 
@@ -237,6 +242,7 @@ interface ErrorResponse {
 | `TOO_LONG_CHAT_ROLE_NAME` | 400 | `{ "role_name": string, "max_len": 32 }` |
 | `DIRECT_CHAT_EXISTS` | 409 | `{ "chat_id": string }` |
 | `MEMBER_LIMIT_EXCEEDED` | 400 | `{ "limit": number }` — лимит зависит от типа чата (2/500/1000000/10000000), см. раздел 9 |
+| `PINNED_CHATS_LIMIT_EXCEEDED` | 400 | `{ "limit": 5 }` — попытка запинить шестой чат через `PATCH /chats/{chat_id}/state/`; лимит общий на пользователя, архив считается вместе с основным списком |
 | `MESSAGE_TOO_LONG` | 400 | `{ "length": number, "max_length": 4096 }` |
 | `LIVEKIT_ERROR` | 502 | `{ "reason": string }` |
 | `LIVEKIT_UNAUTHORIZED` | 502 | `{}` |
@@ -484,13 +490,45 @@ interface SessionDTO {
 если строки ещё нет, эндпоинт создаёт её сам. Клиенту проще один раз позвать `/profiles/my/` после
 логина, чем ловить `404` на `GET /profiles/{id}/`.
 
-### 4.2 `GET /profiles/` 🔓 (публичный)
+### 4.2 `GET /profiles/` 🔒 (раньше был публичным) — список и поиск
 
-Query (`GetProfilesRequest`): `username?, display_name?, skills?: string[], page=1, page_size=20 (≤100), sort?`.
+Query (`GetProfilesRequest`): `q?, username?, display_name?, skills?: string[], page=1, page_size=20 (≤100), sort?`.
 
-**Response `200`**: `PageResult<ProfileDTO>` (только 4 поля пагинации, см. 1.5).
+**Эндпоинт больше не публичный.** Единый параметр `q` делает перебор пользовательской базы
+дешёвым (один запрос вместо двух), поэтому список закрыт токеном и ограничен по частоте:
+`20` запросов в `60` секунд на клиента (`PROFILE_SEARCH_RATE_TIMES` / `PROFILE_SEARCH_RATE_SECONDS`).
+Превышение — `429` в формате из 2.2 (`{"detail": "Too Many Requests"}`), без `Authorization` — `401 NOT_AUTHENTICATED`.
 
-### 4.3 `GET /profiles/{profile_id}/` 🔓 (публичный)
+**`q` — поиск по одному полю ввода**: совпадение по `username` **ИЛИ** по `display_name`
+(`ILIKE '%q%'`, регистр не важен, `%` и `_` внутри `q` экранируются и ищутся буквально).
+Клиенту больше не нужно слать два запроса и склеивать результаты по `id`.
+
+- минимальная длина `q` — **2 символа** после `strip()` (`PROFILE_SEARCH_MIN_QUERY`), максимальная — 150;
+  пустой или короткий `q` — `422 VALIDATION`, а не «весь список»;
+- `q` **нельзя** комбинировать с `username` или `display_name` — это `422 VALIDATION`,
+  а не молчаливый приоритет одного параметра над другим;
+- поиск подстрочный, а не префиксный: `q=van` найдёт и `ivan_dev`, и `Ivan Petrov`.
+  Это ровно объединение того, что раньше давали два отдельных запроса.
+
+**`username` и `display_name` оставлены для обратной совместимости и комбинируются через `AND`**
+(как и раньше): `?username=ivan&display_name=Петров` вернёт только тех, у кого совпало **и** то, **и** другое.
+Каждый из них — тоже подстрочный `ILIKE '%значение%'` (без экранирования `%`/`_`, в отличие от `q`).
+`skills` — `AND` к остальному (массив совпадает целиком, значения в lowercase).
+
+**Блокировки**: из выдачи вычитаются пользователи, которых вызывающий заблокировал
+(`blocked_users`, см. 4.13). Обратное направление не фильтруется: тот, кто заблокировал вас,
+в поиске по-прежнему виден. Ответы без `q` кешируются на 360 с на каждого вызывающего,
+поэтому свежая блокировка пропадает из обычного списка не мгновенно; выдача с `q` не кешируется
+и учитывает блокировки сразу.
+
+Без `sort` порядок — по `id` по возрастанию (стабильная пагинация).
+
+**Response `200`**: `PageResult<ProfileDTO>` (только 4 поля пагинации, см. 1.5) — форма ответа
+одинакова и для списка, и для поиска.
+
+### 4.3 `GET /profiles/{profile_id}/` 🔒
+
+(Раньше документировался как публичный — в коде он всегда требовал токен.)
 
 **Response `200`**: `ProfileDTO`. Ошибки: `404 NOT_FOUND_PROFILE`.
 
@@ -778,6 +816,8 @@ interface BlockedListDTO {
 | Префикс | Файл роутера | Тег | Подключён? |
 |---|---|---|---|
 | `/chats` | `routes/v1/chats.py` | `chats` | ✅ |
+| `/chats/messages/search/` | `routes/v1/chats.py` (статический путь выше `/{chat_id}/`) | `chats` | ✅ |
+| `/chats/reactions/catalog/` | `routes/v1/chats.py` (статический путь выше `/{chat_id}/`) | `chats` | ✅ |
 | `/chats/{chat_id}/members` | `routes/v1/members.py` | `chat-members` | ✅ |
 | `/chats/{chat_id}/messages` | `routes/v1/messages.py` | `chat-messages` | ✅ |
 | `/chats/{chat_id}` | `routes/v1/attachments.py` | `chat-attachments` | ✅ |
@@ -798,10 +838,11 @@ interface BlockedListDTO {
 
 | Метод | Путь | Rate limit | Request | Response |
 |---|---|---|---|---|
-| GET | `/chats/` | — | Query `GetListUserChatsRequest {limit=50 (≤100), last_chat_id?: UUID, last_activity_at?: datetime}` — курсорная пагинация | `ListChats` |
+| GET | `/chats/` | — | Query `GetListUserChatsRequest {limit=50 (≤100), last_chat_id?: UUID, last_activity_at?: datetime, archived=false}` — курсорная пагинация | `ListChats` |
 | POST | `/chats/` | 4/5мин | `CreateChatRequest` | `201`, `ChatDTO` |
 | GET | `/chats/{chat_id}/` | — | — | `ChatDetailDTO` |
 | PATCH | `/chats/{chat_id}/` | 4/5мин | `UpdateChatRequest` | `200`, `ChatDTO` |
+| PATCH | `/chats/{chat_id}/state/` | 60/1мин | `UpdateChatStateRequest` | `200`, `ChatStateDTO` — личное состояние чата: пин, архив, мьют уведомлений, черновик |
 | DELETE | `/chats/{chat_id}/` | 4/5мин | — | `204` |
 | POST | `/chats/{chat_id}/join/` | 10/5мин | — | `204` — вступить в публичный чат |
 | POST | `/chats/{chat_id}/leave/` | 4/5мин | — | `204` |
@@ -822,6 +863,18 @@ interface BlockedListDTO {
 }
 // UpdateChatRequest — все поля опциональны, null = не менять
 { name?, description?, is_public?, admin_only?, slow_mode_seconds?, permissions? }
+
+// UpdateChatStateRequest — ВНИМАНИЕ: семантика опциональности здесь ДРУГАЯ, чем у UpdateChatRequest.
+// Поле отсутствует в теле = не менять. Поле передано как null = снять/очистить.
+// Сервер различает эти два случая по составу тела запроса, а не по значению.
+{
+  pinned?: boolean | null;                    // true = закрепить (pinned_at = now), false/null = открепить
+  archived?: boolean | null;                  // true = в архив (archived_at = now), false/null = вернуть в основной список
+  notifications_muted_until?: string | null;  // дата снятия мьюта; null или дата в прошлом = размьютить;
+                                              // «навсегда» выражается далёкой датой
+  draft?: string | null;                      // ≤ 4096 симв., пробелы по краям обрезаются;
+                                              // null или пустая строка = очистить черновик
+}
 ```
 
 ```ts
@@ -832,9 +885,28 @@ interface ChatDTO {
   is_public: boolean; admin_only: boolean; slow_mode_seconds: number;
   permissions: Record<string, boolean>;
   created_by: number; member_count: number; unread_count: number;
-  me: MemberChatDTO | null;         // данные о текущем пользователе как участнике (роль, мьют, бан)
+  me: MemberChatDTO | null;         // данные о текущем пользователе как участнике (роль, МОДЕРАТОРСКИЙ мьют, бан)
   last_read: ReadDetail | null;     // { last_read_message_seq: number, last_read_at: string }
   last_message: MessageDTO | null;  // превью последнего сообщения для списка чатов
+
+  // Кого рисовать в строке списка. Заполняется ТОЛЬКО в GET /chats/ — см. врезку ниже.
+  peer: ChatProfileDTO | null;          // ТОЛЬКО для type == "direct", иначе всегда null
+  members_preview: ChatProfileDTO[];    // ТОЛЬКО для "group"/"supergroup", иначе всегда []
+
+  // Личное состояние чата у текущего пользователя — то, что клиент раньше держал
+  // в shared preferences. Живёт в его строке chat_members, переезжает между устройствами.
+  is_pinned: boolean; pinned_at: string | null;
+  is_archived: boolean;
+  notifications_muted_until: string | null;
+  is_muted_by_me: boolean;          // производное от notifications_muted_until (> сейчас), не отдельное поле в БД
+  draft: string | null;
+}
+interface ChatStateDTO {   // ответ PATCH /chats/{id}/state/ — только личное состояние, без самого чата
+  chat_id: string;
+  is_pinned: boolean; pinned_at: string | null;
+  is_archived: boolean; archived_at: string | null;
+  notifications_muted_until: string | null; is_muted_by_me: boolean;
+  draft: string | null; draft_updated_at: string | null;
 }
 interface ChatDetailDTO {   // ответ GET /chats/{id}/ — отличается от ChatDTO: вместо unread_count/me/last_read/last_message даёт полный список участников
   id: string; seq_counter: number; last_activity_at: string | null;
@@ -855,6 +927,49 @@ interface ReadDetail { last_read_message_seq: number; last_read_at: string }
 ```
 
 ⚠️ **Курсор списка чатов двусоставной**: для следующей страницы нужно передать **оба** значения — `last_activity_at = next_date` и `last_chat_id = next_chat_id` (сортировка `last_activity_at DESC, id DESC`, второй ключ разрешает коллизии по времени).
+
+⚠️ **`archived` делит список на два независимых набора.** `archived=false` (по умолчанию) — основной список, архив скрыт целиком; `archived=true` — **только** архив. Промежуточного «всё сразу» нет, курсор у наборов свой.
+
+⚠️ **Пины и курсор.** Запиненные чаты вырезаны из keyset-тела на всех страницах и отдаются отдельным запросом в начале **первой** страницы (когда курсор не передан), в порядке `pinned_at DESC`. Поэтому первая страница может содержать до `limit + 5` элементов, а `has_next`/`next_date`/`next_chat_id` считаются только по непинованной части — пины в курсор не попадают и на следующих страницах не повторяются. Пин и архив независимы: у набора `archived=true` свои пины, которые точно так же едут в начале его первой страницы. Лимит — 5 закреплённых чатов на пользователя (общий на оба набора), шестой пин отвечает `400 PINNED_CHATS_LIMIT_EXCEEDED`.
+
+
+#### `peer` и `members_preview` — кого показывать в строке списка чатов 🆕
+
+У direct-чата **нет ни `name`, ни `avatar_s3_key`**: `POST /chats/` с `chat_type: "direct"`
+их не заполняет, и заполнить их нечем. Пока в диалоге не появилось первое сообщение,
+`last_message` тоже `null` — то есть раньше пустой диалог клиенту было буквально нечем
+отрисовать. Для этого и заведены два поля:
+
+- **`peer`** — `ChatProfileDTO` собеседника (`user_id`, `username`, `display_name`,
+  `avatar_url`, `avatar_s3_key`). Заполняется **только при `type == "direct"`**, у остальных
+  типов всегда `null`. Это тот участник, который не есть вызывающий, — у обоих собеседников
+  в одном и том же чате `peer` будет разным.
+- **`members_preview`** — до **3** участников кроме себя, порядок детерминированный по
+  возрастанию `user_id` (не по активности и не по алфавиту). Заполняется **только при
+  `type == "group"` / `"supergroup"`**; у `direct` и `channel` всегда `[]`. Предназначено
+  для стопки аватарок в строке списка, полный ростер — `GET /chats/{chat_id}/members/`.
+
+⚠️ **Оба поля отдаёт только `GET /chats/`.** В ответе `POST /chats/` и `PATCH /chats/{id}/`
+они придут `null`/`[]` — там `ChatDTO` собирается из только что записанной модели чата. Для
+`GET /chats/{chat_id}/` они не нужны: `ChatDetailDTO` и так отдаёт полный список `members`.
+
+⚠️ **`peer.user_id` есть всегда, остальные поля профиля — нет.** Профиль в модуле чатов это
+проекция, которую наполняет консьюмер по `profiles.profile.created/updated`; доставка
+асинхронная. Если проекция ещё не доехала (или пользователь удалён), придёт
+`{user_id, username: null, display_name: null, avatar_url: null, avatar_s3_key: null}` —
+клиенту стоит уметь отрисовать заглушку по одному `user_id`, а не считать такой ответ ошибкой.
+
+⚠️ **Забаненные в выдачу не попадают.** Участник с активным `banned_until` не считается ни
+`peer`, ни частью `members_preview` — так же, как он не виден в `GET /members/`. Для direct'а
+это теоретический случай (у роли `direct` нет права `member:ban`), но если он случится,
+`peer` будет `null`.
+
+`avatar_url` в обоих полях — уже подписанная ссылка с тем же TTL `300` сек, что и у прочих
+аватаров; отдельного запроса на presign делать не нужно.
+
+⚠️ **`me.is_muted` и `is_muted_by_me` — разные вещи.** Первое — модераторский мьют (админ запретил писать, поле `muted_until`), второе — личный мьют уведомлений самого пользователя (`notifications_muted_until`). Личный мьют вырезает пользователя только из offline-сигнала на push; WS-события в замьюченном чате приходят как обычно, счётчик `unread_count` тоже считается как обычно.
+
+Ошибки `PATCH /chats/{chat_id}/state/`: `404 NOT_FOUND_CHAT` (чат не существует **или** нет своего membership — отдельного 403 здесь нет, факт членства не раскрывается), `400 PINNED_CHATS_LIMIT_EXCEEDED`, `422` на `draft` длиннее 4096 символов. Прав в чате команда не требует: скоуп — только своё membership, `user_id` берётся из JWT и в теле не передаётся.
 
 Ошибки: `400 MEMBER_LIMIT_EXCEEDED` (для direct — если `member_ids.length != 1`), `400 SLOW_MODE_OUT_OF_RANGE`, `403 CHAT_ACCESS_DENIED/NOT_CHAT_MEMBER`, `404 NOT_FOUND_CHAT`.
 
@@ -988,6 +1103,77 @@ interface MessagesDTO {   // курсорная пагинация, has_next —
 
 Ошибки: `400 MESSAGE_TOO_LONG/INVALID_MESSAGE/SLOW_MODE_OUT_OF_RANGE`, `403 NOT_CHAT_MEMBER/CHAT_ACCESS_DENIED`, `404 NOT_FOUND_CHAT/NOT_FOUND_MESSAGE`, `409 IDEMPOTENCY_CONFLICT`, `429 SLOW_MODE_LIMIT`.
 
+### 5.4.1 `GET /chats/messages/search/` 🔒 — серверный поиск по сообщениям
+
+| Метод | Путь | Rate limit | Query | Response |
+|---|---|---|---|---|
+| GET | `/chats/messages/search/` | 20/60 сек | `q` (2..150, обязателен), `chat_id?`, `limit=30 (≤50)`, `last_message_id?` | `MessageSearchDTO` |
+
+⚠️ **Путь статический и лежит в роутере чатов, а не сообщений.** Полный путь — именно
+`/api/v1/chats/messages/search/`, без `{chat_id}` в середине. Он объявлен **выше**
+`GET /chats/{chat_id}/`, поэтому сегмент `messages` не уезжает в UUID-параметр. Слэш в конце,
+как везде, обязателен: `/chats/messages/search` → `404`.
+
+```ts
+interface MessageSearchItemDTO {
+  message: MessageDTO;            // тот же MessageDTO, что и в 5.4
+  chat: {                         // превью чата, чтобы отрисовать строку результата
+    id: string;
+    type: "direct" | "group" | "supergroup" | "channel";
+    name: string | null;
+    avatar_url: string | null;    // presigned, TTL 300 сек
+    avatar_s3_key: string | null;
+  };
+}
+interface MessageSearchDTO {      // курсорная пагинация, has_next — реальное поле
+  has_next: boolean;
+  items: MessageSearchItemDTO[];
+  next_message_id: string | null; // передать следующим запросом как last_message_id
+}
+```
+
+**Что именно ищется.** Только поле `content` сообщения. Имена файлов вложений
+(`AttachmentDTO.file_name`), названия и описания чатов, имена и username участников в индекс
+**не входят** и никогда не дадут совпадения. Поиска по вложениям нет.
+
+**Как работает матчинг.** Postgres full-text с конфигурацией `simple`: стемминга нет, слова
+только приводятся к нижнему регистру. Выбрана осознанно — переписка двуязычная, и стемминг на
+неверном для текста языке даёт как ложные совпадения, так и ложные пропуски. Запрос режется на
+термы по всему, что не буква/цифра; **последний терм матчится по префиксу, остальные точно**,
+между термами `AND`. Практические следствия для клиента:
+
+- `догов` → найдёт «договор», «договоре», «договорились»;
+- `договор` → **не** найдёт «договоры» (префикс работает только вперёд);
+- `бюджет догов` → сообщение обязано содержать и «бюджет», и слово на «догов»;
+- операторы tsquery (`&`, `|`, `!`, `:*`, скобки), кавычки и апострофы — не операторы,
+  а разделители термов; запрос из одних таких символов вернёт пустую страницу, а не `422`;
+- подстрочный поиск («найди `юдже` внутри слова») и посимвольный поиск по CJK не поддерживаются;
+- учитываются максимум **10** первых термов запроса.
+
+**Ранжирования нет.** Порядок строго `messages.id DESC` — это uuid7, то есть от новых к старым.
+Подсветка совпадений остаётся на клиенте.
+
+**Что попадает в выдачу (скоуп видимости).** Только сообщения из чатов, где вызывающий
+**сейчас активный участник** (состоит в `chat_members` и не забанен), не удалённые
+(`is_deleted = false`), из не удалённых чатов. Отдельно стоит знать:
+
+- ⚠️ **по `joined_at` выдача не режется**: если пользователя добавили в старый чат, поиск найдёт
+  и сообщения, написанные до его вступления. Это сознательно — `GET /chats/{chat_id}/messages/`
+  и `.../context/` историю по дате вступления тоже не режут, и расхождение между поиском и
+  историей запутало бы сильнее;
+- бан **вызывающего** в чате (`chat_members.banned_until` в будущем) убирает сообщения
+  этого чата из его выдачи; выход из чата — тоже;
+- `chat_id` только **сужает** уже безопасную выборку. Передать чужой `chat_id` не ошибка и не
+  `403` — придёт пустая страница.
+
+**Курсор.** `last_message_id` — keyset по `messages.id`. `id` это uuid7, монотонный по времени,
+поэтому курсор корректен и для глобального поиска по всем чатам сразу. `next_message_id`
+заполняется **только когда `has_next == true`**, иначе `null`.
+
+Ошибки: `422` на пустой/короткий (<2) или слишком длинный (>150) `q`, на `limit > 50` и на
+невалидный UUID в `chat_id`/`last_message_id`; `429` при превышении рейт-лимита (формат из 2.2 —
+`{"detail": "Too Many Requests"}`).
+
 ### 5.5 Вложения — двухшаговая загрузка через presigned PUT (детали отличаются от аватара, см. 9.4)
 
 **Типы вложений.** `AttachmentType`: `"image" | "video" | "file" | "voice" | "video_note"`. `AttachmentStatus`: `"pending" | "success" | "error"`.
@@ -1098,6 +1284,8 @@ interface LiveKitParticipantsDTO { identity: string; name: string; state: number
 
 `{emoji}` — path-параметр, строка 1..32, **обязательно URL-encoded** (`👍` → `%F0%9F%91%8D`).
 
+Каталог допустимых эмодзи лежит вне этого префикса — `GET /chats/reactions/catalog/` (5.7.7).
+
 #### 5.7.2 Семантика (Telegram-like)
 
 - Пользователь может поставить **несколько** разных эмодзи на одно сообщение — до `MAX_REACTIONS_PER_USER_PER_MESSAGE = 3`.
@@ -1105,7 +1293,7 @@ interface LiveKitParticipantsDTO { identity: string; name: string; state: number
 - `DELETE .../reactions/{emoji}/` — снимает конкретный эмодзи. Снятие отсутствующего — no-op, `204`.
 - `PUT .../reactions/` с телом `{ "reactions": ["👍","🔥"] }` — **полная замена** набора пользователя (как `messages.sendReaction` в Telegram). Пустой список = снять всё.
 - Каждое результирующее изменение публикует **ровно одно** событие `chats.message.reaction_updated` на сообщение — со снимком всех групп (не дельтой).
-- Разрешён только курированный каталог эмодзи (`app/chats/reactions/catalog.py`, ~73 шт.). Плюс настройки чата (5.7.5).
+- Разрешён только курированный каталог эмодзи — `chat_config.DEFAULT_REACTIONS` (`app/chats/config.py`; отдельного файла `app/chats/reactions/catalog.py` в репозитории нет). По умолчанию 73 эмодзи, но `ChatConfig` наследует `BaseSettings` с `env_file=".env"`, поэтому `DEFAULT_REACTIONS` **переопределяется переменной окружения и зависит от стенда** — не зашивайте список в клиент, читайте его из `GET /chats/reactions/catalog/` (5.7.7). Плюс настройки чата (5.7.5).
 
 #### 5.7.3 Ответ GET
 
@@ -1185,6 +1373,41 @@ interface MessageReactionsDTO {
 
 Обработка: заменить группы реакций у локального сообщения `message_id` на `reaction.groups`. `reacted_by_me` в этом событии не персонализируется — клиент трекает свой выбор оптимистично (или сверяется через GET). После переподключения актуальные реакции для видимых сообщений приходят в `ws.history` / перезапросом списка сообщений.
 
+#### 5.7.7 Каталог реакций 🆕
+
+`GET /api/v1/chats/reactions/catalog/` — отдаёт тот самый каталог, по которому бэкенд валидирует
+эмодзи. Нужен, чтобы клиент не зашивал список в код и не узнавал о расхождении по `INVALID_REACTION`.
+
+| Метод | Путь | Авторизация | Rate limit | Response |
+|---|---|---|---|---|
+| GET | `/chats/reactions/catalog/` | Bearer, как у остальных роутов `chats` | — | `200`, `ReactionsCatalogDTO`; `304` при совпавшем `If-None-Match` |
+
+```ts
+interface ReactionsCatalogDTO {
+  emojis: string[];                          // порядок значимый — в нём же рисуется пикер
+  max_reactions_per_user_per_message: number;
+  max_distinct_reactions_per_message: number;
+  max_reaction_length: number;
+  version: string;                           // стабильный хеш от emojis, он же ETag
+}
+```
+
+**Кеширование.** Ответ несёт `ETag: "<version>"` и `Cache-Control: private, max-age=<REACTIONS_CATALOG_CACHE_TTL>`
+(по умолчанию 300 с). Клиент дёргает эндпоинт на каждом холодном старте, поэтому сохраняйте `version`
+и присылайте его следующим запросом в `If-None-Match` — при совпадении придёт `304` с пустым телом
+и тем же `ETag`, и распаковывать каталог заново не нужно. `version` считается как обрезанный SHA-256
+от `emojis`, то есть стабилен между воркерами и перезапусками и меняется ровно тогда, когда меняется
+список (например, после правки `DEFAULT_REACTIONS` в `.env` стенда).
+
+**Каталог глобальный, подмножество чата — в `ChatDTO`.** Этот эндпоинт ничего не знает про конкретный
+чат: он отдаёт общий для стенда список. Ограничения чата приходят в `ChatDTO` / `ChatDetailDTO` полями
+`reactions_mode` и `allowed_reactions` (5.7.5). Правило для клиента:
+
+- `reactions_mode = "all"` — пикер = `emojis`;
+- `reactions_mode = "some"` — пикер = `emojis` ∩ `allowed_reactions` (пересечение, а не `allowed_reactions`
+  как есть: в белом списке чата может остаться эмодзи, выпавшее из каталога стенда, — бэкенд отвергнет его
+  с `INVALID_REACTION`);
+- `reactions_mode = "none"` — реакции в чате выключены, пикер не показываем.
 
 ## 6. Чаты — WebSocket
 

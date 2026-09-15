@@ -922,6 +922,12 @@ abstract class AppLocalizations {
   /// **'Recording — tap send when you are done'**
   String get voiceRecordingLocked;
 
+  /// Shown when the 600 s cap stopped the recording and it is waiting to be sent or discarded
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum length reached'**
+  String get voiceLimitReached;
+
   /// Mic permission was refused
   ///
   /// In en, this message translates to:
@@ -933,6 +939,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voice message'**
   String get voiceMessage;
+
+  /// Button that starts a voice message
+  ///
+  /// In en, this message translates to:
+  /// **'Play voice message'**
+  String get voicePlay;
+
+  /// Button that pauses a voice message
+  ///
+  /// In en, this message translates to:
+  /// **'Pause voice message'**
+  String get voicePause;
+
+  /// Shown instead of the duration when a voice message could not be fetched
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get voiceUnavailable;
+
+  /// Semantics label for the dot marking a voice message this device has not played yet
+  ///
+  /// In en, this message translates to:
+  /// **'Not listened to yet'**
+  String get voiceNotListened;
+
+  /// Semantics label of the playback speed button, e.g. 1.5x
+  ///
+  /// In en, this message translates to:
+  /// **'Playback speed {speed}'**
+  String voiceSpeedLabel(String speed);
+
+  /// Semantics label of the live waveform while recording
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get voiceRecording;
+
+  /// Countdown shown in the last 30 seconds before the 600 s cap, as m:ss
+  ///
+  /// In en, this message translates to:
+  /// **'{time} left'**
+  String voiceTimeLeft(String time);
+
+  /// Button that throws away a hands-free recording
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get voiceCancelRecording;
+
+  /// Button that sends a hands-free recording
+  ///
+  /// In en, this message translates to:
+  /// **'Send voice message'**
+  String get voiceSendRecording;
 
   /// Tooltip for the attachment button
   ///
@@ -3027,6 +3087,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove'**
   String get mediaPreviewRemove;
+
+  /// Accessible label of the composer button while it is in video-note mode
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to record a video note'**
+  String get composerRecordVideoNoteLabel;
+
+  /// Tooltip on the microphone button: tapping it swaps the recorder for the camera
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to video note'**
+  String get composerSwitchToVideoNote;
+
+  /// Tooltip on the camera button: tapping it swaps the camera back for the microphone
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to voice message'**
+  String get composerSwitchToVoice;
+
+  /// Turns the camera around while framing a video note
+  ///
+  /// In en, this message translates to:
+  /// **'Switch camera'**
+  String get videoNoteSwitchCamera;
+
+  /// Says that a double tap on the circle turns the camera around
+  ///
+  /// In en, this message translates to:
+  /// **'Double-tap to switch camera'**
+  String get videoNoteDoubleTapToSwitch;
+
+  /// Shown for the moment between the thumb going down and the camera waking
+  ///
+  /// In en, this message translates to:
+  /// **'Opening the camera…'**
+  String get videoNoteOpeningCamera;
+
+  /// Hint under the composer circle before a take starts
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to record'**
+  String get videoNoteHoldToRecord;
+
+  /// Button that sends a finished video note
+  ///
+  /// In en, this message translates to:
+  /// **'Send video note'**
+  String get videoNoteSend;
+
+  /// Accessible label of the live circle while a video note is being recorded
+  ///
+  /// In en, this message translates to:
+  /// **'Recording a video note'**
+  String get videoNoteRecordingLabel;
+
+  /// Hint on a video note playing silently in the feed
+  ///
+  /// In en, this message translates to:
+  /// **'Tap for sound'**
+  String get videoNoteTapForSound;
+
+  /// Hint on a video note that currently has sound
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to mute'**
+  String get videoNoteTapToMute;
+
+  /// Hint that a long press opens the video note full screen
+  ///
+  /// In en, this message translates to:
+  /// **'Hold for full screen'**
+  String get videoNoteHoldForFullScreen;
+
+  /// Accessible label of a video note in the feed
+  ///
+  /// In en, this message translates to:
+  /// **'Video note, {duration}'**
+  String videoNotePlayerLabel(String duration);
+
+  /// Shown on a video note that will not start on its own
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to play'**
+  String get videoNoteAutoplayOff;
+
+  /// Settings section: when video notes may start playing by themselves
+  ///
+  /// In en, this message translates to:
+  /// **'Autoplay video notes'**
+  String get mediaAutoplay;
+
+  /// Explains what autoplay does and how sound is turned on
+  ///
+  /// In en, this message translates to:
+  /// **'Video notes start silently when they scroll into view. Sound comes on when you tap one.'**
+  String get mediaAutoplayHint;
+
+  /// Autoplay on any connection
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get mediaAutoplayAlways;
+
+  /// Autoplay only on an unmetered connection
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi only'**
+  String get mediaAutoplayWifi;
+
+  /// Never autoplay
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get mediaAutoplayNever;
+
+  /// Accessible label of the live camera circle before a take starts
+  ///
+  /// In en, this message translates to:
+  /// **'Camera preview'**
+  String get videoNotePreview;
 }
 
 class _AppLocalizationsDelegate

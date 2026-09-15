@@ -484,10 +484,44 @@ class AppLocalizationsBn extends AppLocalizations {
   String get voiceRecordingLocked => 'রেকর্ডিং — শেষ হলে পাঠান চাপুন';
 
   @override
+  String get voiceLimitReached => 'সর্বোচ্চ দৈর্ঘ্যে পৌঁছেছে';
+
+  @override
   String get voicePermissionDenied => 'মাইক্রোফোন অ্যাক্সেস বন্ধ';
 
   @override
   String get voiceMessage => 'ভয়েস বার্তা';
+
+  @override
+  String get voicePlay => 'ভয়েস মেসেজ চালান';
+
+  @override
+  String get voicePause => 'ভয়েস মেসেজ থামান';
+
+  @override
+  String get voiceUnavailable => 'পাওয়া যাচ্ছে না';
+
+  @override
+  String get voiceNotListened => 'এখনও শোনা হয়নি';
+
+  @override
+  String voiceSpeedLabel(String speed) {
+    return 'প্লেব্যাক গতি $speed';
+  }
+
+  @override
+  String get voiceRecording => 'রেকর্ড করা হচ্ছে';
+
+  @override
+  String voiceTimeLeft(String time) {
+    return '$time বাকি';
+  }
+
+  @override
+  String get voiceCancelRecording => 'বাতিল';
+
+  @override
+  String get voiceSendRecording => 'ভয়েস মেসেজ পাঠান';
 
   @override
   String get attach => 'সংযুক্ত করুন';
@@ -1673,4 +1707,68 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get mediaPreviewRemove => 'সরান';
+
+  @override
+  String get composerRecordVideoNoteLabel =>
+      'ভিডিও বার্তা রেকর্ড করতে চেপে ধরুন';
+
+  @override
+  String get composerSwitchToVideoNote => 'ভিডিও বার্তায় যান';
+
+  @override
+  String get composerSwitchToVoice => 'ভয়েস বার্তায় যান';
+
+  @override
+  String get videoNoteSwitchCamera => 'ক্যামেরা বদলান';
+
+  @override
+  String get videoNoteDoubleTapToSwitch => 'ক্যামেরা বদলাতে দুবার আলতো চাপুন';
+
+  @override
+  String get videoNoteOpeningCamera => 'ক্যামেরা চালু হচ্ছে…';
+
+  @override
+  String get videoNoteHoldToRecord => 'রেকর্ড করতে চেপে ধরুন';
+
+  @override
+  String get videoNoteSend => 'ভিডিও বার্তা পাঠান';
+
+  @override
+  String get videoNoteRecordingLabel => 'ভিডিও বার্তা রেকর্ড হচ্ছে';
+
+  @override
+  String get videoNoteTapForSound => 'শব্দ চালু করতে আলতো চাপুন';
+
+  @override
+  String get videoNoteTapToMute => 'নিঃশব্দ করতে আলতো চাপুন';
+
+  @override
+  String get videoNoteHoldForFullScreen => 'পূর্ণ পর্দায় দেখতে চেপে ধরুন';
+
+  @override
+  String videoNotePlayerLabel(String duration) {
+    return 'ভিডিও বার্তা, $duration';
+  }
+
+  @override
+  String get videoNoteAutoplayOff => 'চালাতে আলতো চাপুন';
+
+  @override
+  String get mediaAutoplay => 'ভিডিও বার্তা নিজে থেকে চালু';
+
+  @override
+  String get mediaAutoplayHint =>
+      'পর্দায় এলে ভিডিও বার্তা নিঃশব্দে চলতে শুরু করে। আলতো চাপলে শব্দ চালু হয়।';
+
+  @override
+  String get mediaAutoplayAlways => 'সবসময়';
+
+  @override
+  String get mediaAutoplayWifi => 'শুধু Wi-Fi-তে';
+
+  @override
+  String get mediaAutoplayNever => 'কখনও নয়';
+
+  @override
+  String get videoNotePreview => 'ক্যামেরার প্রিভিউ';
 }

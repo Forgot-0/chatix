@@ -11,6 +11,7 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
@@ -23,6 +24,8 @@ import 'package:chatix/features/chat/presentation/providers/chat_socket_provider
 import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/voice_playback_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/video_note_record_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
@@ -220,7 +223,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             focusNode: _composerFocus,
             length: composer.length,
             hasAttachments: attachments?.isReady ?? false,
-            isRecording: ref.watch(voiceRecordProvider).isRecording,
+            isRecording:
+                ref.watch(voiceRecordProvider).isActive ||
+                ref.watch(videoNoteRecordProvider).isActive,
             slowMode: composer.slowMode,
             isSending: composer.isSending,
             replyTo: state.replyTo,
@@ -231,6 +236,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             onAttach: composer.isEditing ? null : _openAttachmentSheet,
             onSend: _send,
             onVoiceRecorded: composer.isEditing ? null : _sendVoice,
+            onVideoNoteRecorded: composer.isEditing ? null : _sendVideoNote,
           ),
         ],
       ],
@@ -693,6 +699,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         filePath: recording.path,
       ),
       MessageType.voice,
+      // The bars were sampled while this was being spoken and there is
+      // nowhere on the server to put them (api-docs §5.5), so they are filed
+      // against the attachment id — which is the `upload_token` the presign
+      // step already handed back.
+      onTokens: (tokens) async {
+        if (tokens.isEmpty || recording.waveform.isEmpty) return;
+        await ref
+            .read(voiceLocalStoreProvider)
+            .writeWaveform(tokens.first, recording.waveform);
+      },
     );
   }
 
@@ -703,8 +719,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// replace it and go straight out.
   Future<void> _sendExclusive(
     AttachmentUploadRequestEntity upload,
-    MessageType type,
-  ) async {
+    MessageType type, {
+    /// Called with the confirmed slots before the message goes out, for
+    /// anything that has to be filed against the attachment id.
+    Future<void> Function(List<String> tokens)? onTokens,
+  }) async {
     final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
 
     notifier.select([upload]);
@@ -720,6 +739,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ref.read(chatAttachmentProvider(widget.chatId)).value?.uploadTokens ??
         const <String>[];
     if (tokens.isEmpty) return;
+
+    await onTokens?.call(tokens);
+    if (!mounted) return;
 
     _composer.markSent();
 
@@ -859,6 +881,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     if (take == null) return;
 
-    await _sendExclusive(take.upload, MessageType.videoNote);
+    await _sendVideoNote(take);
   }
+
+  /// Sends a take, wherever it came from — the sheet, or the composer
+  /// button's hold.
+  Future<void> _sendVideoNote(VideoNoteTake take) =>
+      _sendExclusive(take.upload, MessageType.videoNote);
 }

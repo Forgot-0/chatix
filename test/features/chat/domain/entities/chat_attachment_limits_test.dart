@@ -8,6 +8,12 @@ import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart
 /// rejected with `resolution_limit_exceeded` (api-docs §5.5), and nothing
 /// downstream resizes anything — so the recorder picks a resolution by this
 /// and the finished file is checked against it again.
+///
+/// The cap is read on the **short** side — confirmed against the backend,
+/// since api-docs §5.5 says only "≤ 640 px". That is what lets an ordinary
+/// Android 480p capture (720×480) through at all, and the failure mode for
+/// getting it wrong is silent: `attachment_status: "error"` with the reason
+/// kept server-side, after the message has been sent.
 void main() {
   bool fits(int w, int h) => ChatAttachmentLimits.fitsVideoNoteFrame(w, h);
 
@@ -22,6 +28,7 @@ void main() {
 
     test('one pixel over on the short side does not', () {
       expect(fits(641, 641), isFalse);
+      expect(fits(720, 641), isFalse);
     });
 
     test('a long side well over the cap is fine on its own', () {
@@ -40,6 +47,26 @@ void main() {
       expect(fits(0, 480), isFalse);
       expect(fits(640, 0), isFalse);
       expect(fits(-1, 480), isFalse);
+    });
+  });
+
+  group('the square a note is shown as', () {
+    int side(int w, int h) => ChatAttachmentLimits.videoNoteSquareSide(w, h);
+
+    test('is the shorter side of the frame', () {
+      expect(side(640, 480), 480);
+      expect(side(480, 640), 480);
+      expect(side(352, 288), 288);
+    });
+
+    test('never exceeds the cap, however large the capture', () {
+      expect(side(1920, 1080), ChatAttachmentLimits.maxVideoNoteResolutionPx);
+      expect(side(640, 640), 640);
+    });
+
+    test('is nothing at all for a frame with no size', () {
+      expect(side(0, 480), 0);
+      expect(side(-1, -1), 0);
     });
   });
 

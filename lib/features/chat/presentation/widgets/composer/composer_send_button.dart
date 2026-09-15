@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/feedback/progress_ring.dart';
+import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
+import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/slow_mode.dart';
+import 'package:chatix/features/chat/presentation/providers/video_note_record_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -34,6 +37,11 @@ enum ComposerAction {
 ///
 /// While slow mode holds a message back (api-docs §5.2) the button keeps its
 /// shape and shows the seconds instead, counting down in place.
+///
+/// In its recording shape it is two buttons in one: a tap swaps the
+/// microphone for the camera and back, and a hold records whichever is
+/// showing. A video note counts its sixty seconds (api-docs §5.5) on a ring
+/// around the button itself, where the thumb already is.
 class ComposerSendButton extends ConsumerStatefulWidget {
   const ComposerSendButton({
     super.key,
@@ -42,6 +50,7 @@ class ComposerSendButton extends ConsumerStatefulWidget {
     required this.slowMode,
     this.onSend,
     this.onVoiceRecorded,
+    this.onVideoNoteRecorded,
     this.clock = systemClock,
   });
 
@@ -58,6 +67,10 @@ class ComposerSendButton extends ConsumerStatefulWidget {
   /// Null where voice messages are not on offer; the button then never takes
   /// the [ComposerAction.record] shape.
   final void Function(VoiceRecording recording)? onVoiceRecorded;
+
+  /// Null where video notes are not on offer; the button then has nothing to
+  /// swap to and stays a microphone.
+  final void Function(VideoNoteTake take)? onVideoNoteRecorded;
 
   /// Where "now" comes from.
   ///
@@ -79,6 +92,11 @@ class _ComposerSendButtonState extends ConsumerState<ComposerSendButton> {
   /// recording — the same two gestures the rest of the world uses.
   static const double _cancelAt = 90;
   static const double _lockAt = 60;
+
+  /// Below this the drag is treated as vertical and the cancel slide is left
+  /// alone, so reaching for the lock does not also start throwing the
+  /// recording away.
+  static const double _axisBias = 1.4;
 
   Offset _origin = Offset.zero;
 
@@ -128,9 +146,38 @@ class _ComposerSendButtonState extends ConsumerState<ComposerSendButton> {
     });
   }
 
+  VideoNoteRecordController get _note =>
+      ref.read(videoNoteRecordProvider.notifier);
+
   Future<void> _finishRecording() async {
     final recording = await _voice.stop();
     if (recording != null) widget.onVoiceRecorded?.call(recording);
+  }
+
+  Future<void> _finishNote() async {
+    final take = await _note.stop();
+    if (take != null) widget.onVideoNoteRecorded?.call(take);
+  }
+
+  /// The two gestures that start from the same point: left throws the take
+  /// away, up leaves the hands free. Shared by both recorders because they
+  /// are the same thumb doing the same thing.
+  void _onDrag(Offset position, {required bool isVideoNote}) {
+    final delta = position - _origin;
+    final up = -delta.dy;
+    final left = -delta.dx;
+
+    // Up wins when the thumb is clearly going up: the two gestures start
+    // from the same point and a diagonal has to mean one thing.
+    if (up > _lockAt && up > left * _axisBias) {
+      isVideoNote ? _note.lock() : _voice.lock();
+      return;
+    }
+
+    final progress = left / _cancelAt;
+    isVideoNote
+        ? _note.updateDrag(cancelProgress: progress)
+        : _voice.updateDrag(cancelProgress: progress);
   }
 
   @override
@@ -140,6 +187,7 @@ class _ComposerSendButtonState extends ConsumerState<ComposerSendButton> {
     final l10n = AppLocalizations.of(context);
 
     final voice = ref.watch(voiceRecordProvider);
+    final note = ref.watch(videoNoteRecordProvider);
     final secondsLeft = widget.slowMode.secondsLeftAt(_now);
 
     // Mid-recording the button is no longer a shape-shifter: it is the one
@@ -153,34 +201,46 @@ class _ComposerSendButtonState extends ConsumerState<ComposerSendButton> {
       );
     }
 
-    if (voice.stage == VoiceRecordStage.locked) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: l10n.cancel,
-            icon: Icon(Icons.delete_outline, color: chatix.danger),
-            onPressed: _voice.cancel,
-          ),
-          _Circle(
-            filled: true,
-            enabled: true,
-            onTap: _finishRecording,
-            semanticsLabel: l10n.composerSendLabel,
-            child: const _MorphIcon(action: ComposerAction.send),
-          ),
-        ],
+    if (note.stage == VideoNoteStage.unavailable) {
+      return IconButton(
+        tooltip: _unavailableReason(l10n, note.readiness),
+        icon: Icon(Icons.videocam_off_outlined, color: chatix.danger),
+        onPressed: _note.dismissUnavailable,
       );
     }
 
-    final isHeld = voice.isRecording;
+    if (voice.stage == VoiceRecordStage.locked || voice.holdsRecording) {
+      // Hands free, or stopped by the 600-second cap: the gesture is over,
+      // so the two things it could still have meant become two buttons that
+      // say which is which.
+      return _Decision(
+        onCancel: () => unawaited(_voice.cancel()),
+        onSend: () => unawaited(_finishRecording()),
+        sendLabel: l10n.voiceSendRecording,
+      );
+    }
+
+    if (note.stage == VideoNoteStage.locked || note.holdsRecording) {
+      return _Decision(
+        onCancel: () => unawaited(_note.cancel()),
+        onSend: () => unawaited(_finishNote()),
+        sendLabel: l10n.videoNoteSend,
+      );
+    }
+
     final isWaiting = secondsLeft > 0;
 
-    final label = switch (widget.action) {
-      ComposerAction.record => l10n.composerRecordLabel,
-      ComposerAction.send => l10n.composerSendLabel,
-      ComposerAction.save => l10n.composerSaveEditLabel,
-    };
+    // Which recorder the hold drives. A chat that cannot take one of the two
+    // leaves the button on the other rather than offering a swap to nothing.
+    final canRecordVoice = widget.onVoiceRecorded != null;
+    final canRecordNote = widget.onVideoNoteRecorded != null;
+    final mode = canRecordNote && canRecordVoice
+        ? ref.watch(composerRecordModeProvider)
+        : (canRecordNote ? ComposerRecordMode.videoNote
+                         : ComposerRecordMode.voice);
+
+    final isVideoNote = mode == ComposerRecordMode.videoNote;
+    final isHeld = isVideoNote ? note.isActive : voice.isRecording;
 
     // Holding to record is only on offer in the microphone shape, but the
     // gesture detector stays in the tree either way: swapping it in and out
@@ -188,31 +248,92 @@ class _ComposerSendButtonState extends ConsumerState<ComposerSendButton> {
     // icons over instead of morphing them.
     final holdToRecord =
         widget.action == ComposerAction.record &&
-        widget.onVoiceRecorded != null &&
+        (canRecordVoice || canRecordNote) &&
         !isWaiting;
+
+    // A tap on the microphone has nothing to send, so it is free to mean the
+    // other thing: swap which recorder the hold will use.
+    final canSwapMode = holdToRecord && canRecordVoice && canRecordNote;
+
+    final label = switch (widget.action) {
+      ComposerAction.record =>
+        isVideoNote ? l10n.composerRecordVideoNoteLabel : l10n.composerRecordLabel,
+      ComposerAction.send => l10n.composerSendLabel,
+      ComposerAction.save => l10n.composerSaveEditLabel,
+    };
+
+    final button = _Circle(
+      // A tooltip installs a long-press recogniser of its own, and it sits
+      // inside this button's — so on a touch device it would win the arena
+      // and swallow every hold. While the hold means "record", the tooltip
+      // is left to hover only.
+      holdsLongPress: !holdToRecord,
+      // The microphone sits on the surface; anything that sends is filled,
+      // which is the difference between "you could" and "you can".
+      filled: widget.action != ComposerAction.record,
+      // The microphone has something to do even with an empty box, so it
+      // is not a disabled control — it just does not send.
+      enabled: holdToRecord || (widget.enabled && !isWaiting),
+      danger: isHeld && (isVideoNote ? note.willCancel : voice.willCancel),
+      onTap: switch (widget.action) {
+        _ when isWaiting => null,
+        ComposerAction.record => canSwapMode
+            ? ref.read(composerRecordModeProvider.notifier).toggle
+            : null,
+        _ => widget.enabled ? widget.onSend : null,
+      },
+      semanticsLabel: isWaiting ? l10n.composerSlowModeWait(secondsLeft) : label,
+      tooltip: switch (widget.action) {
+        _ when isWaiting =>
+          l10n.composerSlowModeHint(widget.slowMode.interval.inSeconds),
+        ComposerAction.record when canSwapMode => isVideoNote
+            ? l10n.composerSwitchToVoice
+            : l10n.composerSwitchToVideoNote,
+        _ => null,
+      },
+      child: isWaiting
+          ? _Countdown(seconds: secondsLeft, style: theme.textTheme.labelLarge)
+          : _MorphIcon(
+              action: widget.action,
+              pressed: isHeld,
+              recordIcon: isVideoNote
+                  ? Icons.videocam_outlined
+                  : Icons.mic_none_rounded,
+            ),
+    );
 
     return GestureDetector(
       onLongPressStart: !holdToRecord
           ? null
           : (details) {
               _origin = details.globalPosition;
-              HapticFeedback.mediumImpact();
-              unawaited(_voice.start());
+              // The haptic belongs to the recording actually starting, which
+              // the controller knows about and this does not — the
+              // microphone may still be refused.
+              unawaited(isVideoNote ? _note.start() : _voice.start());
             },
       onLongPressMoveUpdate: !holdToRecord
           ? null
-          : (details) {
-              final delta = details.globalPosition - _origin;
-
-              if (-delta.dy > _lockAt) {
-                _voice.lock();
-                return;
-              }
-              _voice.updateDrag(willCancel: -delta.dx > _cancelAt);
-            },
+          : (details) =>
+                _onDrag(details.globalPosition, isVideoNote: isVideoNote),
       onLongPressEnd: !holdToRecord
           ? null
           : (_) {
+              if (isVideoNote) {
+                final stage = ref.read(videoNoteRecordProvider).stage;
+                if (stage == VideoNoteStage.preparing) {
+                  unawaited(_note.cancel());
+                  return;
+                }
+                if (stage != VideoNoteStage.recording) return;
+                if (ref.read(videoNoteRecordProvider).willCancel) {
+                  unawaited(_note.cancel());
+                  return;
+                }
+                unawaited(_finishNote());
+                return;
+              }
+
               final state = ref.read(voiceRecordProvider);
               if (state.stage != VoiceRecordStage.holding) return;
               if (state.willCancel) {
@@ -223,31 +344,98 @@ class _ComposerSendButtonState extends ConsumerState<ComposerSendButton> {
             },
       onLongPressCancel: !holdToRecord
           ? null
-          : () => unawaited(_voice.cancel()),
-      child: _Circle(
-        // The microphone sits on the surface; anything that sends is filled,
-        // which is the difference between "you could" and "you can".
-        filled: widget.action != ComposerAction.record,
-        // The microphone has something to do even with an empty box, so it
-        // is not a disabled control — it just does not send.
-        enabled: holdToRecord || (widget.enabled && !isWaiting),
-        danger: isHeld && voice.willCancel,
-        onTap: widget.action == ComposerAction.record || isWaiting
-            ? null
-            : (widget.enabled ? widget.onSend : null),
-        semanticsLabel: isWaiting
-            ? l10n.composerSlowModeWait(secondsLeft)
-            : label,
-        tooltip: isWaiting
-            ? l10n.composerSlowModeHint(widget.slowMode.interval.inSeconds)
-            : null,
-        child: isWaiting
-            ? _Countdown(
-                seconds: secondsLeft,
-                style: theme.textTheme.labelLarge,
-              )
-            : _MorphIcon(action: widget.action, pressed: isHeld),
-      ),
+          : () {
+              if (isVideoNote) {
+                final stage = ref.read(videoNoteRecordProvider).stage;
+                // Only a take still in the thumb's hands: one the cap has
+                // already stopped belongs to the two buttons now.
+                if (stage == VideoNoteStage.recording ||
+                    stage == VideoNoteStage.preparing) {
+                  unawaited(_note.cancel());
+                }
+                return;
+              }
+
+              if (ref.read(voiceRecordProvider).stage !=
+                  VoiceRecordStage.holding) {
+                return;
+              }
+              unawaited(_voice.cancel());
+            },
+      // The sixty seconds, drawn where the thumb already is. Only while a
+      // take is open: an empty ring around an idle button is decoration.
+      child: note.isActive
+          ? SizedBox(
+              width: ComposerSendButton.diameter + _ringInset * 2,
+              height: ComposerSendButton.diameter + _ringInset * 2,
+              child: ProgressRing(
+                progress: note.progress,
+                color: note.willCancel ? chatix.danger : theme.colorScheme.primary,
+                trackColor: theme.colorScheme.outlineVariant,
+                child: Center(child: button),
+              ),
+            )
+          : button,
+    );
+  }
+
+  /// How far outside the button the countdown ring sits.
+  static const double _ringInset = 5;
+
+  static String _unavailableReason(
+    AppLocalizations l10n,
+    VideoNoteReadiness? readiness,
+  ) => switch (readiness) {
+    VideoNoteReadiness.denied => l10n.videoNoteCameraDenied,
+    VideoNoteReadiness.noCamera => l10n.videoNoteNoCamera,
+    VideoNoteReadiness.tooLarge => l10n.videoNoteTooLarge(
+      ChatAttachmentLimits.maxVideoNoteResolutionPx,
+    ),
+    _ => l10n.videoNoteCameraFailed,
+  };
+}
+
+/// A recording nobody is holding any more, and the two things it could still
+/// become. Shared by both recorders, which reach this the same two ways:
+/// hands free, or stopped by the cap.
+class _Decision extends StatelessWidget {
+  const _Decision({
+    required this.onCancel,
+    required this.onSend,
+    required this.sendLabel,
+  });
+
+  final VoidCallback onCancel;
+  final VoidCallback onSend;
+  final String sendLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final chatix = ChatixTheme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton(
+          onPressed: onCancel,
+          style: TextButton.styleFrom(
+            foregroundColor: chatix.danger,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
+            minimumSize: const Size(0, ComposerSendButton.diameter),
+            visualDensity: VisualDensity.compact,
+          ),
+          child: Text(l10n.voiceCancelRecording),
+        ),
+        const SizedBox(width: AppSpacing.x1),
+        _Circle(
+          filled: true,
+          enabled: true,
+          onTap: onSend,
+          semanticsLabel: sendLabel,
+          child: const _MorphIcon(action: ComposerAction.send),
+        ),
+      ],
     );
   }
 }
@@ -262,6 +450,7 @@ class _Circle extends StatelessWidget {
     required this.child,
     this.danger = false,
     this.tooltip,
+    this.holdsLongPress = true,
   });
 
   final bool filled;
@@ -269,6 +458,11 @@ class _Circle extends StatelessWidget {
   final bool danger;
   final VoidCallback? onTap;
   final String semanticsLabel;
+
+  /// Whether the tooltip may claim a long press. False wherever something
+  /// outside this button is listening for one — a tooltip's recogniser is
+  /// the inner of the two and would take every hold.
+  final bool holdsLongPress;
 
   /// Shown on hover or long press when it says more than the label does —
   /// why the button is counting down, rather than what it would do.
@@ -301,6 +495,7 @@ class _Circle extends StatelessWidget {
       child: ExcludeSemantics(
         child: Tooltip(
           message: tooltip ?? semanticsLabel,
+          triggerMode: holdsLongPress ? null : TooltipTriggerMode.manual,
           child: InkResponse(
             onTap: onTap,
             radius: ComposerSendButton.diameter * 0.6,
@@ -337,12 +532,22 @@ class _Circle extends StatelessWidget {
 /// swapping one widget for another: the microphone tips out as the plane
 /// tips in, in the same spot, on the same arc.
 class _MorphIcon extends StatelessWidget {
-  const _MorphIcon({required this.action, this.pressed = false});
+  const _MorphIcon({
+    required this.action,
+    this.pressed = false,
+    this.recordIcon = Icons.mic_none_rounded,
+  });
 
   final ComposerAction action;
 
   /// A held microphone swells slightly, so the recording has a source.
   final bool pressed;
+
+  /// What the [ComposerAction.record] slot draws — a microphone or a camera,
+  /// depending on which recorder the hold will use. Swapped in place rather
+  /// than by exchanging widgets, so the change reads as the same control
+  /// turning over.
+  final IconData recordIcon;
 
   static const List<IconData> _icons = [
     Icons.mic_none_rounded,
@@ -361,7 +566,7 @@ class _MorphIcon extends StatelessWidget {
         children: [
           for (var i = 0; i < _icons.length; i++)
             _MorphLayer(
-              icon: _icons[i],
+              icon: i == ComposerAction.record.index ? recordIcon : _icons[i],
               // 0 when this icon is the one being shown, 1 a whole step away.
               distance: (position - i).abs().clamp(0.0, 1.0),
               pressed: pressed && i == ComposerAction.record.index,

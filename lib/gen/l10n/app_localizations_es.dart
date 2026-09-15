@@ -488,10 +488,44 @@ class AppLocalizationsEs extends AppLocalizations {
   String get voiceRecordingLocked => 'Grabando: pulsa enviar cuando termines';
 
   @override
+  String get voiceLimitReached => 'Duración máxima alcanzada';
+
+  @override
   String get voicePermissionDenied => 'El acceso al micrófono está desactivado';
 
   @override
   String get voiceMessage => 'Mensaje de voz';
+
+  @override
+  String get voicePlay => 'Reproducir mensaje de voz';
+
+  @override
+  String get voicePause => 'Pausar mensaje de voz';
+
+  @override
+  String get voiceUnavailable => 'No disponible';
+
+  @override
+  String get voiceNotListened => 'Aún no escuchado';
+
+  @override
+  String voiceSpeedLabel(String speed) {
+    return 'Velocidad de reproducción $speed';
+  }
+
+  @override
+  String get voiceRecording => 'Grabando';
+
+  @override
+  String voiceTimeLeft(String time) {
+    return 'Quedan $time';
+  }
+
+  @override
+  String get voiceCancelRecording => 'Cancelar';
+
+  @override
+  String get voiceSendRecording => 'Enviar mensaje de voz';
 
   @override
   String get attach => 'Adjuntar';
@@ -1688,4 +1722,70 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get mediaPreviewRemove => 'Quitar';
+
+  @override
+  String get composerRecordVideoNoteLabel =>
+      'Mantén pulsado para grabar un videomensaje';
+
+  @override
+  String get composerSwitchToVideoNote => 'Cambiar a videomensaje';
+
+  @override
+  String get composerSwitchToVoice => 'Cambiar a mensaje de voz';
+
+  @override
+  String get videoNoteSwitchCamera => 'Cambiar de cámara';
+
+  @override
+  String get videoNoteDoubleTapToSwitch =>
+      'Toca dos veces para cambiar de cámara';
+
+  @override
+  String get videoNoteOpeningCamera => 'Abriendo la cámara…';
+
+  @override
+  String get videoNoteHoldToRecord => 'Mantén pulsado para grabar';
+
+  @override
+  String get videoNoteSend => 'Enviar videomensaje';
+
+  @override
+  String get videoNoteRecordingLabel => 'Grabando un videomensaje';
+
+  @override
+  String get videoNoteTapForSound => 'Toca para activar el sonido';
+
+  @override
+  String get videoNoteTapToMute => 'Toca para silenciar';
+
+  @override
+  String get videoNoteHoldForFullScreen =>
+      'Mantén pulsado para ver en pantalla completa';
+
+  @override
+  String videoNotePlayerLabel(String duration) {
+    return 'Videomensaje, $duration';
+  }
+
+  @override
+  String get videoNoteAutoplayOff => 'Toca para reproducir';
+
+  @override
+  String get mediaAutoplay => 'Reproducir videomensajes automáticamente';
+
+  @override
+  String get mediaAutoplayHint =>
+      'Los videomensajes empiezan sin sonido cuando aparecen en pantalla. El sonido se activa al tocarlos.';
+
+  @override
+  String get mediaAutoplayAlways => 'Siempre';
+
+  @override
+  String get mediaAutoplayWifi => 'Solo con Wi-Fi';
+
+  @override
+  String get mediaAutoplayNever => 'Nunca';
+
+  @override
+  String get videoNotePreview => 'Vista previa de la cámara';
 }
