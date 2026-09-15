@@ -368,7 +368,7 @@
   "hideFolderTabsHint": "ফোল্ডার থেকে যাবে, কেবল তালিকার উপরের ট্যাবগুলো দেখা যাবে না",
   "unarchiveOnNewMessage": "নতুন বার্তায় ফিরিয়ে আনুন",
   "unarchiveOnNewMessageHint": "কেউ লিখলে আর্কাইভ করা চ্যাট তালিকায় ফিরে আসে",
-  "organizerDeviceOnly": "পিন, আর্কাইভ ও ফোল্ডার কেবল এই ডিভাইসে থাকে, অ্যাকাউন্টের সঙ্গে যায় না।",
+  "organizerDeviceOnly": "ফোল্ডার কেবল এই ডিভাইসে থাকে, অ্যাকাউন্টের সঙ্গে যায় না। পিন, আর্কাইভ ও নীরব করা চ্যাট যায়।",
   "chatPinnedZone": "পিন করা",
   "chatUnarchivedToast": "তালিকায় ফিরিয়ে আনা হয়েছে",
   "searchTabMessages": "বার্তা",
@@ -379,14 +379,13 @@
   "searchRemoveFromHistory": "সাম্প্রতিক অনুসন্ধান থেকে সরান",
   "searchStartTitle": "চ্যাট, মানুষ বা বার্তা খুঁজুন",
   "searchStartHint": "চ্যাট নাম দিয়ে, মানুষ ইউজারনেম দিয়ে, বার্তা তার লেখা দিয়ে খোঁজা হয়।",
-  "searchLoadedHistoryOnly": "লোড হওয়া ইতিহাসে খোঁজা হচ্ছে",
-  "searchLoadedHistoryExplained": "সার্ভারে বার্তা অনুসন্ধান নেই, তাই এই ডিভাইসে থাকা বার্তাগুলোতেই খোঁজা হয়। আরও পেতে চ্যাট খুলুন।",
+  "searchLoadedHistoryOnly": "এই ডিভাইসে যা আছে তাতে খোঁজা হয়েছে",
+  "searchLoadedHistoryExplained": "সার্ভারে পৌঁছানো যায়নি, তাই এই ডিভাইসে থাকা বার্তাগুলোতেই খোঁজা হয়েছে।",
   "noChatsFound": "কোনো চ্যাট পাওয়া যায়নি",
   "noChatsFoundHint": "ইতিমধ্যে লোড হওয়া চ্যাটগুলোর নাম ও বিবরণ দেখে খোঁজা হয়।",
   "noPeopleFoundHint": "অন্য বানানে চেষ্টা করুন, বা ইউজারনেম দিয়ে খুঁজুন।",
   "noMessagesFound": "কোনো বার্তা পাওয়া যায়নি",
   "messageSearchFailed": "বার্তা খোঁজা যায়নি",
-  "searchResultsCapped": "প্রথম {count}টি মিল দেখানো হচ্ছে",
   "searchInChat": "এই চ্যাটে খুঁজুন",
   "searchMatchPosition": "{total}টির মধ্যে {current}",
   "searchNoMatches": "কোনো মিল নেই",
@@ -756,5 +755,7 @@
   "videoNotePreview": "ক্যামেরার প্রিভিউ",
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "searchTypeMore": "অন্তত {count}টি অক্ষর লিখুন",
+  "noMessagesFoundHint": "অনুসন্ধান শুধু বার্তার লেখায় চলে, ফাইলের নাম বা চ্যাটের নামে নয়।"
 }

@@ -5,33 +5,21 @@ import 'package:chatix/features/chat_organizer/domain/entities/organizer_setting
 
 /// Everything the organizer knows, in one value.
 ///
-/// None of it is on the server: `/chats/` has no pin, archive or folder field
-/// (api-docs §5.2), so this lives on the device and does not follow the
-/// account to the next one. See `docs/BACKEND_GAPS.md`.
+/// Folders and the switches around them, and nothing else. Pins, the archive
+/// and silenced chats used to live here too; they are fields on the chat row
+/// now (`is_pinned`, `is_archived`, `is_muted_by_me`, api-docs §5.2) and
+/// follow the account between devices. Folders still do not — there is no
+/// folder resource in the API. See `docs/BACKEND_GAPS.md`.
 class ChatOrganizerData extends Equatable {
   const ChatOrganizerData({
-    this.pinnedChatIds = const <String>{},
-    this.archivedChatIds = const <String>{},
     this.folders = const <ChatFolder>[],
     this.settings = const OrganizerSettings(),
   });
-
-  /// Insertion-ordered: the order chats were pinned in, which is what the
-  /// limit is counted against.
-  final Set<String> pinnedChatIds;
-
-  final Set<String> archivedChatIds;
 
   /// In the order the tab strip draws them.
   final List<ChatFolder> folders;
 
   final OrganizerSettings settings;
-
-  bool isPinned(String chatId) => pinnedChatIds.contains(chatId);
-
-  bool isArchived(String chatId) => archivedChatIds.contains(chatId);
-
-  bool get canPinMore => pinnedChatIds.length < OrganizerLimits.pinnedChats;
 
   ChatFolder? folderById(String? id) {
     if (id == null) return null;
@@ -42,24 +30,15 @@ class ChatOrganizerData extends Equatable {
   }
 
   ChatOrganizerData copyWith({
-    Set<String>? pinnedChatIds,
-    Set<String>? archivedChatIds,
     List<ChatFolder>? folders,
     OrganizerSettings? settings,
   }) {
     return ChatOrganizerData(
-      pinnedChatIds: pinnedChatIds ?? this.pinnedChatIds,
-      archivedChatIds: archivedChatIds ?? this.archivedChatIds,
       folders: folders ?? this.folders,
       settings: settings ?? this.settings,
     );
   }
 
   @override
-  List<Object?> get props => [
-    pinnedChatIds,
-    archivedChatIds,
-    folders,
-    settings,
-  ];
+  List<Object?> get props => [folders, settings];
 }

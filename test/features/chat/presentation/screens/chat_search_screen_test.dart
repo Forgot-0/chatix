@@ -16,6 +16,8 @@ import 'package:chatix/features/chat/data/datasources/message_cache_store.dart';
 import 'package:chatix/features/chat/data/datasources/search_history_store.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_search.dart';
+import 'package:chatix/features/chat/domain/repositories/message_search_repository.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_search_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/search_providers.dart';
@@ -29,6 +31,9 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
 
 class MockGetProfilesUseCase extends Mock implements GetProfilesUseCase {}
+
+class MockMessageSearchRepository extends Mock
+    implements MessageSearchRepository {}
 
 class _FakeAuthController extends AuthController {
   @override
@@ -49,25 +54,34 @@ void main() {
   final l10n = AppLocalizationsEn();
 
   late MockGetProfilesUseCase getProfiles;
+  late MockMessageSearchRepository searchMessages;
   late InMemoryMessageCacheStore cache;
   late InMemorySearchHistoryStore history;
 
   setUp(() {
     getProfiles = MockGetProfilesUseCase();
+    searchMessages = MockMessageSearchRepository();
     cache = InMemoryMessageCacheStore();
     history = InMemorySearchHistoryStore();
 
     when(
       () => getProfiles.execute(
-        username: any(named: 'username'),
-        displayName: any(named: 'displayName'),
-        skills: any(named: 'skills'),
+        q: any(named: 'q'),
         page: any(named: 'page'),
         pageSize: any(named: 'pageSize'),
-        sort: any(named: 'sort'),
         cancellation: any(named: 'cancellation'),
       ),
     ).thenAnswer((_) async => const Right(_emptyPage));
+
+    when(
+      () => searchMessages.search(
+        any(),
+        chatId: any(named: 'chatId'),
+        limit: any(named: 'limit'),
+        lastMessageId: any(named: 'lastMessageId'),
+        cancellation: any(named: 'cancellation'),
+      ),
+    ).thenAnswer((_) async => const Right(MessageSearchResult.empty));
   });
 
   MessageEntity message(String chatId, int seq, String content) =>
@@ -146,6 +160,7 @@ void main() {
           chatListProvider.overrideWith(() => _FakeChatListController(chats)),
           getProfilesUseCaseProvider.overrideWithValue(getProfiles),
           messageCacheStoreProvider.overrideWithValue(cache),
+          messageSearchRepositoryProvider.overrideWithValue(searchMessages),
           searchHistoryStoreProvider.overrideWithValue(history),
         ],
         child: MaterialApp.router(
@@ -242,7 +257,7 @@ void main() {
   testWidgets('people come from the profiles endpoint', (tester) async {
     when(
       () => getProfiles.execute(
-        username: any(named: 'username'),
+        q: any(named: 'q'),
         page: any(named: 'page'),
         pageSize: any(named: 'pageSize'),
         cancellation: any(named: 'cancellation'),
@@ -257,14 +272,6 @@ void main() {
         ),
       ),
     );
-    when(
-      () => getProfiles.execute(
-        displayName: any(named: 'displayName'),
-        page: any(named: 'page'),
-        pageSize: any(named: 'pageSize'),
-        cancellation: any(named: 'cancellation'),
-      ),
-    ).thenAnswer((_) async => const Right(_emptyPage));
 
     await pumpScreen(tester);
     await search(tester, 'ann');
@@ -279,15 +286,7 @@ void main() {
   testWidgets('a people search that fails offers a retry', (tester) async {
     when(
       () => getProfiles.execute(
-        username: any(named: 'username'),
-        page: any(named: 'page'),
-        pageSize: any(named: 'pageSize'),
-        cancellation: any(named: 'cancellation'),
-      ),
-    ).thenAnswer((_) async => const Left(ServerFailure()));
-    when(
-      () => getProfiles.execute(
-        displayName: any(named: 'displayName'),
+        q: any(named: 'q'),
         page: any(named: 'page'),
         pageSize: any(named: 'pageSize'),
         cancellation: any(named: 'cancellation'),
@@ -314,10 +313,30 @@ void main() {
     expect(find.text(l10n.noPeopleFoundHint), findsOneWidget);
   });
 
-  testWidgets('messages are searched on the device, and say so', (
+  testWidgets('messages come from the server search', (tester) async {
+    _answerWith(searchMessages, [
+      MessageSearchHit.of(message('a', 3, 'ship it tomorrow'), 'ship')!,
+    ]);
+
+    await pumpScreen(tester, chats: [chat('a', name: 'Design team')]);
+    await search(tester, 'ship');
+
+    await tester.tap(find.text(l10n.searchTabMessages));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MessageSearchResultTile), findsOneWidget);
+    // Nothing to apologise for: the whole history was searched.
+    expect(find.byType(LocalSearchNotice), findsNothing);
+  });
+
+  testWidgets('a result from the device says where it came from', (
     tester,
   ) async {
-    cache.remember('a', [message('a', 3, 'ship it tomorrow')]);
+    _answerWith(
+      searchMessages,
+      [MessageSearchHit.of(message('a', 3, 'ship it tomorrow'), 'ship')!],
+      source: MessageSearchSource.localCache,
+    );
 
     await pumpScreen(tester, chats: [chat('a', name: 'Design team')]);
     await search(tester, 'ship');
@@ -327,14 +346,38 @@ void main() {
 
     expect(find.byType(LocalSearchNotice), findsOneWidget);
     expect(find.text(l10n.searchLoadedHistoryOnly), findsOneWidget);
-    expect(find.byType(MessageSearchResultTile), findsOneWidget);
   });
 
-  testWidgets('the newest message of every chat is searchable from cold', (
+  testWidgets('a hit from a chat the list never loaded still has a row', (
     tester,
   ) async {
-    // `ChatDTO.last_message` arrives with the list, so a preview is
-    // searchable before any chat has been opened.
+    _answerWith(searchMessages, [
+      MessageSearchHit.of(
+        message('unloaded', 3, 'ship it tomorrow'),
+        'ship',
+        chat: const MessageSearchChat(
+          id: 'unloaded',
+          type: ChatType.group,
+          name: 'Another team',
+        ),
+      )!,
+    ]);
+
+    await pumpScreen(tester);
+    await search(tester, 'ship');
+
+    await tester.tap(find.text(l10n.searchTabMessages));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Another team'), findsOneWidget);
+  });
+
+  testWidgets('the list previews are kept where the fallback can find them', (
+    tester,
+  ) async {
+    // `ChatDTO.last_message` arrives with the list, so the newest message of
+    // every chat is searchable even on a device that cannot reach the
+    // server.
     final withPreview = ChatEntity(
       id: 'a',
       seqCounter: 3,
@@ -358,10 +401,10 @@ void main() {
     await tester.tap(find.text(l10n.searchTabMessages));
     await tester.pumpAndSettle();
 
-    expect(find.byType(MessageSearchResultTile), findsOneWidget);
+    expect(cache.messagesOf('a'), hasLength(1));
   });
 
-  testWidgets('a message search with nothing to show explains the limit', (
+  testWidgets('a message search with nothing to show says what it covers', (
     tester,
   ) async {
     await pumpScreen(tester, chats: [chat('a')]);
@@ -371,7 +414,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.noMessagesFound), findsOneWidget);
-    expect(find.text(l10n.searchLoadedHistoryExplained), findsWidgets);
+    expect(find.text(l10n.noMessagesFoundHint), findsOneWidget);
+  });
+
+  testWidgets('one letter is not a search the server would take', (
+    tester,
+  ) async {
+    await pumpScreen(tester, chats: [chat('a')]);
+    await search(tester, 's');
+
+    await tester.tap(find.text(l10n.searchTabMessages));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.searchTypeMore(2)), findsWidgets);
+    verifyNever(
+      () => searchMessages.search(
+        any(),
+        chatId: any(named: 'chatId'),
+        limit: any(named: 'limit'),
+        lastMessageId: any(named: 'lastMessageId'),
+        cancellation: any(named: 'cancellation'),
+      ),
+    );
   });
 
   testWidgets('opening a result remembers the search that found it', (
@@ -418,3 +482,22 @@ const PageResult<ProfileEntity> _emptyPage = PageResult<ProfileEntity>(
   page: 1,
   pageSize: 20,
 );
+
+/// Scripts what the message search answers with.
+void _answerWith(
+  MockMessageSearchRepository repository,
+  List<MessageSearchHit> hits, {
+  MessageSearchSource source = MessageSearchSource.server,
+}) {
+  when(
+    () => repository.search(
+      any(),
+      chatId: any(named: 'chatId'),
+      limit: any(named: 'limit'),
+      lastMessageId: any(named: 'lastMessageId'),
+      cancellation: any(named: 'cancellation'),
+    ),
+  ).thenAnswer(
+    (_) async => Right(MessageSearchResult(hits: hits, source: source)),
+  );
+}

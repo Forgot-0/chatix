@@ -1437,7 +1437,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get organizerDeviceOnly =>
-      'Pins, the archive and folders are kept on this device and do not follow your account.';
+      'Folders are kept on this device and do not follow your account. Pins, the archive and silenced chats do.';
 
   @override
   String get chatPinnedZone => 'Pinned';
@@ -1471,11 +1471,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Chats are matched by name, people by username, messages by what they say.';
 
   @override
-  String get searchLoadedHistoryOnly => 'Searching loaded history';
+  String get searchLoadedHistoryOnly => 'Searched what is on this device';
 
   @override
   String get searchLoadedHistoryExplained =>
-      'The server has no message search, so this looks through the messages already on this device. Open a chat to load more of it.';
+      'The server could not be reached, so this searched the messages already on this device.';
 
   @override
   String get noChatsFound => 'No chats found';
@@ -1493,11 +1493,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get messageSearchFailed => 'Could not search messages';
-
-  @override
-  String searchResultsCapped(int count) {
-    return 'Showing the first $count matches';
-  }
 
   @override
   String get searchInChat => 'Search in this chat';
@@ -1774,4 +1769,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get videoNotePreview => 'Camera preview';
+
+  @override
+  String searchTypeMore(int count) {
+    return 'Type at least $count characters';
+  }
+
+  @override
+  String get noMessagesFoundHint =>
+      'Search looks inside what was said, not at file names or chat titles.';
 }

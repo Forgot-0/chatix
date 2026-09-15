@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_organizer_data.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/folder_rule.dart';
@@ -51,12 +50,9 @@ final activeChatFolderProvider = Provider<ChatFolder?>(
 /// "no reply for N days" folder turns over as the list does — which is often
 /// enough, and keeps the whole strip from re-filtering on a clock tick.
 final chatRuleContextProvider = Provider<ChatRuleContext>((ref) {
-  final organizer = ref.watch(organizerDataProvider);
-
   return ChatRuleContext(
     now: DateTime.now(),
     myUserId: ref.watch(authProvider.select((user) => user.value?.id)),
-    pinnedChatIds: organizer.pinnedChatIds,
   );
 });
 
@@ -66,9 +62,8 @@ final folderUnreadCountsProvider = Provider<Map<String, int>>((ref) {
 
   return folderUnreadCounts(
     chats: chats,
-    organizer: ref.watch(organizerDataProvider),
+    folders: ref.watch(organizerDataProvider).folders,
     context: ref.watch(chatRuleContextProvider),
-    mutedChatIds: ref.watch(chatLocalPrefsProvider).muted,
   );
 });
 
@@ -77,13 +72,11 @@ final folderUnreadCountsProvider = Provider<Map<String, int>>((ref) {
 /// they stay out of the per-folder counts.
 final visibleUnreadCountProvider = Provider<int>((ref) {
   final chats = ref.watch(chatListProvider).value?.items ?? const [];
-  final organizer = ref.watch(organizerDataProvider);
-  final muted = ref.watch(chatLocalPrefsProvider).muted;
 
   var total = 0;
   for (final chat in chats) {
-    if (organizer.isArchived(chat.id)) continue;
-    if (muted.contains(chat.id)) continue;
+    if (chat.isArchived) continue;
+    if (chat.isMutedByMe) continue;
     total += chat.unreadCount ?? 0;
   }
   return total;

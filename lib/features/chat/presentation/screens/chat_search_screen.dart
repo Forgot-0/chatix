@@ -11,6 +11,7 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_search.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/search_messages_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_search_provider.dart';
@@ -414,6 +415,15 @@ class _PeopleResultsState extends ConsumerState<_PeopleResults> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+
+    if (widget.query.trim().length < PeopleSearchController.minQueryLength) {
+      return AppEmptyState(
+        icon: Icons.keyboard_outlined,
+        title: l10n.searchTypeMore(PeopleSearchController.minQueryLength),
+        message: l10n.searchStartHint,
+      );
+    }
+
     final results = ref.watch(peopleSearchProvider(widget.query));
 
     return results.when(
@@ -454,16 +464,55 @@ class _PeopleResultsState extends ConsumerState<_PeopleResults> {
   }
 }
 
-class _MessageResults extends ConsumerWidget {
+class _MessageResults extends ConsumerStatefulWidget {
   const _MessageResults({required this.query, required this.onOpen});
 
   final String query;
   final ValueChanged<MessageSearchHit> onOpen;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MessageResults> createState() => _MessageResultsState();
+}
+
+class _MessageResultsState extends ConsumerState<_MessageResults> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      ref.read(messageSearchProvider(widget.query).notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final results = ref.watch(messageSearchProvider(query));
+
+    if (widget.query.trim().length < SearchMessagesUseCase.minQueryLength) {
+      return AppEmptyState(
+        icon: Icons.keyboard_outlined,
+        title: l10n.searchTypeMore(SearchMessagesUseCase.minQueryLength),
+        message: l10n.searchStartHint,
+      );
+    }
+
+    final results = ref.watch(messageSearchProvider(widget.query));
     final chats = ref.watch(chatListProvider).value?.items ?? const [];
 
     ChatEntity? chatOf(String chatId) {
@@ -478,78 +527,52 @@ class _MessageResults extends ConsumerWidget {
       error: (error, _) => AppErrorState(
         error: error,
         fallbackMessage: l10n.messageSearchFailed,
-        onRetry: () => ref.invalidate(messageSearchProvider(query)),
+        onRetry: () => ref.invalidate(messageSearchProvider(widget.query)),
       ),
-      data: (result) {
-        final isLocal = result.source == MessageSearchSource.localCache;
-
-        if (result.isEmpty) {
+      data: (state) {
+        if (state.isEmpty) {
           // A column rather than a list: the empty state sizes itself to the
           // room it is given, and a scroll view gives it none.
           return Column(
             children: [
-              if (isLocal) const LocalSearchNotice(),
+              if (state.isLocal) const LocalSearchNotice(),
               Expanded(
                 child: AppEmptyState(
                   icon: Icons.chat_bubble_outline,
                   title: l10n.noMessagesFound,
-                  message: isLocal ? l10n.searchLoadedHistoryExplained : null,
+                  message: state.isLocal
+                      ? l10n.searchLoadedHistoryExplained
+                      : l10n.noMessagesFoundHint,
                 ),
               ),
             ],
           );
         }
 
-        return ListView.builder(
-          itemCount: result.hits.length + (isLocal ? 1 : 0) + 1,
-          itemBuilder: (context, index) {
-            if (isLocal && index == 0) return const LocalSearchNotice();
+        final leading = state.isLocal ? 1 : 0;
 
-            final hitIndex = isLocal ? index - 1 : index;
-            if (hitIndex >= result.hits.length) {
-              return result.isCapped
-                  ? _CappedNotice(count: result.hits.length)
-                  : const SizedBox(height: AppSpacing.x8);
+        return ListView.builder(
+          controller: _scrollController,
+          itemCount: state.hits.length + leading + (state.canLoadMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (state.isLocal && index == 0) return const LocalSearchNotice();
+
+            final hitIndex = index - leading;
+            if (hitIndex >= state.hits.length) {
+              return const AppLoadMoreIndicator();
             }
 
-            final hit = result.hits[hitIndex];
+            final hit = state.hits[hitIndex];
             return MessageSearchResultTile(
               key: ValueKey<String>('message-hit-${hit.message.id}'),
               hit: hit,
-              query: query,
+              query: widget.query,
               chat: chatOf(hit.chatId),
-              onTap: () => onOpen(hit),
+              onTap: () => widget.onOpen(hit),
             );
           },
         );
       },
-    );
-  }
-}
-
-class _CappedNotice extends StatelessWidget {
-  const _CappedNotice({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x4,
-        AppSpacing.x4,
-        AppSpacing.x4,
-        AppSpacing.x8,
-      ),
-      child: Text(
-        AppLocalizations.of(context).searchResultsCapped(count),
-        textAlign: TextAlign.center,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
     );
   }
 }

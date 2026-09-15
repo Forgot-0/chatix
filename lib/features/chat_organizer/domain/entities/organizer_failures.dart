@@ -1,17 +1,5 @@
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
-import 'package:chatix/features/chat_organizer/domain/entities/organizer_settings.dart';
-
-/// The pinned zone is full.
-class PinLimitFailure extends Failure {
-  const PinLimitFailure({this.limit = OrganizerLimits.pinnedChats})
-    : super(message: 'Pinned chats limit reached');
-
-  final int limit;
-
-  @override
-  List<Object?> get props => [...super.props, limit];
-}
 
 /// This device already holds as many folders as the strip can carry.
 class FolderLimitFailure extends Failure {

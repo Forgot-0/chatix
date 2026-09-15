@@ -17,6 +17,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<Either<Failure, PageResult<ProfileEntity>>> getProfiles({
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,
@@ -26,6 +27,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     RequestCancellation? cancellation,
   }) async {
     final result = await _remoteDataSource.fetchProfiles(
+      q: q,
       username: username,
       displayName: displayName,
       skills: skills,

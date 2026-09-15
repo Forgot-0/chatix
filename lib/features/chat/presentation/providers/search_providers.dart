@@ -2,9 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/features/chat/data/datasources/chat_rest_data_source.dart';
 import 'package:chatix/features/chat/data/datasources/message_cache_store.dart';
 import 'package:chatix/features/chat/data/datasources/search_history_store.dart';
 import 'package:chatix/features/chat/data/repositories/local_message_search_repository.dart';
+import 'package:chatix/features/chat/data/repositories/remote_message_search_repository.dart';
 import 'package:chatix/features/chat/domain/repositories/message_search_repository.dart';
 import 'package:chatix/features/chat/domain/usecases/search_messages_use_case.dart';
 
@@ -16,14 +18,20 @@ final messageCacheStoreProvider = Provider<MessageCacheStore>(
   (ref) => InMemoryMessageCacheStore(),
 );
 
-/// The one line to change when the backend grows a message search.
+/// The server search, with this device's own messages behind it.
 ///
-/// Point it at a remote implementation and every screen above follows: the
-/// results carry their own [MessageSearchSource], so the "loaded history
-/// only" notice disappears without anyone editing a widget.
-final messageSearchRepositoryProvider = Provider<MessageSearchRepository>(
-  (ref) => LocalMessageSearchRepository(ref.watch(messageCacheStoreProvider)),
-);
+/// `GET /chats/messages/search/` covers every chat the caller is in
+/// (api-docs §5.4.1). The cache is not a second opinion, only a last resort
+/// for a request that could not be made at all; when it answers, the result
+/// says so and the screen tells the reader.
+final messageSearchRepositoryProvider = Provider<MessageSearchRepository>((
+  ref,
+) {
+  return OfflineFallbackMessageSearchRepository(
+    remote: RemoteMessageSearchRepository(ref.watch(chatRestDataSourceProvider)),
+    local: LocalMessageSearchRepository(ref.watch(messageCacheStoreProvider)),
+  );
+});
 
 final searchMessagesUseCaseProvider = Provider<SearchMessagesUseCase>(
   (ref) => SearchMessagesUseCase(ref.watch(messageSearchRepositoryProvider)),

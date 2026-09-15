@@ -9,22 +9,14 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 /// chat row knows nothing about. Everything here is passed in so the rules
 /// themselves stay pure functions of their inputs.
 class ChatRuleContext extends Equatable {
-  const ChatRuleContext({
-    required this.now,
-    this.myUserId,
-    this.pinnedChatIds = const <String>{},
-  });
+  const ChatRuleContext({required this.now, this.myUserId});
 
   final DateTime now;
 
   final int? myUserId;
 
-  final Set<String> pinnedChatIds;
-
-  bool isPinned(String chatId) => pinnedChatIds.contains(chatId);
-
   @override
-  List<Object?> get props => [now, myUserId, pinnedChatIds];
+  List<Object?> get props => [now, myUserId];
 }
 
 /// Which kind of rule this is, and the key it is stored under.
@@ -101,7 +93,7 @@ final class UnreadRule extends FolderRule {
   List<Object?> get props => [expected];
 }
 
-/// Whether this device pins the chat.
+/// Whether the chat is pinned.
 final class PinnedRule extends FolderRule {
   const PinnedRule({this.expected = true});
 
@@ -112,7 +104,7 @@ final class PinnedRule extends FolderRule {
 
   @override
   bool evaluate(ChatEntity chat, ChatRuleContext context) =>
-      context.isPinned(chat.id) == expected;
+      chat.isPinned == expected;
 
   @override
   List<Object?> get props => [expected];

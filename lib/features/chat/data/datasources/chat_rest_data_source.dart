@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/api_client.dart';
+import 'package:chatix/core/network/request_cancellation.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/features/chat/data/models/attachment_model.dart';
 import 'package:chatix/features/chat/data/models/call_token_model.dart';
 import 'package:chatix/features/chat/data/models/chat_member_model.dart';
 import 'package:chatix/features/chat/data/models/chat_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
+import 'package:chatix/features/chat/data/models/message_search_model.dart';
 import 'package:chatix/features/chat/data/models/reaction_model.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
@@ -20,6 +22,22 @@ abstract class ChatRestDataSource {
     int limit = 50,
     String? lastChatId,
     DateTime? lastActivityAt,
+    bool archived = false,
+  });
+
+  /// `PATCH /chats/{id}/state/` — the caller's own view of a chat.
+  ///
+  /// The body says what to change by what it contains: a field that is not
+  /// there is left alone, a field that is there as null is cleared
+  /// (api-docs §5.2). Hence the `clear` flags rather than a bare null.
+  Future<Either<Failure, ChatStateModel>> updateChatState(
+    String chatId, {
+    bool? pinned,
+    bool? archived,
+    DateTime? notificationsMutedUntil,
+    bool clearNotificationsMutedUntil = false,
+    String? draft,
+    bool clearDraft = false,
   });
 
   Future<Either<Failure, ChatModel>> createChat({
@@ -85,6 +103,19 @@ abstract class ChatRestDataSource {
     String chatId, {
     int limit = 30,
     int? cursorMessageSeq,
+  });
+
+  /// `GET /chats/messages/search/` — full-text over message content.
+  ///
+  /// A static path in the chats router, not under `{chat_id}`: the whole
+  /// path is `/chats/messages/search/` and `chat_id` is a query parameter
+  /// that narrows it (api-docs §5.4.1).
+  Future<Either<Failure, MessageSearchModel>> searchMessages(
+    String query, {
+    String? chatId,
+    int limit = 30,
+    String? lastMessageId,
+    RequestCancellation? cancellation,
   });
 
   Future<Either<Failure, MessagesModel>> fetchMessagesContext(
@@ -192,6 +223,7 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     int limit = 50,
     String? lastChatId,
     DateTime? lastActivityAt,
+    bool archived = false,
   }) async {
     final result = await _apiClient.get(
       '/chats/',
@@ -200,10 +232,40 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
         'last_chat_id': ?lastChatId,
         if (lastActivityAt != null)
           'last_activity_at': lastActivityAt.toUtc().toIso8601String(),
+        'archived': archived,
       },
     );
     return result.map(
       (data) => ListChatsModel.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<Either<Failure, ChatStateModel>> updateChatState(
+    String chatId, {
+    bool? pinned,
+    bool? archived,
+    DateTime? notificationsMutedUntil,
+    bool clearNotificationsMutedUntil = false,
+    String? draft,
+    bool clearDraft = false,
+  }) async {
+    final body = <String, dynamic>{
+      'pinned': ?pinned,
+      'archived': ?archived,
+      if (clearNotificationsMutedUntil)
+        'notifications_muted_until': null
+      else if (notificationsMutedUntil != null)
+        'notifications_muted_until': notificationsMutedUntil
+            .toUtc()
+            .toIso8601String(),
+      if (clearDraft) 'draft': null else 'draft': ?draft,
+    };
+
+    final result = await _apiClient.patch('/chats/$chatId/state/', data: body);
+
+    return result.map(
+      (data) => ChatStateModel.fromJson(data as Map<String, dynamic>),
     );
   }
 
@@ -388,6 +450,30 @@ class ChatRestDataSourceImpl implements ChatRestDataSource {
     );
     return result.map(
       (data) => MessagesModel.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<Either<Failure, MessageSearchModel>> searchMessages(
+    String query, {
+    String? chatId,
+    int limit = 30,
+    String? lastMessageId,
+    RequestCancellation? cancellation,
+  }) async {
+    final result = await _apiClient.get(
+      '/chats/messages/search/',
+      cancelToken: cancellation?.dioToken,
+      queryParameters: {
+        'q': query,
+        'chat_id': ?chatId,
+        'limit': limit,
+        'last_message_id': ?lastMessageId,
+      },
+    );
+
+    return result.map(
+      (data) => MessageSearchModel.fromJson(data as Map<String, dynamic>),
     );
   }
 

@@ -5,13 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
+import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_search.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
+import 'package:chatix/features/chat/domain/usecases/search_messages_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/search_providers.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
 /// The three things a search can be looking for.
@@ -98,102 +101,228 @@ final chatSearchResultsProvider = Provider<List<ChatSearchHit>>((ref) {
   );
 });
 
-/// Messages matching the query, out of what this device has loaded.
-///
-/// Seeds the cache from the chat list first: every row carries its own
-/// `last_message` (api-docs §5.2), so the newest message of every chat is
-/// searchable from a cold start, before any conversation has been opened.
-final messageSearchProvider =
-    FutureProvider.family<MessageSearchResult, String>(
-      (ref, query) async {
-        if (query.trim().isEmpty) return MessageSearchResult.empty;
-
-        final store = ref.watch(messageCacheStoreProvider);
-        final chats =
-            ref.watch(chatListProvider).value?.items ?? const <ChatEntity>[];
-
-        for (final chat in chats) {
-          final last = chat.lastMessage;
-          if (last != null) store.remember(chat.id, [last]);
-        }
-
-        final result = await ref
-            .watch(searchMessagesUseCaseProvider)
-            .execute(query);
-
-        return result.getOrElse((failure) => throw failure);
-      },
-      isAutoDispose: true,
-      retry: _neverRetry,
-    );
-
-/// A page of people, merged out of the two fields the endpoint can filter on.
-class PeopleSearchState extends Equatable {
-  const PeopleSearchState({
-    this.people = const <ProfileEntity>[],
-    this.page = 1,
-    this.usernameHasNext = false,
-    this.displayNameHasNext = false,
+/// A page of message hits.
+class MessageSearchState extends Equatable {
+  const MessageSearchState({
+    this.hits = const <MessageSearchHit>[],
+    this.source = MessageSearchSource.server,
+    this.hasNext = false,
+    this.nextMessageId,
     this.isLoadingMore = false,
   });
 
-  final List<ProfileEntity> people;
+  final List<MessageSearchHit> hits;
 
-  /// The page number both halves of the search are on.
-  final int page;
+  /// Whether the whole history was searched, or only what is on the device.
+  final MessageSearchSource source;
 
-  final bool usernameHasNext;
-  final bool displayNameHasNext;
+  final bool hasNext;
+  final String? nextMessageId;
   final bool isLoadingMore;
 
-  bool get hasNext => usernameHasNext || displayNameHasNext;
+  bool get isEmpty => hits.isEmpty;
 
-  bool get isEmpty => people.isEmpty;
+  bool get isLocal => source == MessageSearchSource.localCache;
 
-  PeopleSearchState copyWith({
-    List<ProfileEntity>? people,
-    int? page,
-    bool? usernameHasNext,
-    bool? displayNameHasNext,
+  bool get canLoadMore => hasNext && nextMessageId != null;
+
+  MessageSearchState copyWith({
+    List<MessageSearchHit>? hits,
+    MessageSearchSource? source,
+    bool? hasNext,
+    String? nextMessageId,
     bool? isLoadingMore,
   }) {
-    return PeopleSearchState(
-      people: people ?? this.people,
-      page: page ?? this.page,
-      usernameHasNext: usernameHasNext ?? this.usernameHasNext,
-      displayNameHasNext: displayNameHasNext ?? this.displayNameHasNext,
+    return MessageSearchState(
+      hits: hits ?? this.hits,
+      source: source ?? this.source,
+      hasNext: hasNext ?? this.hasNext,
+      nextMessageId: nextMessageId ?? this.nextMessageId,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
   @override
   List<Object?> get props => [
-    people,
-    page,
-    usernameHasNext,
-    displayNameHasNext,
+    hits,
+    source,
+    hasNext,
+    nextMessageId,
     isLoadingMore,
   ];
 }
 
+/// Messages matching the query, from `GET /chats/messages/search/`.
+///
+/// The server searches every chat the caller is still in, so this is not
+/// limited to what has been opened on this device — but the cache is kept
+/// fed anyway, because it is what answers when the request cannot be made.
+class MessageSearchController extends AsyncNotifier<MessageSearchState> {
+  MessageSearchController(this._query);
+
+  final String _query;
+
+  @override
+  Future<MessageSearchState> build() async {
+    final needle = _query.trim();
+    if (needle.length < SearchMessagesUseCase.minQueryLength) {
+      return const MessageSearchState();
+    }
+
+    _seedCacheFromList();
+
+    final cancellation = RequestCancellation();
+    ref.onDispose(cancellation.cancel);
+
+    return _fetch(needle, cancellation: cancellation);
+  }
+
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null || !current.canLoadMore || current.isLoadingMore) {
+      return;
+    }
+
+    // The cache has no cursor to continue from; an offline result is one
+    // page and says as much by having nothing to load.
+    if (current.isLocal) return;
+
+    state = AsyncValue.data(current.copyWith(isLoadingMore: true));
+
+    final cancellation = RequestCancellation();
+    ref.onDispose(cancellation.cancel);
+
+    final next = await _fetch(
+      _query.trim(),
+      lastMessageId: current.nextMessageId,
+      cancellation: cancellation,
+    ).onError<Failure>((failure, _) {
+      Logger.warning('MessageSearch: next page failed (${failure.message})');
+      return current.copyWith(isLoadingMore: false);
+    });
+
+    if (!ref.mounted) return;
+
+    final latest = state.value ?? current;
+    state = AsyncValue.data(
+      latest.copyWith(
+        hits: [...latest.hits, ...next.hits],
+        source: next.source,
+        hasNext: next.hasNext,
+        nextMessageId: next.nextMessageId,
+        isLoadingMore: false,
+      ),
+    );
+  }
+
+  Future<MessageSearchState> _fetch(
+    String needle, {
+    String? lastMessageId,
+    required RequestCancellation cancellation,
+  }) async {
+    final result = await ref
+        .read(searchMessagesUseCaseProvider)
+        .execute(
+          needle,
+          lastMessageId: lastMessageId,
+          cancellation: cancellation,
+        );
+
+    return result.match((failure) => throw failure, (found) {
+      return MessageSearchState(
+        hits: found.hits,
+        source: found.source,
+        hasNext: found.hasNext,
+        nextMessageId: found.nextMessageId,
+      );
+    });
+  }
+
+  /// Keeps the offline fallback worth having: every chat row carries its own
+  /// `last_message` (api-docs §5.2), so the newest message of every chat is
+  /// searchable even on a device that has opened none of them.
+  void _seedCacheFromList() {
+    if (!ref.exists(chatListProvider)) return;
+
+    final store = ref.read(messageCacheStoreProvider);
+    for (final chat in ref.read(chatListProvider).value?.items ??
+        const <ChatEntity>[]) {
+      final last = chat.lastMessage;
+      if (last != null) store.remember(chat.id, [last]);
+    }
+  }
+}
+
+final messageSearchProvider =
+    AsyncNotifierProvider.family<
+      MessageSearchController,
+      MessageSearchState,
+      String
+    >(MessageSearchController.new, isAutoDispose: true, retry: _neverRetry);
+
+/// A page of people.
+class PeopleSearchState extends Equatable {
+  const PeopleSearchState({
+    this.people = const <ProfileEntity>[],
+    this.page = 1,
+    this.hasNext = false,
+    this.isLoadingMore = false,
+  });
+
+  final List<ProfileEntity> people;
+
+  final int page;
+
+  /// `PageResult` carries no `has_next`; it is `page < ceil(total/page_size)`
+  /// (api-docs §1.5), which the model works out.
+  final bool hasNext;
+
+  final bool isLoadingMore;
+
+  bool get isEmpty => people.isEmpty;
+
+  PeopleSearchState copyWith({
+    List<ProfileEntity>? people,
+    int? page,
+    bool? hasNext,
+    bool? isLoadingMore,
+  }) {
+    return PeopleSearchState(
+      people: people ?? this.people,
+      page: page ?? this.page,
+      hasNext: hasNext ?? this.hasNext,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+
+  @override
+  List<Object?> get props => [people, page, hasNext, isLoadingMore];
+}
+
 /// People matching the query, from `GET /profiles/`.
 ///
-/// The endpoint filters on `username` and `display_name` separately and the
-/// docs do not say whether passing both narrows or widens (api-docs §4.2), so
-/// this asks for each and merges. Both requests share one cancellation, and
-/// the provider is keyed by the query: the moment a new query arrives this
-/// instance is disposed, which cancels whatever was still in flight.
+/// One request per search: `q` matches `username` OR `display_name` on the
+/// server (api-docs §4.2), so there is nothing left for the client to merge.
+/// The endpoint takes a token and 20 requests a minute, which the debounce
+/// on the field is what keeps this inside.
+///
+/// Keyed by the query: the moment a new one arrives this instance is
+/// disposed, which cancels whatever was still in flight.
 class PeopleSearchController extends AsyncNotifier<PeopleSearchState> {
   PeopleSearchController(this._query);
 
   static const int pageSize = 20;
+
+  /// Shorter than this and the server answers 422, so the screen does not
+  /// ask at all.
+  static const int minQueryLength = GetProfilesUseCase.minQueryLength;
 
   final String _query;
 
   @override
   Future<PeopleSearchState> build() async {
     final needle = _query.trim();
-    if (needle.isEmpty) return const PeopleSearchState();
+    if (needle.length < minQueryLength) return const PeopleSearchState();
 
     final cancellation = RequestCancellation();
     ref.onDispose(cancellation.cancel);
@@ -206,7 +335,7 @@ class PeopleSearchController extends AsyncNotifier<PeopleSearchState> {
     if (current == null || !current.hasNext || current.isLoadingMore) return;
 
     final needle = _query.trim();
-    if (needle.isEmpty) return;
+    if (needle.length < minQueryLength) return;
 
     state = AsyncValue.data(current.copyWith(isLoadingMore: true));
 
@@ -217,8 +346,6 @@ class PeopleSearchController extends AsyncNotifier<PeopleSearchState> {
       needle,
       page: current.page + 1,
       cancellation: cancellation,
-      onlyUsername: current.usernameHasNext,
-      onlyDisplayName: current.displayNameHasNext,
     );
 
     if (!ref.mounted) return;
@@ -228,8 +355,7 @@ class PeopleSearchController extends AsyncNotifier<PeopleSearchState> {
       latest.copyWith(
         people: _merge(latest.people, next.people),
         page: next.page,
-        usernameHasNext: next.usernameHasNext,
-        displayNameHasNext: next.displayNameHasNext,
+        hasNext: next.hasNext,
         isLoadingMore: false,
       ),
     );
@@ -239,76 +365,36 @@ class PeopleSearchController extends AsyncNotifier<PeopleSearchState> {
     String needle, {
     required int page,
     required RequestCancellation cancellation,
-    bool onlyUsername = true,
-    bool onlyDisplayName = true,
   }) async {
-    final useCase = ref.read(getProfilesUseCaseProvider);
-
-    final responses = await Future.wait([
-      if (onlyUsername)
-        useCase.execute(
-          username: needle,
+    final result = await ref
+        .read(getProfilesUseCaseProvider)
+        .execute(
+          q: needle,
           page: page,
           pageSize: pageSize,
           cancellation: cancellation,
-        )
-      else
-        Future.value(null),
-      if (onlyDisplayName)
-        useCase.execute(
-          displayName: needle,
-          page: page,
-          pageSize: pageSize,
-          cancellation: cancellation,
-        )
-      else
-        Future.value(null),
-    ]);
+        );
 
-    final byUsername = responses[0];
-    final byDisplayName = responses[1];
-
-    // One side failing is only fatal if the other did too: half a result list
-    // beats an error page.
-    Failure? failure;
-    var people = <ProfileEntity>[];
-    var usernameHasNext = false;
-    var displayNameHasNext = false;
-
-    if (byUsername != null) {
-      byUsername.match((f) => failure = f, (result) {
-        people = _merge(people, result.items);
-        usernameHasNext = result.hasNext;
-      });
-    }
-
-    if (byDisplayName != null) {
-      byDisplayName.match((f) => failure ??= f, (result) {
-        failure = null;
-        people = _merge(people, result.items);
-        displayNameHasNext = result.hasNext;
-      });
-    }
-
-    final error = failure;
-    if (error != null && people.isEmpty) throw error;
-
-    return PeopleSearchState(
-      people: people,
-      page: page,
-      usernameHasNext: usernameHasNext,
-      displayNameHasNext: displayNameHasNext,
-    );
+    return result.match((failure) => throw failure, (found) {
+      return PeopleSearchState(
+        people: found.items,
+        page: found.page,
+        hasNext: found.hasNext,
+      );
+    });
   }
 
-  /// Username matches keep their place in front; nobody appears twice.
+  /// Nobody appears twice, even if a page boundary moved under us.
   static List<ProfileEntity> _merge(
     List<ProfileEntity> first,
     List<ProfileEntity> second,
   ) {
     final seen = {for (final profile in first) profile.id};
 
-    return [...first, ...second.where((profile) => seen.add(profile.id))];
+    return [
+      ...first,
+      ...second.where((profile) => seen.add(profile.id)),
+    ];
   }
 }
 

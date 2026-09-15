@@ -368,7 +368,7 @@
   "hideFolderTabsHint": "Garde vos dossiers sans afficher les onglets au-dessus de la liste",
   "unarchiveOnNewMessage": "Ramener à la réception d’un message",
   "unarchiveOnNewMessageHint": "Un chat archivé revient dans la liste dès que quelqu’un y écrit",
-  "organizerDeviceOnly": "Les épingles, l’archive et les dossiers restent sur cet appareil et ne suivent pas votre compte.",
+  "organizerDeviceOnly": "Les dossiers restent sur cet appareil et ne suivent pas votre compte. Les épingles, l’archive et les chats en sourdine, si.",
   "chatPinnedZone": "Épinglés",
   "chatUnarchivedToast": "De retour dans la liste",
   "searchTabMessages": "Messages",
@@ -379,14 +379,13 @@
   "searchRemoveFromHistory": "Retirer des recherches récentes",
   "searchStartTitle": "Trouvez un chat, une personne ou un message",
   "searchStartHint": "Les chats par leur nom, les personnes par leur identifiant, les messages par leur contenu.",
-  "searchLoadedHistoryOnly": "Recherche dans l’historique chargé",
-  "searchLoadedHistoryExplained": "Le serveur n’a pas de recherche de messages : seuls ceux déjà présents sur cet appareil sont parcourus. Ouvrez un chat pour en charger davantage.",
+  "searchLoadedHistoryOnly": "Recherche dans ce qui est sur cet appareil",
+  "searchLoadedHistoryExplained": "Le serveur est injoignable : seuls les messages déjà présents sur cet appareil ont été parcourus.",
   "noChatsFound": "Aucun chat trouvé",
   "noChatsFoundHint": "Les chats sont trouvés par nom et description, parmi ceux déjà chargés.",
   "noPeopleFoundHint": "Essayez une autre orthographe, ou cherchez par identifiant.",
   "noMessagesFound": "Aucun message trouvé",
   "messageSearchFailed": "Impossible de rechercher les messages",
-  "searchResultsCapped": "Affichage des {count} premiers résultats",
   "searchInChat": "Rechercher dans ce chat",
   "searchMatchPosition": "{current} sur {total}",
   "searchNoMatches": "Aucun résultat",
@@ -756,5 +755,7 @@
   "videoNotePreview": "Aperçu de la caméra",
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "searchTypeMore": "Saisissez au moins {count} caractères",
+  "noMessagesFoundHint": "La recherche porte sur ce qui a été dit, pas sur les noms de fichiers ni les titres des chats."
 }

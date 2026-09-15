@@ -1,13 +1,15 @@
-import 'dart:async';
-
-import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
 
-/// The store behind the device-local chat flags and drafts.
+/// The store behind the device-local chat odds and ends: unsent drafts, and
+/// which emoji this person reaches for.
+///
+/// Silencing a chat used to be here. It is `is_muted_by_me` on the chat row
+/// now, written through `PATCH /chats/{chat_id}/state/` (api-docs §5.2), so
+/// it follows the account instead of the phone.
 ///
 /// Shared preferences are handed to the app at startup, so anywhere they were
 /// not — a widget test that pumps the list without overriding them — this
@@ -22,88 +24,3 @@ final chatLocalPrefsStoreProvider = Provider<ChatLocalPrefsStore>((ref) {
     return InMemoryChatLocalPrefsStore();
   }
 });
-
-/// Which chats this device silences.
-///
-/// Pinning and archiving are the chat organizer's, not this — see
-/// `features/chat_organizer`.
-class ChatLocalPrefs extends Equatable {
-  const ChatLocalPrefs({this.muted = const <String>{}});
-
-  /// Notifications off. Not `MemberChatDTO.is_muted`, which is the moderator
-  /// mute that stops a member writing.
-  final Set<String> muted;
-
-  bool isMuted(String chatId) => muted.contains(chatId);
-
-  Set<String> of(ChatLocalFlag flag) => switch (flag) {
-    ChatLocalFlag.muted => muted,
-  };
-
-  ChatLocalPrefs withFlag(ChatLocalFlag flag, Set<String> chatIds) {
-    return switch (flag) {
-      ChatLocalFlag.muted => ChatLocalPrefs(muted: chatIds),
-    };
-  }
-
-  @override
-  List<Object?> get props => [muted];
-}
-
-class ChatLocalPrefsController extends Notifier<ChatLocalPrefs> {
-  @override
-  ChatLocalPrefs build() {
-    final store = ref.watch(chatLocalPrefsStoreProvider);
-    return ChatLocalPrefs(muted: store.readFlag(ChatLocalFlag.muted));
-  }
-
-  /// Turns [flag] on or off for [chatId] and reports what it now is.
-  bool toggle(ChatLocalFlag flag, String chatId) {
-    final current = state.of(flag);
-    final next = current.contains(chatId)
-        ? (current.where((id) => id != chatId).toSet())
-        : {...current, chatId};
-
-    _write(flag, next);
-    return next.contains(chatId);
-  }
-
-  void set(ChatLocalFlag flag, String chatId, {required bool value}) {
-    final current = state.of(flag);
-    if (current.contains(chatId) == value) return;
-
-    _write(
-      flag,
-      value
-          ? {...current, chatId}
-          : current.where((id) => id != chatId).toSet(),
-    );
-  }
-
-  /// Drops every flag a chat carried — what deleting or leaving it means for
-  /// state that only exists here.
-  void forget(String chatId) {
-    for (final flag in ChatLocalFlag.values) {
-      set(flag, chatId, value: false);
-    }
-  }
-
-  void _write(ChatLocalFlag flag, Set<String> chatIds) {
-    state = state.withFlag(flag, chatIds);
-
-    unawaited(
-      ref
-          .read(chatLocalPrefsStoreProvider)
-          .writeFlag(flag, chatIds)
-          .catchError(
-            (Object error) =>
-                Logger.warning('Chat prefs: flag not persisted ($error)'),
-          ),
-    );
-  }
-}
-
-final chatLocalPrefsProvider =
-    NotifierProvider<ChatLocalPrefsController, ChatLocalPrefs>(
-      ChatLocalPrefsController.new,
-    );

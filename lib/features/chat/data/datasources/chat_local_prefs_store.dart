@@ -2,30 +2,14 @@ import 'dart:convert';
 
 import 'package:chatix/core/storage/local_storage_service.dart';
 
-/// A per-chat flag the backend does not know about.
+/// Where the device-local chat odds and ends are kept.
 ///
-/// Silencing notifications is a client-side idea: `/chats/` has no field for
-/// it, and `MemberChatDTO.is_muted` is a moderator mute (api-docs §8.1,
-/// right `member:mute`) that stops the member writing — nothing to do with
-/// whether this device rings.
-///
-/// Pinning and archiving used to live here too. They moved to
-/// `features/chat_organizer`, which owns them along with folders, and which
-/// still writes them under the keys this file used.
-enum ChatLocalFlag {
-  muted('chat_flags.muted');
-
-  const ChatLocalFlag(this.storageKey);
-
-  final String storageKey;
-}
-
-/// Where the device-local chat flags and drafts are kept.
+/// Pinning, archiving and silencing used to be among them. They are fields
+/// on the chat row now — `is_pinned`, `is_archived`, `is_muted_by_me`
+/// (api-docs §5.2) — written through `PATCH /chats/{chat_id}/state/`, and
+/// they follow the account rather than the device. What is left here is what
+/// the API still has nowhere to put.
 abstract interface class ChatLocalPrefsStore {
-  Set<String> readFlag(ChatLocalFlag flag);
-
-  Future<void> writeFlag(ChatLocalFlag flag, Set<String> chatIds);
-
   Map<String, String> readDrafts();
 
   Future<void> writeDrafts(Map<String, String> drafts);
@@ -40,8 +24,7 @@ abstract interface class ChatLocalPrefsStore {
   Future<void> writeRecentReactions(List<String> emojis);
 }
 
-/// The real store: shared preferences, one list per flag and one JSON blob
-/// for the drafts.
+/// The real store: shared preferences, with one JSON blob for the drafts.
 class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
   SharedPrefsChatLocalPrefsStore(this._storage);
 
@@ -49,22 +32,6 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
   static const String _recentReactionsKey = 'chat.recent_reactions';
 
   final LocalStorageService _storage;
-
-  @override
-  Set<String> readFlag(ChatLocalFlag flag) {
-    final stored = _storage.getStringList(flag.storageKey);
-    if (stored == null || stored.isEmpty) return const <String>{};
-    return stored.toSet();
-  }
-
-  @override
-  Future<void> writeFlag(ChatLocalFlag flag, Set<String> chatIds) async {
-    if (chatIds.isEmpty) {
-      await _storage.remove(flag.storageKey);
-      return;
-    }
-    await _storage.setStringList(flag.storageKey, chatIds.toList());
-  }
 
   @override
   Map<String, String> readDrafts() {
@@ -105,20 +72,11 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
 }
 
 /// The fallback used where shared preferences were never wired up — widget
-/// tests, mostly. Flags and drafts still work for the life of the process,
-/// they just do not outlive it.
+/// tests, mostly. Drafts still work for the life of the process, they just
+/// do not outlive it.
 class InMemoryChatLocalPrefsStore implements ChatLocalPrefsStore {
-  final Map<ChatLocalFlag, Set<String>> _flags = <ChatLocalFlag, Set<String>>{};
   Map<String, String> _drafts = const <String, String>{};
   List<String> _recentReactions = const <String>[];
-
-  @override
-  Set<String> readFlag(ChatLocalFlag flag) => _flags[flag] ?? const <String>{};
-
-  @override
-  Future<void> writeFlag(ChatLocalFlag flag, Set<String> chatIds) async {
-    _flags[flag] = {...chatIds};
-  }
 
   @override
   Map<String, String> readDrafts() => _drafts;

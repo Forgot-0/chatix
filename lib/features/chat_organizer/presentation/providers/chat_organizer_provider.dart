@@ -7,17 +7,20 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_state_actions.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_organizer_data.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organizer_settings.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_providers.dart';
 
-/// Pins, the archive, the folders and the switches around them.
+/// The folders and the switches around them.
 ///
-/// Every change goes through a use case, which is what enforces the pinned
-/// limit and what keeps the archive and the pinned zone from claiming the
-/// same chat. Nothing here talks to storage directly.
+/// Pins, the archive and silenced chats are not here any more: they are
+/// fields on the chat row, written through `PATCH /chats/{id}/state/`
+/// (`features/chat/presentation/providers/chat_state_actions.dart`). What is
+/// left is what the API still has nowhere to keep.
 class ChatOrganizerController extends AsyncNotifier<ChatOrganizerData> {
   StreamSubscription<WSEvent>? _eventSubscription;
 
@@ -38,6 +41,11 @@ class ChatOrganizerController extends AsyncNotifier<ChatOrganizerData> {
   /// A chat somebody wrote into comes back out of the archive, when that is
   /// what the reader asked for. Messages I sent myself do not count: opening
   /// a chat to write in it is not the archive being wrong.
+  ///
+  /// Whether a chat is archived is the server's answer now, and the only
+  /// place this device has it is the archive list. With that list never
+  /// opened there is nothing to check against, and nothing happens — the row
+  /// comes back on its own the next time the archive is fetched.
   void _watchForArchiveReturns() {
     _eventSubscription = ref
         .read(chatSocketServiceProvider)
@@ -49,55 +57,27 @@ class ChatOrganizerController extends AsyncNotifier<ChatOrganizerData> {
             final data = state.value;
             if (data == null) return;
             if (!data.settings.unarchiveOnNewMessage) return;
-            if (!data.isArchived(event.chatId)) return;
+
+            if (!ref.exists(archivedChatListProvider)) return;
+            final archived = ref
+                .read(archivedChatListProvider.notifier)
+                .rowOf(event.chatId);
+            if (archived == null) return;
 
             final myUserId = ref.read(authProvider).value?.id;
             if (myUserId != null && event.senderId == myUserId) return;
 
-            unawaited(setArchived(event.chatId, archived: false));
+            unawaited(
+              ref
+                  .read(chatStateActionsProvider)
+                  .setArchived(event.chatId, archived: false),
+            );
           },
           onError: (Object error, StackTrace stackTrace) {
             Logger.error('Organizer: event stream error', error, stackTrace);
           },
           cancelOnError: false,
         );
-  }
-
-  /// Pins [chatId] or lets it go, and reports what stopped it — a full
-  /// pinned zone, or storage that would not take the write.
-  Future<Failure?> setPinned(String chatId, {required bool pinned}) {
-    return _apply(
-      (data) => ref
-          .read(setChatPinnedUseCaseProvider)
-          .execute(data, chatId: chatId, pinned: pinned),
-    );
-  }
-
-  Future<Failure?> togglePin(String chatId) {
-    final data = state.value;
-    if (data == null) return Future.value(const CacheFailure());
-    return setPinned(chatId, pinned: !data.isPinned(chatId));
-  }
-
-  Future<Failure?> setArchived(String chatId, {required bool archived}) {
-    return _apply(
-      (data) => ref
-          .read(setChatArchivedUseCaseProvider)
-          .execute(data, chatId: chatId, archived: archived),
-    );
-  }
-
-  Future<Failure?> toggleArchived(String chatId) {
-    final data = state.value;
-    if (data == null) return Future.value(const CacheFailure());
-    return setArchived(chatId, archived: !data.isArchived(chatId));
-  }
-
-  /// What deleting or leaving a chat means for state that only exists here.
-  Future<Failure?> forget(String chatId) {
-    return _apply(
-      (data) => ref.read(forgetChatUseCaseProvider).execute(data, chatId),
-    );
   }
 
   Future<Failure?> saveFolder(ChatFolder folder) {
@@ -172,7 +152,7 @@ final chatOrganizerProvider =
 ///
 /// Local storage answers in a microtask and can only fail by being absent,
 /// so the list does not need a loading state or an error state for it: an
-/// account whose pins have not arrived yet simply has none for a frame.
+/// account whose folders have not arrived yet simply has none for a frame.
 final organizerDataProvider = Provider<ChatOrganizerData>(
   (ref) => ref.watch(chatOrganizerProvider).value ?? const ChatOrganizerData(),
 );

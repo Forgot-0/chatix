@@ -62,6 +62,78 @@ class ReadDetailEntity extends Equatable {
   List<Object?> get props => [lastReadMessageSeq, lastReadAt];
 }
 
+/// The chat as *this* user has it set up: pinned, archived, silenced, with
+/// an unsent draft.
+///
+/// Its own value rather than six fields on the chat because not every
+/// response carries it. `GET /chats/` does; `GET /chats/{id}/` answers with
+/// `ChatDetailDTO`, which has no state block at all (api-docs §5.2). Null
+/// therefore means "this response did not say", which is what lets a chat
+/// loaded by id be merged into the list without quietly unpinning it.
+class ChatStateEntity extends Equatable {
+  const ChatStateEntity({
+    this.isPinned = false,
+    this.pinnedAt,
+    this.isArchived = false,
+    this.notificationsMutedUntil,
+    this.isMutedByMe = false,
+    this.draft,
+  });
+
+  final bool isPinned;
+
+  /// When it was pinned. The server orders the pinned block by this,
+  /// newest first.
+  final DateTime? pinnedAt;
+
+  final bool isArchived;
+
+  /// When the silence runs out. "Forever" is a date far in the future, not a
+  /// flag (api-docs §5.2).
+  final DateTime? notificationsMutedUntil;
+
+  /// The server's own reading of [notificationsMutedUntil] at the moment the
+  /// response was built. Trusted over a local clock comparison, which would
+  /// disagree with it on a device whose time is off.
+  final bool isMutedByMe;
+
+  /// What was typed here and never sent.
+  final String? draft;
+
+  ChatStateEntity copyWith({
+    bool? isPinned,
+    DateTime? pinnedAt,
+    bool? isArchived,
+    DateTime? notificationsMutedUntil,
+    bool? isMutedByMe,
+    String? draft,
+    bool clearPinnedAt = false,
+    bool clearMutedUntil = false,
+    bool clearDraft = false,
+  }) {
+    return ChatStateEntity(
+      isPinned: isPinned ?? this.isPinned,
+      pinnedAt: clearPinnedAt ? null : (pinnedAt ?? this.pinnedAt),
+      isArchived: isArchived ?? this.isArchived,
+      notificationsMutedUntil: clearMutedUntil
+          ? null
+          : (notificationsMutedUntil ?? this.notificationsMutedUntil),
+      isMutedByMe: isMutedByMe ?? this.isMutedByMe,
+      draft: clearDraft ? null : (draft ?? this.draft),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    isPinned,
+    pinnedAt,
+    isArchived,
+    notificationsMutedUntil,
+    isMutedByMe,
+    draft,
+  ];
+}
+
 class ChatEntity extends Equatable {
   final String id;
 
@@ -97,6 +169,20 @@ class ChatEntity extends Equatable {
 
   final List<ChatMemberEntity>? members;
 
+  /// The other person in a direct chat, as the list response names them.
+  ///
+  /// A direct chat has no `name` and no avatar of its own, and an empty one
+  /// has no `last_message` either, so without this there is nothing to draw
+  /// a row with. Only `GET /chats/` fills it (api-docs §5.2).
+  final ChatProfileEntity? peer;
+
+  /// Up to three members other than me, for the stack of faces on a group
+  /// row. Only `GET /chats/` fills it, and only for group and supergroup.
+  final List<ChatProfileEntity> membersPreview;
+
+  /// Pinned, archived, silenced, draft. Null when the response did not say.
+  final ChatStateEntity? state;
+
   const ChatEntity({
     required this.id,
     required this.seqCounter,
@@ -118,7 +204,24 @@ class ChatEntity extends Equatable {
     this.lastRead,
     this.lastMessage,
     this.members,
+    this.peer,
+    this.membersPreview = const [],
+    this.state,
   });
+
+  bool get isPinned => state?.isPinned ?? false;
+
+  DateTime? get pinnedAt => state?.pinnedAt;
+
+  bool get isArchived => state?.isArchived ?? false;
+
+  /// Whether this device should stay quiet about the chat. The server has
+  /// already compared the mute deadline with its own clock.
+  bool get isMutedByMe => state?.isMutedByMe ?? false;
+
+  DateTime? get notificationsMutedUntil => state?.notificationsMutedUntil;
+
+  String? get draft => state?.draft;
 
   bool get reactionsEnabled => reactionsMode != ChatReactionsMode.none;
 
@@ -138,6 +241,12 @@ class ChatEntity extends Equatable {
 
   ChatProfileEntity? peerProfile(int? myUserId) {
     if (type != ChatType.direct) return null;
+
+    // What the list response says, when it says anything: the server picked
+    // the member who is not the caller, which is more than a roster the chat
+    // may not carry can tell us.
+    final named = peer;
+    if (named != null) return named;
 
     final mine = myUserId ?? me?.userId;
     if (mine == null) return null;
@@ -190,11 +299,16 @@ class ChatEntity extends Equatable {
     ReadDetailEntity? lastRead,
     MessageEntity? lastMessage,
     List<ChatMemberEntity>? members,
+    ChatProfileEntity? peer,
+    List<ChatProfileEntity>? membersPreview,
+    ChatStateEntity? state,
     bool clearUnreadCount = false,
     bool clearMe = false,
     bool clearLastRead = false,
     bool clearLastMessage = false,
     bool clearMembers = false,
+    bool clearPeer = false,
+    bool clearState = false,
   }) {
     return ChatEntity(
       id: id ?? this.id,
@@ -217,6 +331,9 @@ class ChatEntity extends Equatable {
       lastRead: clearLastRead ? null : (lastRead ?? this.lastRead),
       lastMessage: clearLastMessage ? null : (lastMessage ?? this.lastMessage),
       members: clearMembers ? null : (members ?? this.members),
+      peer: clearPeer ? null : (peer ?? this.peer),
+      membersPreview: membersPreview ?? this.membersPreview,
+      state: clearState ? null : (state ?? this.state),
     );
   }
 
@@ -242,5 +359,8 @@ class ChatEntity extends Equatable {
     lastRead,
     lastMessage,
     members,
+    peer,
+    membersPreview,
+    state,
   ];
 }

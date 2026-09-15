@@ -5,13 +5,15 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
-import 'package:chatix/features/chat/data/datasources/message_cache_store.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_search.dart';
+import 'package:chatix/features/chat/domain/repositories/message_search_repository.dart';
 import 'package:chatix/features/chat/domain/usecases/get_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_context_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_use_case.dart';
@@ -34,19 +36,20 @@ class MockGetMessagesContextUseCase extends Mock
 
 class MockMarkReadUseCase extends Mock implements MarkReadUseCase {}
 
+class MockMessageSearchRepository extends Mock
+    implements MessageSearchRepository {}
+
 class _FakeAuthController extends AuthController {
   @override
   Future<UserEntity?> build() async =>
       const UserEntity(id: 7, username: 'me', email: 'me@example.com');
 }
 
-/// Searching inside one chat finds what the device has, and then asks the
-/// server for the window around it — `GET /chats/{id}/messages/context/`
-/// (api-docs §5.4) — which is the only way to open a match that was found in
-/// a preview of history nobody has loaded.
+/// Searching inside one chat is `GET /chats/messages/search/?chat_id=`
+/// (api-docs §5.4.1), so it reaches history this device never loaded — and
+/// opening a match is a second request, the window around it.
 void main() {
   const chatId = '550e8400-e29b-41d4-a716-446655440000';
-  const otherChatId = '550e8400-e29b-41d4-a716-446655440001';
 
   setUpAll(
     () => dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com'),
@@ -69,9 +72,9 @@ void main() {
     unreadCount: 0,
   );
 
-  MessageEntity message(String chat, int seq, String content) => MessageEntity(
-    id: '$chat-$seq',
-    chatId: chat,
+  MessageEntity message(int seq, String content) => MessageEntity(
+    id: 'm-$seq',
+    chatId: chatId,
     seq: seq,
     authorId: 9,
     type: MessageType.text,
@@ -84,11 +87,14 @@ void main() {
     createdAt: DateTime.utc(2026, 3, 10, seq),
   );
 
+  MessageSearchHit hit(int seq) =>
+      MessageSearchHit.of(message(seq, 'ship it'), 'ship')!;
+
   late MockGetChatUseCase getChat;
   late MockGetMessagesUseCase getMessages;
   late MockGetMessagesContextUseCase getContext;
   late MockMarkReadUseCase markRead;
-  late InMemoryMessageCacheStore store;
+  late MockMessageSearchRepository search;
   late FakeWebSocketChannel channel;
   late ChatSocketService socket;
 
@@ -97,7 +103,7 @@ void main() {
     getMessages = MockGetMessagesUseCase();
     getContext = MockGetMessagesContextUseCase();
     markRead = MockMarkReadUseCase();
-    store = InMemoryMessageCacheStore();
+    search = MockMessageSearchRepository();
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
       secureStorage: FakeSecureStorageService(
@@ -112,7 +118,7 @@ void main() {
     ).thenAnswer(
       (_) async => Right(
         MessagesPage(
-          messages: [message(chatId, 20, 'nothing to see')],
+          messages: [message(20, 'nothing to see')],
           nextCursor: null,
           hasNext: false,
         ),
@@ -127,11 +133,7 @@ void main() {
       (invocation) async => Right(
         MessagesPage(
           messages: [
-            message(
-              chatId,
-              invocation.positionalArguments[1] as int,
-              'ship it',
-            ),
+            message(invocation.positionalArguments[1] as int, 'ship it'),
           ],
           nextCursor: null,
           hasNext: false,
@@ -139,6 +141,33 @@ void main() {
       ),
     );
   });
+
+  /// Scripts what the search answers with.
+  void answerWith(
+    List<MessageSearchHit> hits, {
+    bool hasNext = false,
+    String? nextMessageId,
+    MessageSearchSource source = MessageSearchSource.server,
+  }) {
+    when(
+      () => search.search(
+        any(),
+        chatId: any(named: 'chatId'),
+        limit: any(named: 'limit'),
+        lastMessageId: any(named: 'lastMessageId'),
+        cancellation: any(named: 'cancellation'),
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        MessageSearchResult(
+          hits: hits,
+          source: source,
+          hasNext: hasNext,
+          nextMessageId: nextMessageId,
+        ),
+      ),
+    );
+  }
 
   tearDown(() async {
     await socket.dispose();
@@ -152,7 +181,7 @@ void main() {
         getMessagesUseCaseProvider.overrideWithValue(getMessages),
         getMessagesContextUseCaseProvider.overrideWithValue(getContext),
         markReadUseCaseProvider.overrideWithValue(markRead),
-        messageCacheStoreProvider.overrideWithValue(store),
+        messageSearchRepositoryProvider.overrideWithValue(search),
         chatSocketServiceProvider.overrideWithValue(socket),
         authProvider.overrideWith(_FakeAuthController.new),
       ],
@@ -186,51 +215,60 @@ void main() {
   InChatSearchState stateOf(ProviderContainer container) =>
       container.read(inChatSearchProvider(chatId));
 
-  test('what the chat has loaded is searchable at once', () async {
+  test('the search is narrowed to this chat', () async {
+    answerWith([hit(9)]);
     final container = await boot();
-
-    container.read(inChatSearchProvider(chatId).notifier).submit('nothing');
-    await settle();
-
-    expect(stateOf(container).hits, hasLength(1));
-    expect(stateOf(container).hits.single.seq, 20);
-  });
-
-  test('it searches this chat only', () async {
-    final container = await boot();
-    store.remember(otherChatId, [message(otherChatId, 3, 'nothing here')]);
-
-    container.read(inChatSearchProvider(chatId).notifier).submit('nothing');
-    await settle();
-
-    expect(stateOf(container).hits.map((h) => h.chatId), [chatId]);
-  });
-
-  test('matches are newest first and the newest is opened', () async {
-    final container = await boot();
-    store.remember(chatId, [
-      message(chatId, 4, 'ship it'),
-      message(chatId, 9, 'ship it again'),
-    ]);
 
     container.read(inChatSearchProvider(chatId).notifier).submit('ship');
     await settle();
 
-    expect(stateOf(container).hits.map((h) => h.seq), [9, 4]);
-    expect(stateOf(container).position, 1);
+    verify(
+      () => search.search(
+        'ship',
+        chatId: chatId,
+        limit: any(named: 'limit'),
+        lastMessageId: null,
+        cancellation: any(named: 'cancellation'),
+      ),
+    ).called(1);
+    expect(stateOf(container).hits, hasLength(1));
+  });
 
-    // Opening a match the screen has not loaded is a context request.
+  test('a query shorter than the server takes is never sent', () async {
+    answerWith([hit(9)]);
+    final container = await boot();
+
+    container.read(inChatSearchProvider(chatId).notifier).submit('s');
+    await settle();
+
+    verifyNever(
+      () => search.search(
+        any(),
+        chatId: any(named: 'chatId'),
+        limit: any(named: 'limit'),
+        lastMessageId: any(named: 'lastMessageId'),
+        cancellation: any(named: 'cancellation'),
+      ),
+    );
+    expect(stateOf(container).hits, isEmpty);
+  });
+
+  test('the newest match is opened, which is a context request', () async {
+    answerWith([hit(9), hit(4)]);
+    final container = await boot();
+
+    container.read(inChatSearchProvider(chatId).notifier).submit('ship');
+    await settle();
+
+    expect(stateOf(container).position, 1);
     verify(
       () => getContext.execute(chatId, 9, limit: any(named: 'limit')),
     ).called(1);
   });
 
   test('the arrows walk the matches and take the chat with them', () async {
+    answerWith([hit(9), hit(4)]);
     final container = await boot();
-    store.remember(chatId, [
-      message(chatId, 4, 'ship it'),
-      message(chatId, 9, 'ship it again'),
-    ]);
 
     final controller = container.read(inChatSearchProvider(chatId).notifier);
     controller.submit('ship');
@@ -251,9 +289,27 @@ void main() {
     expect(stateOf(container).position, 1);
   });
 
-  test('the arrows stop at the ends instead of wrapping around', () async {
+  test('walking past the page in hand fetches the one behind it', () async {
+    answerWith([hit(9)], hasNext: true, nextMessageId: 'm-9');
     final container = await boot();
-    store.remember(chatId, [message(chatId, 4, 'ship it')]);
+
+    final controller = container.read(inChatSearchProvider(chatId).notifier);
+    controller.submit('ship');
+    await settle();
+
+    expect(stateOf(container).canGoOlder, isTrue);
+
+    answerWith([hit(4)]);
+    await controller.goOlder();
+
+    expect(stateOf(container).hits.map((h) => h.seq), [9, 4]);
+    expect(stateOf(container).position, 2);
+    expect(stateOf(container).canGoOlder, isFalse);
+  });
+
+  test('the arrows stop at the ends instead of wrapping around', () async {
+    answerWith([hit(4)]);
+    final container = await boot();
 
     final controller = container.read(inChatSearchProvider(chatId).notifier);
     controller.submit('ship');
@@ -266,6 +322,7 @@ void main() {
   });
 
   test('a match already on screen needs no request', () async {
+    answerWith([MessageSearchHit.of(message(20, 'nothing to see'), 'nothing')!]);
     final container = await boot();
 
     container.read(inChatSearchProvider(chatId).notifier).submit('nothing');
@@ -277,10 +334,11 @@ void main() {
   });
 
   test('typing waits for the typing to stop', () async {
+    answerWith([hit(9)]);
     final container = await boot();
     final controller = container.read(inChatSearchProvider(chatId).notifier);
 
-    controller.type('not');
+    controller.type('ship');
     expect(stateOf(container).isSearching, isTrue);
     expect(stateOf(container).hits, isEmpty);
 
@@ -290,11 +348,22 @@ void main() {
     expect(stateOf(container).isSearching, isFalse);
   });
 
+  test('an answer from the device says so', () async {
+    answerWith([hit(9)], source: MessageSearchSource.localCache);
+    final container = await boot();
+
+    container.read(inChatSearchProvider(chatId).notifier).submit('ship');
+    await settle();
+
+    expect(stateOf(container).isLocal, isTrue);
+  });
+
   test('clearing puts everything back', () async {
+    answerWith([hit(9)]);
     final container = await boot();
 
     final controller = container.read(inChatSearchProvider(chatId).notifier);
-    controller.submit('nothing');
+    controller.submit('ship');
     await settle();
     expect(stateOf(container).hasHits, isTrue);
 
@@ -304,6 +373,7 @@ void main() {
   });
 
   test('a search with no matches says so rather than looking broken', () async {
+    answerWith(const []);
     final container = await boot();
 
     container.read(inChatSearchProvider(chatId).notifier).submit('absent');
@@ -312,5 +382,25 @@ void main() {
     expect(stateOf(container).hasQuery, isTrue);
     expect(stateOf(container).hasHits, isFalse);
     expect(stateOf(container).isSearching, isFalse);
+  });
+
+  test('a search that fails leaves the bar empty, not stuck', () async {
+    when(
+      () => search.search(
+        any(),
+        chatId: any(named: 'chatId'),
+        limit: any(named: 'limit'),
+        lastMessageId: any(named: 'lastMessageId'),
+        cancellation: any(named: 'cancellation'),
+      ),
+    ).thenAnswer((_) async => const Left(ServerFailure()));
+
+    final container = await boot();
+
+    container.read(inChatSearchProvider(chatId).notifier).submit('ship');
+    await settle();
+
+    expect(stateOf(container).isSearching, isFalse);
+    expect(stateOf(container).hasHits, isFalse);
   });
 }

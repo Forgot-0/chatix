@@ -1444,7 +1444,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get organizerDeviceOnly =>
-      'Los chats fijados, el archivo y las carpetas se guardan en este dispositivo y no siguen a tu cuenta.';
+      'Las carpetas se guardan en este dispositivo y no siguen a tu cuenta. Los chats fijados, el archivo y los silenciados sí.';
 
   @override
   String get chatPinnedZone => 'Fijados';
@@ -1478,11 +1478,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los chats por su nombre, las personas por su usuario, los mensajes por lo que dicen.';
 
   @override
-  String get searchLoadedHistoryOnly => 'Busca en el historial cargado';
+  String get searchLoadedHistoryOnly =>
+      'Se buscó en lo que hay en este dispositivo';
 
   @override
   String get searchLoadedHistoryExplained =>
-      'El servidor no tiene búsqueda de mensajes, así que esto recorre lo que ya está en este dispositivo. Abre un chat para cargar más.';
+      'No se pudo contactar con el servidor, así que se buscó en los mensajes que ya están en este dispositivo.';
 
   @override
   String get noChatsFound => 'No se encontraron chats';
@@ -1500,11 +1501,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get messageSearchFailed => 'No se pudieron buscar los mensajes';
-
-  @override
-  String searchResultsCapped(int count) {
-    return 'Mostrando las primeras $count coincidencias';
-  }
 
   @override
   String get searchInChat => 'Buscar en este chat';
@@ -1788,4 +1784,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get videoNotePreview => 'Vista previa de la cámara';
+
+  @override
+  String searchTypeMore(int count) {
+    return 'Escribe al menos $count caracteres';
+  }
+
+  @override
+  String get noMessagesFoundHint =>
+      'La búsqueda mira lo que se dijo, no los nombres de archivo ni los títulos de los chats.';
 }

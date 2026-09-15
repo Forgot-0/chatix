@@ -51,7 +51,12 @@ class _FakeChatListController extends ChatListController {
 void main() {
   final l10n = AppLocalizationsEn();
 
-  ChatEntity chat(String id, {int unread = 0}) => ChatEntity(
+  ChatEntity chat(
+    String id, {
+    int unread = 0,
+    bool pinned = false,
+    bool archived = false,
+  }) => ChatEntity(
     id: id,
     seqCounter: 3,
     lastActivityAt: DateTime.now(),
@@ -66,6 +71,9 @@ void main() {
     createdBy: 1,
     memberCount: 2,
     unreadCount: unread,
+    state: pinned || archived
+        ? ChatStateEntity(isPinned: pinned, isArchived: archived)
+        : null,
   );
 
   late InMemoryChatLocalPrefsStore store;
@@ -75,16 +83,10 @@ void main() {
   Future<void> pumpScreen(
     WidgetTester tester, {
     ChatListState? state = const ChatListState(),
-    ChatLocalPrefs prefs = const ChatLocalPrefs(),
-    Set<String> pinned = const <String>{},
-    Set<String> archived = const <String>{},
+    List<ChatEntity> archived = const <ChatEntity>[],
     List<ChatFolder> folders = const <ChatFolder>[],
     bool foldersHidden = false,
   }) async {
-    for (final flag in ChatLocalFlag.values) {
-      await store.writeFlag(flag, prefs.of(flag));
-    }
-
     final router = GoRouter(
       initialLocation: ChatsRoute.location,
       routes: [
@@ -108,14 +110,17 @@ void main() {
           chatLocalPrefsStoreProvider.overrideWithValue(store),
           chatOrganizerDataSourceProvider.overrideWithValue(
             InMemoryChatOrganizerDataSource(
-              pinned: pinned,
-              archived: archived,
               folders: folders.map(ChatFolderModel.fromEntity).toList(),
               settings: OrganizerSettingsModel(foldersHidden: foldersHidden),
             ),
           ),
           authProvider.overrideWith(_FakeAuthController.new),
           chatListProvider.overrideWith(() => _FakeChatListController(state)),
+          // The archive is a second request with its own cursor; the screen
+          // asks for it whether or not the drawer is open.
+          archivedChatListProvider.overrideWith(
+            () => _FakeChatListController(ChatListState(items: archived)),
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -125,6 +130,10 @@ void main() {
         ),
       ),
     );
+
+    // Two frames: the list resolves on the first, and the archive it asks
+    // for once it is on screen resolves on the second.
+    await tester.pump();
     await tester.pump();
   }
 
@@ -159,8 +168,7 @@ void main() {
   testWidgets('pinned chats get their own block at the top', (tester) async {
     await pumpScreen(
       tester,
-      state: ChatListState(items: [chat('a'), chat('b')]),
-      pinned: const {'b'},
+      state: ChatListState(items: [chat('a'), chat('b', pinned: true)]),
     );
 
     expect(find.text(l10n.chatPinnedZone.toUpperCase()), findsOneWidget);
@@ -176,8 +184,8 @@ void main() {
   ) async {
     await pumpScreen(
       tester,
-      state: ChatListState(items: [chat('a'), chat('b', unread: 2)]),
-      archived: const {'b'},
+      state: ChatListState(items: [chat('a')]),
+      archived: [chat('b', unread: 2, archived: true)],
     );
 
     expect(find.text(l10n.archivedChats), findsOneWidget);
@@ -197,8 +205,7 @@ void main() {
   ) async {
     await pumpScreen(
       tester,
-      state: ChatListState(items: [chat('a')]),
-      archived: const {'a'},
+      archived: [chat('a', archived: true)],
     );
 
     expect(find.text(l10n.allChatsArchived), findsOneWidget);

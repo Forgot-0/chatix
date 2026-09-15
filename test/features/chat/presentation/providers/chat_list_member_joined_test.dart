@@ -47,7 +47,11 @@ void main() {
     dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com');
   });
 
-  ChatEntity chat(String id, {int memberCount = 3}) => ChatEntity(
+  ChatEntity chat(
+    String id, {
+    int memberCount = 3,
+    ChatStateEntity? state,
+  }) => ChatEntity(
     id: id,
     seqCounter: 5,
     lastActivityAt: DateTime.utc(2026, 1, 1),
@@ -61,6 +65,7 @@ void main() {
     permissions: const {},
     createdBy: 1,
     memberCount: memberCount,
+    state: state,
     unreadCount: 0,
   );
 
@@ -191,6 +196,31 @@ void main() {
         expect(ids, contains(existingChatId));
       },
     );
+  });
+
+  test('a refetched row keeps what only the list response carries', () async {
+    // `GET /chats/{id}/` answers with `ChatDetailDTO`: no state block, no
+    // `peer` (api-docs §5.2). Taking it as written would unpin the chat.
+    final container = await boot([
+      chat(
+        existingChatId,
+        state: const ChatStateEntity(isPinned: true, isMutedByMe: true),
+      ),
+    ]);
+
+    when(
+      () => getChat.execute(existingChatId),
+    ).thenAnswer((_) async => Right(chat(existingChatId, memberCount: 4)));
+
+    channel.emit(memberJoined(chatId: existingChatId, userId: myUserId));
+    await settle();
+    await settle();
+
+    final row = container.read(chatListProvider).value!.items.single;
+
+    expect(row.memberCount, 4);
+    expect(row.isPinned, isTrue);
+    expect(row.isMutedByMe, isTrue);
   });
 
   group('member_joined naming SOMEONE ELSE', () {

@@ -1,9 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:chatix/features/chat/data/models/chat_member_model.dart';
+import 'package:chatix/features/chat/data/models/chat_profile_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 
 part 'chat_model.g.dart';
 
@@ -33,6 +35,83 @@ extension ReadDetailModelX on ReadDetailModel {
       lastReadAt: lastReadAt == null ? null : DateTime.parse(lastReadAt!),
     );
   }
+}
+
+/// The per-user state block: the fields of `ChatDTO` the server keeps in the
+/// caller's `chat_members` row, and the whole of `ChatStateDTO` (api-docs
+/// §5.2).
+@JsonSerializable(fieldRename: FieldRename.snake)
+class ChatStateModel extends Equatable {
+  @JsonKey(defaultValue: false)
+  final bool isPinned;
+
+  final String? pinnedAt;
+
+  @JsonKey(defaultValue: false)
+  final bool isArchived;
+
+  final String? archivedAt;
+
+  final String? notificationsMutedUntil;
+
+  @JsonKey(defaultValue: false)
+  final bool isMutedByMe;
+
+  final String? draft;
+
+  final String? draftUpdatedAt;
+
+  /// `PATCH /chats/{id}/state/` answers with the chat id; the state block
+  /// inside `ChatDTO` does not repeat it.
+  final String? chatId;
+
+  const ChatStateModel({
+    this.isPinned = false,
+    this.pinnedAt,
+    this.isArchived = false,
+    this.archivedAt,
+    this.notificationsMutedUntil,
+    this.isMutedByMe = false,
+    this.draft,
+    this.draftUpdatedAt,
+    this.chatId,
+  });
+
+  @override
+  List<Object?> get props => [
+    isPinned,
+    pinnedAt,
+    isArchived,
+    archivedAt,
+    notificationsMutedUntil,
+    isMutedByMe,
+    draft,
+    draftUpdatedAt,
+    chatId,
+  ];
+
+  factory ChatStateModel.fromJson(Map<String, dynamic> json) =>
+      _$ChatStateModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ChatStateModelToJson(this);
+}
+
+extension ChatStateModelX on ChatStateModel {
+  ChatStateEntity toEntity() {
+    return ChatStateEntity(
+      isPinned: isPinned,
+      pinnedAt: _parseDate(pinnedAt),
+      isArchived: isArchived,
+      notificationsMutedUntil: _parseDate(notificationsMutedUntil),
+      isMutedByMe: isMutedByMe,
+      draft: draft,
+    );
+  }
+}
+
+DateTime? _parseDate(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)
@@ -70,6 +149,28 @@ class ChatModel extends Equatable {
 
   final List<ChatMemberModel>? members;
 
+  /// Only `GET /chats/` fills these two; `POST /chats/` and
+  /// `PATCH /chats/{id}/` answer with `null` and `[]` (api-docs §5.2).
+  final ChatProfileModel? peer;
+
+  @JsonKey(defaultValue: <ChatProfileModel>[])
+  final List<ChatProfileModel> membersPreview;
+
+  @JsonKey(defaultValue: false)
+  final bool isPinned;
+
+  final String? pinnedAt;
+
+  @JsonKey(defaultValue: false)
+  final bool isArchived;
+
+  final String? notificationsMutedUntil;
+
+  @JsonKey(defaultValue: false)
+  final bool isMutedByMe;
+
+  final String? draft;
+
   const ChatModel({
     required this.id,
     required this.seqCounter,
@@ -91,7 +192,41 @@ class ChatModel extends Equatable {
     this.lastRead,
     this.lastMessage,
     this.members,
+    this.peer,
+    this.membersPreview = const [],
+    this.isPinned = false,
+    this.pinnedAt,
+    this.isArchived = false,
+    this.notificationsMutedUntil,
+    this.isMutedByMe = false,
+    this.draft,
   });
+
+  /// The state block as its own value.
+  ///
+  /// `ChatDetailDTO` carries none of these fields, so a chat fetched by id
+  /// would report every flag as false. Rather than let that overwrite what
+  /// the list knows, the state is dropped when the response looks like it
+  /// never had one.
+  ChatStateModel? get state {
+    final hasState =
+        isPinned ||
+        isArchived ||
+        isMutedByMe ||
+        pinnedAt != null ||
+        notificationsMutedUntil != null ||
+        draft != null;
+    if (!hasState) return null;
+
+    return ChatStateModel(
+      isPinned: isPinned,
+      pinnedAt: pinnedAt,
+      isArchived: isArchived,
+      notificationsMutedUntil: notificationsMutedUntil,
+      isMutedByMe: isMutedByMe,
+      draft: draft,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -115,6 +250,14 @@ class ChatModel extends Equatable {
     lastRead,
     lastMessage,
     members,
+    peer,
+    membersPreview,
+    isPinned,
+    pinnedAt,
+    isArchived,
+    notificationsMutedUntil,
+    isMutedByMe,
+    draft,
   ];
 
   factory ChatModel.fromJson(Map<String, dynamic> json) =>
@@ -150,6 +293,11 @@ extension ChatModelX on ChatModel {
       members: members
           ?.map<ChatMemberEntity>((member) => member.toEntity())
           .toList(),
+      peer: peer?.toEntity(),
+      membersPreview: membersPreview
+          .map<ChatProfileEntity>((profile) => profile.toEntity())
+          .toList(),
+      state: state?.toEntity(),
     );
   }
 }

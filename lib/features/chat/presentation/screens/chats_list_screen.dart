@@ -8,7 +8,6 @@ import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_scroll_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organized_chats.dart';
@@ -75,7 +74,16 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
   Future<void> _refresh() async {
     // Presence answers are as stale as the rows they sit on.
     ref.read(chatPresenceProvider.notifier).invalidate();
-    await ref.read(chatListProvider.notifier).refresh();
+
+    await Future.wait([
+      ref.read(chatListProvider.notifier).refresh(),
+      // The archive is a second request, and a pull refreshes the screen
+      // rather than one list on it. Only if it has already been fetched:
+      // starting it here would make the drawer appear out of a gesture that
+      // was about something else.
+      if (ref.exists(archivedChatListProvider))
+        ref.read(archivedChatListProvider.notifier).refresh(),
+    ]);
   }
 
   @override
@@ -151,18 +159,22 @@ class _ChatsList extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    final organizer = ref.watch(organizerDataProvider);
     final folder = ref.watch(activeChatFolderProvider);
-    final muted = ref.watch(chatLocalPrefsProvider).muted;
 
     final sections = organizeChats(
       chats: state.items,
-      organizer: organizer,
       context: ref.watch(chatRuleContextProvider),
       folder: folder,
     );
 
-    if (state.items.isEmpty) {
+    // The archive is its own request with its own cursor (api-docs §5.2), so
+    // the drawer is not a slice of this list — it is a second one, fetched
+    // whether or not it is open, because the header has to say how much is
+    // in there.
+    final archive = ref.watch(archivedChatListProvider).value;
+    final archived = archive?.items ?? const <ChatEntity>[];
+
+    if (state.items.isEmpty && archived.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: AppEmptyState(
@@ -185,17 +197,27 @@ class _ChatsList extends ConsumerWidget {
         controller: scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          if (sections.hasArchive)
+          if (archived.isNotEmpty)
             SliverToBoxAdapter(
               child: _ArchiveHeader(
-                count: sections.archived.length,
-                unread: sections.unreadInArchive(muted),
+                count: archived.length,
+                unread: unreadInArchive(archived),
                 isOpen: archiveOpen,
                 onTap: onToggleArchive,
               ),
             ),
-          if (sections.hasArchive && archiveOpen)
-            _rows(sections.archived, isLast: false),
+          if (archived.isNotEmpty && archiveOpen)
+            _rows(archived, isLast: false, readState: archive),
+          if (archived.isNotEmpty && archiveOpen && (archive?.canLoadMore ?? false))
+            SliverToBoxAdapter(
+              child: Center(
+                child: TextButton(
+                  onPressed: () =>
+                      ref.read(archivedChatListProvider.notifier).loadMore(),
+                  child: Text(l10n.showMore),
+                ),
+              ),
+            ),
 
           // The pinned zone is a block of its own, on its own ground: the
           // point of pinning is that those rows are not part of the stream
@@ -234,7 +256,11 @@ class _ChatsList extends ConsumerWidget {
 
   /// One block of rows, hairline-separated the way a list of people is —
   /// the rule starts where the text does, so the avatars form a column.
-  Widget _rows(List<ChatEntity> chats, {required bool isLast}) {
+  Widget _rows(
+    List<ChatEntity> chats, {
+    required bool isLast,
+    ChatListState? readState,
+  }) {
     return SliverList.builder(
       itemCount: chats.length,
       itemBuilder: (context, index) {
@@ -248,7 +274,7 @@ class _ChatsList extends ConsumerWidget {
               key: ValueKey<String>(chat.id),
               chat: chat,
               isSelected: chat.id == selectedChatId,
-              peerReadSeq: state.peerReadSeqOf(chat.id),
+              peerReadSeq: (readState ?? state).peerReadSeqOf(chat.id),
             ),
             if (!isBlockEnd || !isLast) const Divider(height: 1, indent: 80),
           ],

@@ -1448,7 +1448,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get organizerDeviceOnly =>
-      'Anheftungen, Archiv und Ordner liegen auf diesem Gerät und folgen deinem Konto nicht.';
+      'Ordner liegen auf diesem Gerät und folgen deinem Konto nicht. Anheftungen, Archiv und stummgeschaltete Chats schon.';
 
   @override
   String get chatPinnedZone => 'Angeheftet';
@@ -1483,11 +1483,11 @@ class AppLocalizationsDe extends AppLocalizations {
       'Chats über den Namen, Personen über den Benutzernamen, Nachrichten über ihren Inhalt.';
 
   @override
-  String get searchLoadedHistoryOnly => 'Durchsucht den geladenen Verlauf';
+  String get searchLoadedHistoryOnly => 'Auf diesem Gerät gesucht';
 
   @override
   String get searchLoadedHistoryExplained =>
-      'Der Server kennt keine Nachrichtensuche, deshalb wird nur durchsucht, was schon auf diesem Gerät liegt. Öffne einen Chat, um mehr davon zu laden.';
+      'Der Server war nicht erreichbar, deshalb wurden nur die Nachrichten auf diesem Gerät durchsucht.';
 
   @override
   String get noChatsFound => 'Keine Chats gefunden';
@@ -1506,11 +1506,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get messageSearchFailed =>
       'Nachrichten konnten nicht durchsucht werden';
-
-  @override
-  String searchResultsCapped(int count) {
-    return 'Zeigt die ersten $count Treffer';
-  }
 
   @override
   String get searchInChat => 'In diesem Chat suchen';
@@ -1793,4 +1788,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get videoNotePreview => 'Kameravorschau';
+
+  @override
+  String searchTypeMore(int count) {
+    return 'Gib mindestens $count Zeichen ein';
+  }
+
+  @override
+  String get noMessagesFoundHint =>
+      'Gesucht wird im Gesagten, nicht in Dateinamen oder Chat-Titeln.';
 }

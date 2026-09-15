@@ -1414,7 +1414,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get organizerDeviceOnly =>
-      'ピン留め・アーカイブ・フォルダはこの端末にだけ保存され、アカウントには付いていきません。';
+      'フォルダはこの端末にだけ保存され、アカウントには付いていきません。ピン留め・アーカイブ・通知オフは付いていきます。';
 
   @override
   String get chatPinnedZone => 'ピン留め';
@@ -1447,11 +1447,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchStartHint => 'チャットは名前、人はユーザー名、メッセージは本文で探します。';
 
   @override
-  String get searchLoadedHistoryOnly => '読み込み済みの履歴を検索';
+  String get searchLoadedHistoryOnly => 'この端末にあるものを検索しました';
 
   @override
   String get searchLoadedHistoryExplained =>
-      'サーバーにメッセージ検索がないため、この端末にすでにあるメッセージだけを探します。チャットを開くと対象が増えます。';
+      'サーバーに接続できなかったため、この端末にあるメッセージだけを検索しました。';
 
   @override
   String get noChatsFound => 'チャットが見つかりません';
@@ -1467,11 +1467,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get messageSearchFailed => 'メッセージを検索できませんでした';
-
-  @override
-  String searchResultsCapped(int count) {
-    return '最初の $count 件を表示しています';
-  }
 
   @override
   String get searchInChat => 'このチャット内を検索';
@@ -1746,4 +1741,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get videoNotePreview => 'カメラのプレビュー';
+
+  @override
+  String searchTypeMore(int count) {
+    return '$count 文字以上を入力してください';
+  }
+
+  @override
+  String get noMessagesFoundHint => '検索の対象は本文だけで、ファイル名やチャット名は含まれません。';
 }

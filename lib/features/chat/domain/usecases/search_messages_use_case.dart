@@ -8,26 +8,38 @@ import 'package:chatix/features/chat/domain/repositories/message_search_reposito
 class SearchMessagesUseCase {
   const SearchMessagesUseCase(this._repository);
 
-  static const int defaultLimit = 100;
-  static const int maxLimit = 500;
+  /// The server's own bounds (api-docs §5.4.1): shorter or longer than this
+  /// is a `422`, so the client does not ask.
+  static const int minQueryLength = 2;
+  static const int maxQueryLength = 150;
+
+  static const int defaultLimit = 30;
+  static const int maxLimit = 50;
 
   final MessageSearchRepository _repository;
-
-  /// What the results can claim to cover, which the screen has to say out
-  /// loud while it is [MessageSearchSource.localCache].
-  MessageSearchSource get source => _repository.source;
 
   Future<Either<Failure, MessageSearchResult>> execute(
     String query, {
     String? chatId,
     int limit = defaultLimit,
+    String? lastMessageId,
     RequestCancellation? cancellation,
   }) {
     final needle = query.trim();
-    if (needle.isEmpty) {
-      // Not an error: an empty box has no results, it has a history list.
+
+    // Not an error: a box with one letter in it has no results, it has a
+    // hint telling the reader to keep typing.
+    if (needle.length < minQueryLength) {
+      return Future.value(const Right(MessageSearchResult.empty));
+    }
+
+    if (needle.length > maxQueryLength) {
       return Future.value(
-        Right(MessageSearchResult(hits: const [], source: _repository.source)),
+        Left(
+          InputFailure(
+            message: 'A search can be at most $maxQueryLength characters',
+          ),
+        ),
       );
     }
 
@@ -41,6 +53,7 @@ class SearchMessagesUseCase {
       needle,
       chatId: chatId,
       limit: limit,
+      lastMessageId: lastMessageId,
       cancellation: cancellation,
     );
   }

@@ -27,13 +27,37 @@ class ChatRepositoryImpl implements ChatRepository {
     int limit = 50,
     String? lastChatId,
     DateTime? lastActivityAt,
+    bool archived = false,
   }) async {
     final result = await _remote.fetchChats(
       limit: limit,
       lastChatId: lastChatId,
       lastActivityAt: lastActivityAt,
+      archived: archived,
     );
     return result.map(_toChatsPage);
+  }
+
+  @override
+  Future<Either<Failure, ChatStateEntity>> updateChatState(
+    String chatId, {
+    bool? pinned,
+    bool? archived,
+    DateTime? notificationsMutedUntil,
+    bool clearNotificationsMutedUntil = false,
+    String? draft,
+    bool clearDraft = false,
+  }) async {
+    final result = await _remote.updateChatState(
+      chatId,
+      pinned: pinned,
+      archived: archived,
+      notificationsMutedUntil: notificationsMutedUntil,
+      clearNotificationsMutedUntil: clearNotificationsMutedUntil,
+      draft: draft,
+      clearDraft: clearDraft,
+    );
+    return result.map((model) => model.toEntity());
   }
 
   @override

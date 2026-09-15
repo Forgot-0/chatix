@@ -111,15 +111,10 @@ void main() {
   });
 
   group('people', () {
-    void stubBoth({
-      required List<ProfileEntity> byUsername,
-      required List<ProfileEntity> byDisplayName,
-      int usernameTotal = 0,
-      int displayNameTotal = 0,
-    }) {
+    void stub(List<ProfileEntity> people, {int total = 0}) {
       when(
         () => getProfiles.execute(
-          username: any(named: 'username'),
+          q: any(named: 'q'),
           page: any(named: 'page'),
           pageSize: any(named: 'pageSize'),
           cancellation: any(named: 'cancellation'),
@@ -127,36 +122,18 @@ void main() {
       ).thenAnswer(
         (invocation) async => Right(
           page(
-            byUsername,
-            total: usernameTotal,
-            number: invocation.namedArguments[#page] as int,
-          ),
-        ),
-      );
-
-      when(
-        () => getProfiles.execute(
-          displayName: any(named: 'displayName'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).thenAnswer(
-        (invocation) async => Right(
-          page(
-            byDisplayName,
-            total: displayNameTotal,
+            people,
+            total: total,
             number: invocation.namedArguments[#page] as int,
           ),
         ),
       );
     }
 
-    test('asks both fields the endpoint can filter on, and merges', () async {
-      stubBoth(
-        byUsername: [profile(1, 'Ann')],
-        byDisplayName: [profile(2, 'Annie')],
-      );
+    test('one request answers the whole search', () async {
+      // `q` matches username OR display_name on the server, so there is
+      // nothing left for the client to merge (api-docs §4.2).
+      stub([profile(1, 'Ann'), profile(2, 'Annie')]);
 
       final container = boot();
       final state = await peopleFor(container, 'ann');
@@ -165,15 +142,7 @@ void main() {
 
       verify(
         () => getProfiles.execute(
-          username: 'ann',
-          page: 1,
-          pageSize: PeopleSearchController.pageSize,
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).called(1);
-      verify(
-        () => getProfiles.execute(
-          displayName: 'ann',
+          q: 'ann',
           page: 1,
           pageSize: PeopleSearchController.pageSize,
           cancellation: any(named: 'cancellation'),
@@ -181,26 +150,16 @@ void main() {
       ).called(1);
     });
 
-    test('somebody matching on both fields appears once', () async {
-      stubBoth(
-        byUsername: [profile(1, 'Ann')],
-        byDisplayName: [profile(1, 'Ann'), profile(2, 'Annie')],
-      );
+    test('a query too short for the server is not sent at all', () async {
+      stub(const []);
 
       final container = boot();
-      final state = await peopleFor(container, 'ann');
-
-      expect(state.people.map((p) => p.id), [1, 2]);
-    });
-
-    test('an empty query asks for nothing', () async {
-      final container = boot();
-      final state = await peopleFor(container, '  ');
+      final state = await peopleFor(container, 'a');
 
       expect(state.isEmpty, isTrue);
       verifyNever(
         () => getProfiles.execute(
-          username: any(named: 'username'),
+          q: any(named: 'q'),
           page: any(named: 'page'),
           pageSize: any(named: 'pageSize'),
           cancellation: any(named: 'cancellation'),
@@ -209,27 +168,34 @@ void main() {
     });
 
     test('has_next is worked out from the totals the API does send', () async {
-      // PageResult carries only items/total/page/page_size (api-docs §1.5).
-      stubBoth(
-        byUsername: [profile(1, 'Ann')],
-        byDisplayName: const [],
-        usernameTotal: PeopleSearchController.pageSize * 3,
+      // `PageResult` carries only items/total/page/page_size (api-docs §1.5).
+      stub(
+        [profile(1, 'Ann')],
+        total: PeopleSearchController.pageSize * 3,
       );
 
       final container = boot();
-      final state = await peopleFor(container, 'ann');
 
-      expect(state.hasNext, isTrue);
-      expect(state.usernameHasNext, isTrue);
-      expect(state.displayNameHasNext, isFalse);
+      expect((await peopleFor(container, 'ann')).hasNext, isTrue);
     });
 
-    test('loading more asks only the half that has more', () async {
-      stubBoth(
-        byUsername: [profile(1, 'Ann')],
-        byDisplayName: const [],
-        usernameTotal: PeopleSearchController.pageSize * 3,
-      );
+    test('loading more asks for the next page and keeps what is there', () async {
+      stub([profile(1, 'Ann')], total: PeopleSearchController.pageSize * 3);
+
+      final container = boot();
+      await peopleFor(container, 'ann');
+
+      stub([profile(2, 'Annie')], total: PeopleSearchController.pageSize * 3);
+      await container.read(peopleSearchProvider('ann').notifier).loadMore();
+
+      final state = container.read(peopleSearchProvider('ann')).requireValue;
+
+      expect(state.page, 2);
+      expect(state.people.map((p) => p.id), [1, 2]);
+    });
+
+    test('nobody comes back twice across pages', () async {
+      stub([profile(1, 'Ann')], total: PeopleSearchController.pageSize * 3);
 
       final container = boot();
       await peopleFor(container, 'ann');
@@ -237,63 +203,13 @@ void main() {
       await container.read(peopleSearchProvider('ann').notifier).loadMore();
 
       final state = container.read(peopleSearchProvider('ann')).requireValue;
-      expect(state.page, 2);
-
-      verify(
-        () => getProfiles.execute(
-          username: 'ann',
-          page: 2,
-          pageSize: PeopleSearchController.pageSize,
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).called(1);
-      verifyNever(
-        () => getProfiles.execute(
-          displayName: 'ann',
-          page: 2,
-          pageSize: PeopleSearchController.pageSize,
-          cancellation: any(named: 'cancellation'),
-        ),
-      );
+      expect(state.people.map((p) => p.id), [1]);
     });
 
-    test('half an answer beats an error page', () async {
+    test('a failure is an error the screen can show', () async {
       when(
         () => getProfiles.execute(
-          username: any(named: 'username'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).thenAnswer((_) async => const Left(ServerFailure()));
-
-      when(
-        () => getProfiles.execute(
-          displayName: any(named: 'displayName'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).thenAnswer((_) async => Right(page([profile(2, 'Annie')])));
-
-      final container = boot();
-      final state = await peopleFor(container, 'ann');
-
-      expect(state.people.map((p) => p.id), [2]);
-    });
-
-    test('both halves failing is an error the screen can show', () async {
-      when(
-        () => getProfiles.execute(
-          username: any(named: 'username'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          cancellation: any(named: 'cancellation'),
-        ),
-      ).thenAnswer((_) async => const Left(ServerFailure()));
-      when(
-        () => getProfiles.execute(
-          displayName: any(named: 'displayName'),
+          q: any(named: 'q'),
           page: any(named: 'page'),
           pageSize: any(named: 'pageSize'),
           cancellation: any(named: 'cancellation'),
@@ -308,49 +224,38 @@ void main() {
       );
     });
 
-    test(
-      'the request for a query nobody is waiting for is cancelled',
-      () async {
-        final tokens = <RequestCancellation>[];
+    test('the request for a query nobody is waiting for is cancelled', () async {
+      final tokens = <RequestCancellation>[];
 
-        when(
-          () => getProfiles.execute(
-            username: any(named: 'username'),
-            page: any(named: 'page'),
-            pageSize: any(named: 'pageSize'),
-            cancellation: any(named: 'cancellation'),
-          ),
-        ).thenAnswer((invocation) async {
-          tokens.add(
-            invocation.namedArguments[#cancellation] as RequestCancellation,
-          );
-          return Right(page([profile(1, 'Ann')]));
-        });
-        when(
-          () => getProfiles.execute(
-            displayName: any(named: 'displayName'),
-            page: any(named: 'page'),
-            pageSize: any(named: 'pageSize'),
-            cancellation: any(named: 'cancellation'),
-          ),
-        ).thenAnswer((_) async => Right(page(const [])));
-
-        final container = boot();
-        final subscription = container.listen(
-          peopleSearchProvider('an'),
-          (_, _) {},
+      when(
+        () => getProfiles.execute(
+          q: any(named: 'q'),
+          page: any(named: 'page'),
+          pageSize: any(named: 'pageSize'),
+          cancellation: any(named: 'cancellation'),
+        ),
+      ).thenAnswer((invocation) async {
+        tokens.add(
+          invocation.namedArguments[#cancellation] as RequestCancellation,
         );
-        await container.read(peopleSearchProvider('an').future);
+        return Right(page([profile(1, 'Ann')]));
+      });
 
-        expect(tokens, hasLength(1));
-        expect(tokens.single.isCancelled, isFalse);
+      final container = boot();
+      final subscription = container.listen(
+        peopleSearchProvider('an'),
+        (_, _) {},
+      );
+      await container.read(peopleSearchProvider('an').future);
 
-        // The next keystroke makes a new query, and nothing holds the old one.
-        subscription.close();
-        await Future<void>.delayed(Duration.zero);
+      expect(tokens, hasLength(1));
+      expect(tokens.single.isCancelled, isFalse);
 
-        expect(tokens.single.isCancelled, isTrue);
-      },
-    );
+      // The next keystroke makes a new query, and nothing holds the old one.
+      subscription.close();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(tokens.single.isCancelled, isTrue);
+    });
   });
 }

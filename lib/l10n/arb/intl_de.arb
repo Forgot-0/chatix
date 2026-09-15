@@ -368,7 +368,7 @@
   "hideFolderTabsHint": "Behält die Ordner, zeigt aber keine Tabs über der Liste",
   "unarchiveOnNewMessage": "Bei neuer Nachricht zurückholen",
   "unarchiveOnNewMessageHint": "Ein archivierter Chat kehrt zurück, sobald jemand darin schreibt",
-  "organizerDeviceOnly": "Anheftungen, Archiv und Ordner liegen auf diesem Gerät und folgen deinem Konto nicht.",
+  "organizerDeviceOnly": "Ordner liegen auf diesem Gerät und folgen deinem Konto nicht. Anheftungen, Archiv und stummgeschaltete Chats schon.",
   "chatPinnedZone": "Angeheftet",
   "chatUnarchivedToast": "Zurück in der Liste",
   "searchTabMessages": "Nachrichten",
@@ -379,14 +379,13 @@
   "searchRemoveFromHistory": "Aus den letzten Suchen entfernen",
   "searchStartTitle": "Finde einen Chat, eine Person oder eine Nachricht",
   "searchStartHint": "Chats über den Namen, Personen über den Benutzernamen, Nachrichten über ihren Inhalt.",
-  "searchLoadedHistoryOnly": "Durchsucht den geladenen Verlauf",
-  "searchLoadedHistoryExplained": "Der Server kennt keine Nachrichtensuche, deshalb wird nur durchsucht, was schon auf diesem Gerät liegt. Öffne einen Chat, um mehr davon zu laden.",
+  "searchLoadedHistoryOnly": "Auf diesem Gerät gesucht",
+  "searchLoadedHistoryExplained": "Der Server war nicht erreichbar, deshalb wurden nur die Nachrichten auf diesem Gerät durchsucht.",
   "noChatsFound": "Keine Chats gefunden",
   "noChatsFoundHint": "Chats werden über Name und Beschreibung gefunden, unter den bereits geladenen.",
   "noPeopleFoundHint": "Versuch eine andere Schreibweise oder such nach dem Benutzernamen.",
   "noMessagesFound": "Keine Nachrichten gefunden",
   "messageSearchFailed": "Nachrichten konnten nicht durchsucht werden",
-  "searchResultsCapped": "Zeigt die ersten {count} Treffer",
   "searchInChat": "In diesem Chat suchen",
   "searchMatchPosition": "{current} von {total}",
   "searchNoMatches": "Keine Treffer",
@@ -756,5 +755,7 @@
   "videoNotePreview": "Kameravorschau",
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "searchTypeMore": "Gib mindestens {count} Zeichen ein",
+  "noMessagesFoundHint": "Gesucht wird im Gesagten, nicht in Dateinamen oder Chat-Titeln."
 }

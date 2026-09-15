@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
-import 'package:chatix/features/chat/domain/entities/message_search.dart';
+import 'package:chatix/features/chat/domain/usecases/search_messages_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/local_search_notice.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -82,9 +82,18 @@ class _Status extends StatelessWidget {
       );
     }
 
-    // Nothing typed yet: say what this search can see instead of "0 of 0".
-    if (!state.hasQuery) {
-      return const LocalSearchNotice(compact: true);
+    // Nothing typed yet, or not enough of it for the server to take.
+    if (state.query.length < SearchMessagesUseCase.minQueryLength) {
+      return Text(
+        state.hasQuery
+            ? l10n.searchTypeMore(SearchMessagesUseCase.minQueryLength)
+            : l10n.searchInChatHint,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
     }
 
     if (!state.hasHits) {
@@ -104,7 +113,7 @@ class _Status extends StatelessWidget {
             color: theme.colorScheme.onSurface,
           ),
         ),
-        if (state.source == MessageSearchSource.localCache) ...[
+        if (state.isLocal) ...[
           const SizedBox(width: AppSpacing.x3),
           const Flexible(child: LocalSearchNotice(compact: true)),
         ],

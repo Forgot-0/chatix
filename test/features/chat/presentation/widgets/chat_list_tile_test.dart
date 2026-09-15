@@ -14,6 +14,7 @@ import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
@@ -28,6 +29,9 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
 
 class MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
+
+class MockUpdateChatStateUseCase extends Mock
+    implements UpdateChatStateUseCase {}
 
 class FakeAuthController extends AuthController {
   FakeAuthController(this._user);
@@ -48,11 +52,26 @@ void main() {
   const me = UserEntity(id: myUserId, username: 'me', email: 'me@example.com');
 
   late MockGetMembersUseCase getMembers;
+  late MockUpdateChatStateUseCase updateState;
   late InMemoryChatLocalPrefsStore store;
 
   setUp(() {
     getMembers = MockGetMembersUseCase();
+    updateState = MockUpdateChatStateUseCase();
     store = InMemoryChatLocalPrefsStore();
+
+    when(
+      () => updateState.setArchived(any(), archived: any(named: 'archived')),
+    ).thenAnswer((_) async => const Right(ChatStateEntity(isArchived: true)));
+    when(
+      () => updateState.setPinned(any(), pinned: any(named: 'pinned')),
+    ).thenAnswer((_) async => const Right(ChatStateEntity(isPinned: true)));
+    when(() => updateState.mute(any(), until: any(named: 'until'))).thenAnswer(
+      (_) async => const Right(ChatStateEntity(isMutedByMe: true)),
+    );
+    when(
+      () => updateState.unmute(any()),
+    ).thenAnswer((_) async => const Right(ChatStateEntity()));
 
     when(
       () => getMembers.execute(
@@ -112,6 +131,8 @@ void main() {
     int unread = 0,
     MessageEntity? last,
     ChatMemberEntity? membership,
+    bool pinned = false,
+    bool muted = false,
   }) => ChatEntity(
     id: chatId,
     seqCounter: 9,
@@ -129,6 +150,10 @@ void main() {
     unreadCount: unread,
     lastMessage: last,
     me: membership,
+    // Pinned and silenced ride on the row now (api-docs §5.2).
+    state: pinned || muted
+        ? ChatStateEntity(isPinned: pinned, isMutedByMe: muted)
+        : null,
   );
 
   ChatMemberEntity membership(ChatRole role) => ChatMemberEntity(
@@ -143,22 +168,17 @@ void main() {
     WidgetTester tester,
     ChatEntity value, {
     int? peerReadSeq,
-    ChatLocalPrefs prefs = const ChatLocalPrefs(),
-    Set<String> pinned = const <String>{},
     String? draft,
     bool dark = false,
   }) async {
-    for (final flag in ChatLocalFlag.values) {
-      await store.writeFlag(flag, prefs.of(flag));
-    }
-
     final container = ProviderContainer(
       overrides: [
         chatLocalPrefsStoreProvider.overrideWithValue(store),
         chatOrganizerDataSourceProvider.overrideWithValue(
-          InMemoryChatOrganizerDataSource(pinned: pinned),
+          InMemoryChatOrganizerDataSource(),
         ),
         getMembersUseCaseProvider.overrideWithValue(getMembers),
+        updateChatStateUseCaseProvider.overrideWithValue(updateState),
         authProvider.overrideWith(() => FakeAuthController(me)),
       ],
     );
@@ -238,8 +258,7 @@ void main() {
   ) async {
     await pumpTile(
       tester,
-      chat(unread: 4, last: message(content: 'hi')),
-      prefs: const ChatLocalPrefs(muted: {chatId}),
+      chat(unread: 4, last: message(content: 'hi'), muted: true),
     );
 
     expect(find.text('4'), findsOneWidget);
@@ -251,8 +270,7 @@ void main() {
   ) async {
     await pumpTile(
       tester,
-      chat(last: message(content: 'hi')),
-      pinned: const {chatId},
+      chat(last: message(content: 'hi'), pinned: true),
     );
 
     expect(find.byIcon(Icons.push_pin), findsOneWidget);

@@ -26,7 +26,8 @@ class ChatListState extends Equatable {
   /// How far the other side has read, per chat, as told by `messages_read`
   /// events from someone who is not us (api-docs §6.4).
   ///
-  /// `ChatDTO.last_read` is our own read position, so nothing in the list
+  /// `ChatDTO.last_read` is our own read position — how far *we* got, which
+  /// is what the unread divider is drawn from — so nothing in the list
   /// response says whether our last message was read. Without an entry here
   /// the row shows one tick, which is the honest answer: sent, unknown.
   final Map<String, int> peerReadSeqs;
@@ -76,7 +77,19 @@ class ChatListState extends Equatable {
   ];
 }
 
+/// The chat list, either of the two of them.
+///
+/// `archived` splits `GET /chats/` into two independent sets with their own
+/// cursors — the main list never contains an archived chat and the archive
+/// never contains anything else (api-docs §5.2). One controller serves both;
+/// [isArchive] is what tells it whether a chat it has never seen belongs
+/// here.
 class ChatListController extends AsyncNotifier<ChatListState> {
+  ChatListController({this.isArchive = false});
+
+  /// Whether this instance holds the archive.
+  final bool isArchive;
+
   StreamSubscription<WSEvent>? _eventSubscription;
 
   final Set<String> _inFlightChatFetches = <String>{};
@@ -230,6 +243,9 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   }
 
   Future<void> _onChatCreated(ChatCreated event) async {
+    // A chat that has just been created is not in anybody's archive.
+    if (isArchive) return;
+
     final current = state.value;
     if (current == null) return;
     if (current.items.any((c) => c.id == event.chatId)) return;
@@ -335,6 +351,11 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   }
 
   Future<void> _refetchRow(String chatId) async {
+    // Rejoining a chat puts it back in the main list. Whether it is also in
+    // this reader's archive is a question only `GET /chats/?archived=true`
+    // answers, and `GET /chats/{id}/` does not.
+    if (isArchive && !_holds(chatId)) return;
+
     if (!_inFlightChatFetches.add(chatId)) return;
 
     try {
@@ -365,7 +386,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     _mutate((s) {
       final index = s.items.indexWhere((c) => c.id == chat.id);
       final items = index >= 0
-          ? ([...s.items]..[index] = chat)
+          ? ([...s.items]..[index] = _keepWhatTheFetchLeftOut(s.items[index], chat))
           : [chat, ...s.items];
       return s.copyWith(
         items: ChatRealtimeMerge.sortByActivity(items),
@@ -373,6 +394,25 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         nextChatId: s.nextChatId,
       );
     });
+  }
+
+  /// Carries over the parts of a row that only the list response has.
+  ///
+  /// A row refetched by id comes back as `ChatDetailDTO`, which has no state
+  /// block, no `peer` and no `members_preview` (api-docs §5.2). Taking it as
+  /// written would unpin the chat, unsilence it and leave a direct chat with
+  /// nobody's name on it until the next full fetch.
+  static ChatEntity _keepWhatTheFetchLeftOut(
+    ChatEntity before,
+    ChatEntity fetched,
+  ) {
+    return fetched.copyWith(
+      state: fetched.state ?? before.state,
+      peer: fetched.peer ?? before.peer,
+      membersPreview: fetched.membersPreview.isEmpty
+          ? before.membersPreview
+          : fetched.membersPreview,
+    );
   }
 
   bool _isAccessDenied(Failure failure) {
@@ -394,6 +434,51 @@ class ChatListController extends AsyncNotifier<ChatListState> {
       final items = [...s.items]..[index] = transform(s.items[index]);
       return s.copyWith(
         items: items,
+        nextDate: s.nextDate,
+        nextChatId: s.nextChatId,
+      );
+    });
+  }
+
+  bool _holds(String chatId) =>
+      state.value?.items.any((chat) => chat.id == chatId) ?? false;
+
+  /// Rewrites the per-user state of one row and hands back the row as it
+  /// was, so a caller that guessed wrong can put it back.
+  ChatEntity? patchState(
+    String chatId,
+    ChatStateEntity Function(ChatStateEntity state) change,
+  ) {
+    final before = rowOf(chatId);
+    if (before == null) return null;
+
+    _patchRow(
+      chatId,
+      (chat) =>
+          chat.copyWith(state: change(chat.state ?? const ChatStateEntity())),
+    );
+
+    return before;
+  }
+
+  /// Puts a row back exactly as it was.
+  void restoreRow(ChatEntity chat) =>
+      _patchRow(chat.id, (_) => chat);
+
+  ChatEntity? rowOf(String chatId) {
+    for (final chat in state.value?.items ?? const <ChatEntity>[]) {
+      if (chat.id == chatId) return chat;
+    }
+    return null;
+  }
+
+  /// Takes a row in from the other list — archiving a chat moves it across
+  /// rather than making it disappear and come back on the next fetch.
+  void adoptRow(ChatEntity chat) {
+    _mutate((s) {
+      if (s.items.any((existing) => existing.id == chat.id)) return s;
+      return s.copyWith(
+        items: ChatRealtimeMerge.sortByActivity([chat, ...s.items]),
         nextDate: s.nextDate,
         nextChatId: s.nextChatId,
       );
@@ -476,6 +561,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
             nextChatId: current.nextChatId,
           ),
           limit: _pageSize,
+          archived: isArchive,
         );
 
     final latest = state.value ?? current;
@@ -502,7 +588,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   Future<ChatListState> _fetchFirstPage() async {
     final result = await ref
         .read(getChatsUseCaseProvider)
-        .execute(limit: _pageSize);
+        .execute(limit: _pageSize, archived: isArchive);
     return result.fold((failure) => throw failure, (page) {
       return ChatListState(
         items: page.chats,
@@ -517,4 +603,15 @@ class ChatListController extends AsyncNotifier<ChatListState> {
 final chatListProvider =
     AsyncNotifierProvider<ChatListController, ChatListState>(
       ChatListController.new,
+    );
+
+/// The archive: the same rows, fetched with `archived=true`.
+///
+/// Its own provider because it is its own request with its own cursor. It is
+/// only built when something looks at the archive, so a reader who never
+/// opens it never pays for it.
+final archivedChatListProvider =
+    AsyncNotifierProvider<ChatListController, ChatListState>(
+      () => ChatListController(isArchive: true),
+      isAutoDispose: true,
     );

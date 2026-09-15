@@ -368,7 +368,7 @@
   "hideFolderTabsHint": "フォルダは残したまま、一覧の上のタブを表示しません",
   "unarchiveOnNewMessage": "新着で戻す",
   "unarchiveOnNewMessageHint": "アーカイブしたチャットは、誰かが書き込むと一覧に戻ります",
-  "organizerDeviceOnly": "ピン留め・アーカイブ・フォルダはこの端末にだけ保存され、アカウントには付いていきません。",
+  "organizerDeviceOnly": "フォルダはこの端末にだけ保存され、アカウントには付いていきません。ピン留め・アーカイブ・通知オフは付いていきます。",
   "chatPinnedZone": "ピン留め",
   "chatUnarchivedToast": "一覧に戻しました",
   "searchTabMessages": "メッセージ",
@@ -379,14 +379,13 @@
   "searchRemoveFromHistory": "最近の検索から削除",
   "searchStartTitle": "チャット・人・メッセージを探す",
   "searchStartHint": "チャットは名前、人はユーザー名、メッセージは本文で探します。",
-  "searchLoadedHistoryOnly": "読み込み済みの履歴を検索",
-  "searchLoadedHistoryExplained": "サーバーにメッセージ検索がないため、この端末にすでにあるメッセージだけを探します。チャットを開くと対象が増えます。",
+  "searchLoadedHistoryOnly": "この端末にあるものを検索しました",
+  "searchLoadedHistoryExplained": "サーバーに接続できなかったため、この端末にあるメッセージだけを検索しました。",
   "noChatsFound": "チャットが見つかりません",
   "noChatsFoundHint": "読み込み済みのチャットの中から、名前と説明で探します。",
   "noPeopleFoundHint": "綴りを変えるか、ユーザー名で探してみてください。",
   "noMessagesFound": "メッセージが見つかりません",
   "messageSearchFailed": "メッセージを検索できませんでした",
-  "searchResultsCapped": "最初の {count} 件を表示しています",
   "searchInChat": "このチャット内を検索",
   "searchMatchPosition": "{total} 件中 {current} 件目",
   "searchNoMatches": "該当なし",
@@ -756,5 +755,7 @@
   "videoNotePreview": "カメラのプレビュー",
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "searchTypeMore": "{count} 文字以上を入力してください",
+  "noMessagesFoundHint": "検索の対象は本文だけで、ファイル名やチャット名は含まれません。"
 }

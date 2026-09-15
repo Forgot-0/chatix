@@ -22,27 +22,11 @@ class ChatOrganizerRepositoryImpl implements ChatOrganizerRepository {
       final folders = await _local.readFolders();
 
       return ChatOrganizerData(
-        pinnedChatIds: await _local.readPinned(),
-        archivedChatIds: await _local.readArchived(),
         folders: folders.map((f) => f.toEntity()).nonNulls.toList(),
         settings: (await _local.readSettings()).toEntity(),
       );
     });
   }
-
-  @override
-  Future<Either<Failure, Unit>> savePinned(Set<String> chatIds) =>
-      _guard(() async {
-        await _local.writePinned(chatIds);
-        return unit;
-      });
-
-  @override
-  Future<Either<Failure, Unit>> saveArchived(Set<String> chatIds) =>
-      _guard(() async {
-        await _local.writeArchived(chatIds);
-        return unit;
-      });
 
   @override
   Future<Either<Failure, Unit>> saveFolders(List<ChatFolder> folders) =>

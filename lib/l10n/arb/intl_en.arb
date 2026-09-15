@@ -1864,7 +1864,7 @@
   "@unarchiveOnNewMessageHint": {
     "description": "Explains what bringing a chat back on a new message does"
   },
-  "organizerDeviceOnly": "Pins, the archive and folders are kept on this device and do not follow your account.",
+  "organizerDeviceOnly": "Folders are kept on this device and do not follow your account. Pins, the archive and silenced chats do.",
   "@organizerDeviceOnly": {
     "description": "Says that the organizer's state is local, since the API stores none of it"
   },
@@ -1908,11 +1908,11 @@
   "@searchStartHint": {
     "description": "Explains what each tab of the search covers"
   },
-  "searchLoadedHistoryOnly": "Searching loaded history",
+  "searchLoadedHistoryOnly": "Searched what is on this device",
   "@searchLoadedHistoryOnly": {
     "description": "Notice saying message search covers only what this device has loaded"
   },
-  "searchLoadedHistoryExplained": "The server has no message search, so this looks through the messages already on this device. Open a chat to load more of it.",
+  "searchLoadedHistoryExplained": "The server could not be reached, so this searched the messages already on this device.",
   "@searchLoadedHistoryExplained": {
     "description": "Explains why message search is limited to the device"
   },
@@ -1935,15 +1935,6 @@
   "messageSearchFailed": "Could not search messages",
   "@messageSearchFailed": {
     "description": "Fallback error message when the message search fails"
-  },
-  "searchResultsCapped": "Showing the first {count} matches",
-  "@searchResultsCapped": {
-    "description": "Says the result list was cut off at a limit",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
   },
   "searchInChat": "Search in this chat",
   "@searchInChat": {
@@ -2346,5 +2337,18 @@
   "videoNotePreview": "Camera preview",
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
+  },
+  "searchTypeMore": "Type at least {count} characters",
+  "@searchTypeMore": {
+    "description": "Hint shown when the query is shorter than the server accepts",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noMessagesFoundHint": "Search looks inside what was said, not at file names or chat titles.",
+  "@noMessagesFoundHint": {
+    "description": "Explains what the message search covers"
   }
 }

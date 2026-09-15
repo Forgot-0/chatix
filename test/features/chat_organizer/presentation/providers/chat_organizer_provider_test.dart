@@ -1,23 +1,35 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
+import 'package:chatix/features/chat/domain/usecases/get_chats_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
+import 'package:chatix/features/chat_organizer/data/models/chat_folder_model.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/folder_preset.dart';
-import 'package:chatix/features/chat_organizer/domain/entities/organizer_failures.dart';
-import 'package:chatix/features/chat_organizer/domain/entities/organizer_settings.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_providers.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/folder_selection_provider.dart';
 
 import '../../../../helpers/fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/fakes/fake_web_socket_channel.dart';
+
+class MockGetChatsUseCase extends Mock implements GetChatsUseCase {}
+
+class MockUpdateChatStateUseCase extends Mock
+    implements UpdateChatStateUseCase {}
 
 class _FakeAuthController extends AuthController {
   @override
@@ -35,9 +47,56 @@ void main() {
   late InMemoryChatOrganizerDataSource store;
   late FakeWebSocketChannel channel;
   late ChatSocketService socket;
+  late MockGetChatsUseCase getChats;
+  late MockUpdateChatStateUseCase updateState;
+
+  /// What `GET /chats/?archived=true` answers with.
+  late List<ChatEntity> archivedChats;
+
+  ChatEntity archivedChat(String id) => ChatEntity(
+    id: id,
+    seqCounter: 4,
+    lastActivityAt: DateTime.utc(2026, 3, 10),
+    type: ChatType.group,
+    name: 'Chat $id',
+    description: null,
+    avatarS3Key: null,
+    isPublic: false,
+    adminOnly: false,
+    slowModeSeconds: 0,
+    permissions: const {},
+    createdBy: 1,
+    memberCount: 2,
+    state: const ChatStateEntity(isArchived: true),
+  );
 
   setUp(() {
     store = InMemoryChatOrganizerDataSource();
+    getChats = MockGetChatsUseCase();
+    updateState = MockUpdateChatStateUseCase();
+    archivedChats = <ChatEntity>[];
+
+    when(
+      () => getChats.execute(
+        limit: any(named: 'limit'),
+        archived: any(named: 'archived'),
+      ),
+    ).thenAnswer(
+      (invocation) async => Right(
+        ChatsPage(
+          chats: (invocation.namedArguments[#archived] as bool)
+              ? archivedChats
+              : const [],
+          hasNext: false,
+          nextDate: null,
+          nextChatId: null,
+        ),
+      ),
+    );
+
+    when(
+      () => updateState.setArchived(any(), archived: any(named: 'archived')),
+    ).thenAnswer((_) async => const Right(ChatStateEntity()));
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
       secureStorage: FakeSecureStorageService(
@@ -58,6 +117,8 @@ void main() {
         chatOrganizerDataSourceProvider.overrideWithValue(store),
         chatSocketServiceProvider.overrideWithValue(socket),
         authProvider.overrideWith(_FakeAuthController.new),
+        getChatsUseCaseProvider.overrideWithValue(getChats),
+        updateChatStateUseCaseProvider.overrideWithValue(updateState),
       ],
     );
     addTearDown(container.dispose);
@@ -100,70 +161,70 @@ void main() {
 
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
-  test('what the store held is what the list starts from', () async {
-    store = InMemoryChatOrganizerDataSource(pinned: {'a'}, archived: {'b'});
+  test('what the store held is what the folders start from', () async {
+    store = InMemoryChatOrganizerDataSource(
+      folders: [ChatFolderModel.fromEntity(ChatFolder.fromPreset(FolderPreset.unread))],
+    );
 
     final container = await boot();
-    final data = container.read(organizerDataProvider);
 
-    expect(data.isPinned('a'), isTrue);
-    expect(data.isArchived('b'), isTrue);
+    expect(container.read(organizerDataProvider).folders, hasLength(1));
   });
 
-  test(
-    'the pinned limit reaches the caller as a failure it can explain',
-    () async {
-      final container = await boot();
-      final organizer = container.read(chatOrganizerProvider.notifier);
-
-      for (var i = 0; i < OrganizerLimits.pinnedChats; i++) {
-        expect(await organizer.setPinned('chat-$i', pinned: true), isNull);
-      }
-
-      final failure = await organizer.setPinned('one-too-many', pinned: true);
-
-      expect(failure, isA<PinLimitFailure>());
-      expect(
-        container.read(organizerDataProvider).isPinned('one-too-many'),
-        isFalse,
-      );
-    },
-  );
-
   test('a message from someone else brings an archived chat back', () async {
-    store = InMemoryChatOrganizerDataSource(archived: {chatId});
+    archivedChats = [archivedChat(chatId)];
+
     final container = await boot();
+    // The archive is only known to a device that has fetched it.
+    await container.read(archivedChatListProvider.future);
 
     channel.emit(newMessage(senderId: 9));
     await settle();
 
-    expect(container.read(organizerDataProvider).isArchived(chatId), isFalse);
+    verify(() => updateState.setArchived(chatId, archived: false)).called(1);
   });
 
   test('my own message leaves the chat where I put it', () async {
-    store = InMemoryChatOrganizerDataSource(archived: {chatId});
+    archivedChats = [archivedChat(chatId)];
+
     final container = await boot();
+    await container.read(archivedChatListProvider.future);
 
     channel.emit(newMessage(senderId: 7));
     await settle();
 
-    expect(container.read(organizerDataProvider).isArchived(chatId), isTrue);
+    verifyNever(
+      () => updateState.setArchived(any(), archived: any(named: 'archived')),
+    );
   });
 
-  test('with the setting off the archive stays closed', () async {
+  test('a message in a chat nobody archived changes nothing', () async {
     final container = await boot();
-    final organizer = container.read(chatOrganizerProvider.notifier);
-
-    await organizer.setUnarchiveOnNewMessage(enabled: false);
-    await organizer.setArchived(chatId, archived: true);
+    await container.read(archivedChatListProvider.future);
 
     channel.emit(newMessage(senderId: 9));
     await settle();
 
-    expect(container.read(organizerDataProvider).isArchived(chatId), isTrue);
-    expect(
-      container.read(organizerDataProvider).settings,
-      const OrganizerSettings(unarchiveOnNewMessage: false),
+    verifyNever(
+      () => updateState.setArchived(any(), archived: any(named: 'archived')),
+    );
+  });
+
+  test('with the setting off the archive stays closed', () async {
+    archivedChats = [archivedChat(chatId)];
+
+    final container = await boot();
+    await container.read(archivedChatListProvider.future);
+
+    await container
+        .read(chatOrganizerProvider.notifier)
+        .setUnarchiveOnNewMessage(enabled: false);
+
+    channel.emit(newMessage(senderId: 9));
+    await settle();
+
+    verifyNever(
+      () => updateState.setArchived(any(), archived: any(named: 'archived')),
     );
   });
 
@@ -193,9 +254,9 @@ void main() {
       await organizer.saveFolder(ChatFolder.fromPreset(preset));
       container.read(activeFolderProvider.notifier).select(preset.folderId);
 
-      // Pinning rewrites the organizer's state, which the selection is
-      // computed from; it must not take the chosen tab down with it.
-      await organizer.setPinned('some-chat', pinned: true);
+      // Saving a folder rewrites the organizer's state, which the selection
+      // is computed from; it must not take the chosen tab down with it.
+      await organizer.saveFolder(ChatFolder.fromPreset(FolderPreset.personal));
 
       expect(container.read(activeFolderProvider), preset.folderId);
       expect(container.read(activeChatFolderProvider)?.preset, preset);

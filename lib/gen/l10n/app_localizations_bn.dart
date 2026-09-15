@@ -1433,7 +1433,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get organizerDeviceOnly =>
-      'পিন, আর্কাইভ ও ফোল্ডার কেবল এই ডিভাইসে থাকে, অ্যাকাউন্টের সঙ্গে যায় না।';
+      'ফোল্ডার কেবল এই ডিভাইসে থাকে, অ্যাকাউন্টের সঙ্গে যায় না। পিন, আর্কাইভ ও নীরব করা চ্যাট যায়।';
 
   @override
   String get chatPinnedZone => 'পিন করা';
@@ -1467,11 +1467,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'চ্যাট নাম দিয়ে, মানুষ ইউজারনেম দিয়ে, বার্তা তার লেখা দিয়ে খোঁজা হয়।';
 
   @override
-  String get searchLoadedHistoryOnly => 'লোড হওয়া ইতিহাসে খোঁজা হচ্ছে';
+  String get searchLoadedHistoryOnly => 'এই ডিভাইসে যা আছে তাতে খোঁজা হয়েছে';
 
   @override
   String get searchLoadedHistoryExplained =>
-      'সার্ভারে বার্তা অনুসন্ধান নেই, তাই এই ডিভাইসে থাকা বার্তাগুলোতেই খোঁজা হয়। আরও পেতে চ্যাট খুলুন।';
+      'সার্ভারে পৌঁছানো যায়নি, তাই এই ডিভাইসে থাকা বার্তাগুলোতেই খোঁজা হয়েছে।';
 
   @override
   String get noChatsFound => 'কোনো চ্যাট পাওয়া যায়নি';
@@ -1489,11 +1489,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get messageSearchFailed => 'বার্তা খোঁজা যায়নি';
-
-  @override
-  String searchResultsCapped(int count) {
-    return 'প্রথম $countটি মিল দেখানো হচ্ছে';
-  }
 
   @override
   String get searchInChat => 'এই চ্যাটে খুঁজুন';
@@ -1771,4 +1766,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get videoNotePreview => 'ক্যামেরার প্রিভিউ';
+
+  @override
+  String searchTypeMore(int count) {
+    return 'অন্তত $countটি অক্ষর লিখুন';
+  }
+
+  @override
+  String get noMessagesFoundHint =>
+      'অনুসন্ধান শুধু বার্তার লেখায় চলে, ফাইলের নাম বা চ্যাটের নামে নয়।';
 }

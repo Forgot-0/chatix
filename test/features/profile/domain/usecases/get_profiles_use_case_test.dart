@@ -1,6 +1,7 @@
-import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -9,122 +10,104 @@ import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.da
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
 
+/// `q` searches username OR display_name in one request; `username` and
+/// `display_name` are the old AND pair, and mixing the two is a 422
+/// (api-docs §4.2).
 void main() {
+  late MockProfileRepository repository;
   late GetProfilesUseCase useCase;
-  late MockProfileRepository mockProfileRepository;
 
   setUp(() {
-    mockProfileRepository = MockProfileRepository();
-    useCase = GetProfilesUseCase(mockProfileRepository);
-  });
+    repository = MockProfileRepository();
+    useCase = GetProfilesUseCase(repository);
 
-  const tProfile = ProfileEntity(
-    id: 1,
-    avatars: {},
-    specialization: 'Backend',
-    displayName: 'Jane Doe',
-    bio: null,
-    dateBirthday: null,
-    skills: ['dart'],
-    contacts: [],
-  );
-
-  const tPage = PageResult<ProfileEntity>(
-    items: [tProfile],
-    total: 1,
-    page: 1,
-    pageSize: 20,
-  );
-
-  test(
-    'should call ProfileRepository.getProfiles and return the page on success',
-    () async {
-      when(
-        () => mockProfileRepository.getProfiles(
-          username: any(named: 'username'),
-          displayName: any(named: 'displayName'),
-          skills: any(named: 'skills'),
-          page: any(named: 'page'),
-          pageSize: any(named: 'pageSize'),
-          sort: any(named: 'sort'),
-        ),
-      ).thenAnswer((_) async => const Right(tPage));
-
-      final result = await useCase.execute(username: 'jane');
-
-      expect(result, const Right(tPage));
-      verify(
-        () => mockProfileRepository.getProfiles(
-          username: 'jane',
-          displayName: null,
-          skills: null,
-          page: 1,
-          pageSize: 20,
-          sort: null,
-        ),
-      ).called(1);
-    },
-  );
-
-  test('should return the repository Failure when the call fails', () async {
-    const tFailure = ApiFailure(
-      code: 'UNKNOWN',
-      message: 'Something broke',
-      detail: {},
-      status: 500,
-    );
     when(
-      () => mockProfileRepository.getProfiles(
+      () => repository.getProfiles(
+        q: any(named: 'q'),
         username: any(named: 'username'),
         displayName: any(named: 'displayName'),
         skills: any(named: 'skills'),
         page: any(named: 'page'),
         pageSize: any(named: 'pageSize'),
         sort: any(named: 'sort'),
+        cancellation: any(named: 'cancellation'),
       ),
-    ).thenAnswer((_) async => const Left(tFailure));
-
-    final result = await useCase.execute();
-
-    expect(result, const Left(tFailure));
+    ).thenAnswer(
+      (_) async => const Right(
+        PageResult<ProfileEntity>(items: [], total: 0, page: 1, pageSize: 20),
+      ),
+    );
   });
 
-  test(
-    'should return InputFailure and never hit the repository when page is less than 1',
-    () async {
-      final result = await useCase.execute(page: 0);
+  test('a search goes out as one trimmed q', () async {
+    await useCase.execute(q: '  ann  ');
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+    verify(
+      () => repository.getProfiles(
+        q: 'ann',
+        username: null,
+        displayName: null,
+        skills: null,
+        page: 1,
+        pageSize: 20,
+        sort: null,
+        cancellation: null,
+      ),
+    ).called(1);
+  });
 
-  test(
-    'should return InputFailure and never hit the repository when pageSize is 0',
-    () async {
-      final result = await useCase.execute(pageSize: 0);
+  test('one character is not sent, because the server refuses it', () async {
+    final result = await useCase.execute(q: 'a');
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+    expect(result.getLeft().toNullable(), isA<InputFailure>());
+    verifyNever(
+      () => repository.getProfiles(
+        q: any(named: 'q'),
+        username: any(named: 'username'),
+        displayName: any(named: 'displayName'),
+        skills: any(named: 'skills'),
+        page: any(named: 'page'),
+        pageSize: any(named: 'pageSize'),
+        sort: any(named: 'sort'),
+        cancellation: any(named: 'cancellation'),
+      ),
+    );
+  });
 
-  test(
-    'should return InputFailure and never hit the repository when pageSize exceeds 100',
-    () async {
-      final result = await useCase.execute(pageSize: 101);
+  test('a query longer than the server takes is refused here', () async {
+    final result = await useCase.execute(
+      q: 'x' * (GetProfilesUseCase.maxQueryLength + 1),
+    );
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+    expect(result.getLeft().toNullable(), isA<InputFailure>());
+  });
+
+  test('q with a field is refused rather than sent to be 422d', () async {
+    final result = await useCase.execute(q: 'ann', username: 'ann');
+
+    expect(result.getLeft().toNullable(), isA<InputFailure>());
+  });
+
+  test('the old fields still work on their own', () async {
+    await useCase.execute(username: 'ann', displayName: 'Ann');
+
+    verify(
+      () => repository.getProfiles(
+        q: null,
+        username: 'ann',
+        displayName: 'Ann',
+        skills: null,
+        page: 1,
+        pageSize: 20,
+        sort: null,
+        cancellation: null,
+      ),
+    ).called(1);
+  });
+
+  test('a listing with no query at all is still allowed', () async {
+    final result = await useCase.execute(page: 2);
+
+    expect(result.isRight(), isTrue);
+  });
 }

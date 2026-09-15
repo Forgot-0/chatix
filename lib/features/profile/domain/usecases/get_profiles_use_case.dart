@@ -6,11 +6,17 @@ import 'package:chatix/features/profile/domain/repositories/profile_repository.d
 import 'package:chatix/core/network/request_cancellation.dart';
 
 class GetProfilesUseCase {
+  /// `q` shorter than this is a `422`, not an empty page (api-docs §4.2).
+  static const int minQueryLength = 2;
+
+  static const int maxQueryLength = 150;
+
   final ProfileRepository _repository;
 
   GetProfilesUseCase(this._repository);
 
   Future<Either<Failure, PageResult<ProfileEntity>>> execute({
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,
@@ -33,7 +39,41 @@ class GetProfilesUseCase {
       );
     }
 
+    final needle = q?.trim();
+    if (needle != null) {
+      if (username != null || displayName != null) {
+        // The server answers 422 rather than picking one, so there is
+        // nothing to gain by finding out the hard way.
+        return Future.value(
+          const Left(
+            InputFailure(
+              message: 'Search by one field or by name and username, not both',
+            ),
+          ),
+        );
+      }
+      if (needle.length < minQueryLength) {
+        return Future.value(
+          Left(
+            InputFailure(
+              message: 'Type at least $minQueryLength characters to search',
+            ),
+          ),
+        );
+      }
+      if (needle.length > maxQueryLength) {
+        return Future.value(
+          Left(
+            InputFailure(
+              message: 'A search can be at most $maxQueryLength characters',
+            ),
+          ),
+        );
+      }
+    }
+
     return _repository.getProfiles(
+      q: needle,
       username: username,
       displayName: displayName,
       skills: skills,

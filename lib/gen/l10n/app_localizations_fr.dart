@@ -1450,7 +1450,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get organizerDeviceOnly =>
-      'Les épingles, l’archive et les dossiers restent sur cet appareil et ne suivent pas votre compte.';
+      'Les dossiers restent sur cet appareil et ne suivent pas votre compte. Les épingles, l’archive et les chats en sourdine, si.';
 
   @override
   String get chatPinnedZone => 'Épinglés';
@@ -1485,11 +1485,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les chats par leur nom, les personnes par leur identifiant, les messages par leur contenu.';
 
   @override
-  String get searchLoadedHistoryOnly => 'Recherche dans l’historique chargé';
+  String get searchLoadedHistoryOnly =>
+      'Recherche dans ce qui est sur cet appareil';
 
   @override
   String get searchLoadedHistoryExplained =>
-      'Le serveur n’a pas de recherche de messages : seuls ceux déjà présents sur cet appareil sont parcourus. Ouvrez un chat pour en charger davantage.';
+      'Le serveur est injoignable : seuls les messages déjà présents sur cet appareil ont été parcourus.';
 
   @override
   String get noChatsFound => 'Aucun chat trouvé';
@@ -1507,11 +1508,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get messageSearchFailed => 'Impossible de rechercher les messages';
-
-  @override
-  String searchResultsCapped(int count) {
-    return 'Affichage des $count premiers résultats';
-  }
 
   @override
   String get searchInChat => 'Rechercher dans ce chat';
@@ -1794,4 +1790,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get videoNotePreview => 'Aperçu de la caméra';
+
+  @override
+  String searchTypeMore(int count) {
+    return 'Saisissez au moins $count caractères';
+  }
+
+  @override
+  String get noMessagesFoundHint =>
+      'La recherche porte sur ce qui a été dit, pas sur les noms de fichiers ni les titres des chats.';
 }

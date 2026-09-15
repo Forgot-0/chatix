@@ -10,6 +10,7 @@ import 'package:chatix/core/network/request_cancellation.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<Either<Failure, PageResult<ProfileModel>>> fetchProfiles({
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,
@@ -55,6 +56,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<Either<Failure, PageResult<ProfileModel>>> fetchProfiles({
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,
@@ -67,6 +69,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       '/profiles/',
       cancelToken: cancellation?.dioToken,
       queryParameters: {
+        // `q` searches username OR display_name in one request, and is a
+        // `422` if sent alongside either of them (api-docs §4.2).
+        'q': ?q,
         'username': ?username,
         'display_name': ?displayName,
         'skills': ?skills,

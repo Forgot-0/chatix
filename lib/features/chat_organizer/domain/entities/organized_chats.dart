@@ -1,75 +1,81 @@
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
-import 'package:chatix/features/chat_organizer/domain/entities/chat_organizer_data.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/folder_rule.dart';
 
-/// The chat list cut into the three blocks it is drawn as.
+/// The chat list cut into the two blocks it is drawn as.
 ///
-/// Order inside each block is the order the server sent — `last_activity_at`
-/// descending with the chat id breaking ties (api-docs §5.2). Nothing is
-/// re-sorted here: pinning lifts a chat out of one block into another, it
-/// does not reshuffle what is left.
+/// The archive is not one of them any more: `GET /chats/?archived=true` is a
+/// set of its own with its own cursor (api-docs §5.2), so what is put away
+/// is not in this list to be split out of it.
 class OrganizedChats {
-  const OrganizedChats({
-    required this.pinned,
-    required this.active,
-    required this.archived,
-  });
+  const OrganizedChats({required this.pinned, required this.active});
 
+  static const OrganizedChats empty = OrganizedChats(
+    pinned: [],
+    active: [],
+  );
+
+  /// Newest pin first, the order the server sends them in.
   final List<ChatEntity> pinned;
+
   final List<ChatEntity> active;
-  final List<ChatEntity> archived;
 
-  bool get hasArchive => archived.isNotEmpty;
-
-  bool get isEmpty => pinned.isEmpty && active.isEmpty && archived.isEmpty;
+  bool get isEmpty => pinned.isEmpty && active.isEmpty;
 
   /// Everything the reader is meant to act on, in the order it is drawn.
   List<ChatEntity> get visible => [...pinned, ...active];
-
-  /// What the archive row's badge says. A silenced chat does not add to it —
-  /// the point of silencing one is that it stops asking for attention.
-  int unreadInArchive(Set<String> mutedChatIds) {
-    var total = 0;
-    for (final chat in archived) {
-      if (mutedChatIds.contains(chat.id)) continue;
-      total += chat.unreadCount ?? 0;
-    }
-    return total;
-  }
 }
 
-/// Splits [chats] into the pinned zone, the list and the archive.
+/// Splits [chats] into the pinned zone and the list below it.
 ///
-/// [folder], when given, narrows the first two: the archive is what you put
-/// away, and a tab should not hide half of it. Archiving wins over pinning,
-/// so a chat that is somehow both ends up only in the archive.
+/// [folder], when given, narrows both. A row that says it is archived is
+/// dropped: the list should not be holding one, but a chat archived a
+/// moment ago on this device is briefly still here, and it should leave the
+/// screen the moment it is put away rather than on the next fetch.
 OrganizedChats organizeChats({
   required List<ChatEntity> chats,
-  required ChatOrganizerData organizer,
   required ChatRuleContext context,
   ChatFolder? folder,
 }) {
   final pinned = <ChatEntity>[];
   final active = <ChatEntity>[];
-  final archived = <ChatEntity>[];
 
   for (final chat in chats) {
-    if (organizer.isArchived(chat.id)) {
-      archived.add(chat);
-      continue;
-    }
-
+    if (chat.isArchived) continue;
     if (folder != null && !folder.matches(chat, context)) continue;
 
-    if (organizer.isPinned(chat.id)) {
+    if (chat.isPinned) {
       pinned.add(chat);
     } else {
       active.add(chat);
     }
   }
 
-  return OrganizedChats(pinned: pinned, active: active, archived: archived);
+  // `pinned_at DESC`, the order the server puts them in at the head of the
+  // first page. Rows without a date keep the order they arrived in.
+  pinned.sort((a, b) {
+    final left = a.pinnedAt;
+    final right = b.pinnedAt;
+    if (left == null && right == null) return 0;
+    if (left == null) return 1;
+    if (right == null) return -1;
+    return right.compareTo(left);
+  });
+
+  return OrganizedChats(pinned: pinned, active: active);
+}
+
+/// How much unread the archive is sitting on.
+///
+/// A silenced chat does not add to it — the point of silencing one is that
+/// it stops asking for attention.
+int unreadInArchive(List<ChatEntity> archived) {
+  var total = 0;
+  for (final chat in archived) {
+    if (chat.isMutedByMe) continue;
+    total += chat.unreadCount ?? 0;
+  }
+  return total;
 }
 
 /// How much unread each folder is sitting on, keyed by folder id.
@@ -79,20 +85,19 @@ OrganizedChats organizeChats({
 /// shows.
 Map<String, int> folderUnreadCounts({
   required List<ChatEntity> chats,
-  required ChatOrganizerData organizer,
+  required List<ChatFolder> folders,
   required ChatRuleContext context,
-  Set<String> mutedChatIds = const <String>{},
 }) {
   final counts = <String, int>{};
 
-  for (final folder in organizer.folders) {
+  for (final folder in folders) {
     var total = 0;
 
     for (final chat in chats) {
       final unread = chat.unreadCount ?? 0;
       if (unread == 0) continue;
-      if (organizer.isArchived(chat.id)) continue;
-      if (mutedChatIds.contains(chat.id)) continue;
+      if (chat.isArchived) continue;
+      if (chat.isMutedByMe) continue;
       if (!folder.matches(chat, context)) continue;
       total += unread;
     }

@@ -19,6 +19,7 @@ import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart'
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
@@ -1220,6 +1221,21 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     });
   }
 
+  /// The row the chat list already holds for this chat, if it holds one.
+  ///
+  /// Read rather than watched, and only when the list is already alive:
+  /// starting it from here would turn opening a chat by link into a fetch of
+  /// the whole list.
+  ChatEntity? _listRow() {
+    if (!ref.exists(chatListProvider)) return null;
+
+    for (final chat in ref.read(chatListProvider).value?.items ??
+        const <ChatEntity>[]) {
+      if (chat.id == _chatId) return chat;
+    }
+    return null;
+  }
+
   Future<ChatDetailState> _load() async {
     final myUserId = ref.watch(authProvider).value?.id;
 
@@ -1236,8 +1252,17 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     // would drag the divider down the screen mid-read.
     if (!_unreadFrozen) {
       _unreadFrozen = true;
-      _unreadAnchorSeq = chat.lastRead?.lastReadMessageSeq;
-      _unreadAtOpen = chat.unreadCount ?? 0;
+
+      // `GET /chats/{id}/` answers with `ChatDetailDTO`, which carries
+      // neither `last_read` nor `unread_count` (api-docs §5.2) — both are
+      // fields of the list row. So the row is where the divider comes from
+      // when the list is up, which it is whenever a chat was opened from it.
+      final row = _listRow();
+
+      _unreadAnchorSeq =
+          chat.lastRead?.lastReadMessageSeq ??
+          row?.lastRead?.lastReadMessageSeq;
+      _unreadAtOpen = chat.unreadCount ?? row?.unreadCount ?? 0;
     }
 
     _cache(page.messages);

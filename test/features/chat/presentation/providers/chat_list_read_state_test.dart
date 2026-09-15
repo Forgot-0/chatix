@@ -69,7 +69,11 @@ void main() {
         ),
       );
 
-  ChatEntity chat({int unread = 3, MessageEntity? last}) => ChatEntity(
+  ChatEntity chat({
+    int unread = 3,
+    MessageEntity? last,
+    int? lastReadSeq,
+  }) => ChatEntity(
     id: chatId,
     seqCounter: 12,
     lastActivityAt: DateTime.utc(2026, 1, 1),
@@ -85,7 +89,14 @@ void main() {
     memberCount: 2,
     unreadCount: unread,
     lastMessage: last,
+    lastRead: lastReadSeq == null
+        ? null
+        : ReadDetailEntity(
+            lastReadMessageSeq: lastReadSeq,
+            lastReadAt: DateTime.utc(2026, 1, 1),
+          ),
   );
+
 
   late MockGetChatsUseCase getChats;
   late MockMarkReadUseCase markRead;
@@ -159,6 +170,10 @@ void main() {
   ChatListState stateOf(ProviderContainer container) =>
       container.read(chatListProvider).requireValue;
 
+  /// How far the other side has read, as the row would report it.
+  int? peerReadOf(ProviderContainer container) =>
+      stateOf(container).peerReadSeqOf(chatId);
+
   group('markChatRead', () {
     test('clears the badge and reads up to the last message', () async {
       when(
@@ -225,7 +240,7 @@ void main() {
       channel.emit(messagesRead(seq: 11, readerId: peerId));
       await settle();
 
-      expect(stateOf(container).peerReadSeqOf(chatId), 11);
+      expect(peerReadOf(container), 11);
     });
 
     test('my own read clears the badge instead', () async {
@@ -237,7 +252,21 @@ void main() {
       await settle();
 
       expect(stateOf(container).items.single.unreadCount, 0);
-      expect(stateOf(container).peerReadSeqOf(chatId), isNull);
+      expect(peerReadOf(container), isNull);
+    });
+
+    test('what the list came with is our own place, not theirs', () async {
+      // `ChatDTO.last_read` is how far *we* have read. Reading it as the
+      // other side's would double-tick a message nobody has opened.
+      final container = await boot([
+        chat(
+          unread: 0,
+          last: lastMessage(seq: 11, authorId: myUserId),
+          lastReadSeq: 11,
+        ),
+      ]);
+
+      expect(peerReadOf(container), isNull);
     });
 
     test('the position never moves backwards', () async {
@@ -252,7 +281,7 @@ void main() {
       );
       await settle();
 
-      expect(stateOf(container).peerReadSeqOf(chatId), 11);
+      expect(peerReadOf(container), 11);
     });
   });
 }

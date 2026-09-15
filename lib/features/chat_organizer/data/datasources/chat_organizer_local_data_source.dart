@@ -8,17 +8,10 @@ import 'package:chatix/features/chat_organizer/data/models/organizer_settings_mo
 /// Where the organizer's state is kept on this device.
 ///
 /// Asynchronous on purpose even though shared preferences answer at once:
-/// the day any of this gains a backend, the server data source drops in here
-/// and nothing above the repository notices.
+/// the day folders gain a backend, the server data source drops in here and
+/// nothing above the repository notices. Pins and the archive already made
+/// that trip — they are chat fields now, and no longer pass through here.
 abstract interface class ChatOrganizerLocalDataSource {
-  Future<Set<String>> readPinned();
-
-  Future<void> writePinned(Set<String> chatIds);
-
-  Future<Set<String>> readArchived();
-
-  Future<void> writeArchived(Set<String> chatIds);
-
   Future<List<ChatFolderModel>> readFolders();
 
   Future<void> writeFolders(List<ChatFolderModel> folders);
@@ -29,33 +22,14 @@ abstract interface class ChatOrganizerLocalDataSource {
 }
 
 /// The real store.
-///
-/// Pins and the archive keep the keys the chat feature wrote them under
-/// before the organizer existed, so nobody loses their list to an upgrade.
 class SharedPrefsChatOrganizerDataSource
     implements ChatOrganizerLocalDataSource {
   SharedPrefsChatOrganizerDataSource(this._storage);
 
-  static const String pinnedKey = 'chat_flags.pinned';
-  static const String archivedKey = 'chat_flags.archived';
   static const String foldersKey = 'chat_organizer.folders';
   static const String settingsKey = 'chat_organizer.settings';
 
   final LocalStorageService _storage;
-
-  @override
-  Future<Set<String>> readPinned() async => _readIds(pinnedKey);
-
-  @override
-  Future<void> writePinned(Set<String> chatIds) =>
-      _writeIds(pinnedKey, chatIds);
-
-  @override
-  Future<Set<String>> readArchived() async => _readIds(archivedKey);
-
-  @override
-  Future<void> writeArchived(Set<String> chatIds) =>
-      _writeIds(archivedKey, chatIds);
 
   @override
   Future<List<ChatFolderModel>> readFolders() async {
@@ -110,19 +84,7 @@ class SharedPrefsChatOrganizerDataSource
     await _storage.setString(settingsKey, json.encode(settings.toJson()));
   }
 
-  Set<String> _readIds(String key) {
-    final stored = _storage.getStringList(key);
-    if (stored == null || stored.isEmpty) return <String>{};
-    return stored.toSet();
-  }
 
-  Future<void> _writeIds(String key, Set<String> chatIds) async {
-    if (chatIds.isEmpty) {
-      await _storage.remove(key);
-      return;
-    }
-    await _storage.setStringList(key, chatIds.toList());
-  }
 }
 
 /// The fallback for where shared preferences were never wired up — widget
@@ -130,32 +92,13 @@ class SharedPrefsChatOrganizerDataSource
 /// not outlive it.
 class InMemoryChatOrganizerDataSource implements ChatOrganizerLocalDataSource {
   InMemoryChatOrganizerDataSource({
-    Set<String>? pinned,
-    Set<String>? archived,
     List<ChatFolderModel>? folders,
     OrganizerSettingsModel? settings,
-  }) : _pinned = {...?pinned},
-       _archived = {...?archived},
-       _folders = [...?folders],
+  }) : _folders = [...?folders],
        _settings = settings ?? const OrganizerSettingsModel();
 
-  Set<String> _pinned;
-  Set<String> _archived;
   List<ChatFolderModel> _folders;
   OrganizerSettingsModel _settings;
-
-  @override
-  Future<Set<String>> readPinned() async => {..._pinned};
-
-  @override
-  Future<void> writePinned(Set<String> chatIds) async => _pinned = {...chatIds};
-
-  @override
-  Future<Set<String>> readArchived() async => {..._archived};
-
-  @override
-  Future<void> writeArchived(Set<String> chatIds) async =>
-      _archived = {...chatIds};
 
   @override
   Future<List<ChatFolderModel>> readFolders() async => [..._folders];

@@ -7,15 +7,15 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/widgets/app_swipe_actions.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
-import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_state_failures.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart'
     show chatFailureMessage;
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_state_actions.dart';
 import 'package:chatix/features/chat/presentation/providers/search_history_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_preview.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
@@ -24,9 +24,6 @@ import 'package:chatix/features/chat/presentation/utils/open_chat.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_type_glyph.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
-import 'package:chatix/features/chat_organizer/domain/entities/chat_organizer_data.dart';
-import 'package:chatix/features/chat_organizer/domain/entities/organizer_failures.dart';
-import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What a chat row can do to the chat it stands for.
@@ -99,13 +96,13 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final chatix = ChatixTheme.of(context);
 
     final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
-    final prefs = ref.watch(chatLocalPrefsProvider);
-    final organizer = ref.watch(organizerDataProvider);
     final draft = ref.watch(chatDraftProvider(chat.id));
 
-    final isMuted = prefs.isMuted(chat.id);
-    final isPinned = organizer.isPinned(chat.id);
-    final isArchived = organizer.isArchived(chat.id);
+    // Pinned, archived and silenced ride on the row now: they are the
+    // caller's own fields of `ChatDTO` (api-docs §5.2), not device flags.
+    final isMuted = chat.isMutedByMe;
+    final isPinned = chat.isPinned;
+    final isArchived = chat.isArchived;
     final unread = chat.unreadCount ?? 0;
 
     final preview = chatPreviewOf(chat, l10n, draft: draft, myUserId: myUserId);
@@ -115,7 +112,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
       child: InkWell(
         onTap: () => openChat(context, ref, chat.id),
         onLongPress: widget.enableActions
-            ? () => _openMenu(prefs, organizer, myUserId)
+            ? () => _openMenu(myUserId)
             : null,
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -221,33 +218,40 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
   /// which of them to let go of is not ours to decide.
   Future<void> _togglePin() async {
     final failure = await ref
-        .read(chatOrganizerProvider.notifier)
-        .togglePin(widget.chat.id);
+        .read(chatStateActionsProvider)
+        .togglePinned(widget.chat);
 
     if (failure == null || !mounted) return;
 
     final l10n = AppLocalizations.of(context);
     _toast(
-      failure is PinLimitFailure
+      failure is PinnedChatsLimitFailure
           ? l10n.pinLimitReached(failure.limit)
-          : l10n.errorOccurred,
+          : friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
     );
   }
 
-  void _toggleMute() {
-    ref
-        .read(chatLocalPrefsProvider.notifier)
-        .toggle(ChatLocalFlag.muted, widget.chat.id);
+  Future<void> _toggleMute() async {
+    final failure = await ref
+        .read(chatStateActionsProvider)
+        .toggleMuted(widget.chat);
+
+    if (failure == null || !mounted) return;
+    _toast(
+      friendlyFailureMessage(
+        failure,
+        fallback: AppLocalizations.of(context).errorOccurred,
+      ),
+    );
   }
 
   Future<void> _toggleArchive() async {
-    final controller = ref.read(chatOrganizerProvider.notifier);
-    final wasArchived = ref
-        .read(organizerDataProvider)
-        .isArchived(widget.chat.id);
+    final actions = ref.read(chatStateActionsProvider);
+    final chatId = widget.chat.id;
+    final wasArchived = widget.chat.isArchived;
 
-    final failure = await controller.setArchived(
-      widget.chat.id,
+    final failure = await actions.setArchived(
+      chatId,
       archived: !wasArchived,
     );
 
@@ -256,7 +260,9 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final l10n = AppLocalizations.of(context);
 
     if (failure != null) {
-      _toast(l10n.errorOccurred);
+      _toast(
+        friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+      );
       return;
     }
 
@@ -272,18 +278,13 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
           content: Text(l10n.chatArchivedToast),
           action: SnackBarAction(
             label: l10n.undo,
-            onPressed: () =>
-                controller.setArchived(widget.chat.id, archived: false),
+            onPressed: () => actions.setArchived(chatId, archived: false),
           ),
         ),
       );
   }
 
-  Future<void> _openMenu(
-    ChatLocalPrefs prefs,
-    ChatOrganizerData organizer,
-    int? myUserId,
-  ) async {
+  Future<void> _openMenu(int? myUserId) async {
     final chat = widget.chat;
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
@@ -330,38 +331,30 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
               ),
             ListTile(
               leading: Icon(
-                organizer.isPinned(chat.id)
-                    ? Icons.push_pin
-                    : Icons.push_pin_outlined,
+                chat.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
               ),
-              title: Text(
-                organizer.isPinned(chat.id) ? l10n.unpinChat : l10n.pinChat,
-              ),
+              title: Text(chat.isPinned ? l10n.unpinChat : l10n.pinChat),
               onTap: () => Navigator.of(sheetContext).pop(ChatRowAction.pin),
             ),
             ListTile(
               leading: Icon(
-                organizer.isArchived(chat.id)
+                chat.isArchived
                     ? Icons.unarchive_outlined
                     : Icons.archive_outlined,
               ),
               title: Text(
-                organizer.isArchived(chat.id)
-                    ? l10n.unarchiveChat
-                    : l10n.archiveChat,
+                chat.isArchived ? l10n.unarchiveChat : l10n.archiveChat,
               ),
               onTap: () =>
                   Navigator.of(sheetContext).pop(ChatRowAction.archive),
             ),
             ListTile(
               leading: Icon(
-                prefs.isMuted(chat.id)
+                chat.isMutedByMe
                     ? Icons.notifications_active_outlined
                     : Icons.notifications_off_outlined,
               ),
-              title: Text(
-                prefs.isMuted(chat.id) ? l10n.unmuteChat : l10n.muteChat,
-              ),
+              title: Text(chat.isMutedByMe ? l10n.unmuteChat : l10n.muteChat),
               onTap: () => Navigator.of(sheetContext).pop(ChatRowAction.mute),
             ),
             // `DELETE /chats/{id}/` needs `chat:delete`, which only an owner
@@ -436,8 +429,6 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
       ),
       (_) {
         ref.read(chatListProvider.notifier).removeLocally(widget.chat.id);
-        ref.read(chatLocalPrefsProvider.notifier).forget(widget.chat.id);
-        ref.read(chatOrganizerProvider.notifier).forget(widget.chat.id);
         ref.read(searchHistoryProvider.notifier).forgetChat(widget.chat.id);
         _toast(l10n.chatDeletedToast);
       },
@@ -508,7 +499,18 @@ class ChatRowAvatar extends ConsumerWidget {
   /// The list endpoint does not always carry a roster, and a group that has
   /// its own `avatar_s3_key` does not need one; both cases fall through to
   /// the type icon that [ChatAvatarMosaic] draws when handed nothing.
+  /// The faces on a group row.
+  ///
+  /// `members_preview` is what the list response is for: up to three members
+  /// other than me, already picked by the server (api-docs §5.2). The roster
+  /// is the fallback for a chat that came from somewhere else, such as the
+  /// detail endpoint, which sends `members` and no preview.
   static List<AvatarFace> _facesOf(ChatEntity chat, int? myUserId) {
+    final preview = chat.membersPreview;
+    if (preview.isNotEmpty) {
+      return [for (final profile in preview) AvatarFace.profile(profile)];
+    }
+
     final roster = chat.members;
     if (roster == null) return const [];
 

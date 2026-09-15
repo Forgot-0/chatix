@@ -36,6 +36,7 @@ void main() {
     MessageEntity? last,
     List<ChatMemberEntity>? members,
     int createdBy = 1,
+    bool pinned = false,
   }) => ChatEntity(
     id: id,
     seqCounter: 4,
@@ -53,10 +54,10 @@ void main() {
     unreadCount: unread,
     lastMessage: last,
     members: members,
+    state: pinned ? const ChatStateEntity(isPinned: true) : null,
   );
 
-  ChatRuleContext context({Set<String> pinned = const <String>{}}) =>
-      ChatRuleContext(now: now, myUserId: myUserId, pinnedChatIds: pinned);
+  ChatRuleContext context() => ChatRuleContext(now: now, myUserId: myUserId);
 
   group('chat type rule', () {
     test('keeps the listed types and nothing else', () {
@@ -91,11 +92,8 @@ void main() {
   });
 
   group('pinned rule', () {
-    test('asks the context, since the row does not know', () {
-      expect(
-        const PinnedRule().evaluate(chat(), context(pinned: {'a'})),
-        isTrue,
-      );
+    test('reads the flag the list response carries', () {
+      expect(const PinnedRule().evaluate(chat(pinned: true), context()), isTrue);
       expect(const PinnedRule().evaluate(chat(), context()), isFalse);
     });
 
@@ -103,7 +101,7 @@ void main() {
       const rule = PinnedRule(expected: false);
 
       expect(rule.evaluate(chat(), context()), isTrue);
-      expect(rule.evaluate(chat(), context(pinned: {'a'})), isFalse);
+      expect(rule.evaluate(chat(pinned: true), context()), isFalse);
     });
   });
 

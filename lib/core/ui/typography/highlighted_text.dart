@@ -18,6 +18,7 @@ class HighlightedText extends StatelessWidget {
     this.overflow = TextOverflow.ellipsis,
     this.matchStart,
     this.matchLength,
+    this.ranges,
   });
 
   final String text;
@@ -39,6 +40,11 @@ class HighlightedText extends StatelessWidget {
   final int? matchStart;
 
   final int? matchLength;
+
+  /// Every place to pick out, for a query that is more than one string: a
+  /// message search matches term by term, and the terms land in different
+  /// places (api-docs §5.4.1).
+  final List<TextMatchRange>? ranges;
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +88,17 @@ class HighlightedText extends StatelessWidget {
   }
 
   List<TextMatchRange> _ranges() {
+    final given = ranges;
+    if (given != null) {
+      return [
+        for (final range in given)
+          if (range.start >= 0 &&
+              range.end <= text.length &&
+              range.end > range.start)
+            range,
+      ];
+    }
+
     final start = matchStart;
     final length = matchLength;
 

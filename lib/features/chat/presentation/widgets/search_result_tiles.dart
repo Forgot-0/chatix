@@ -9,6 +9,7 @@ import 'package:chatix/features/chat/domain/entities/chat_search.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
@@ -142,6 +143,10 @@ class PersonSearchResultTile extends StatelessWidget {
 }
 
 /// One message that matched, under the chat it was said in.
+///
+/// A hit can come from a chat this device has never loaded, so the row is
+/// drawn from whatever names it best: the list row when there is one, the
+/// chat preview the search answered with otherwise (api-docs §5.4.1).
 class MessageSearchResultTile extends ConsumerWidget {
   const MessageSearchResultTile({
     super.key,
@@ -154,8 +159,7 @@ class MessageSearchResultTile extends ConsumerWidget {
   final MessageSearchHit hit;
   final String query;
 
-  /// The chat the message belongs to, when the list still holds it. Null for
-  /// a message cached from a chat that has since left the loaded pages.
+  /// The chat as the list knows it, when the list knows it.
   final ChatEntity? chat;
 
   final VoidCallback onTap;
@@ -168,30 +172,18 @@ class MessageSearchResultTile extends ConsumerWidget {
 
     final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
     final row = chat;
-
-    final title = row == null
-        ? l10n.searchOpenChat
-        : chatTitleOf(row, l10n, myUserId: myUserId);
+    final preview = hit.chat;
 
     final author = hit.message.profile?.bestName;
 
     return ListTile(
       onTap: onTap,
-      leading: row == null
-          ? CircleAvatar(
-              backgroundColor: scheme.surfaceContainerHighest,
-              child: Icon(
-                Icons.chat_bubble_outline,
-                size: 18,
-                color: scheme.onSurfaceVariant,
-              ),
-            )
-          : ChatRowAvatar(chat: row, myUserId: myUserId),
+      leading: _leading(row, preview, myUserId, scheme),
       title: Row(
         children: [
           Expanded(
             child: Text(
-              title,
+              _title(row, preview, author, l10n, myUserId),
               style: theme.textTheme.titleSmall,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -227,8 +219,7 @@ class MessageSearchResultTile extends ConsumerWidget {
           HighlightedText(
             text: hit.snippet,
             query: query,
-            matchStart: hit.matchStart,
-            matchLength: hit.matchLength,
+            ranges: hit.highlights,
             style: theme.textTheme.bodyMedium,
             maxLines: 2,
           ),
@@ -236,5 +227,62 @@ class MessageSearchResultTile extends ConsumerWidget {
       ),
       isThreeLine: author != null && author.isNotEmpty,
     );
+  }
+
+  Widget _leading(
+    ChatEntity? row,
+    MessageSearchChat? preview,
+    int? myUserId,
+    ColorScheme scheme,
+  ) {
+    if (row != null) return ChatRowAvatar(chat: row, myUserId: myUserId);
+
+    final url = preview?.avatarUrl;
+    if (url != null && url.isNotEmpty) {
+      return ChatAvatar(
+        source: AvatarSource.url(url, cacheKey: preview?.avatarS3Key),
+        userId: preview?.id.hashCode,
+        name: preview?.name,
+        size: ChatAvatarSize.sm,
+      );
+    }
+
+    final name = preview?.name ?? hit.message.profile?.bestName;
+    if (name != null && name.isNotEmpty) {
+      return ChatAvatar(
+        userId: preview?.id.hashCode ?? hit.chatId.hashCode,
+        name: name,
+        size: ChatAvatarSize.sm,
+      );
+    }
+
+    return CircleAvatar(
+      backgroundColor: scheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.chat_bubble_outline,
+        size: 18,
+        color: scheme.onSurfaceVariant,
+      ),
+    );
+  }
+
+  /// A direct chat has no name of its own — not in the list, and not in the
+  /// search preview — so the person who said it names the row.
+  String _title(
+    ChatEntity? row,
+    MessageSearchChat? preview,
+    String? author,
+    AppLocalizations l10n,
+    int? myUserId,
+  ) {
+    if (row != null) return chatTitleOf(row, l10n, myUserId: myUserId);
+
+    final name = preview?.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+
+    if (author != null && author.isNotEmpty) return author;
+
+    final type = preview?.type;
+    return type == null ? l10n.searchOpenChat : chatTypeLabel(type, l10n);
   }
 }

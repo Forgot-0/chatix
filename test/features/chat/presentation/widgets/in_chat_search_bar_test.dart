@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:chatix/core/theme/app_theme.dart';
+import 'package:chatix/core/utils/text_match.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
 import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
@@ -42,8 +43,7 @@ void main() {
       createdAt: DateTime.utc(2026, 3, 10, seq),
     ),
     snippet: 'ship it',
-    matchStart: 0,
-    matchLength: 4,
+    highlights: const [TextMatchRange(0, 4)],
   );
 
   Future<void> pumpBar(
@@ -74,10 +74,33 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('before anything is typed it says what it can see', (
+  testWidgets('before anything is typed it says what the field is for', (
     tester,
   ) async {
     await pumpBar(tester, const InChatSearchState());
+
+    expect(find.text(l10n.searchInChatHint), findsOneWidget);
+  });
+
+  testWidgets('one letter in, it asks for another', (tester) async {
+    // The endpoint refuses a query shorter than two characters
+    // (api-docs §5.4.1), so the bar says so instead of showing "no matches".
+    await pumpBar(tester, const InChatSearchState(query: 's'));
+
+    expect(find.text(l10n.searchTypeMore(2)), findsOneWidget);
+  });
+
+  testWidgets('an answer from the device says where it came from', (
+    tester,
+  ) async {
+    await pumpBar(
+      tester,
+      InChatSearchState(
+        query: 'ship',
+        hits: [hit(9)],
+        source: MessageSearchSource.localCache,
+      ),
+    );
 
     expect(find.text(l10n.searchLoadedHistoryOnly), findsOneWidget);
   });

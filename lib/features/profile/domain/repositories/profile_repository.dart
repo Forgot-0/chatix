@@ -7,6 +7,9 @@ import 'package:chatix/core/network/request_cancellation.dart';
 
 abstract class ProfileRepository {
   Future<Either<Failure, PageResult<ProfileEntity>>> getProfiles({
+    /// One field to search both `username` and `display_name`. Cannot be
+    /// combined with either of them.
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,

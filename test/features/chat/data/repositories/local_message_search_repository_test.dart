@@ -5,6 +5,10 @@ import 'package:chatix/features/chat/data/repositories/local_message_search_repo
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
 
+/// The offline fallback. It searches only what this device has loaded, and
+/// it matches the way the server does — every term present, the last one by
+/// prefix (api-docs §5.4.1) — so being offline changes what is found, not
+/// what counts as a match.
 void main() {
   late InMemoryMessageCacheStore store;
   late LocalMessageSearchRepository repository;
@@ -40,10 +44,9 @@ void main() {
   }
 
   test('says out loud that it only searched this device', () async {
-    expect(repository.source, MessageSearchSource.localCache);
+    store.remember('a', [message('a', 1, content: 'ship it')]);
 
-    final result = await search('anything');
-    expect(result.source, MessageSearchSource.localCache);
+    expect((await search('ship')).source, MessageSearchSource.localCache);
   });
 
   test('finds a message by its content, ignoring case', () async {
@@ -51,8 +54,30 @@ void main() {
 
     final result = await search('SHIP');
 
-    expect(result.hits, hasLength(1));
     expect(result.hits.single.message.seq, 1);
+  });
+
+  test('the last term matches by prefix, like the index does', () async {
+    store.remember('a', [message('a', 1, content: 'подписали договор')]);
+
+    expect((await search('догов')).hits, hasLength(1));
+  });
+
+  test('a prefix only works forwards', () async {
+    store.remember('a', [message('a', 1, content: 'договоры подписаны')]);
+
+    expect((await search('договорами')).hits, isEmpty);
+  });
+
+  test('every term has to be there', () async {
+    store.remember('a', [
+      message('a', 1, content: 'бюджет на договор'),
+      message('a', 2, content: 'бюджет на квартал'),
+    ]);
+
+    final result = await search('бюджет догов');
+
+    expect(result.hits.map((h) => h.seq), [1]);
   });
 
   test('the hit carries the piece of the message that matched', () async {
@@ -63,9 +88,21 @@ void main() {
     final hit = (await search('needle')).hits.single;
 
     expect(hit.snippet.length, lessThan(200));
+    final range = hit.highlights.single;
+    expect(hit.snippet.substring(range.start, range.end), 'needle');
+  });
+
+  test('every term is picked out, not just the first', () async {
+    store.remember('a', [message('a', 1, content: 'бюджет на договор')]);
+
+    final hit = (await search('бюджет догов')).hits.single;
+
+    expect(hit.highlights, hasLength(2));
     expect(
-      hit.snippet.substring(hit.matchStart, hit.matchStart + hit.matchLength),
-      'needle',
+      hit.highlights
+          .map((r) => hit.snippet.substring(r.start, r.end))
+          .toList(),
+      ['бюджет', 'догов'],
     );
   });
 
@@ -81,9 +118,7 @@ void main() {
       ),
     ]);
 
-    final result = await search('ship');
-
-    expect(result.hits.map((h) => h.seq), [3, 2, 1]);
+    expect((await search('ship')).hits.map((h) => h.seq), [3, 2, 1]);
   });
 
   test('searches every chat, or only the one it was asked about', () async {
@@ -100,15 +135,15 @@ void main() {
     expect((await search('anything')).hits, isEmpty);
   });
 
-  test('an empty query is an empty result, not an error', () async {
+  test('a query of nothing but punctuation finds nothing', () async {
+    // The server treats those as term separators, so such a query has no
+    // terms at all and comes back empty rather than as an error.
     store.remember('a', [message('a', 1, content: 'ship it')]);
 
-    final result = await search('   ');
-
-    expect(result.isEmpty, isTrue);
+    expect((await search(' & | ! ')).hits, isEmpty);
   });
 
-  test('says when there were more matches than it returned', () async {
+  test('a page from the cache is the only page', () async {
     store.remember('a', [
       for (var seq = 1; seq <= 10; seq++)
         message('a', seq, content: 'ship $seq'),
@@ -118,13 +153,8 @@ void main() {
 
     result.match((failure) => fail('unexpected ${failure.message}'), (found) {
       expect(found.hits, hasLength(4));
-      expect(found.isCapped, isTrue);
+      expect(found.hasNext, isFalse);
+      expect(found.canLoadMore, isFalse);
     });
-  });
-
-  test('a full result is not marked as capped', () async {
-    store.remember('a', [message('a', 1, content: 'ship it')]);
-
-    expect((await search('ship')).isCapped, isFalse);
   });
 }

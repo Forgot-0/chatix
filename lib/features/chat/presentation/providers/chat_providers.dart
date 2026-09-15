@@ -32,6 +32,7 @@ import 'package:chatix/features/chat/domain/usecases/remove_reaction_use_case.da
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mute_call_participant_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_use_case.dart';
 
 final getChatsUseCaseProvider = Provider<GetChatsUseCase>((ref) {
@@ -48,6 +49,10 @@ final createChatUseCaseProvider = Provider<CreateChatUseCase>((ref) {
 
 final updateChatUseCaseProvider = Provider<UpdateChatUseCase>((ref) {
   return UpdateChatUseCase(ref.watch(chatRepositoryProvider));
+});
+
+final updateChatStateUseCaseProvider = Provider<UpdateChatStateUseCase>((ref) {
+  return UpdateChatStateUseCase(ref.watch(chatRepositoryProvider));
 });
 
 final deleteChatUseCaseProvider = Provider<DeleteChatUseCase>((ref) {

@@ -12,6 +12,22 @@ abstract class ChatRepository {
     int limit = 50,
     String? lastChatId,
     DateTime? lastActivityAt,
+    bool archived = false,
+  });
+
+  /// Pins, archives, silences or drafts into the caller's own row.
+  ///
+  /// The `clear` flags are the difference between "leave this alone" and
+  /// "set it to nothing", which the endpoint reads off the body itself
+  /// (api-docs §5.2).
+  Future<Either<Failure, ChatStateEntity>> updateChatState(
+    String chatId, {
+    bool? pinned,
+    bool? archived,
+    DateTime? notificationsMutedUntil,
+    bool clearNotificationsMutedUntil = false,
+    String? draft,
+    bool clearDraft = false,
   });
 
   Future<Either<Failure, ChatEntity>> createChat({

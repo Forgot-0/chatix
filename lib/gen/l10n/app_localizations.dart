@@ -2617,7 +2617,7 @@ abstract class AppLocalizations {
   /// Says that the organizer's state is local, since the API stores none of it
   ///
   /// In en, this message translates to:
-  /// **'Pins, the archive and folders are kept on this device and do not follow your account.'**
+  /// **'Folders are kept on this device and do not follow your account. Pins, the archive and silenced chats do.'**
   String get organizerDeviceOnly;
 
   /// Header of the block at the top of the list holding pinned chats
@@ -2683,13 +2683,13 @@ abstract class AppLocalizations {
   /// Notice saying message search covers only what this device has loaded
   ///
   /// In en, this message translates to:
-  /// **'Searching loaded history'**
+  /// **'Searched what is on this device'**
   String get searchLoadedHistoryOnly;
 
   /// Explains why message search is limited to the device
   ///
   /// In en, this message translates to:
-  /// **'The server has no message search, so this looks through the messages already on this device. Open a chat to load more of it.'**
+  /// **'The server could not be reached, so this searched the messages already on this device.'**
   String get searchLoadedHistoryExplained;
 
   /// Title shown when no loaded chat matches the query
@@ -2721,12 +2721,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not search messages'**
   String get messageSearchFailed;
-
-  /// Says the result list was cut off at a limit
-  ///
-  /// In en, this message translates to:
-  /// **'Showing the first {count} matches'**
-  String searchResultsCapped(int count);
 
   /// Action in a chat's header that opens the search inside it
   ///
@@ -3207,6 +3201,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Camera preview'**
   String get videoNotePreview;
+
+  /// Hint shown when the query is shorter than the server accepts
+  ///
+  /// In en, this message translates to:
+  /// **'Type at least {count} characters'**
+  String searchTypeMore(int count);
+
+  /// Explains what the message search covers
+  ///
+  /// In en, this message translates to:
+  /// **'Search looks inside what was said, not at file names or chat titles.'**
+  String get noMessagesFoundHint;
 }
 
 class _AppLocalizationsDelegate
