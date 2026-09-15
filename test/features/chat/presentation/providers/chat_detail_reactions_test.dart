@@ -19,6 +19,7 @@ import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/remove_reaction_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_outbox_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
@@ -236,6 +237,29 @@ void main() {
     });
 
     test('a rollback says why, quietly', () async {
+      answerSet(
+        const Left(
+          ApiFailure(
+            code: 'REACTION_NOT_ALLOWED',
+            message: 'no',
+            detail: null,
+            status: 400,
+          ),
+        ),
+      );
+      final container = await boot();
+
+      await container
+          .read(chatDetailProvider(chatId).notifier)
+          .toggleReaction(messageId, '👍');
+
+      expect(container.read(reactionNoticeProvider), isNotNull);
+    });
+
+    test('"too fast" keeps the chip and waits its turn', () async {
+      // 429 is the server saying "later", not "no". The reaction is queued,
+      // the chip stays where the tap put it, and the queue tries again — so
+      // there is nothing to roll back and nothing to apologise for.
       answerSet(const Left(RateLimitFailure()));
       final container = await boot();
 
@@ -243,14 +267,14 @@ void main() {
           .read(chatDetailProvider(chatId).notifier)
           .toggleReaction(messageId, '👍');
 
-      expect(
-        container.read(reactionNoticeProvider)?.reason,
-        ReactionNoticeReason.tooFast,
-      );
+      expect(reactionsOf(container).isMine('👍'), isTrue);
+      expect(container.read(reactionNoticeProvider), isNull);
+      expect(container.read(chatOutboxProvider), hasLength(1));
     });
 
     test('a cancelled request is not worth a word', () async {
-      // The screen closed mid-flight; nobody failed at anything.
+      // The screen closed mid-flight; nobody failed at anything, and the
+      // request never reached a conclusion — so it stays queued.
       answerSet(const Left(CancelledFailure()));
       final container = await boot();
 
@@ -259,7 +283,7 @@ void main() {
           .toggleReaction(messageId, '👍');
 
       expect(container.read(reactionNoticeProvider), isNull);
-      expect(reactionsOf(container).groups, isEmpty);
+      expect(reactionsOf(container).isMine('👍'), isTrue);
     });
   });
 

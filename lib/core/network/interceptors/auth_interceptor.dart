@@ -1,3 +1,4 @@
+import 'package:chatix/core/auth/access_token_refresher.dart';
 import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_path.dart';
@@ -5,23 +6,32 @@ import 'package:chatix/core/network/error_envelope.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:dio/dio.dart';
-import 'package:synchronized/synchronized.dart';
 
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor({
     required Dio sideChannel,
     required SecureStorageService secureStorage,
     SessionExpiredSignal? sessionExpiredSignal,
+    AccessTokenRefresher? refresher,
   }) : _sideChannel = sideChannel,
        _secureStorage = secureStorage,
-       _sessionExpiredSignal = sessionExpiredSignal;
+       _sessionExpiredSignal = sessionExpiredSignal,
+       _refresher =
+           refresher ??
+           AccessTokenRefresher(
+             sideChannel: sideChannel,
+             secureStorage: secureStorage,
+             sessionExpiredSignal: sessionExpiredSignal,
+           );
 
   final Dio _sideChannel;
   final SecureStorageService _secureStorage;
 
   final SessionExpiredSignal? _sessionExpiredSignal;
 
-  final Lock _refreshLock = Lock();
+  /// Shared with the socket, so a renewal started by a request and one
+  /// started by a reconnect are the same renewal rather than two.
+  final AccessTokenRefresher _refresher;
 
   static const _refreshPath = '/auth/refresh/';
 
@@ -80,11 +90,13 @@ class AuthInterceptor extends QueuedInterceptor {
     }
 
     if (newToken == null) {
+      // The refresher has already cleared the token and said so — it is the
+      // one that knows whether a refusal was terminal. Saying it twice would
+      // reach the session-expiry listeners twice.
       Logger.info(
         'AuthInterceptor: refresh rejected, session is over '
         '(${err.requestOptions.path})',
       );
-      await _endSession(SessionExpiredReason.refreshFailed);
       handler.next(err);
       return;
     }
@@ -148,62 +160,11 @@ class AuthInterceptor extends QueuedInterceptor {
 
   Future<String?> _refreshOrReuse(RequestOptions options) {
     final sentWith = options.headers[_authHeader] as String?;
+    final sentToken = sentWith != null && sentWith.startsWith(_bearerPrefix)
+        ? sentWith.substring(_bearerPrefix.length)
+        : null;
 
-    return _refreshLock.synchronized(() async {
-      final stored = await _secureStorage.read(
-        key: AppConstants.accessTokenKey,
-      );
-      if (stored != null &&
-          stored.isNotEmpty &&
-          '$_bearerPrefix$stored' != sentWith) {
-        Logger.debug(
-          'AuthInterceptor: reusing the token a sibling request just '
-          'refreshed (${options.path})',
-        );
-        return stored;
-      }
-      return _performRefresh();
-    });
-  }
-
-  Future<String?> _performRefresh() async {
-    try {
-      final response = await _sideChannel.post<dynamic>(
-        _refreshPath,
-        options: Options(extra: {'skipAuthRefresh': true}),
-      );
-      final accessToken = decodeResponseBody(response.data)?['access_token'];
-      if (accessToken is! String || accessToken.isEmpty) {
-        return null;
-      }
-
-      await _secureStorage.write(
-        key: AppConstants.accessTokenKey,
-        value: accessToken,
-      );
-      return accessToken;
-    } on DioException catch (e) {
-      if (_isRefreshTerminalFailure(e)) {
-        return null;
-      }
-      rethrow;
-    }
-  }
-
-  bool _isRefreshTerminalFailure(DioException err) {
-    final statusCode = err.response?.statusCode;
-    final code = _readErrorCode(err.response?.data);
-
-    if (statusCode == 404 && code == 'NOT_FOUND_OR_INACTIVE_SESSION') {
-      return true;
-    }
-
-    if (statusCode == 400 &&
-        (code == 'INVALID_TOKEN' || code == 'EXPIRED_TOKEN')) {
-      return true;
-    }
-
-    return false;
+    return _refresher.refresh(knownStale: sentToken);
   }
 
   Future<void> _endSession(SessionExpiredReason reason) async {

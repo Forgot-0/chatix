@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/network/request_cancellation.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -13,7 +16,7 @@ class UserSearchField extends ConsumerStatefulWidget {
     super.key,
     required this.onSelected,
     this.excludedUserIds = const {},
-    this.labelText = 'Search by username',
+    this.labelText = 'Search by name or @username',
     this.autofocus = false,
     this.debounce = const Duration(milliseconds: 300),
   });
@@ -31,6 +34,10 @@ class UserSearchField extends ConsumerStatefulWidget {
 }
 
 class _UserSearchFieldState extends ConsumerState<UserSearchField> {
+  /// Below this the server answers 422 rather than an empty page
+  /// (api-docs §4.2), so the field waits instead of asking.
+  static const int _minQueryLength = GetProfilesUseCase.minQueryLength;
+
   final _controller = TextEditingController();
 
   Timer? _debounce;
@@ -38,38 +45,65 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
   bool _isLoading = false;
   String? _error;
 
+  /// Set while a query is typed but still too short to send.
+  bool _needsMoreCharacters = false;
+
   int _requestId = 0;
+  RequestCancellation? _inFlight;
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _inFlight?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   void _onChanged(String value) {
     _debounce?.cancel();
+    // Whatever is still on the wire answers an older query.
+    _inFlight?.cancel();
 
     final query = value.trim();
     if (query.isEmpty) {
       setState(() {
         _results = const [];
         _isLoading = false;
+        _needsMoreCharacters = false;
         _error = null;
       });
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (query.length < _minQueryLength) {
+      setState(() {
+        _results = const [];
+        _isLoading = false;
+        _needsMoreCharacters = true;
+        _error = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _needsMoreCharacters = false;
+    });
     _debounce = Timer(widget.debounce, () => _search(query));
   }
 
   Future<void> _search(String query) async {
     final requestId = ++_requestId;
 
+    final cancellation = RequestCancellation();
+    _inFlight = cancellation;
+
+    // One `q` matches username OR display_name server-side (api-docs §4.2),
+    // so a person is found by either without the client firing two requests
+    // against a 20/min budget and merging the answers.
     final result = await ref
         .read(getProfilesUseCaseProvider)
-        .execute(username: query, pageSize: 20);
+        .execute(q: query, pageSize: 20, cancellation: cancellation);
 
     if (!mounted || requestId != _requestId) return;
 
@@ -77,6 +111,8 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
       _isLoading = false;
       result.match(
         (failure) {
+          // The search this one replaced is nobody's error to see.
+          if (failure is CancelledFailure) return;
           _error = friendlyFailureMessage(
             failure,
             fallback: AppLocalizations.of(context).peopleSearchFailed,
@@ -139,6 +175,19 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
   }
 
   Widget _buildResults(ThemeData theme) {
+    if (_needsMoreCharacters) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(
+          'Type at least $_minQueryLength characters to search.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
     if (_isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
@@ -185,7 +234,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
               textAlign: TextAlign.center,
             ),
             Text(
-              'Search matches usernames exactly as they are registered.',
+              'Search matches any part of a name or @username.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -232,7 +281,7 @@ class MultiUserSearchField extends StatelessWidget {
     required this.selected,
     required this.onAdd,
     required this.onRemove,
-    this.labelText = 'Add people by username',
+    this.labelText = 'Add people by name or @username',
     this.helperText,
   });
 

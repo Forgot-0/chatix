@@ -81,6 +81,17 @@ void main() {
       expect(result.getRight().toNullable()?.id, 7);
     });
 
+    test('fetchMyProfile uses the GetOrCreate route, not an id', () async {
+      stubGet(tProfileJson);
+
+      final result = await dataSource.fetchMyProfile();
+
+      // api-docs §4.1: `/profiles/my/` is declared above `/{profile_id}/` and
+      // creates the row when the auth.user.verified consumer has not yet.
+      expect(capturedGetPath(), '/profiles/my/');
+      expect(result.getRight().toNullable()?.id, 7);
+    });
+
     test('reads profile links from `links` (api-docs §4.6 rename)', () async {
       stubGet(tProfileJson);
 

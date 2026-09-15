@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
@@ -14,6 +13,8 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_window.dart';
+import 'package:chatix/features/chat/domain/entities/outbox_entry.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_members_provider.dart';
@@ -21,13 +22,26 @@ import 'package:chatix/features/chat/presentation/providers/chat_providers.dart'
 import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_outbox_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/search_providers.dart';
 
 const _pageSize = 30;
-const _uuid = Uuid();
 
+/// How much of a chat is drawn from the cache before the network answers.
+///
+/// A little more than a page, so the first frame is a full screen with
+/// somewhere to scroll rather than exactly one screenful.
+const _cachedWindow = 60;
+
+/// A message the queue is still carrying, as the feed draws it.
+///
+/// A view of an [OutboxEntry], not a second copy of the truth: the queue owns
+/// these, survives the screen and the process, and this is what one of its
+/// entries looks like to a bubble. [idempotencyKey] is the entry's id, which
+/// is also the `Idempotency-Key` the send carries (api-docs §5.4) — the same
+/// value on every retry, so retrying cannot post the message twice.
 class PendingMessage extends Equatable {
   final String idempotencyKey;
 
@@ -37,7 +51,15 @@ class PendingMessage extends Equatable {
 
   final MessageType? messageType;
 
-  final Failure? failure;
+  /// Why the last attempt did not work, if one has not.
+  final String? failureMessage;
+
+  /// How many attempts have been made.
+  final int attempts;
+
+  /// Set when the queue has stopped retrying on its own: from here it is
+  /// Retry or Delete, and nothing happens until one of them is chosen.
+  final bool needsAttention;
 
   const PendingMessage({
     required this.idempotencyKey,
@@ -45,19 +67,31 @@ class PendingMessage extends Equatable {
     this.replyToId,
     this.uploadTokens = const [],
     this.messageType,
-    this.failure,
+    this.failureMessage,
+    this.attempts = 0,
+    this.needsAttention = false,
   });
 
-  PendingMessage copyWith({Failure? failure, bool clearFailure = false}) {
+  /// Null for a queued entry that is not a message — a reaction or a read
+  /// cursor has no bubble.
+  static PendingMessage? fromOutbox(OutboxEntry entry) {
+    final operation = entry.operation;
+    if (operation is! OutboxSendMessage) return null;
+
     return PendingMessage(
-      idempotencyKey: idempotencyKey,
-      content: content,
-      replyToId: replyToId,
-      uploadTokens: uploadTokens,
-      messageType: messageType,
-      failure: clearFailure ? null : (failure ?? this.failure),
+      idempotencyKey: entry.id,
+      content: operation.content,
+      replyToId: operation.replyToId,
+      uploadTokens: operation.uploadTokens,
+      messageType: operation.messageType,
+      failureMessage: entry.failureMessage,
+      attempts: entry.attempts,
+      needsAttention: entry.needsAttention,
     );
   }
+
+  /// Whether this is still on its way rather than stuck.
+  bool get isInFlight => !needsAttention;
 
   @override
   List<Object?> get props => [
@@ -66,7 +100,9 @@ class PendingMessage extends Equatable {
     replyToId,
     uploadTokens,
     messageType,
-    failure,
+    failureMessage,
+    attempts,
+    needsAttention,
   ];
 }
 
@@ -229,9 +265,31 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
 
   StreamSubscription<WSEvent>? _eventSubscription;
 
+  StreamSubscription<ChatSocketStatus>? _statusSubscription;
+
+  StreamSubscription<OutboxDelivery>? _deliverySubscription;
+
   ChatSocketService? _socket;
 
   bool _membershipRefreshInFlight = false;
+
+  bool _refetchInFlight = false;
+
+  Timer? _catchUpTimer;
+
+  /// How much reactions looked like before a queued change to them, kept
+  /// against the id of the entry that changed them, so the one that is
+  /// eventually given up on can be taken back off the screen.
+  final Map<String, MessageReactionsEntity> _reactionRollbacks = {};
+
+  /// How long a connection may be gone before what is on screen stops being
+  /// trustworthy.
+  ///
+  /// Under this, `resume` and `ws.history` close the gap exactly (api-docs
+  /// §6.3). Over it the replay is likelier to be long than short, and a
+  /// single `GET /messages/` is both cheaper and authoritative — it also
+  /// picks up the deletions and edits that a replay cannot describe.
+  static const Duration staleAfter = Duration(minutes: 10);
 
   int? _lastHistoryCursor;
   int _historyPagesFetched = 0;
@@ -257,11 +315,96 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
   Future<ChatDetailState> build() async {
     ref.onDispose(_teardown);
 
+    _watchOutbox();
+
+    // Whatever this device already holds goes on screen first, without
+    // waiting for anything: no await between here and the returned state, so
+    // reopening a chat is a frame, not a request. The network answer follows
+    // and reconciles.
+    final cached = _fromCache();
+    if (cached != null) {
+      _attachRealtime(cached);
+      _watchConnection();
+      _scheduleCatchUp();
+      return cached;
+    }
+
     final loaded = await _load();
 
     _attachRealtime(loaded);
+    _watchConnection();
 
     return loaded;
+  }
+
+  /// The chat as this device last saw it, or null if it has never seen it.
+  ChatDetailState? _fromCache() {
+    final messages = ref
+        .read(getLocalMessagesUseCaseProvider)
+        .execute(_chatId, limit: _cachedWindow);
+    if (messages.isEmpty) return null;
+
+    final oldest = MessageWindow.lowestSeq(messages);
+
+    return ChatDetailState(
+      // `GET /chats/{id}/` has not answered yet, so the header is drawn from
+      // the list row when the list is up — and from nothing when the chat was
+      // opened by link, which the screen already handles.
+      chat: _listRow(),
+      messages: messages,
+      // The cached window is a window: there is older history behind it
+      // unless it reaches the first message of the chat.
+      nextCursor: oldest,
+      hasNext: oldest != null && oldest > 1,
+      myUserId: ref.read(authProvider).value?.id,
+      pending: _pendingOf(ref.read(chatOutboxProvider)),
+    );
+  }
+
+  /// Starts the catch-up once this build has settled.
+  ///
+  /// A timer rather than a bare call, because the cached state is still on
+  /// its way through `build` at this point: anything written to `state`
+  /// before that lands is overwritten by the very value being returned here.
+  /// Timers run after the microtask queue drains, which is after that.
+  void _scheduleCatchUp() {
+    _catchUpTimer = Timer(Duration.zero, () => unawaited(_catchUp()));
+  }
+
+  /// Brings the cached window up to date over the network.
+  ///
+  /// A failure here is not an error state: the screen is already drawn, and
+  /// the honest answer to "no network" is the chat as it was, not a blank
+  /// page with a message about connectivity.
+  Future<void> _catchUp() async {
+    final refreshed = await AsyncValue.guard(_load);
+
+    final loaded = refreshed.value;
+    if (loaded == null) {
+      Logger.warning(
+        'ChatDetail($_chatId): opened from cache, catch-up failed '
+        '(${refreshed.error})',
+      );
+      return;
+    }
+
+    _mutate(
+      (s) => s.copyWith(
+        chat: loaded.chat,
+        messages: MessageWindow.reconcile(s.messages, loaded.messages),
+        nextCursor: loaded.nextCursor,
+        hasNext: loaded.hasNext,
+        unreadAnchorSeq: loaded.unreadAnchorSeq,
+        unreadAtOpen: loaded.unreadAtOpen,
+      ),
+    );
+
+    // The socket was subscribed with the cached cursor; now that the newest
+    // page is in, move it on so a replay does not repeat what just arrived.
+    final highest = MessageWindow.highestSeq(state.value?.messages ?? const []);
+    if (highest != null) {
+      ref.read(chatSocketServiceProvider).subscribe(_chatId, lastSeq: highest);
+    }
   }
 
   void _attachRealtime(ChatDetailState loaded) {
@@ -286,9 +429,149 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     );
   }
 
+  /// Follows the queue: what is still on its way, and what became of it.
+  ///
+  /// Two channels because they answer different questions. The list is the
+  /// state — which bubbles are pending right now, including ones queued
+  /// before this screen existed or before this run of the app. The stream is
+  /// the events — a message that landed, a reaction that was given up on.
+  void _watchOutbox() {
+    final outbox = ref.read(chatOutboxProvider.notifier);
+
+    _deliverySubscription = outbox.deliveries.listen(
+      _onDelivery,
+      onError: (Object error, StackTrace stackTrace) {
+        Logger.error('ChatDetail($_chatId): outbox stream error', error, stackTrace);
+      },
+      cancelOnError: false,
+    );
+
+    ref.listen<List<OutboxEntry>>(chatOutboxProvider, (_, queue) {
+      _mutate((s) => s.copyWith(pending: _pendingOf(queue), nextCursor: s.nextCursor));
+    });
+  }
+
+  List<PendingMessage> _pendingOf(List<OutboxEntry> queue) => [
+    for (final entry in queue)
+      if (entry.chatId == _chatId)
+        if (PendingMessage.fromOutbox(entry) case final PendingMessage pending)
+          pending,
+  ];
+
+  Future<void> _onDelivery(OutboxDelivery delivery) async {
+    if (delivery.chatId != _chatId) return;
+
+    final failure = delivery.failure;
+    if (failure != null) {
+      _onDeliveryFailed(delivery, failure);
+      return;
+    }
+
+    _reactionRollbacks.remove(delivery.entry.id);
+
+    final message = delivery.message;
+    if (message == null) return;
+
+    _mutate(
+      (s) => s.copyWith(
+        messages: ChatRealtimeMerge.upsertMessage(s.messages, message),
+        nextCursor: s.nextCursor,
+      ),
+    );
+
+    ref.read(chatSocketServiceProvider).subscribe(_chatId, lastSeq: message.seq);
+
+    // Sending is the one place the client may speak for the reader without
+    // asking the viewport: you have read what you are replying to.
+    reportRead(message.seq);
+  }
+
+  void _onDeliveryFailed(OutboxDelivery delivery, Failure failure) {
+    _reportSlowMode(failure);
+
+    // A retryable failure is not a result. The bubble already says the
+    // message is waiting, the chip is already on the message, and the queue
+    // will try again — undoing either would be describing a defeat that has
+    // not happened.
+    if (!delivery.abandoned) return;
+
+    final before = _reactionRollbacks.remove(delivery.entry.id);
+    if (delivery.entry.operation is! OutboxReaction) return;
+
+    final messageId = (delivery.entry.operation as OutboxReaction).messageId;
+
+    if (before != null) {
+      _rollbackReactions(messageId, before, failure);
+      return;
+    }
+
+    // Queued in an earlier run, so there is no snapshot to go back to: ask
+    // the server what the message actually looks like.
+    unawaited(refreshMessage(messageId));
+    if (failure is! CancelledFailure) {
+      ref.read(reactionNoticeProvider.notifier).report(failure);
+    }
+  }
+
+  /// Watches the connection for outages long enough to invalidate the window.
+  void _watchConnection() {
+    final socket = ref.read(chatSocketServiceProvider);
+
+    _statusSubscription = socket.statusStream.listen((status) {
+      if (status != ChatSocketStatus.ready) return;
+
+      final outage = socket.lastOutage;
+      if (outage == null || outage < staleAfter) return;
+
+      Logger.info(
+        'ChatDetail($_chatId): ${outage.inMinutes} min offline, refetching '
+        'the window instead of replaying it',
+      );
+      unawaited(_refetchWindow());
+    });
+  }
+
+  /// Throws away what is on screen and asks for the newest page again.
+  ///
+  /// The answer to both ways the window can stop being trustworthy: a `seq`
+  /// that jumped, and an outage longer than a replay is worth. Older
+  /// messages already scrolled to are kept — the page is authoritative only
+  /// for the span it covers ([MessageWindow.reconcile]).
+  Future<void> _refetchWindow() async {
+    if (_refetchInFlight) return;
+    _refetchInFlight = true;
+
+    try {
+      final result = await ref
+          .read(getMessagesUseCaseProvider)
+          .execute(_chatId, limit: _pageSize);
+
+      result.match(
+        (failure) => Logger.warning(
+          'ChatDetail($_chatId): window refetch failed (${failure.message})',
+        ),
+        (page) => _mutate(
+          (s) => s.copyWith(
+            messages: MessageWindow.reconcile(s.messages, page.messages),
+            nextCursor: s.isViewingHistory ? s.nextCursor : page.nextCursor,
+            hasNext: s.isViewingHistory ? s.hasNext : page.hasNext,
+          ),
+        ),
+      );
+    } finally {
+      _refetchInFlight = false;
+    }
+  }
+
   void _teardown() {
+    _catchUpTimer?.cancel();
+    _catchUpTimer = null;
     _eventSubscription?.cancel();
     _eventSubscription = null;
+    _statusSubscription?.cancel();
+    _statusSubscription = null;
+    _deliverySubscription?.cancel();
+    _deliverySubscription = null;
     _readCooldown?.cancel();
     _readCooldown = null;
     _socket?.unsubscribe(_chatId);
@@ -318,6 +601,11 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
             clearReplyTo: s.replyTo?.id == event.messageId,
             nextCursor: s.nextCursor,
           ),
+        );
+        unawaited(
+          ref
+              .read(rememberMessagesUseCaseProvider)
+              .forgetMessage(_chatId, event.messageId),
         );
 
       case WsHistory():
@@ -404,7 +692,20 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     // reader is up in the history has not been read, and saying otherwise
     // clears a badge they never looked at. The feed reports it once it is
     // genuinely on screen.
-    _upsertDecodedMessage(event.message);
+    final known = state.value?.messages ?? const <MessageEntity>[];
+
+    final message = _upsertDecodedMessage(event.message);
+    if (message == null) return;
+
+    // A `seq` that skipped means something never arrived — or was deleted
+    // before it ever did. Either way the window on screen is no longer a
+    // description of the chat, and only a fetch can say what is.
+    if (MessageWindow.isGap(known, message)) {
+      Logger.info(
+        'ChatDetail($_chatId): seq gap before ${message.seq}, refetching',
+      );
+      unawaited(_refetchWindow());
+    }
   }
 
   MessageEntity? _upsertDecodedMessage(Map<String, dynamic> raw) {
@@ -417,6 +718,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         nextCursor: s.nextCursor,
       ),
     );
+
+    _remember([message]);
     return message;
   }
 
@@ -447,6 +750,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
         }
         return s.copyWith(messages: messages, nextCursor: s.nextCursor);
       });
+
+      _remember(decoded);
     }
 
     _continueHistory(event);
@@ -612,27 +917,49 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       ),
     );
 
-    final result = isRemoval
-        ? await ref
-              .read(removeReactionUseCaseProvider)
-              .execute(_chatId, messageId, emoji, current: before)
-        : await ref
-              .read(setReactionUseCaseProvider)
-              .execute(
-                _chatId,
-                messageId,
-                emoji,
-                current: before,
-                policy: policy,
-              );
+    await _queueReaction(
+      messageId,
+      isRemoval ? OutboxReactionAction.remove : OutboxReactionAction.set,
+      before,
+      emoji: emoji,
+    );
+  }
 
-    result.match((failure) {
-      Logger.warning(
-        'ChatDetail($_chatId): reaction $emoji on $messageId failed '
-        '(${failure.message})',
-      );
-      _rollbackReactions(messageId, before, failure);
-    }, (_) {});
+  /// Puts a reaction change in the queue and takes one pass at sending it.
+  ///
+  /// The chip is already on the message by the time this is called. What the
+  /// queue adds is that it stays there: a tap made with no connection is not
+  /// a tap that failed, it is a tap that has not gone out yet, and it goes
+  /// out when the connection comes back — or after a restart, if that is how
+  /// long it takes.
+  Future<void> _queueReaction(
+    String messageId,
+    OutboxReactionAction action,
+    MessageReactionsEntity before, {
+    String? emoji,
+    List<String> emojis = const [],
+  }) async {
+    final outbox = ref.read(chatOutboxProvider.notifier);
+
+    final entry = outbox.enqueueReaction(
+      _chatId,
+      messageId,
+      action,
+      emoji: emoji,
+      emojis: emojis,
+    );
+
+    // Collapsing can cancel a change outright — a reaction added and taken
+    // back before either left the device. Nothing will be delivered for it,
+    // so nothing needs to be remembered to undo.
+    final queued = ref
+        .read(chatOutboxProvider)
+        .any((candidate) => candidate.id == entry.id);
+    if (queued) {
+      _reactionRollbacks.putIfAbsent(entry.id, () => before);
+    }
+
+    await outbox.drain();
   }
 
   Future<void> replaceReactions(String messageId, List<String> emojis) async {
@@ -641,7 +968,15 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
 
     final before = current.reactionsFor(messageId);
     final myUserId = current.myUserId;
+
+    // The policy check used to happen inside the use case, on the way to the
+    // request. The request is now a queue entry that may not go out for a
+    // while, so what the chat forbids has to be settled here — before the
+    // chip is drawn, not after it has been sitting there for a minute.
     final policy = current.chat?.reactionPolicy;
+    if (policy != null && emojis.any((emoji) => !policy.isAllowed(emoji))) {
+      return;
+    }
 
     _mutate(
       (s) => s.copyWith(
@@ -657,21 +992,12 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       ),
     );
 
-    final result = emojis.isEmpty
-        ? await ref
-              .read(clearReactionsUseCaseProvider)
-              .execute(_chatId, messageId, current: before)
-        : await ref
-              .read(replaceReactionsUseCaseProvider)
-              .execute(_chatId, messageId, emojis, policy: policy);
-
-    result.match((failure) {
-      Logger.warning(
-        'ChatDetail($_chatId): replacing reactions on $messageId failed '
-        '(${failure.message})',
-      );
-      _rollbackReactions(messageId, before, failure);
-    }, (_) {});
+    await _queueReaction(
+      messageId,
+      emojis.isEmpty ? OutboxReactionAction.clear : OutboxReactionAction.replace,
+      before,
+      emojis: emojis,
+    );
   }
 
   /// Puts the message back the way it was, and says so once.
@@ -727,6 +1053,19 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     ref
         .read(messageCacheStoreProvider)
         .remember(_chatId, messages, reconcile: true);
+  }
+
+  /// Writes messages that reached the screen without passing through a
+  /// repository call — everything the socket pushed.
+  ///
+  /// Only those: a page fetched over REST is written down by the repository
+  /// on its way here, and writing the whole window again on every reaction
+  /// or read would be a disk write per tap.
+  void _remember(List<MessageEntity> messages) {
+    if (messages.isEmpty) return;
+    unawaited(
+      ref.read(rememberMessagesUseCaseProvider).execute(_chatId, messages),
+    );
   }
 
   Future<void> refresh() async {
@@ -986,116 +1325,36 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     final current = state.value;
     if (current == null) return;
 
-    final pending = PendingMessage(
-      idempotencyKey: _uuid.v4(),
+    final replyToId = current.replyTo?.id;
+
+    // The reply banner goes first, before the queue announces the new
+    // pending bubble — the announcement rebuilds the state, and clearing the
+    // banner afterwards would be writing an older copy of it back.
+    state = AsyncValue.data(
+      current.copyWith(clearReplyTo: true, nextCursor: current.nextCursor),
+    );
+
+    final outbox = ref.read(chatOutboxProvider.notifier);
+    outbox.enqueueMessage(
+      _chatId,
       content: content,
-      replyToId: current.replyTo?.id,
-      uploadTokens: uploadTokens,
+      replyToId: replyToId,
       messageType: messageType,
+      uploadTokens: uploadTokens,
     );
 
-    state = AsyncValue.data(
-      current.copyWith(
-        pending: [...current.pending, pending],
-        clearReplyTo: true,
-        nextCursor: current.nextCursor,
-      ),
-    );
-
-    await _attemptSend(pending);
+    await outbox.drain();
   }
 
-  Future<void> retry(PendingMessage message) async {
-    final current = state.value;
-    if (current == null) return;
+  /// Tries a stuck message again, at a person's asking.
+  Future<void> retry(PendingMessage message) =>
+      ref.read(chatOutboxProvider.notifier).retry(message.idempotencyKey);
 
-    state = AsyncValue.data(
-      current.copyWith(
-        pending: [
-          for (final p in current.pending)
-            if (p.idempotencyKey == message.idempotencyKey)
-              p.copyWith(clearFailure: true)
-            else
-              p,
-        ],
-        nextCursor: current.nextCursor,
-      ),
-    );
-
-    await _attemptSend(message);
-  }
-
+  /// Throws a stuck message away unsent.
   void discard(PendingMessage message) {
-    final current = state.value;
-    if (current == null) return;
-    state = AsyncValue.data(
-      current.copyWith(
-        pending: current.pending
-            .where((p) => p.idempotencyKey != message.idempotencyKey)
-            .toList(),
-        nextCursor: current.nextCursor,
-      ),
+    unawaited(
+      ref.read(chatOutboxProvider.notifier).discard(message.idempotencyKey),
     );
-  }
-
-  Future<void> _attemptSend(PendingMessage pending) async {
-    final result = await ref
-        .read(sendMessageUseCaseProvider)
-        .execute(
-          _chatId,
-          content: pending.content,
-          replyToId: pending.replyToId,
-          uploadTokens: pending.uploadTokens.isEmpty
-              ? null
-              : pending.uploadTokens,
-          messageType: pending.messageType,
-          idempotencyKey: pending.idempotencyKey,
-        );
-
-    result.match(_reportSlowMode, (_) {});
-
-    final current = state.value;
-    if (current == null) return;
-
-    state = result.fold(
-      (failure) => AsyncValue.data(
-        current.copyWith(
-          pending: [
-            for (final p in current.pending)
-              if (p.idempotencyKey == pending.idempotencyKey)
-                p.copyWith(failure: failure)
-              else
-                p,
-          ],
-          nextCursor: current.nextCursor,
-        ),
-      ),
-      (message) {
-        return AsyncValue.data(
-          current.copyWith(
-            messages: ChatRealtimeMerge.upsertMessage(
-              current.messages,
-              message,
-            ),
-            pending: current.pending
-                .where((p) => p.idempotencyKey != pending.idempotencyKey)
-                .toList(),
-            nextCursor: current.nextCursor,
-          ),
-        );
-      },
-    );
-
-    final sent = result.getRight().toNullable();
-
-    if (sent != null) {
-      ref.read(chatSocketServiceProvider).subscribe(_chatId, lastSeq: sent.seq);
-    }
-
-    // Sending is the one place the client may speak for the reader without
-    // asking the viewport: you have read what you are replying to.
-    final sentSeq = sent?.seq;
-    if (sentSeq != null) reportRead(sentSeq);
   }
 
   /// Hands a slow-mode refusal to the composer, which owns the clock.
@@ -1153,17 +1412,13 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     _queuedReadSeq = null;
     _lastReadSentAt = DateTime.now();
 
-    unawaited(
-      ref.read(markReadUseCaseProvider).execute(_chatId, seq).then((result) {
-        result.match(
-          (failure) => Logger.warning(
-            'ChatDetail($_chatId): read up to $seq not recorded '
-            '(${failure.message})',
-          ),
-          (_) {},
-        );
-      }),
-    );
+    // Queued rather than sent, for the case the throttle cannot help with:
+    // reading a chat with no connection. The cursor is kept, collapsed with
+    // whatever else is queued for this chat, and reported once — with the
+    // furthest seq — when there is a connection to report it on.
+    final outbox = ref.read(chatOutboxProvider.notifier);
+    outbox.enqueueRead(_chatId, seq);
+    unawaited(outbox.drain());
   }
 
   void _flushRead() {
@@ -1250,6 +1505,12 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     // Read state is taken from the chat exactly once. A refresh later in the
     // session re-fetches a cursor we ourselves have moved, and adopting it
     // would drag the divider down the screen mid-read.
+    // What this device already told the server, so a restart does not
+    // re-report the same cursor on the first scroll.
+    _reportedReadSeq ??= ref
+        .read(rememberMessagesUseCaseProvider)
+        .reportedReadSeq(_chatId);
+
     if (!_unreadFrozen) {
       _unreadFrozen = true;
 
@@ -1273,6 +1534,10 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       nextCursor: page.nextCursor,
       hasNext: page.hasNext,
       myUserId: myUserId,
+      // A message queued before this screen existed — in this run or an
+      // earlier one — belongs at the bottom of the feed from the first frame,
+      // not from whenever the queue next moves.
+      pending: _pendingOf(ref.read(chatOutboxProvider)),
       unreadAnchorSeq: _unreadAnchorSeq,
       unreadAtOpen: _unreadAtOpen,
     );

@@ -1120,6 +1120,12 @@ abstract class AppLocalizations {
   /// **'Search by username'**
   String get searchByUsername;
 
+  /// People search placeholder: one field matches display name or username
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or @username'**
+  String get searchPeopleHint;
+
   /// Profile list error
   ///
   /// In en, this message translates to:
@@ -1461,6 +1467,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load chats'**
   String get chatsLoadFailedShort;
+
+  /// Shown on a queued message that is between retries
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to send'**
+  String get messageWaitingToSend;
+
+  /// Fallback label on a message the queue gave up on
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent'**
+  String get messageNotSent;
+
+  /// Connection strip: the app is reaching the chat gateway
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connectionBusy;
+
+  /// Connection strip: there is no network to reach the gateway over
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for network'**
+  String get connectionWaitingForNetwork;
+
+  /// Settings entry, shown only while protocol recording is on
+  ///
+  /// In en, this message translates to:
+  /// **'Connection diagnostics'**
+  String get wsDiagnostics;
+
+  /// How much of the WebSocket session has been captured
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No frames recorded} =1{1 frame recorded} other{{count} frames recorded}}'**
+  String wsDiagnosticsFrames(int count);
+
+  /// Confirmation after copying the WebSocket session dump
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics copied'**
+  String get wsDiagnosticsCopied;
 
   /// Drops a failed pending message
   ///

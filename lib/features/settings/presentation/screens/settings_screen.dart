@@ -1,14 +1,19 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/settings/media_settings.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
+import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/core/websocket/socket_protocol_log.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -51,6 +56,8 @@ class SettingsScreen extends ConsumerWidget {
               title: Text(l10n.designSystem),
               onTap: () => context.push(ComponentShowcaseRoute.location),
             ),
+
+          const _WsDiagnosticsTile(),
 
           const Divider(),
 
@@ -311,6 +318,41 @@ class _SectionLabel extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+/// The way a recorded WebSocket session gets off the device.
+///
+/// Only here while `enable_ws_protocol_log` is on, which is also the only
+/// time there is anything to copy — the flag gates the recording and this
+/// entry together, so the app never offers to hand over a dump it does not
+/// have. Copying rather than sharing because a dump belongs in the bug
+/// report that is already being written, and the clipboard is the shortest
+/// path into one.
+class _WsDiagnosticsTile extends ConsumerWidget {
+  const _WsDiagnosticsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(featureFlagServiceProvider)
+        .getBool(kWsProtocolLogFlag, defaultValue: false);
+    if (!enabled) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+    final log = ref.watch(socketProtocolLogProvider);
+
+    return ListTile(
+      leading: const Icon(Icons.cable_outlined),
+      title: Text(l10n.wsDiagnostics),
+      subtitle: Text(l10n.wsDiagnosticsFrames(log.length)),
+      trailing: const Icon(Icons.copy_all_outlined),
+      onTap: () async {
+        await Clipboard.setData(ClipboardData(text: log.dump()));
+        if (!context.mounted) return;
+        AppSnackbar.quiet(context, l10n.wsDiagnosticsCopied);
+      },
     );
   }
 }

@@ -21,6 +21,9 @@ abstract class ProfileRepository {
 
   Future<Either<Failure, ProfileEntity>> getProfile(int profileId);
 
+  /// The caller's own profile, created on the spot if it is not there yet.
+  Future<Either<Failure, ProfileEntity>> getMyProfile();
+
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,

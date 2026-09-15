@@ -4,8 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/storage/cache/attachment_file_cache.dart';
 import 'package:chatix/features/chat/data/datasources/chat_attachment_downloader_impl.dart';
 import 'package:chatix/features/chat/data/datasources/chat_attachment_uploader_impl.dart';
+import 'package:chatix/features/chat/data/repositories/chat_local_repository_impl.dart';
 import 'package:chatix/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/chat_outbox_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_local_chats_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_local_messages_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/remember_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/ban_member_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/change_member_role_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/delete_chat_use_case.dart';
@@ -176,4 +181,24 @@ final replaceReactionsUseCaseProvider = Provider<ReplaceReactionsUseCase>((
 
 final clearReactionsUseCaseProvider = Provider<ClearReactionsUseCase>((ref) {
   return ClearReactionsUseCase(ref.watch(chatRepositoryProvider));
+});
+
+final getLocalChatsUseCaseProvider = Provider<GetLocalChatsUseCase>((ref) {
+  return GetLocalChatsUseCase(ref.watch(chatLocalRepositoryProvider));
+});
+
+final getLocalMessagesUseCaseProvider = Provider<GetLocalMessagesUseCase>((
+  ref,
+) {
+  return GetLocalMessagesUseCase(ref.watch(chatLocalRepositoryProvider));
+});
+
+final rememberMessagesUseCaseProvider = Provider<RememberMessagesUseCase>((
+  ref,
+) {
+  return RememberMessagesUseCase(ref.watch(chatLocalRepositoryProvider));
+});
+
+final chatOutboxUseCaseProvider = Provider<ChatOutboxUseCase>((ref) {
+  return ChatOutboxUseCase(ref.watch(chatLocalRepositoryProvider));
 });

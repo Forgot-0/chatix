@@ -585,6 +585,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get searchByUsername => 'ユーザー名で検索';
 
   @override
+  String get searchPeopleHint => '名前または@ユーザー名で検索';
+
+  @override
   String get profilesLoadFailed => 'プロフィールを読み込めませんでした。';
 
   @override
@@ -758,6 +761,35 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get chatsLoadFailedShort => 'チャットを読み込めませんでした';
+
+  @override
+  String get messageWaitingToSend => '送信待ち';
+
+  @override
+  String get messageNotSent => '未送信';
+
+  @override
+  String get connectionBusy => '接続中…';
+
+  @override
+  String get connectionWaitingForNetwork => 'ネットワーク待機中';
+
+  @override
+  String get wsDiagnostics => '接続診断';
+
+  @override
+  String wsDiagnosticsFrames(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count件のフレームを記録',
+      zero: 'フレームの記録なし',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wsDiagnosticsCopied => '診断をコピーしました';
 
   @override
   String get discard => '破棄';

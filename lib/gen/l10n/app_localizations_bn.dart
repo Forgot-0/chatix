@@ -589,6 +589,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get searchByUsername => 'ইউজারনেম দিয়ে খুঁজুন';
 
   @override
+  String get searchPeopleHint => 'নাম বা @ইউজারনেম দিয়ে খুঁজুন';
+
+  @override
   String get profilesLoadFailed => 'প্রোফাইল লোড করা যায়নি।';
 
   @override
@@ -762,6 +765,36 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get chatsLoadFailedShort => 'চ্যাট লোড করা যায়নি';
+
+  @override
+  String get messageWaitingToSend => 'পাঠানোর অপেক্ষায়';
+
+  @override
+  String get messageNotSent => 'পাঠানো হয়নি';
+
+  @override
+  String get connectionBusy => 'সংযোগ করা হচ্ছে…';
+
+  @override
+  String get connectionWaitingForNetwork => 'নেটওয়ার্কের অপেক্ষায়';
+
+  @override
+  String get wsDiagnostics => 'সংযোগ ডায়াগনস্টিকস';
+
+  @override
+  String wsDiagnosticsFrames(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি ফ্রেম রেকর্ড হয়েছে',
+      one: '১টি ফ্রেম রেকর্ড হয়েছে',
+      zero: 'কোনো ফ্রেম রেকর্ড হয়নি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wsDiagnosticsCopied => 'ডায়াগনস্টিকস কপি করা হয়েছে';
 
   @override
   String get discard => 'বাতিল করুন';

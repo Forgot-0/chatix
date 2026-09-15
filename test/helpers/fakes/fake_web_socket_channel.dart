@@ -42,9 +42,37 @@ class FakeWebSocketChannel extends StreamChannelMixin<dynamic>
 
   final FakeWebSocketSink outbound = FakeWebSocketSink();
 
+  /// Everything the client sent, decoded.
+  List<Map<String, dynamic>> get commands => [
+    for (final frame in outbound.sent)
+      if (frame is String)
+        if (jsonDecode(frame) case final Map<String, dynamic> command) command,
+  ];
+
+  /// The `op` of every command sent, in order.
+  List<String> get ops => [
+    for (final command in commands)
+      if (command['op'] case final String op) op,
+  ];
+
   void emit(Map<String, dynamic> frame) => _controller.add(jsonEncode(frame));
 
-  Future<void> dispose() => _controller.close();
+  /// The gateway hanging up, with the code it hung up with.
+  ///
+  /// Close codes are the whole of the socket's error handling — 1001, 1008
+  /// and 1012 mean three different things and lead to three different
+  /// recoveries (api-docs §6.2) — so a fake that cannot report one cannot
+  /// test any of them.
+  void serverClose(int code, [String? reason]) {
+    closeCode = code;
+    closeReason = reason;
+    dispose();
+  }
+
+  Future<void> dispose() async {
+    if (_controller.isClosed) return;
+    await _controller.close();
+  }
 
   @override
   Stream<dynamic> get stream => _controller.stream;
@@ -53,10 +81,10 @@ class FakeWebSocketChannel extends StreamChannelMixin<dynamic>
   WebSocketSink get sink => outbound;
 
   @override
-  int? get closeCode => null;
+  int? closeCode;
 
   @override
-  String? get closeReason => null;
+  String? closeReason;
 
   @override
   String? get protocol => null;

@@ -15,6 +15,11 @@ const Map<String, dynamic> kDefaultFeatureFlags = {
   'use_debug_biometrics': false,
   'force_firebase_analytics': false,
 
+  // Records the WebSocket conversation in memory so a session can be read
+  // back from a device that is not running a debug build. Off by default:
+  // it costs memory and puts message text in a buffer.
+  'enable_ws_protocol_log': false,
+
   'cache_ttl_seconds': 3600,
   'api_timeout_ms': 30000,
   'max_retry_count': 3,
@@ -35,12 +40,14 @@ final featureFlagServiceProvider = Provider<FeatureFlagService>((ref) {
 
   service.init();
 
-  final analytics = ref.watch(analyticsProvider);
+  // Read when the event happens rather than watched here. Analytics asks the
+  // flag service whether analytics is switched on, so building it from
+  // inside the flag service's own build is a cycle — and one that only shows
+  // up the first time anything in the app reads a flag.
   service.addListener(() {
-    analytics.logUserAction(
-      action: 'feature_flags_updated',
-      category: 'config',
-    );
+    ref
+        .read(analyticsProvider)
+        .logUserAction(action: 'feature_flags_updated', category: 'config');
   });
 
   ref.onDispose(() {

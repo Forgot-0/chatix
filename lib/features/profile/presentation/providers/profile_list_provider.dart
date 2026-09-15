@@ -10,6 +10,11 @@ class ProfileListState extends Equatable {
   final int page;
   final bool hasNext;
   final bool isLoadingMore;
+
+  /// The single search field: matches `username` OR `display_name` on the
+  /// server and cannot be combined with either (api-docs §4.2).
+  final String? q;
+
   final String? username;
   final String? displayName;
   final List<String>? skills;
@@ -20,6 +25,7 @@ class ProfileListState extends Equatable {
     this.page = 1,
     this.hasNext = false,
     this.isLoadingMore = false,
+    this.q,
     this.username,
     this.displayName,
     this.skills,
@@ -37,6 +43,7 @@ class ProfileListState extends Equatable {
       page: page ?? this.page,
       hasNext: hasNext ?? this.hasNext,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      q: q,
       username: username,
       displayName: displayName,
       skills: skills,
@@ -50,6 +57,7 @@ class ProfileListState extends Equatable {
     page,
     hasNext,
     isLoadingMore,
+    q,
     username,
     displayName,
     skills,
@@ -64,6 +72,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
   }
 
   Future<void> search({
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,
@@ -72,6 +81,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
       () => _fetchFirstPage(
+        q: q,
         username: username,
         displayName: displayName,
         skills: skills,
@@ -85,6 +95,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
       () => _fetchFirstPage(
+        q: previous.q,
         username: previous.username,
         displayName: previous.displayName,
         skills: previous.skills,
@@ -102,6 +113,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
     final result = await ref
         .read(getProfilesUseCaseProvider)
         .execute(
+          q: current.q,
           username: current.username,
           displayName: current.displayName,
           skills: current.skills,
@@ -124,6 +136,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
   }
 
   Future<ProfileListState> _fetchFirstPage({
+    String? q,
     String? username,
     String? displayName,
     List<String>? skills,
@@ -132,6 +145,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
     final result = await ref
         .read(getProfilesUseCaseProvider)
         .execute(
+          q: q,
           username: username,
           displayName: displayName,
           skills: skills,
@@ -145,6 +159,7 @@ class ProfileListController extends AsyncNotifier<ProfileListState> {
         items: page.items,
         page: page.page,
         hasNext: page.hasNext,
+        q: q,
         username: username,
         displayName: displayName,
         skills: skills,

@@ -46,3 +46,13 @@ extension ChatProfileModelX on ChatProfileModel {
     );
   }
 }
+
+extension ChatProfileEntityX on ChatProfileEntity {
+  ChatProfileModel toModel() => ChatProfileModel(
+    userId: userId,
+    username: username,
+    displayName: displayName,
+    avatarUrl: avatarUrl,
+    avatarS3Key: avatarS3Key,
+  );
+}

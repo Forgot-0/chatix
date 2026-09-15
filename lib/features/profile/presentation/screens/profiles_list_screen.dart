@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_list_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -41,9 +42,19 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
   }
 
   void _search(String value) {
+    final needle = value.trim();
+
+    // One `q` covers both the display name and the @username (api-docs §4.2);
+    // below two characters the server answers 422, so an empty needle (the
+    // full directory) is the only thing shorter we send.
+    if (needle.isNotEmpty &&
+        needle.length < GetProfilesUseCase.minQueryLength) {
+      return;
+    }
+
     ref
         .read(profileListProvider.notifier)
-        .search(displayName: value.trim().isEmpty ? null : value.trim());
+        .search(q: needle.isEmpty ? null : needle);
   }
 
   @override
@@ -60,7 +71,7 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
               controller: _searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: AppLocalizations.of(context).searchByName,
+                hintText: AppLocalizations.of(context).searchPeopleHint,
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),

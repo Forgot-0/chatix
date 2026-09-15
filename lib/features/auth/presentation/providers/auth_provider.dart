@@ -8,6 +8,8 @@ import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_providers.dart';
+import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
+import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
 class AuthController extends AsyncNotifier<UserEntity?> {
   @override
@@ -44,6 +46,8 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     }
 
     await _refreshCurrentUser();
+
+    await _ensureMyProfile();
 
     await _registerDeviceForPush();
   }
@@ -118,6 +122,27 @@ class AuthController extends AsyncNotifier<UserEntity?> {
 
     debugPrint('Session ended (${reason.name}) — signing out.');
     state = const AsyncValue.data(null);
+  }
+
+  /// Claims the profile row for this account before any screen asks for it.
+  ///
+  /// The `profiles` consumer creates it from `auth.user.verified`, which
+  /// arrives through Kafka and therefore lands some time after the user can
+  /// already sign in; `GET /profiles/my/` creates it on the spot instead
+  /// (api-docs §4.1). Failing here must not fail the login — the user is
+  /// authenticated either way, and the profile screen will retry.
+  Future<void> _ensureMyProfile() async {
+    final user = state.value;
+    if (user == null) return;
+
+    final result = await ref.read(ensureMyProfileUseCaseProvider).execute();
+
+    result.match(
+      (failure) => debugPrint('Profile bootstrap skipped: ${failure.message}'),
+      // A previous session in this same app run may have cached a 404 for
+      // this id; the row exists now, so let the screen ask again.
+      (_) => ref.invalidate(profileDetailProvider(user.id)),
+    );
   }
 
   Future<void> _registerDeviceForPush() async {

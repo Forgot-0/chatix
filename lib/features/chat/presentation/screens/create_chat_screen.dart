@@ -127,7 +127,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
             onRemove: _removeMember,
             labelText: isDirect
                 ? 'Who do you want to message?'
-                : 'Add people by username',
+                : 'Add people by name or @username',
             helperText: isDirect
                 ? 'Pick exactly one person — a direct chat has two members'
                 : 'Up to ${CreateChatUseCase.maxInitialMembers} people now; '

@@ -101,9 +101,66 @@ class ChatListController extends AsyncNotifier<ChatListState> {
       _eventSubscription = null;
     });
 
+    // The list this device last saw goes up immediately — no await, so the
+    // app opens on the chats rather than on a spinner — and the fetch that
+    // follows replaces it. An empty cache is the only case that still waits.
+    final cached = ref
+        .read(getLocalChatsUseCaseProvider)
+        .execute(archived: isArchive);
+
+    if (cached != null && cached.chats.isNotEmpty) {
+      _attachRealtime();
+      _scheduleCatchUp();
+
+      return ChatListState(
+        items: cached.chats,
+        hasNext: cached.hasNext,
+        nextDate: cached.nextDate,
+        nextChatId: cached.nextChatId,
+      );
+    }
+
     final loaded = await _fetchFirstPage();
     _attachRealtime();
     return loaded;
+  }
+
+  /// Starts the catch-up once this build has settled.
+  ///
+  /// A timer rather than a bare call, because the cached state is still on
+  /// its way through `build` at this point: anything written to `state`
+  /// before that lands is overwritten by the very value being returned here.
+  /// Timers run after the microtask queue drains, which is after that.
+  void _scheduleCatchUp() {
+    final catchUp = Timer(Duration.zero, () => unawaited(_catchUp()));
+    ref.onDispose(catchUp.cancel);
+  }
+
+  /// Replaces the cached list with the current one.
+  ///
+  /// The whole page is taken as written rather than merged: unread counts,
+  /// previews and ordering all move, and the server's copy of all three is
+  /// the right one. A failure leaves the cached list alone — being offline
+  /// with yesterday's chat list is a working app, and an error page is not.
+  Future<void> _catchUp() async {
+    final refreshed = await AsyncValue.guard(_fetchFirstPage);
+
+    final loaded = refreshed.value;
+    if (loaded == null) {
+      Logger.warning(
+        'ChatList: opened from cache, catch-up failed (${refreshed.error})',
+      );
+      return;
+    }
+
+    _mutate(
+      (s) => loaded.copyWith(
+        nextDate: loaded.nextDate,
+        nextChatId: loaded.nextChatId,
+        peerReadSeqs: s.peerReadSeqs,
+        isLoadingMore: false,
+      ),
+    );
   }
 
   void _attachRealtime() {

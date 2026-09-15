@@ -192,7 +192,10 @@ void main() {
 
     final pending = container.read(chatDetailProvider(chatId)).value!.pending;
     expect(pending, hasLength(1));
-    expect(pending.single.failure, isA<ApiFailure>());
+    expect(pending.single.failureMessage, 'Too fast');
+    // 429 is the server saying "later", so the queue keeps the message and
+    // will try again on its own; it is not a message to be rescued by hand.
+    expect(pending.single.needsAttention, isFalse);
 
     // Retrying reuses the key, which is the whole point of generating one
     // per message rather than per attempt (api-docs §5.4).

@@ -1,3 +1,4 @@
+import 'package:chatix/core/auth/access_token_refresher.dart';
 import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_client.dart';
@@ -41,6 +42,19 @@ final authSideChannelDioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
+/// The one renewal path, shared by the HTTP interceptor and the socket.
+///
+/// Both need a fresh access token and neither should ask for one while the
+/// other is already asking — `POST /auth/refresh/` spends a refresh cookie,
+/// and two overlapping calls are two spends.
+final accessTokenRefresherProvider = Provider<AccessTokenRefresher>((ref) {
+  return AccessTokenRefresher(
+    sideChannel: ref.watch(authSideChannelDioProvider),
+    secureStorage: ref.watch(secureStorageServiceProvider),
+    sessionExpiredSignal: ref.read(sessionExpiredSignalProvider),
+  );
+});
+
 @riverpod
 Dio dio(Ref ref) {
   final cookieJar = ref.watch(cookieJarProvider);
@@ -65,6 +79,7 @@ Dio dio(Ref ref) {
       sideChannel: ref.watch(authSideChannelDioProvider),
       secureStorage: secureStorage,
       sessionExpiredSignal: ref.read(sessionExpiredSignalProvider),
+      refresher: ref.watch(accessTokenRefresherProvider),
     ),
   );
   dio.interceptors.add(RetryInterceptor(dio: dio));

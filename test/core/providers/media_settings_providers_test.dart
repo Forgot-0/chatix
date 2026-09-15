@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chatix/core/network/offline_sync_providers.dart';
+import 'package:chatix/core/network/connectivity_providers.dart';
 import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/settings/media_settings.dart';

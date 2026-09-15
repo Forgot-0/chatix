@@ -22,6 +22,9 @@ abstract class ProfileRemoteDataSource {
 
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId);
 
+  /// The caller's own profile, created on the spot if it is not there yet.
+  Future<Either<Failure, ProfileModel>> fetchMyProfile();
+
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
     String? specialization,
@@ -92,6 +95,20 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<Either<Failure, ProfileModel>> fetchProfile(int profileId) async {
     final result = await _apiClient.get('/profiles/$profileId/');
+    return result.map(
+      (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<Either<Failure, ProfileModel>> fetchMyProfile() async {
+    // `/profiles/my/` is declared above `/profiles/{profile_id}/` on the
+    // server, so it is a route of its own rather than profile_id="my".
+    // Unlike every other read it is a GetOrCreate: the profile is normally
+    // written by a consumer of `auth.user.verified` (outbox -> Debezium ->
+    // Kafka), and until that lands `GET /profiles/{id}/` answers 404.
+    // See api-docs §4.1.
+    final result = await _apiClient.get('/profiles/my/');
     return result.map(
       (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
     );

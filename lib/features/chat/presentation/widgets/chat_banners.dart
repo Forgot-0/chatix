@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/network/connectivity_providers.dart';
+import 'package:chatix/core/ui/feedback/connection_strip.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -44,71 +48,84 @@ class ChatBackToLatestBar extends StatelessWidget {
   }
 }
 
-/// What the header says while people are typing.
+/// Whether the app can reach the gateway, said as quietly as possible.
 ///
-/// One name when we can resolve it from the roster, a count otherwise —
-/// never a bare "someone", which reads as a bug when it is the only line.
-class ChatConnectionBanner extends ConsumerWidget {
-  const ChatConnectionBanner({super.key});
+/// Three states and only three: connecting, waiting for a network, and
+/// nothing at all. A connection that is coming back on its own is not news,
+/// so it gets a hairline rather than a banner (see [ConnectionStrip]) — and
+/// it does not even get that until it has been away long enough to be worth
+/// mentioning, which is what [settleDelay] is for. Without it every
+/// half-second blip of a reconnect flashes a strip across the top of the
+/// chat, which reads as breakage rather than as recovery.
+class ChatConnectionStrip extends ConsumerStatefulWidget {
+  const ChatConnectionStrip({super.key});
+
+  /// How long the socket has to be away before the strip appears.
+  ///
+  /// Long enough to cover a reconnect that succeeds immediately — the usual
+  /// one, since the first backoff step is a second — and short enough that a
+  /// real outage is described before the reader starts wondering.
+  static const Duration settleDelay = Duration(milliseconds: 600);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final status =
-        ref.watch(chatSocketStatusProvider).value ??
-        ref.read(chatSocketServiceProvider).status;
+  ConsumerState<ChatConnectionStrip> createState() =>
+      _ChatConnectionStripState();
+}
 
-    final theme = Theme.of(context);
+class _ChatConnectionStripState extends ConsumerState<ChatConnectionStrip> {
+  Timer? _settle;
+  bool _settled = false;
 
-    final (String message, Color background, bool spinner) = switch (status) {
-      ChatSocketStatus.ready ||
-      ChatSocketStatus.connecting => ('', Colors.transparent, false),
+  @override
+  void dispose() {
+    _settle?.cancel();
+    super.dispose();
+  }
 
-      ChatSocketStatus.reconnecting => (
-        'Reconnecting…',
-        theme.colorScheme.secondaryContainer,
-        true,
-      ),
+  /// Starts, stops or leaves the countdown alone, to match the status.
+  void _syncSettle({required bool connected}) {
+    if (connected) {
+      _settle?.cancel();
+      _settle = null;
+      if (_settled) {
+        // Back to normal: the strip goes away on the next frame rather than
+        // inside this build.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _settled = false);
+        });
+      }
+      return;
+    }
 
-      ChatSocketStatus.disconnected => (
-        'Offline — pull to refresh',
-        theme.colorScheme.errorContainer,
-        false,
-      ),
-    };
+    if (_settled || _settle != null) return;
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      child: message.isEmpty
-          ? const SizedBox(width: double.infinity, height: 0)
-          : Container(
-              width: double.infinity,
-              color: background,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (spinner)
-                    const SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  else
-                    Icon(
-                      Icons.cloud_off_outlined,
-                      size: 14,
-                      color: theme.colorScheme.onErrorContainer,
-                    ),
-                  const SizedBox(width: 8),
-                  Text(
-                    message,
-                    style: theme.textTheme.bodySmall,
-                    semanticsLabel: message,
-                  ),
-                ],
-              ),
-            ),
+    _settle = Timer(ChatConnectionStrip.settleDelay, () {
+      _settle = null;
+      if (mounted) setState(() => _settled = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    final status = ref.watch(chatSocketStateProvider);
+
+    final connected = status == ChatSocketStatus.ready;
+    _syncSettle(connected: connected);
+
+    // No link at all is the reader's own network, and the app cannot hurry
+    // it. Anything else is the app's problem and reads as work in progress.
+    final hasLink = ref.watch(hasNetworkLinkProvider);
+
+    final waiting = !hasLink || status == ChatSocketStatus.disconnected;
+
+    return ConnectionStrip(
+      visible: !connected && _settled,
+      tone: waiting
+          ? ConnectionStripTone.waiting
+          : ConnectionStripTone.working,
+      label: waiting ? l10n.connectionWaitingForNetwork : l10n.connectionBusy,
     );
   }
 }

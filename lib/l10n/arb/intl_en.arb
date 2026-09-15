@@ -745,6 +745,10 @@
   "@searchByUsername": {
     "description": "Member search placeholder"
   },
+  "searchPeopleHint": "Search by name or @username",
+  "@searchPeopleHint": {
+    "description": "People search placeholder: one field matches display name or username"
+  },
   "profilesLoadFailed": "Could not load profiles.",
   "@profilesLoadFailed": {
     "description": "Profile list error"
@@ -982,6 +986,39 @@
   "chatsLoadFailedShort": "Could not load chats",
   "@chatsLoadFailedShort": {
     "description": "Forward picker error"
+  },
+  "messageWaitingToSend": "Waiting to send",
+  "@messageWaitingToSend": {
+    "description": "Shown on a queued message that is between retries"
+  },
+  "messageNotSent": "Not sent",
+  "@messageNotSent": {
+    "description": "Fallback label on a message the queue gave up on"
+  },
+  "connectionBusy": "Connecting…",
+  "@connectionBusy": {
+    "description": "Connection strip: the app is reaching the chat gateway"
+  },
+  "connectionWaitingForNetwork": "Waiting for network",
+  "@connectionWaitingForNetwork": {
+    "description": "Connection strip: there is no network to reach the gateway over"
+  },
+  "wsDiagnostics": "Connection diagnostics",
+  "@wsDiagnostics": {
+    "description": "Settings entry, shown only while protocol recording is on"
+  },
+  "wsDiagnosticsFrames": "{count, plural, =0{No frames recorded} =1{1 frame recorded} other{{count} frames recorded}}",
+  "@wsDiagnosticsFrames": {
+    "description": "How much of the WebSocket session has been captured",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wsDiagnosticsCopied": "Diagnostics copied",
+  "@wsDiagnosticsCopied": {
+    "description": "Confirmation after copying the WebSocket session dump"
   },
   "discard": "Discard",
   "@discard": {

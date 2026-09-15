@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/features/profile/data/datasources/avatar_uploader_impl.dart';
 import 'package:chatix/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:chatix/features/profile/domain/usecases/add_contact_use_case.dart';
+import 'package:chatix/features/profile/domain/usecases/ensure_my_profile_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profile_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/domain/usecases/remove_contact_use_case.dart';
@@ -14,6 +15,10 @@ final getProfilesUseCaseProvider = Provider<GetProfilesUseCase>((ref) {
 
 final getProfileUseCaseProvider = Provider<GetProfileUseCase>((ref) {
   return GetProfileUseCase(ref.watch(profileRepositoryProvider));
+});
+
+final ensureMyProfileUseCaseProvider = Provider<EnsureMyProfileUseCase>((ref) {
+  return EnsureMyProfileUseCase(ref.watch(profileRepositoryProvider));
 });
 
 final updateProfileUseCaseProvider = Provider<UpdateProfileUseCase>((ref) {

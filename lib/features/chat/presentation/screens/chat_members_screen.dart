@@ -441,7 +441,7 @@ class _AddMemberDialog extends StatelessWidget {
         width: double.maxFinite,
         child: UserSearchField(
           autofocus: true,
-          labelText: AppLocalizations.of(context).searchByUsername,
+          labelText: AppLocalizations.of(context).searchPeopleHint,
           excludedUserIds: excludedUserIds,
           onSelected: (profile) => Navigator.of(context).pop(profile.id),
         ),

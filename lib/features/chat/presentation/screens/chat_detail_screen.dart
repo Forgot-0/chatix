@@ -192,7 +192,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     return Column(
       children: [
-        const ChatConnectionBanner(),
+        const ChatConnectionStrip(),
         if (state.isRealtimeRejected) const ChatRealtimeRejectedBanner(),
         Expanded(
           child: ChatFeed(

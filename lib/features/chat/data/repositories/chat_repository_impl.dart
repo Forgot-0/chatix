@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:chatix/features/chat/data/datasources/chat_rest_data_source.dart';
 import 'package:chatix/features/chat/data/models/attachment_model.dart';
 import 'package:chatix/features/chat/data/models/call_token_model.dart';
@@ -17,10 +18,26 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/domain/repositories/chat_repository.dart';
 
+/// The repository that decides where an answer comes from.
+///
+/// Reads that can be answered from the device are answered from the device
+/// and then repeated over the network — the `local*` methods are the first
+/// half of that, and every network read that succeeds writes what it learned
+/// back down on its way out. Nothing above this line knows there is a store
+/// at all: a use case asks for messages, and whether the answer travelled is
+/// not part of the question.
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRestDataSource _remote;
+  final ChatLocalDataSource _local;
 
-  ChatRepositoryImpl(this._remote);
+  ChatRepositoryImpl(this._remote, this._local);
+
+  /// How many messages of one chat are written back per page.
+  ///
+  /// The page size the screen opens with is 30 (api-docs §5.4); keeping a
+  /// little more than that means the first paint from the cache is a full
+  /// screen with room to scroll, not a screenful exactly.
+  static const int localMessageWindow = 60;
 
   @override
   Future<Either<Failure, ChatsPage>> getChats({
@@ -35,6 +52,17 @@ class ChatRepositoryImpl implements ChatRepository {
       lastActivityAt: lastActivityAt,
       archived: archived,
     );
+
+    // Only the first page is kept. It is the one a cold start draws, and the
+    // ones after it are scroll-back that the list will ask for again anyway
+    // — storing them would mean keeping a cursor chain consistent for no
+    // gain.
+    final isFirstPage = lastChatId == null && lastActivityAt == null;
+    final model = result.getRight().toNullable();
+    if (isFirstPage && model != null) {
+      await _rememberChatList(model, archived: archived);
+    }
+
     return result.map(_toChatsPage);
   }
 
@@ -117,16 +145,22 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<Either<Failure, void>> deleteChat(String chatId) =>
-      _remote.deleteChat(chatId);
+  Future<Either<Failure, void>> deleteChat(String chatId) async {
+    final result = await _remote.deleteChat(chatId);
+    if (result.isRight()) await _local.forgetChat(chatId);
+    return result;
+  }
 
   @override
   Future<Either<Failure, void>> joinChat(String chatId) =>
       _remote.joinChat(chatId);
 
   @override
-  Future<Either<Failure, void>> leaveChat(String chatId) =>
-      _remote.leaveChat(chatId);
+  Future<Either<Failure, void>> leaveChat(String chatId) async {
+    final result = await _remote.leaveChat(chatId);
+    if (result.isRight()) await _local.forgetChat(chatId);
+    return result;
+  }
 
   @override
   Future<Either<Failure, MembersPage>> getMembers(
@@ -181,6 +215,7 @@ class ChatRepositoryImpl implements ChatRepository {
       limit: limit,
       cursorMessageSeq: cursorMessageSeq,
     );
+    await _rememberPage(chatId, result.getRight().toNullable());
     return result.map(_toMessagesPage);
   }
 
@@ -195,6 +230,7 @@ class ChatRepositoryImpl implements ChatRepository {
       targetSeq,
       limit: limit,
     );
+    await _rememberPage(chatId, result.getRight().toNullable());
     return result.map(_toMessagesPage);
   }
 
@@ -215,6 +251,7 @@ class ChatRepositoryImpl implements ChatRepository {
       uploadTokens: uploadTokens,
       idempotencyKey: idempotencyKey,
     );
+    await _rememberOne(chatId, result.getRight().toNullable());
     return result.map((model) => model.toEntity());
   }
 
@@ -234,6 +271,7 @@ class ChatRepositoryImpl implements ChatRepository {
     String content,
   ) async {
     final result = await _remote.editMessage(chatId, messageId, content);
+    await _rememberOne(chatId, result.getRight().toNullable());
     return result.map((model) => model.toEntity());
   }
 
@@ -241,7 +279,11 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<Either<Failure, void>> deleteMessage(
     String chatId,
     String messageId,
-  ) => _remote.deleteMessage(chatId, messageId);
+  ) async {
+    final result = await _remote.deleteMessage(chatId, messageId);
+    if (result.isRight()) await _local.deleteMessage(chatId, messageId);
+    return result;
+  }
 
   @override
   Future<Either<Failure, MessageEntity>> forwardMessage({
@@ -258,12 +300,18 @@ class ChatRepositoryImpl implements ChatRepository {
       comment: comment,
       idempotencyKey: idempotencyKey,
     );
+    await _rememberOne(targetChatId, result.getRight().toNullable());
     return result.map((model) => model.toEntity());
   }
 
   @override
-  Future<Either<Failure, void>> markRead(String chatId, int messageSeq) =>
-      _remote.markRead(chatId, messageSeq);
+  Future<Either<Failure, void>> markRead(String chatId, int messageSeq) async {
+    final result = await _remote.markRead(chatId, messageSeq);
+    if (result.isRight()) {
+      await _rememberSeq(chatId, reportedSeq: messageSeq);
+    }
+    return result;
+  }
 
   @override
   Future<Either<Failure, List<AttachmentUploadTicketEntity>>>
@@ -388,8 +436,121 @@ class ChatRepositoryImpl implements ChatRepository {
           .toList(),
     );
   }
+
+  Future<void> _rememberChatList(
+    ListChatsModel model, {
+    required bool archived,
+  }) async {
+    await _local.writeChatList(
+      CachedChatList(
+        chats: [for (final chat in model.chats) chat.toJson()],
+        hasNext: model.hasNext,
+        nextDate: model.nextDate,
+        nextChatId: model.nextChatId,
+        savedAt: DateTime.now(),
+      ),
+      archived: archived,
+    );
+  }
+
+  Future<void> _rememberPage(String chatId, MessagesModel? model) async {
+    if (model == null || model.messages.isEmpty) return;
+    await _remember(chatId, [
+      for (final message in model.messages) message.toEntity(),
+    ]);
+  }
+
+  Future<void> _rememberOne(String chatId, MessageModel? model) async {
+    if (model == null) return;
+    await _remember(chatId, [model.toEntity()]);
+  }
+
+  /// Writes a page down on its way to the caller.
+  ///
+  /// The store is shared with [ChatLocalRepository], which is what reads it
+  /// back: a fetch here is what fills the cache a screen opens on.
+  Future<void> _remember(String chatId, List<MessageEntity> messages) async {
+    if (messages.isEmpty) return;
+
+    await _local.writeMessages(chatId, [
+      for (final message in messages) message.toModel().toJson(),
+    ]);
+
+    var highest = messages.first.seq;
+    for (final message in messages) {
+      if (message.seq > highest) highest = message.seq;
+    }
+    await _rememberSeq(chatId, lastSeq: highest);
+
+    await _rememberAttachments(messages);
+  }
+
+  Future<void> _rememberSeq(
+    String chatId, {
+    int? lastSeq,
+    int? reportedSeq,
+  }) async {
+    if (chatId.isEmpty) return;
+
+    final known =
+        _local.readReadState(chatId) ??
+        ChatReadState(
+          chatId: chatId,
+          lastSeq: 0,
+          reportedSeq: 0,
+          updatedAt: DateTime.now(),
+        );
+
+    // Both cursors only ever move forward. A refetch of an older window, or
+    // a read report racing a later one, must not walk them back — a cursor
+    // that went backwards would replay history the reader has already seen.
+    final nextLast = lastSeq != null && lastSeq > known.lastSeq
+        ? lastSeq
+        : known.lastSeq;
+    final nextReported = reportedSeq != null && reportedSeq > known.reportedSeq
+        ? reportedSeq
+        : known.reportedSeq;
+
+    if (nextLast == known.lastSeq && nextReported == known.reportedSeq) return;
+
+    await _local.writeReadState(
+      known.copyWith(
+        lastSeq: nextLast,
+        reportedSeq: nextReported,
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  /// Files what is known about each attachment, keyed by `s3_key`.
+  ///
+  /// Not the bytes — those are the file cache's business — but the sizes and
+  /// types behind them, which is what lets the media a chat is holding be
+  /// measured and trimmed without opening every file to ask.
+  Future<void> _rememberAttachments(List<MessageEntity> messages) async {
+    for (final message in messages) {
+      for (final attachment in message.attachments) {
+        if (attachment.s3Key.isEmpty) continue;
+        await _local.writeAttachment(
+          CachedAttachment(
+            s3Key: attachment.s3Key,
+            chatId: attachment.chatId,
+            messageId: attachment.messageId ?? message.id,
+            mimeType: attachment.mimeType,
+            originalFilename: attachment.originalFilename,
+            size: attachment.size,
+            cachedAt: DateTime.now(),
+          ),
+        );
+      }
+    }
+  }
+
 }
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  return ChatRepositoryImpl(ref.watch(chatRestDataSourceProvider));
+  return ChatRepositoryImpl(
+    ref.watch(chatRestDataSourceProvider),
+    ref.watch(chatLocalDataSourceProvider),
+  );
 });

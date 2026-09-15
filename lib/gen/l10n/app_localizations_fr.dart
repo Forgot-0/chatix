@@ -595,6 +595,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get searchByUsername => 'Rechercher par identifiant';
 
   @override
+  String get searchPeopleHint => 'Rechercher par nom ou @identifiant';
+
+  @override
   String get profilesLoadFailed => 'Impossible de charger les profils.';
 
   @override
@@ -770,6 +773,36 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get chatsLoadFailedShort => 'Impossible de charger les discussions';
+
+  @override
+  String get messageWaitingToSend => 'En attente d\'envoi';
+
+  @override
+  String get messageNotSent => 'Non envoyé';
+
+  @override
+  String get connectionBusy => 'Connexion…';
+
+  @override
+  String get connectionWaitingForNetwork => 'En attente du réseau';
+
+  @override
+  String get wsDiagnostics => 'Diagnostic de connexion';
+
+  @override
+  String wsDiagnosticsFrames(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count trames enregistrées',
+      one: '1 trame enregistrée',
+      zero: 'Aucune trame enregistrée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wsDiagnosticsCopied => 'Diagnostic copié';
 
   @override
   String get discard => 'Abandonner';

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 
 /// Message text typed into a chat and left there.
@@ -24,7 +25,18 @@ class ChatDraftsController extends Notifier<Map<String, String>> {
       _writeTimer = null;
     });
 
-    return ref.watch(chatLocalPrefsStoreProvider).readDrafts();
+    final store = ref.watch(chatLocalDataSourceProvider);
+    final drafts = store.readDrafts();
+    if (drafts.isNotEmpty) return drafts;
+
+    // Drafts used to live in shared preferences, next to the recent
+    // reactions that still do. An install that predates the chat store has
+    // them there and nowhere else, so they are read across once — the first
+    // write below puts them in their new home.
+    final inherited = ref.read(chatLocalPrefsStoreProvider).readDrafts();
+    if (inherited.isNotEmpty) unawaited(store.writeDrafts(inherited));
+
+    return inherited;
   }
 
   String? of(String chatId) => state[chatId];
@@ -70,7 +82,7 @@ class ChatDraftsController extends Notifier<Map<String, String>> {
 
   Future<void> _persist() async {
     try {
-      await ref.read(chatLocalPrefsStoreProvider).writeDrafts(state);
+      await ref.read(chatLocalDataSourceProvider).writeDrafts(state);
     } catch (error) {
       Logger.warning('Chat drafts: not persisted ($error)');
     }

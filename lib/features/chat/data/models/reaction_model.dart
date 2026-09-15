@@ -139,3 +139,13 @@ extension ReactionUpdateModelX on ReactionUpdateModel {
   List<ReactionGroupEntity> toGroups() =>
       groups.map((g) => g.toEntity()).toList();
 }
+
+extension ReactionGroupEntityX on ReactionGroupEntity {
+  ReactionGroupModel toModel() => ReactionGroupModel(
+    emoji: emoji,
+    count: count,
+    version: version,
+    reactedByMe: reactedByMe,
+    recentUserIds: recentUserIds,
+  );
+}

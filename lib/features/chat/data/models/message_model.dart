@@ -125,3 +125,32 @@ class MessagesModel extends Equatable {
 
   Map<String, dynamic> toJson() => _$MessagesModelToJson(this);
 }
+
+extension MessageEntityX on MessageEntity {
+  /// The DTO this message came from, so it can be written back down.
+  ///
+  /// The round trip has to be exact in both directions: a message is cached
+  /// from whichever source produced it — a REST page, a `ws.history` replay,
+  /// a `new_message` push — and read back into the same feed as the ones
+  /// that never left memory. See [AttachmentEntityX.toModel] for the single
+  /// field that is deliberately not kept.
+  MessageModel toModel() => MessageModel(
+    id: id,
+    chatId: chatId,
+    seq: seq,
+    authorId: authorId,
+    type: type.wire,
+    content: content,
+    replyToId: replyToId,
+    forwardedFromChatId: forwardedFromChatId,
+    forwardedFromMessageId: forwardedFromMessageId,
+    forwardedFromAuthorId: forwardedFromAuthorId,
+    isEdited: isEdited,
+    createdAt: createdAt.toIso8601String(),
+    attachments: [for (final a in attachments) a.toModel()],
+    replyTo: replyTo?.toModel(),
+    forwardedFrom: forwardedFrom?.toModel(),
+    profile: profile?.toModel(),
+    reactions: [for (final r in reactions) r.toModel()],
+  );
+}

@@ -1,7 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chatix/core/network/offline_sync_providers.dart';
+import 'package:chatix/core/network/connectivity_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/settings/media_settings.dart';
 import 'package:chatix/core/settings/media_settings_service.dart';
@@ -30,20 +30,6 @@ final mediaSettingsProvider =
     NotifierProvider<MediaSettingsController, MediaSettings>(
       MediaSettingsController.new,
     );
-
-/// What this device is connected through, now and whenever it changes.
-///
-/// The first reading is taken rather than waited for: `onConnectivityChanged`
-/// only fires on a *change*, so a stream of it alone says nothing at all
-/// until the reader walks into a lift.
-final connectivityStatusProvider = StreamProvider<List<ConnectivityResult>>((
-  ref,
-) async* {
-  final connectivity = ref.watch(connectivityProvider);
-
-  yield await connectivity.checkConnectivity();
-  yield* connectivity.onConnectivityChanged;
-});
 
 /// Whether the current connection is one that is not charged by the
 /// megabyte.

@@ -160,3 +160,31 @@ extension AttachmentDownloadUrlModelX on AttachmentDownloadUrlModel {
     );
   }
 }
+
+extension AttachmentEntityX on AttachmentEntity {
+  /// The DTO this attachment came from.
+  ///
+  /// [withUrl] is off by default because the one field that cannot survive
+  /// being written down is `url`: it is a presigned link with 300 seconds on
+  /// it (api-docs §5.5), so a stored copy is a link that will be dead by the
+  /// time anything reads it. The row keeps `s3_key`, which is what the file
+  /// cache is keyed by and what a fresh link is fetched with.
+  AttachmentModel toModel({bool withUrl = false}) => AttachmentModel(
+    id: id,
+    messageId: messageId,
+    chatId: chatId,
+    uploaderId: uploaderId,
+    attachmentType: attachmentType.wire,
+    attachmentStatus: attachmentStatus.wire,
+    url: withUrl ? url : null,
+    urlExpiresIn: withUrl ? urlExpiresIn : null,
+    s3Key: s3Key,
+    mimeType: mimeType,
+    originalFilename: originalFilename,
+    size: size,
+    width: width,
+    height: height,
+    durationSeconds: durationSeconds,
+    createdAt: createdAt.toIso8601String(),
+  );
+}

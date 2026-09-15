@@ -1,18 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
+import 'package:chatix/features/chat/data/datasources/chat_local_store.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 
 void main() {
-  late InMemoryChatLocalPrefsStore store;
+  late ChatLocalStore store;
+  late InMemoryChatLocalPrefsStore legacyStore;
 
-  setUp(() => store = InMemoryChatLocalPrefsStore());
+  setUp(() {
+    store = inMemoryChatLocalStore();
+    legacyStore = InMemoryChatLocalPrefsStore();
+  });
 
+  /// A run of the app. The store outlives it, the container does not, which
+  /// is what makes "boot twice" a stand-in for a restart.
   ProviderContainer boot() {
     final container = ProviderContainer(
-      overrides: [chatLocalPrefsStoreProvider.overrideWithValue(store)],
+      overrides: [
+        chatLocalDataSourceProvider.overrideWithValue(store),
+        chatLocalPrefsStoreProvider.overrideWithValue(legacyStore),
+      ],
     );
     addTearDown(container.dispose);
     return container;
@@ -76,5 +87,18 @@ void main() {
     );
 
     expect(boot().read(chatDraftProvider('a')), 'unsent');
+  });
+
+  test('drafts written by an older build are carried across once', () async {
+    // They used to live in shared preferences. An install that predates the
+    // chat store has them only there, and losing them on upgrade would mean
+    // losing half-written messages nobody chose to discard.
+    await legacyStore.writeDrafts({'a': 'from the old store'});
+
+    final container = boot();
+    expect(container.read(chatDraftProvider('a')), 'from the old store');
+
+    await container.read(chatDraftsProvider.notifier).flush();
+    expect(store.readDrafts()['a'], 'from the old store');
   });
 }
