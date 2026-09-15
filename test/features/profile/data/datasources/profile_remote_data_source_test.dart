@@ -20,7 +20,10 @@ void main() {
     'bio': null,
     'date_birthday': null,
     'skills': <dynamic>[],
-    'contacts': <dynamic>[],
+    // api-docs §4.3: the DTO field is `links`, not the pre-rename `contacts`.
+    'links': <dynamic>[
+      <String, dynamic>{'profile_id': 7, 'provider': 'github', 'contact': 'me'},
+    ],
   };
 
   setUpAll(() {
@@ -76,6 +79,55 @@ void main() {
 
       expect(result.isRight(), isTrue);
       expect(result.getRight().toNullable()?.id, 7);
+    });
+
+    test('reads profile links from `links` (api-docs §4.6 rename)', () async {
+      stubGet(tProfileJson);
+
+      final result = await dataSource.fetchProfile(7);
+
+      final profile = result.getRight().toNullable();
+      expect(profile?.contacts.single.provider, 'github');
+    });
+
+    test('a page of profiles parses the same DTO', () async {
+      stubGet(<String, dynamic>{
+        'items': <dynamic>[tProfileJson],
+        'total': 1,
+        'page': 1,
+        'page_size': 20,
+      });
+
+      final result = await dataSource.fetchProfiles(q: 'iv');
+
+      expect(result.isRight(), isTrue);
+      expect(result.getRight().toNullable()?.items.single.id, 7);
+    });
+  });
+
+  group('profile links (api-docs §4.6)', () {
+    test('addContact posts to /links/, not the pre-rename path', () async {
+      when(
+        () => apiClient.post(any(), data: any(named: 'data')),
+      ).thenAnswer((_) async => const Right(null));
+
+      await dataSource.addContact(7, provider: 'github', contact: 'me');
+
+      final captured = verify(
+        () => apiClient.post(captureAny(), data: any(named: 'data')),
+      ).captured;
+      expect(captured.single, '/profiles/7/links/');
+    });
+
+    test('removeContact deletes /links/{provider}/', () async {
+      when(() => apiClient.delete(any())).thenAnswer(
+        (_) async => const Right(null),
+      );
+
+      await dataSource.removeContact(7, provider: 'github');
+
+      final captured = verify(() => apiClient.delete(captureAny())).captured;
+      expect(captured.single, '/profiles/7/links/github/');
     });
   });
 }

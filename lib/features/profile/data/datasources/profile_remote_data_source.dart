@@ -149,8 +149,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     required String provider,
     required String contact,
   }) async {
+    // api-docs §4.6: the old `/profiles/{id}/contacts/` path is gone.
     final result = await _apiClient.post(
-      '/profiles/$profileId/contacts/',
+      '/profiles/$profileId/links/',
       data: {'provider': provider, 'contact': contact},
     );
     return result.map((_) {});
@@ -161,8 +162,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     int profileId, {
     required String provider,
   }) async {
+    // api-docs §4.6: the old `/profiles/{id}/{provider}/delete/` path is gone.
     final result = await _apiClient.delete(
-      '/profiles/$profileId/$provider/delete/',
+      '/profiles/$profileId/links/$provider/',
     );
     return result.map((_) {});
   }

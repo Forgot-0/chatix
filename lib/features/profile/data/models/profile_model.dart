@@ -14,6 +14,10 @@ class ProfileModel extends Equatable {
   final String? bio;
   final String? dateBirthday;
   final List<String> skills;
+
+  // The server renamed `Contact` to `ProfileLink`: the DTO field is `links`
+  // (api-docs §4.3/§4.6). The Dart side keeps the `contacts` vocabulary.
+  @JsonKey(name: 'links')
   final List<ContactModel> contacts;
 
   const ProfileModel({

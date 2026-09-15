@@ -25,38 +25,43 @@ class LanguageSelectorWidget extends ConsumerWidget {
           ),
         ),
         const Divider(),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: AppLocalizations.supportedLocales.length,
-          itemBuilder: (context, index) {
-            final locale = AppLocalizations.supportedLocales[index];
-            final isSelected =
-                currentLocale.languageCode == locale.languageCode;
+        // Flexible + a scrollable list: the widget is used both inside a
+        // `Dialog` (loose constraints, list keeps its natural height) and
+        // inside an `Expanded` on LanguageSettingsScreen (tight height — the
+        // list must scroll instead of overflowing the Column).
+        Flexible(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: AppLocalizations.supportedLocales.length,
+            itemBuilder: (context, index) {
+              final locale = AppLocalizations.supportedLocales[index];
+              final isSelected =
+                  currentLocale.languageCode == locale.languageCode;
 
-            return ListTile(
-              title: Text(LocalizationUtils.getLocaleName(locale)),
-              subtitle: Text(locale.languageCode.toUpperCase()),
-              leading: CircleAvatar(
-                child: Text(
-                  locale.languageCode.toUpperCase(),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+              return ListTile(
+                title: Text(LocalizationUtils.getLocaleName(locale)),
+                subtitle: Text(locale.languageCode.toUpperCase()),
+                leading: CircleAvatar(
+                  child: Text(
+                    locale.languageCode.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ),
-              trailing: isSelected
-                  ? const Icon(Icons.check, color: Colors.green)
-                  : null,
-              selected: isSelected,
-              onTap: () async {
-                await ref
-                    .read(persistentLocaleProvider.notifier)
-                    .setLocale(locale);
-                if (onLanguageSelected != null) {
-                  onLanguageSelected!(locale);
-                }
-              },
-            );
-          },
+                trailing: isSelected
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                selected: isSelected,
+                onTap: () async {
+                  await ref
+                      .read(persistentLocaleProvider.notifier)
+                      .setLocale(locale);
+                  if (onLanguageSelected != null) {
+                    onLanguageSelected!(locale);
+                  }
+                },
+              );
+            },
+          ),
         ),
       ],
     );
@@ -81,10 +86,12 @@ class LanguageSelectorDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            LanguageSelectorWidget(
-              onLanguageSelected: (locale) {
-                Navigator.of(context).pop(locale);
-              },
+            Flexible(
+              child: LanguageSelectorWidget(
+                onLanguageSelected: (locale) {
+                  Navigator.of(context).pop(locale);
+                },
+              ),
             ),
             const SizedBox(height: 16),
             TextButton(

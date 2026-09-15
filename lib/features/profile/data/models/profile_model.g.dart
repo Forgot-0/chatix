@@ -16,7 +16,7 @@ ProfileModel _$ProfileModelFromJson(Map<String, dynamic> json) => ProfileModel(
   bio: json['bio'] as String?,
   dateBirthday: json['date_birthday'] as String?,
   skills: (json['skills'] as List<dynamic>).map((e) => e as String).toList(),
-  contacts: (json['contacts'] as List<dynamic>)
+  contacts: (json['links'] as List<dynamic>)
       .map((e) => ContactModel.fromJson(e as Map<String, dynamic>))
       .toList(),
 );
@@ -30,5 +30,5 @@ Map<String, dynamic> _$ProfileModelToJson(ProfileModel instance) =>
       'bio': instance.bio,
       'date_birthday': instance.dateBirthday,
       'skills': instance.skills,
-      'contacts': instance.contacts,
+      'links': instance.contacts,
     };
