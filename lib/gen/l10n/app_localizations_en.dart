@@ -1811,4 +1811,438 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noMessagesFoundHint =>
       'Search looks inside what was said, not at file names or chat titles.';
+
+  @override
+  String get chatSettings => 'Chat settings';
+
+  @override
+  String get chatSettingsNoPermission =>
+      'Only an owner or admin can change this chat';
+
+  @override
+  String get chatNameCannotBeCleared =>
+      'A name cannot be removed once the chat has one';
+
+  @override
+  String chatSlowModeRange(int max) {
+    return '0 to $max seconds';
+  }
+
+  @override
+  String get chatReactionsPickHint => 'Pick the emoji people may react with';
+
+  @override
+  String get chatNotMutedLabel => 'Notifications on';
+
+  @override
+  String get chatMutedToast => 'Notifications off for this chat';
+
+  @override
+  String get chatUnmutedToast => 'Notifications back on for this chat';
+
+  @override
+  String get muteForHour => 'Mute for 1 hour';
+
+  @override
+  String get muteForEightHours => 'Mute for 8 hours';
+
+  @override
+  String get muteForever => 'Mute until I turn it back on';
+
+  @override
+  String get leaveChatOwnerStuck =>
+      'The chat creator cannot leave, and you no longer have permission to delete this chat.';
+
+  @override
+  String get chatInviteLink => 'Invite link';
+
+  @override
+  String get chatInviteLinkHint =>
+      'Anyone signed in to ChatiX can open this link and join. It only opens in the app.';
+
+  @override
+  String get chatInviteLinkCopied => 'Invite link copied';
+
+  @override
+  String get sharedMedia => 'Media';
+
+  @override
+  String get sharedFiles => 'Files';
+
+  @override
+  String get sharedLinks => 'Links';
+
+  @override
+  String get sharedVoice => 'Voice';
+
+  @override
+  String get sharedMediaEmpty => 'No photos or videos here yet';
+
+  @override
+  String get sharedFilesEmpty => 'No files here yet';
+
+  @override
+  String get sharedLinksEmpty => 'No links here yet';
+
+  @override
+  String get sharedVoiceEmpty => 'No voice messages here yet';
+
+  @override
+  String get sharedContentLocalOnly =>
+      'Shows what this device has loaded from the chat — the server has no shared-media index.';
+
+  @override
+  String get chatSettingsUnchanged => 'Nothing has changed yet';
+
+  @override
+  String get membersSearchHint => 'Search members';
+
+  @override
+  String get membersSearchLoadedOnly =>
+      'Only the members loaded so far are searched.';
+
+  @override
+  String membersSearchEmpty(String query) {
+    return 'No one here matches “$query”';
+  }
+
+  @override
+  String get membersLoadMore => 'Load more people';
+
+  @override
+  String get membersSectionAdmins => 'Administration';
+
+  @override
+  String get membersSectionMembers => 'Members';
+
+  @override
+  String get membersSectionBanned => 'Banned members';
+
+  @override
+  String get membersBannedHint =>
+      'Banned people cannot read or write here until the ban is lifted.';
+
+  @override
+  String get membersEmptyTitle => 'No members to show';
+
+  @override
+  String get membersEmptyInvite => 'Add someone to get this chat started.';
+
+  @override
+  String get membersEmptyNoInvite =>
+      'Only members with the invite permission can add people here.';
+
+  @override
+  String get chatRoleOwner => 'Owner';
+
+  @override
+  String get chatRoleAdmin => 'Admin';
+
+  @override
+  String get chatRoleEditor => 'Editor';
+
+  @override
+  String get chatRoleDirect => 'Direct';
+
+  @override
+  String get chatRoleMember => 'Member';
+
+  @override
+  String get chatRoleViewer => 'Viewer';
+
+  @override
+  String get chatRoleUnknown => 'Unknown role';
+
+  @override
+  String get memberMutedBadge => 'Muted';
+
+  @override
+  String get memberBannedBadge => 'Banned';
+
+  @override
+  String get memberOpenProfile => 'Open profile';
+
+  @override
+  String get memberMessagePrivately => 'Message privately';
+
+  @override
+  String memberKickConfirmTitle(String name) {
+    return 'Remove $name?';
+  }
+
+  @override
+  String get memberKickConfirmBody =>
+      'They lose access to this chat, but can be added again later.';
+
+  @override
+  String memberRoleChanged(String name, String role) {
+    return '$name is now $role';
+  }
+
+  @override
+  String memberKicked(String name) {
+    return '$name was removed';
+  }
+
+  @override
+  String memberBannedToast(String name) {
+    return '$name was banned';
+  }
+
+  @override
+  String memberUnbanned(String name) {
+    return 'The ban on $name was lifted';
+  }
+
+  @override
+  String get memberActionFailed => 'That did not go through. Please try again.';
+
+  @override
+  String get roleAssignHint => 'You can only assign roles below your own.';
+
+  @override
+  String get roleOwnerTransferHint =>
+      'Owner is not in the list: the API has no way to hand a chat over.';
+
+  @override
+  String get banForHour => 'For an hour';
+
+  @override
+  String get banForDay => 'For a day';
+
+  @override
+  String get banForWeek => 'For a week';
+
+  @override
+  String get inviteMembersTitle => 'Add people';
+
+  @override
+  String get inviteRoleLabel => 'They join as';
+
+  @override
+  String inviteRoomLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Room for $count more people',
+      one: 'Room for 1 more person',
+      zero: 'This chat is full',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inviteChatFull(int limit) {
+    return 'This chat holds $limit members, and it is full.';
+  }
+
+  @override
+  String inviteAddSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Add $count people',
+      one: 'Add 1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inviteAddedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people added',
+      one: '1 person added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inviteFailedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people could not be added',
+      one: '1 person could not be added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inviteSearchStart =>
+      'Find people by name or @username, then add them all at once.';
+
+  @override
+  String get inviteSelectionFull => 'That is everyone this chat has room for.';
+
+  @override
+  String peopleSearchNoneFound(String query) {
+    return 'No one found for “$query”';
+  }
+
+  @override
+  String get peopleSearchHint =>
+      'Search matches any part of a name or @username.';
+
+  @override
+  String get profileShareAction => 'Share';
+
+  @override
+  String get profileShareCopied => 'Profile link copied';
+
+  @override
+  String get profileBirthday => 'Birthday';
+
+  @override
+  String get profileEmptyTitle => 'Nothing here yet';
+
+  @override
+  String get profileEmptyHintSelf =>
+      'Add a few words about yourself so people know who they are talking to.';
+
+  @override
+  String get profileEmptyHintOther =>
+      'This person has not filled in their profile.';
+
+  @override
+  String get profileAccount => 'Account';
+
+  @override
+  String get profileAccountNoEmail => 'Signed in';
+
+  @override
+  String get profilePhoto => 'Photo';
+
+  @override
+  String get profileNoPhoto => 'No photo yet';
+
+  @override
+  String get profileOpenLinkFailed => 'Could not open this link';
+
+  @override
+  String get profileContactCopied => 'Copied to clipboard';
+
+  @override
+  String get profileCopyAction => 'Copy';
+
+  @override
+  String devicesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count devices',
+      one: '1 device',
+      zero: 'No devices',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get changePhoto => 'Change photo';
+
+  @override
+  String get choosePhoto => 'Choose a photo';
+
+  @override
+  String get avatarCropTitle => 'Move and scale';
+
+  @override
+  String get avatarCropHint => 'Drag to move, pinch to zoom.';
+
+  @override
+  String get avatarCropConfirm => 'Use photo';
+
+  @override
+  String get avatarStagePreparing => 'Preparing…';
+
+  @override
+  String get avatarStageUploading => 'Uploading…';
+
+  @override
+  String get avatarStageConfirming => 'Almost done…';
+
+  @override
+  String get avatarStageProcessing => 'Processing the photo…';
+
+  @override
+  String get avatarStageDone => 'Photo updated';
+
+  @override
+  String get avatarProcessingFailed => 'Could not update the photo';
+
+  @override
+  String get avatarProcessingFailedHint =>
+      'The server did not accept that picture. Try another one.';
+
+  @override
+  String get avatarNotAnImage => 'That file is not an image';
+
+  @override
+  String get avatarTooLarge => 'That picture is too large. Pick a smaller one.';
+
+  @override
+  String get avatarUnreadable => 'That picture could not be opened';
+
+  @override
+  String get profileEditDetails => 'Details';
+
+  @override
+  String get profileEditLinks => 'Links';
+
+  @override
+  String get profileEditLinksHint =>
+      'Links are saved the moment you add or remove one, separately from the form below.';
+
+  @override
+  String get profileNoLinks => 'No links yet';
+
+  @override
+  String get removeLink => 'Remove link';
+
+  @override
+  String get clearDateOfBirth => 'Clear date of birth';
+
+  @override
+  String get specializationHint => 'What you do, in a few words';
+
+  @override
+  String bioCounter(int count, int max) {
+    return '$count/$max';
+  }
+
+  @override
+  String get profileSkillsHint => 'Up to 30 characters each';
+
+  @override
+  String get profileSaved => 'Profile saved';
+
+  @override
+  String get discardChangesTitle => 'Discard changes?';
+
+  @override
+  String get discardChangesMessage =>
+      'Your edits to this profile will be lost.';
+
+  @override
+  String get discardAction => 'Discard';
+
+  @override
+  String get keepEditingAction => 'Keep editing';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get loading => 'Loading…';
+
+  @override
+  String fieldTooLong(int max) {
+    return 'At most $max characters';
+  }
+
+  @override
+  String skillTooLong(String skill, int max) {
+    return '“$skill” is longer than $max characters';
+  }
 }

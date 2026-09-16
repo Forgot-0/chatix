@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_upload_stage.dart';
@@ -8,7 +10,60 @@ import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
+/// How long to wait for the background task that turns an uploaded file
+/// into an avatar.
+///
+/// A provider rather than a constant so a test does not have to spend ten
+/// real seconds proving that a rejected picture is reported (api-docs §4.5).
+class AvatarPollSchedule {
+  const AvatarPollSchedule({
+    this.attempts = 8,
+    this.interval = const Duration(milliseconds: 1250),
+  });
+
+  final int attempts;
+  final Duration interval;
+}
+
+final avatarPollScheduleProvider = Provider<AvatarPollSchedule>(
+  (ref) => const AvatarPollSchedule(),
+);
+
+/// The picture a run of the upload is carrying, kept so the same one can be
+/// sent again without asking the user to find it twice.
+class AvatarAttempt extends Equatable {
+  const AvatarAttempt({
+    required this.profileId,
+    required this.bytes,
+    required this.filename,
+    required this.contentType,
+  });
+
+  final int profileId;
+  final Uint8List bytes;
+  final String filename;
+  final String contentType;
+
+  @override
+  List<Object?> get props => [profileId, filename, contentType, bytes.length];
+}
+
+/// Uploading one avatar, from picking it to knowing whether it stuck.
+///
+/// The last step is the unusual one. `POST /profiles/avatar/upload_complete/`
+/// answers `200` and queues a background task; that task is what checks the
+/// real MIME type and the 5 MB cap, and when it rejects the file nothing is
+/// sent back — the avatar simply never changes (api-docs §4.5, §2.5). So
+/// "done" cannot be claimed when the request returns: the profile is polled
+/// until its `avatars` map changes, and a map that never changes is reported
+/// as a failed upload the user can retry.
 class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
+  AvatarAttempt? _lastAttempt;
+
+  /// The picture the last run tried to send, when that run failed. Null
+  /// while idle, mid-flight, or after a success.
+  AvatarAttempt? get lastAttempt => _lastAttempt;
+
   @override
   Future<AvatarUploadStage?> build() async => null;
 
@@ -17,96 +72,106 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
     required Uint8List bytes,
     required String filename,
     required String contentType,
-  }) async {
-    state = const AsyncValue.loading();
+  }) {
+    return _run(
+      AvatarAttempt(
+        profileId: profileId,
+        bytes: bytes,
+        filename: filename,
+        contentType: contentType,
+      ),
+    );
+  }
 
-    final before =
-        ref.read(profileDetailProvider(profileId)).value?.avatars ??
-        const <String, Map<String, String>>{};
+  /// Sends the picture from the run that just failed, again.
+  Future<void> retry() async {
+    final attempt = _lastAttempt;
+    if (attempt == null) return;
+    await _run(attempt);
+  }
+
+  Future<void> _run(AvatarAttempt attempt) async {
+    state = const AsyncValue.loading();
+    _lastAttempt = attempt;
+
+    final before = await _readAvatars();
 
     final stream = ref
         .read(uploadAvatarUseCaseProvider)
-        .execute(bytes: bytes, filename: filename, contentType: contentType);
+        .execute(
+          bytes: attempt.bytes,
+          filename: attempt.filename,
+          contentType: attempt.contentType,
+        );
 
     await for (final event in stream) {
-      state = event.fold(
-        (failure) => AsyncValue.error(failure, StackTrace.current),
-        (stage) => AsyncValue.data(stage),
-      );
+      final failure = event.getLeft().toNullable();
+      if (failure != null) {
+        state = AsyncValue.error(failure, StackTrace.current);
+        return;
+      }
+      state = AsyncValue.data(event.getRight().toNullable());
     }
 
+    // `done` from the use case only means the confirm request was accepted.
+    // Whether the picture is any good is decided later, by a task nobody can
+    // ask about, so the real answer comes from the poll below.
     if (state.value != AvatarUploadStage.done) return;
 
-    await _awaitProcessing(profileId, before: before);
+    state = const AsyncValue.data(AvatarUploadStage.processing);
+    await _awaitProcessing(attempt.profileId, before: before);
   }
 
-  static const _pollAttempts = 6;
-  static const _pollInterval = Duration(seconds: 2);
-
+  /// Polls until the avatar map changes, or gives up and says so.
   Future<void> _awaitProcessing(
     int profileId, {
-    required Map<String, Map<String, String>> before,
+    required Map<String, Map<String, String>>? before,
   }) async {
-    for (var attempt = 0; attempt < _pollAttempts; attempt++) {
-      await Future<void>.delayed(_pollInterval);
+    final schedule = ref.read(avatarPollScheduleProvider);
+
+    for (var attempt = 0; attempt < schedule.attempts; attempt++) {
+      await Future<void>.delayed(schedule.interval);
       if (!ref.mounted) return;
 
+      final avatars = await _readAvatars();
+      if (!ref.mounted) return;
+
+      if (avatars == null) continue;
+      if (before != null && _sameAvatars(avatars, before)) continue;
+      if (avatars.isEmpty) continue;
+
+      _lastAttempt = null;
+      state = const AsyncValue.data(AvatarUploadStage.done);
       ref.invalidate(profileDetailProvider(profileId));
-
-      final profile = await _readProfile(profileId);
-      if (profile == null) continue;
-
-      if (!_sameAvatars(profile.avatars, before)) return;
+      return;
     }
 
     if (!ref.mounted) return;
 
+    Logger.warning('AvatarUpload: the new avatar never appeared');
+
+    // Deliberately not a message of its own: the UI names this state, and
+    // `AvatarProcessingFailure` is what tells it apart from a transport
+    // error that has a message worth showing.
     state = AsyncValue.error(
-      const ServerFailure(
-        message:
-            "That image couldn't be processed. Please try a different one.",
-      ),
+      const AvatarProcessingFailure(),
       StackTrace.current,
     );
   }
 
-  /// Reads the profile without awaiting `provider.future`.
-  ///
-  /// That future never completes when the provider throws a `Failure` —
-  /// Riverpod only settles it for thrown `Error`s, and a `Failure` is a plain
-  /// Equatable. This loop is wrapped in a retry precisely because the fetch can
-  /// fail (a 404 right after registration is expected, api-docs §4.1), so
-  /// awaiting the future would hang the whole poll instead of retrying.
-  /// The AsyncValue carries the same result and settles either way.
-  Future<ProfileEntity?> _readProfile(int profileId) async {
-    final provider = profileDetailProvider(profileId);
+  /// The avatar map as the server currently has it, or null when it could
+  /// not be read — a failed poll is not a failed upload, so it is skipped
+  /// rather than treated as "unchanged".
+  /// Reads through `GET /profiles/my/`, which needs no id: an avatar can
+  /// only ever be set on one's own profile (api-docs §4.5).
+  Future<Map<String, Map<String, String>>?> _readAvatars() async {
+    final result = await ref.read(ensureMyProfileUseCaseProvider).execute();
 
-    // Keep the provider alive while it loads; a bare read would let it dispose
-    // between polls and restart from scratch.
-    final subscription = ref.listen(provider, (_, _) {});
-    try {
-      for (var tick = 0; tick < _readTicks; tick++) {
-        final value = ref.read(provider);
-
-        if (value.hasValue) return value.value;
-        if (value.hasError) {
-          Logger.warning('AvatarUpload: profile poll failed (${value.error})');
-          return null;
-        }
-        await Future<void>.delayed(_readTick);
-      }
-    } finally {
-      subscription.close();
-    }
-
-    Logger.warning('AvatarUpload: profile poll timed out');
-    return null;
+    return result.match<Map<String, Map<String, String>>?>((failure) {
+      Logger.warning('AvatarUpload: profile poll failed (${failure.message})');
+      return null;
+    }, (ProfileEntity profile) => profile.avatars);
   }
-
-  /// Bounded wait for one poll to settle, so a stuck request cannot pin the
-  /// loop past its own [_pollInterval] budget.
-  static const _readTick = Duration(milliseconds: 100);
-  static const _readTicks = 30;
 
   bool _sameAvatars(
     Map<String, Map<String, String>> a,
@@ -124,6 +189,7 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
   }
 
   void reset() {
+    _lastAttempt = null;
     state = const AsyncValue.data(null);
   }
 }

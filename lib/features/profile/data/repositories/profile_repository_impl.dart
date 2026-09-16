@@ -7,6 +7,7 @@ import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/entities/profile_update.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
 
@@ -53,20 +54,18 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<Either<Failure, void>> updateProfile(
-    int profileId, {
-    String? specialization,
-    String? displayName,
-    String? bio,
-    List<String>? skills,
-    DateTime? dateBirthday,
-  }) {
+    int profileId,
+    ProfileUpdate update,
+  ) {
+    final birthday = update.dateBirthday;
+
     return _remoteDataSource.updateProfile(
       profileId,
-      specialization: specialization,
-      displayName: displayName,
-      bio: bio,
-      skills: skills,
-      dateBirthday: dateBirthday != null ? _formatDate(dateBirthday) : null,
+      specialization: update.specialization,
+      displayName: update.displayName,
+      bio: update.bio,
+      skills: update.skills,
+      dateBirthday: birthday != null ? _formatDate(birthday) : null,
     );
   }
 

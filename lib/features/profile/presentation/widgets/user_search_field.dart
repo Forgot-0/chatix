@@ -179,7 +179,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Text(
-          'Type at least $_minQueryLength characters to search.',
+          AppLocalizations.of(context).searchTypeMore(_minQueryLength),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.outline,
           ),
@@ -229,12 +229,14 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No one found for "${_controller.text.trim()}"',
+              AppLocalizations.of(
+                context,
+              ).peopleSearchNoneFound(_controller.text.trim()),
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
             Text(
-              'Search matches any part of a name or @username.',
+              AppLocalizations.of(context).peopleSearchHint,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -281,6 +283,7 @@ class MultiUserSearchField extends StatelessWidget {
     required this.selected,
     required this.onAdd,
     required this.onRemove,
+    this.excludedUserIds = const {},
     this.labelText = 'Add people by name or @username',
     this.helperText,
   });
@@ -288,6 +291,11 @@ class MultiUserSearchField extends StatelessWidget {
   final List<ProfileEntity> selected;
   final void Function(ProfileEntity profile) onAdd;
   final void Function(ProfileEntity profile) onRemove;
+
+  /// People who cannot be picked at all, on top of the ones already chosen —
+  /// members a chat already has, say. Keeping them out of the results is
+  /// kinder than letting them be tapped and quietly ignored.
+  final Set<int> excludedUserIds;
 
   final String labelText;
   final String? helperText;
@@ -316,7 +324,7 @@ class MultiUserSearchField extends StatelessWidget {
         ],
         UserSearchField(
           labelText: labelText,
-          excludedUserIds: selected.map((p) => p.id).toSet(),
+          excludedUserIds: {...excludedUserIds, ...selected.map((p) => p.id)},
           onSelected: onAdd,
         ),
         if (helperText != null) ...[

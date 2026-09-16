@@ -50,6 +50,7 @@ void main() {
               path: ProfileDetailRoute.path,
               builder: (_, state) {
                 parsed.add(ProfileDetailRoute.idFrom(state));
+                parsed.add(ProfileDetailRoute.usernameFrom(state));
                 return const Placeholder();
               },
             ),
@@ -81,8 +82,15 @@ void main() {
     test('chat ids stay strings, profile ids stay ints', () {
       expect(const ChatDetailRoute('9f8e-uuid').location, '/chats/9f8e-uuid');
       expect(const ProfileDetailRoute(17).location, '/profiles/17');
+      expect(
+        const ProfileDetailRoute(17, username: 'ivan dev').location,
+        '/profiles/17?username=ivan+dev',
+      );
+      expect(ProfileDetailAvatarRoute.locationOf(17), '/profiles/17/avatar');
       expect(ChatMembersRoute.locationOf('9f8e'), '/chats/9f8e/members');
       expect(ChatCallRoute.locationOf('9f8e'), '/chats/9f8e/call');
+      expect(ChatInfoRoute.locationOf('9f8e'), '/chats/9f8e/info');
+      expect(ChatSettingsRoute.locationOf('9f8e'), '/chats/9f8e/settings');
     });
   });
 
@@ -193,7 +201,17 @@ void main() {
   group('/profiles/:profileId', () {
     testWidgets('parses the int id', (tester) async {
       final parsed = await go(tester, const ProfileDetailRoute(17).location);
-      expect(parsed, [17]);
+      expect(parsed, [17, null]);
+    });
+
+    testWidgets('carries the handle the opener knew', (tester) async {
+      // `ProfileDTO` has no username, so this is the only way the screen
+      // learns it (api-docs §4.3 — see docs/BACKEND_GAPS.md).
+      final parsed = await go(
+        tester,
+        const ProfileDetailRoute(17, username: 'ivan dev').location,
+      );
+      expect(parsed, [17, 'ivan dev']);
     });
   });
 

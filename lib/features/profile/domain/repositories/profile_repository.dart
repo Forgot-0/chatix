@@ -3,6 +3,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/entities/profile_update.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
 
 abstract class ProfileRepository {
@@ -24,14 +25,14 @@ abstract class ProfileRepository {
   /// The caller's own profile, created on the spot if it is not there yet.
   Future<Either<Failure, ProfileEntity>> getMyProfile();
 
+  /// Writes [update] over the profile wholesale.
+  ///
+  /// The whole set every time, because `PUT /profiles/{id}/` applies `null`
+  /// as a value rather than skipping it (api-docs §4.4).
   Future<Either<Failure, void>> updateProfile(
-    int profileId, {
-    String? specialization,
-    String? displayName,
-    String? bio,
-    List<String>? skills,
-    DateTime? dateBirthday,
-  });
+    int profileId,
+    ProfileUpdate update,
+  );
 
   Future<Either<Failure, AvatarPresignEntity>> presignAvatar({
     required String filename,

@@ -1,11 +1,17 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_member_roster.dart';
 
+/// One page of `GET /chats/{id}/members/`. The endpoint allows up to 500
+/// (api-docs §5.3); 50 is a screenful and change, and the rest arrives as the
+/// reader scrolls.
 const _pageSize = 50;
 
 class ChatMembersState extends Equatable {
@@ -15,6 +21,9 @@ class ChatMembersState extends Equatable {
   final int? nextUserId;
   final bool isLoadingMore;
 
+  /// Who is online, joined from the `presence` array the member list carries
+  /// alongside `members` rather than inside it (api-docs §5.3). A user with
+  /// no entry is offline.
   final Map<int, bool> presence;
 
   final int? myUserId;
@@ -30,6 +39,22 @@ class ChatMembersState extends Equatable {
   });
 
   bool get canLoadMore => hasNext && nextUserId != null;
+
+  bool isOnline(int userId) => presence[userId] ?? false;
+
+  /// The banned members, which only the chat detail reports — the paged
+  /// member list drops them entirely (api-docs §5.3).
+  List<ChatMemberEntity> get banned => bannedMembersOf(chat);
+
+  /// How many people are known to be in the chat, banned included. Used to
+  /// keep the invite screen honest when `member_count` lags behind.
+  int get knownMemberCount {
+    final ids = {
+      for (final member in members) member.userId,
+      for (final member in banned) member.userId,
+    };
+    return ids.length;
+  }
 
   ChatMemberEntity? get me {
     final id = myUserId;
@@ -72,6 +97,23 @@ class ChatMembersState extends Equatable {
   ];
 }
 
+/// What came of adding several people at once.
+///
+/// `POST /members/` takes one user at a time (api-docs §5.3), so an invite of
+/// five is five requests and any of them can fail on its own — already a
+/// member, the chat filled up in between. Both halves are reported so the
+/// screen can say "three added, two not" instead of one blanket failure.
+class AddMembersOutcome {
+  const AddMembersOutcome({required this.added, required this.failed});
+
+  final List<int> added;
+  final Map<int, Failure> failed;
+
+  bool get isCompleteSuccess => failed.isEmpty;
+
+  Failure? get firstFailure => failed.isEmpty ? null : failed.values.first;
+}
+
 class ChatMembersController extends AsyncNotifier<ChatMembersState> {
   ChatMembersController(this._chatId);
 
@@ -80,9 +122,22 @@ class ChatMembersController extends AsyncNotifier<ChatMembersState> {
   @override
   Future<ChatMembersState> build() => _load();
 
+  /// Reloads both halves without blanking the list first.
+  ///
+  /// A refresh that fails keeps the roster already on screen rather than
+  /// replacing it with an error page: it is usually a moderation action's
+  /// follow-up read, and the action itself already reported its own outcome.
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(_load);
+    final previous = state.value;
+    final next = await AsyncValue.guard(_load);
+
+    if (next.hasError && previous != null) {
+      Logger.warning('ChatMembers($_chatId): refresh failed (${next.error})');
+      state = AsyncValue.data(previous);
+      return;
+    }
+
+    state = next;
   }
 
   Future<void> loadMore() async {
@@ -106,6 +161,8 @@ class ChatMembersController extends AsyncNotifier<ChatMembersState> {
           includePresence: true,
         );
 
+    if (!ref.mounted) return;
+
     state = result.fold(
       (_) => AsyncValue.data(
         current.copyWith(isLoadingMore: false, nextUserId: current.nextUserId),
@@ -125,12 +182,27 @@ class ChatMembersController extends AsyncNotifier<ChatMembersState> {
     );
   }
 
-  Future<void> addMember(int userId, {ChatRole role = ChatRole.member}) async {
-    final result = await ref
-        .read(addMemberUseCaseProvider)
-        .execute(_chatId, userId, role: role);
-    result.match((failure) => throw failure, (_) {});
-    await refresh();
+  /// Adds everyone in [userIds], one request each, and refreshes once.
+  Future<AddMembersOutcome> addMembers(
+    Iterable<int> userIds, {
+    ChatRole role = ChatRole.member,
+  }) async {
+    final useCase = ref.read(addMemberUseCaseProvider);
+
+    final added = <int>[];
+    final failed = <int, Failure>{};
+
+    for (final userId in userIds) {
+      final result = await useCase.execute(_chatId, userId, role: role);
+      result.match(
+        (failure) => failed[userId] = failure,
+        (_) => added.add(userId),
+      );
+    }
+
+    if (added.isNotEmpty) await refresh();
+
+    return AddMembersOutcome(added: added, failed: failed);
   }
 
   Future<void> changeRole(int userId, ChatRole role) async {
@@ -153,6 +225,16 @@ class ChatMembersController extends AsyncNotifier<ChatMembersState> {
     await refresh();
   }
 
+  /// Lets a banned member back in — the same endpoint with a past date
+  /// (api-docs §5.3).
+  Future<void> unbanMember(int userId) async {
+    final result = await ref
+        .read(banMemberUseCaseProvider)
+        .lift(_chatId, userId);
+    result.match((failure) => throw failure, (_) {});
+    await refresh();
+  }
+
   Future<void> kickMember(int userId) async {
     final result = await ref
         .read(kickMemberUseCaseProvider)
@@ -164,6 +246,8 @@ class ChatMembersController extends AsyncNotifier<ChatMembersState> {
   Future<ChatMembersState> _load() async {
     final myUserId = ref.watch(authProvider).value?.id;
 
+    // Both at once: the chat detail is what carries the banned members and
+    // the member limit, the paged list is everyone else.
     final chatFuture = ref.read(getChatUseCaseProvider).execute(_chatId);
     final membersFuture = ref
         .read(getMembersUseCaseProvider)

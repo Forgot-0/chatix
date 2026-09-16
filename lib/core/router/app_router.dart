@@ -20,7 +20,9 @@ import 'package:chatix/features/auth/presentation/screens/reset_password_request
 import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/call_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
-import 'package:chatix/features/chat/presentation/screens/chat_info_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_profile_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_settings_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/chat_invite_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_members_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
@@ -29,6 +31,7 @@ import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dar
 import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_avatar_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
@@ -180,6 +183,25 @@ final routerProvider = Provider<GoRouter>((ref) {
                                 ChatMembersScreen(chatId: chatId),
                               );
                             },
+                            routes: [
+                              GoRoute(
+                                path: ChatInviteRoute.path,
+                                name: RouteNames.chatInvite,
+                                pageBuilder: (context, state) {
+                                  final chatId = ChatDetailRoute.idFrom(state);
+                                  if (chatId == null) {
+                                    return _push(
+                                      state,
+                                      const _UnknownChatScreen(),
+                                    );
+                                  }
+                                  return _push(
+                                    state,
+                                    ChatInviteMembersScreen(chatId: chatId),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                           GoRoute(
                             path: ChatInfoRoute.path,
@@ -191,7 +213,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                               }
                               return _push(
                                 state,
-                                ChatInfoScreen(chatId: chatId),
+                                ChatProfileScreen(chatId: chatId),
+                              );
+                            },
+                          ),
+                          GoRoute(
+                            path: ChatSettingsRoute.path,
+                            name: RouteNames.chatSettings,
+                            pageBuilder: (context, state) {
+                              final chatId = ChatDetailRoute.idFrom(state);
+                              if (chatId == null) {
+                                return _push(state, const _UnknownChatScreen());
+                              }
+                              return _push(
+                                state,
+                                ChatSettingsScreen(chatId: chatId),
                               );
                             },
                           ),
@@ -294,8 +330,33 @@ final routerProvider = Provider<GoRouter>((ref) {
                       if (profileId == null) {
                         return _push(state, const _UnknownProfileScreen());
                       }
-                      return _push(state, ProfileScreen(profileId: profileId));
+                      return _push(
+                        state,
+                        ProfileScreen(
+                          profileId: profileId,
+                          // `ProfileDTO` carries no username, so the handle
+                          // rides along from whoever opened this — see
+                          // ProfileDetailRoute.
+                          username: ProfileDetailRoute.usernameFrom(state),
+                        ),
+                      );
                     },
+                    routes: [
+                      GoRoute(
+                        path: ProfileDetailAvatarRoute.path,
+                        name: RouteNames.profileDetailAvatar,
+                        pageBuilder: (context, state) {
+                          final profileId = ProfileDetailRoute.idFrom(state);
+                          if (profileId == null) {
+                            return _push(state, const _UnknownProfileScreen());
+                          }
+                          return _push(
+                            state,
+                            ProfileAvatarScreen(profileId: profileId),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -352,6 +413,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                     name: RouteNames.profileEdit,
                     pageBuilder: (context, state) =>
                         _push(state, const ProfileEditScreen()),
+                  ),
+                  GoRoute(
+                    path: ProfileAvatarRoute.path,
+                    name: RouteNames.profileAvatar,
+                    pageBuilder: (context, state) =>
+                        _push(state, const ProfileAvatarScreen()),
                   ),
                 ],
               ),

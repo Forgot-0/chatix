@@ -2387,5 +2387,449 @@
   "noMessagesFoundHint": "Search looks inside what was said, not at file names or chat titles.",
   "@noMessagesFoundHint": {
     "description": "Explains what the message search covers"
+  },
+  "chatSettings": "Chat settings",
+  "@chatSettings": {
+    "description": "Title of the screen behind PATCH /chats/{id}/"
+  },
+  "chatSettingsNoPermission": "Only an owner or admin can change this chat",
+  "@chatSettingsNoPermission": {
+    "description": "Shown instead of the settings form without chat:update"
+  },
+  "chatNameCannotBeCleared": "A name cannot be removed once the chat has one",
+  "@chatNameCannotBeCleared": {
+    "description": "The API cannot unset name/description (api-docs 5.2)"
+  },
+  "chatSlowModeRange": "0 to {max} seconds",
+  "@chatSlowModeRange": {
+    "description": "Allowed range for slow_mode_seconds",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "chatReactionsPickHint": "Pick the emoji people may react with",
+  "@chatReactionsPickHint": {
+    "description": "Shown above the allowed_reactions picker"
+  },
+  "chatNotMutedLabel": "Notifications on",
+  "@chatNotMutedLabel": {
+    "description": "Opposite of chatMutedLabel"
+  },
+  "chatMutedToast": "Notifications off for this chat",
+  "@chatMutedToast": {
+    "description": "Confirmation after muting"
+  },
+  "chatUnmutedToast": "Notifications back on for this chat",
+  "@chatUnmutedToast": {
+    "description": "Confirmation after unmuting"
+  },
+  "muteForHour": "Mute for 1 hour",
+  "@muteForHour": {
+    "description": "Mute duration option"
+  },
+  "muteForEightHours": "Mute for 8 hours",
+  "@muteForEightHours": {
+    "description": "Mute duration option"
+  },
+  "muteForever": "Mute until I turn it back on",
+  "@muteForever": {
+    "description": "Mute duration option: a date far in the future"
+  },
+  "leaveChatOwnerStuck": "The chat creator cannot leave, and you no longer have permission to delete this chat.",
+  "@leaveChatOwnerStuck": {
+    "description": "Shown to a creator who has lost chat:delete"
+  },
+  "chatInviteLink": "Invite link",
+  "@chatInviteLink": {
+    "description": "Heading of the invite link block on a public chat"
+  },
+  "chatInviteLinkHint": "Anyone signed in to ChatiX can open this link and join. It only opens in the app.",
+  "@chatInviteLinkHint": {
+    "description": "Explains what the invite link can and cannot do"
+  },
+  "chatInviteLinkCopied": "Invite link copied",
+  "@chatInviteLinkCopied": {
+    "description": "Toast after copying the invite link"
+  },
+  "sharedMedia": "Media",
+  "@sharedMedia": {
+    "description": "Shared content tab: photos and videos"
+  },
+  "sharedFiles": "Files",
+  "@sharedFiles": {
+    "description": "Shared content tab: documents"
+  },
+  "sharedLinks": "Links",
+  "@sharedLinks": {
+    "description": "Shared content tab: web addresses found in messages"
+  },
+  "sharedVoice": "Voice",
+  "@sharedVoice": {
+    "description": "Shared content tab: voice messages"
+  },
+  "sharedMediaEmpty": "No photos or videos here yet",
+  "@sharedMediaEmpty": {
+    "description": "Empty shared media tab"
+  },
+  "sharedFilesEmpty": "No files here yet",
+  "@sharedFilesEmpty": {
+    "description": "Empty shared files tab"
+  },
+  "sharedLinksEmpty": "No links here yet",
+  "@sharedLinksEmpty": {
+    "description": "Empty shared links tab"
+  },
+  "sharedVoiceEmpty": "No voice messages here yet",
+  "@sharedVoiceEmpty": {
+    "description": "Empty shared voice tab"
+  },
+  "sharedContentLocalOnly": "Shows what this device has loaded from the chat — the server has no shared-media index.",
+  "@sharedContentLocalOnly": {
+    "description": "Footer under every shared content tab"
+  },
+  "chatSettingsUnchanged": "Nothing has changed yet",
+  "@chatSettingsUnchanged": {
+    "description": "Shown when Save is pressed with no edits to send"
+  },
+  "membersSearchHint": "Search members",
+  "@membersSearchHint": {
+    "description": "Placeholder of the member list's search field"
+  },
+  "membersSearchLoadedOnly": "Only the members loaded so far are searched.",
+  "@membersSearchLoadedOnly": {
+    "description": "Note under member search: the API has no server-side member search"
+  },
+  "membersSearchEmpty": "No one here matches “{query}”",
+  "@membersSearchEmpty": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "membersLoadMore": "Load more people",
+  "@membersLoadMore": {
+    "description": "Fetches the next page of members while a search is on"
+  },
+  "membersSectionAdmins": "Administration",
+  "@membersSectionAdmins": {
+    "description": "Heading over owner, admin and editor in the member list"
+  },
+  "membersSectionMembers": "Members",
+  "@membersSectionMembers": {
+    "description": "Heading over everyone else in the member list"
+  },
+  "membersSectionBanned": "Banned members",
+  "@membersSectionBanned": {
+    "description": "Heading over banned members"
+  },
+  "membersBannedHint": "Banned people cannot read or write here until the ban is lifted.",
+  "@membersBannedHint": {
+    "description": "Explains the banned section"
+  },
+  "membersEmptyTitle": "No members to show",
+  "@membersEmptyTitle": {
+    "description": "Empty member list heading"
+  },
+  "membersEmptyInvite": "Add someone to get this chat started.",
+  "@membersEmptyInvite": {
+    "description": "Empty member list, with the invite permission"
+  },
+  "membersEmptyNoInvite": "Only members with the invite permission can add people here.",
+  "@membersEmptyNoInvite": {
+    "description": "Empty member list, without the invite permission"
+  },
+  "chatRoleOwner": "Owner",
+  "@chatRoleOwner": {
+    "description": "Chat role 1"
+  },
+  "chatRoleAdmin": "Admin",
+  "@chatRoleAdmin": {
+    "description": "Chat role 2"
+  },
+  "chatRoleEditor": "Editor",
+  "@chatRoleEditor": {
+    "description": "Chat role 3"
+  },
+  "chatRoleDirect": "Direct",
+  "@chatRoleDirect": {
+    "description": "Chat role 4, both sides of a one-to-one chat"
+  },
+  "chatRoleMember": "Member",
+  "@chatRoleMember": {
+    "description": "Chat role 5"
+  },
+  "chatRoleViewer": "Viewer",
+  "@chatRoleViewer": {
+    "description": "Chat role 6, a channel subscriber"
+  },
+  "chatRoleUnknown": "Unknown role",
+  "@chatRoleUnknown": {
+    "description": "Chat role the client does not know"
+  },
+  "memberMutedBadge": "Muted",
+  "@memberMutedBadge": {
+    "description": "Badge on a member a moderator has silenced"
+  },
+  "memberBannedBadge": "Banned",
+  "@memberBannedBadge": {
+    "description": "Badge on a banned member"
+  },
+  "memberOpenProfile": "Open profile",
+  "@memberOpenProfile": {
+    "description": "Member action"
+  },
+  "memberMessagePrivately": "Message privately",
+  "@memberMessagePrivately": {
+    "description": "Member action: open or start a one-to-one chat"
+  },
+  "memberKickConfirmTitle": "Remove {name}?",
+  "@memberKickConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberKickConfirmBody": "They lose access to this chat, but can be added again later.",
+  "@memberKickConfirmBody": {
+    "description": "Body of the remove-member confirmation"
+  },
+  "memberRoleChanged": "{name} is now {role}",
+  "@memberRoleChanged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "memberKicked": "{name} was removed",
+  "@memberKicked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberBannedToast": "{name} was banned",
+  "@memberBannedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberUnbanned": "The ban on {name} was lifted",
+  "@memberUnbanned": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "memberActionFailed": "That did not go through. Please try again.",
+  "@memberActionFailed": {
+    "description": "Fallback message when a moderation action fails"
+  },
+  "roleAssignHint": "You can only assign roles below your own.",
+  "@roleAssignHint": {
+    "description": "Footnote in the role picker (api-docs 5.3)"
+  },
+  "roleOwnerTransferHint": "Owner is not in the list: the API has no way to hand a chat over.",
+  "@roleOwnerTransferHint": {
+    "description": "Footnote in the role picker shown to the owner"
+  },
+  "banForHour": "For an hour",
+  "@banForHour": {
+    "description": "Ban duration option"
+  },
+  "banForDay": "For a day",
+  "@banForDay": {
+    "description": "Ban duration option"
+  },
+  "banForWeek": "For a week",
+  "@banForWeek": {
+    "description": "Ban duration option"
+  },
+  "inviteMembersTitle": "Add people",
+  "@inviteMembersTitle": {
+    "description": "Title of the member invite screen"
+  },
+  "inviteRoleLabel": "They join as",
+  "@inviteRoleLabel": {
+    "description": "Label over the role picker on the invite screen"
+  },
+  "inviteRoomLeft": "{count, plural, =0{This chat is full} =1{Room for 1 more person} other{Room for {count} more people}}",
+  "@inviteRoomLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteChatFull": "This chat holds {limit} members, and it is full.",
+  "@inviteChatFull": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteAddSelected": "{count, plural, =1{Add 1 person} other{Add {count} people}}",
+  "@inviteAddSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteAddedCount": "{count, plural, =1{1 person added} other{{count} people added}}",
+  "@inviteAddedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteFailedCount": "{count, plural, =1{1 person could not be added} other{{count} people could not be added}}",
+  "@inviteFailedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inviteSearchStart": "Find people by name or @username, then add them all at once.",
+  "@inviteSearchStart": {
+    "description": "Empty state of the invite screen"
+  },
+  "inviteSelectionFull": "That is everyone this chat has room for.",
+  "@inviteSelectionFull": {
+    "description": "Shown when the selection has reached the chat's member limit"
+  },
+  "peopleSearchNoneFound": "No one found for “{query}”",
+  "@peopleSearchNoneFound": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "peopleSearchHint": "Search matches any part of a name or @username.",
+  "@peopleSearchHint": {
+    "description": "Hint under an empty people-search result"
+  },
+  "profileShareAction": "Share",
+  "@profileShareAction": {
+    "description": "Action that shares a link to a profile"
+  },
+  "profileShareCopied": "Profile link copied",
+  "profileBirthday": "Birthday",
+  "profileEmptyTitle": "Nothing here yet",
+  "@profileEmptyTitle": {
+    "description": "Shown on a profile with no bio, skills or links"
+  },
+  "profileEmptyHintSelf": "Add a few words about yourself so people know who they are talking to.",
+  "profileEmptyHintOther": "This person has not filled in their profile.",
+  "profileAccount": "Account",
+  "profileAccountNoEmail": "Signed in",
+  "@profileAccountNoEmail": {
+    "description": "Account row subtitle when no email is known"
+  },
+  "profilePhoto": "Photo",
+  "@profilePhoto": {
+    "description": "Title of the full-screen avatar viewer"
+  },
+  "profileNoPhoto": "No photo yet",
+  "profileOpenLinkFailed": "Could not open this link",
+  "profileContactCopied": "Copied to clipboard",
+  "profileCopyAction": "Copy",
+  "devicesCount": "{count, plural, =0{No devices} =1{1 device} other{{count} devices}}",
+  "@devicesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "changePhoto": "Change photo",
+  "choosePhoto": "Choose a photo",
+  "avatarCropTitle": "Move and scale",
+  "avatarCropHint": "Drag to move, pinch to zoom.",
+  "avatarCropConfirm": "Use photo",
+  "avatarStagePreparing": "Preparing…",
+  "avatarStageUploading": "Uploading…",
+  "avatarStageConfirming": "Almost done…",
+  "avatarStageProcessing": "Processing the photo…",
+  "avatarStageDone": "Photo updated",
+  "avatarProcessingFailed": "Could not update the photo",
+  "@avatarProcessingFailed": {
+    "description": "The upload went through but the server never produced an avatar"
+  },
+  "avatarProcessingFailedHint": "The server did not accept that picture. Try another one.",
+  "avatarNotAnImage": "That file is not an image",
+  "avatarTooLarge": "That picture is too large. Pick a smaller one.",
+  "avatarUnreadable": "That picture could not be opened",
+  "profileEditDetails": "Details",
+  "@profileEditDetails": {
+    "description": "Section heading of the profile edit form"
+  },
+  "profileEditLinks": "Links",
+  "@profileEditLinks": {
+    "description": "Section heading for the social links of a profile"
+  },
+  "profileEditLinksHint": "Links are saved the moment you add or remove one, separately from the form below.",
+  "profileNoLinks": "No links yet",
+  "removeLink": "Remove link",
+  "clearDateOfBirth": "Clear date of birth",
+  "specializationHint": "What you do, in a few words",
+  "bioCounter": "{count}/{max}",
+  "@bioCounter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "profileSkillsHint": "Up to 30 characters each",
+  "profileSaved": "Profile saved",
+  "discardChangesTitle": "Discard changes?",
+  "discardChangesMessage": "Your edits to this profile will be lost.",
+  "discardAction": "Discard",
+  "keepEditingAction": "Keep editing",
+  "camera": "Camera",
+  "@camera": {
+    "description": "Photo source: take a new picture"
+  },
+  "loading": "Loading…",
+  "@loading": {
+    "description": "Placeholder while a value is still being fetched"
+  },
+  "fieldTooLong": "At most {max} characters",
+  "@fieldTooLong": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "skillTooLong": "“{skill}” is longer than {max} characters",
+  "@skillTooLong": {
+    "placeholders": {
+      "skill": {
+        "type": "String"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
   }
 }

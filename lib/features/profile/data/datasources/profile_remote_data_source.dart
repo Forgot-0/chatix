@@ -25,13 +25,14 @@ abstract class ProfileRemoteDataSource {
   /// The caller's own profile, created on the spot if it is not there yet.
   Future<Either<Failure, ProfileModel>> fetchMyProfile();
 
+  /// Sends every editable field, `null`s included — see the implementation.
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
-    String? specialization,
-    String? displayName,
-    String? bio,
-    List<String>? skills,
-    String? dateBirthday,
+    required String? specialization,
+    required String? displayName,
+    required String? bio,
+    required List<String> skills,
+    required String? dateBirthday,
   });
 
   Future<Either<Failure, AvatarPresignModel>> presignAvatar({
@@ -117,20 +118,25 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<Either<Failure, void>> updateProfile(
     int profileId, {
-    String? specialization,
-    String? displayName,
-    String? bio,
-    List<String>? skills,
-    String? dateBirthday,
+    required String? specialization,
+    required String? displayName,
+    required String? bio,
+    required List<String> skills,
+    required String? dateBirthday,
   }) async {
+    // Every key, on every request, `null` included — deliberately not the
+    // null-aware `?value` form used elsewhere in this file. The endpoint is a
+    // PUT that assigns the request straight onto the row, so a key left out
+    // is not "unchanged": sending only `bio` blanks the name, the
+    // specialization, the skills and the birthday (api-docs §4.4).
     final result = await _apiClient.put(
       '/profiles/$profileId/',
-      data: {
-        'specialization': ?specialization,
-        'display_name': ?displayName,
-        'bio': ?bio,
-        'skills': ?skills,
-        'date_birthday': ?dateBirthday,
+      data: <String, dynamic>{
+        'specialization': specialization,
+        'display_name': displayName,
+        'bio': bio,
+        'skills': skills,
+        'date_birthday': dateBirthday,
       },
     );
     return result.map((_) {});

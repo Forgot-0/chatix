@@ -3261,6 +3261,708 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search looks inside what was said, not at file names or chat titles.'**
   String get noMessagesFoundHint;
+
+  /// Title of the screen behind PATCH /chats/{id}/
+  ///
+  /// In en, this message translates to:
+  /// **'Chat settings'**
+  String get chatSettings;
+
+  /// Shown instead of the settings form without chat:update
+  ///
+  /// In en, this message translates to:
+  /// **'Only an owner or admin can change this chat'**
+  String get chatSettingsNoPermission;
+
+  /// The API cannot unset name/description (api-docs 5.2)
+  ///
+  /// In en, this message translates to:
+  /// **'A name cannot be removed once the chat has one'**
+  String get chatNameCannotBeCleared;
+
+  /// Allowed range for slow_mode_seconds
+  ///
+  /// In en, this message translates to:
+  /// **'0 to {max} seconds'**
+  String chatSlowModeRange(int max);
+
+  /// Shown above the allowed_reactions picker
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the emoji people may react with'**
+  String get chatReactionsPickHint;
+
+  /// Opposite of chatMutedLabel
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications on'**
+  String get chatNotMutedLabel;
+
+  /// Confirmation after muting
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications off for this chat'**
+  String get chatMutedToast;
+
+  /// Confirmation after unmuting
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications back on for this chat'**
+  String get chatUnmutedToast;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'Mute for 1 hour'**
+  String get muteForHour;
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'Mute for 8 hours'**
+  String get muteForEightHours;
+
+  /// Mute duration option: a date far in the future
+  ///
+  /// In en, this message translates to:
+  /// **'Mute until I turn it back on'**
+  String get muteForever;
+
+  /// Shown to a creator who has lost chat:delete
+  ///
+  /// In en, this message translates to:
+  /// **'The chat creator cannot leave, and you no longer have permission to delete this chat.'**
+  String get leaveChatOwnerStuck;
+
+  /// Heading of the invite link block on a public chat
+  ///
+  /// In en, this message translates to:
+  /// **'Invite link'**
+  String get chatInviteLink;
+
+  /// Explains what the invite link can and cannot do
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone signed in to ChatiX can open this link and join. It only opens in the app.'**
+  String get chatInviteLinkHint;
+
+  /// Toast after copying the invite link
+  ///
+  /// In en, this message translates to:
+  /// **'Invite link copied'**
+  String get chatInviteLinkCopied;
+
+  /// Shared content tab: photos and videos
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get sharedMedia;
+
+  /// Shared content tab: documents
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get sharedFiles;
+
+  /// Shared content tab: web addresses found in messages
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get sharedLinks;
+
+  /// Shared content tab: voice messages
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get sharedVoice;
+
+  /// Empty shared media tab
+  ///
+  /// In en, this message translates to:
+  /// **'No photos or videos here yet'**
+  String get sharedMediaEmpty;
+
+  /// Empty shared files tab
+  ///
+  /// In en, this message translates to:
+  /// **'No files here yet'**
+  String get sharedFilesEmpty;
+
+  /// Empty shared links tab
+  ///
+  /// In en, this message translates to:
+  /// **'No links here yet'**
+  String get sharedLinksEmpty;
+
+  /// Empty shared voice tab
+  ///
+  /// In en, this message translates to:
+  /// **'No voice messages here yet'**
+  String get sharedVoiceEmpty;
+
+  /// Footer under every shared content tab
+  ///
+  /// In en, this message translates to:
+  /// **'Shows what this device has loaded from the chat — the server has no shared-media index.'**
+  String get sharedContentLocalOnly;
+
+  /// Shown when Save is pressed with no edits to send
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has changed yet'**
+  String get chatSettingsUnchanged;
+
+  /// Placeholder of the member list's search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search members'**
+  String get membersSearchHint;
+
+  /// Note under member search: the API has no server-side member search
+  ///
+  /// In en, this message translates to:
+  /// **'Only the members loaded so far are searched.'**
+  String get membersSearchLoadedOnly;
+
+  /// No description provided for @membersSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No one here matches “{query}”'**
+  String membersSearchEmpty(String query);
+
+  /// Fetches the next page of members while a search is on
+  ///
+  /// In en, this message translates to:
+  /// **'Load more people'**
+  String get membersLoadMore;
+
+  /// Heading over owner, admin and editor in the member list
+  ///
+  /// In en, this message translates to:
+  /// **'Administration'**
+  String get membersSectionAdmins;
+
+  /// Heading over everyone else in the member list
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get membersSectionMembers;
+
+  /// Heading over banned members
+  ///
+  /// In en, this message translates to:
+  /// **'Banned members'**
+  String get membersSectionBanned;
+
+  /// Explains the banned section
+  ///
+  /// In en, this message translates to:
+  /// **'Banned people cannot read or write here until the ban is lifted.'**
+  String get membersBannedHint;
+
+  /// Empty member list heading
+  ///
+  /// In en, this message translates to:
+  /// **'No members to show'**
+  String get membersEmptyTitle;
+
+  /// Empty member list, with the invite permission
+  ///
+  /// In en, this message translates to:
+  /// **'Add someone to get this chat started.'**
+  String get membersEmptyInvite;
+
+  /// Empty member list, without the invite permission
+  ///
+  /// In en, this message translates to:
+  /// **'Only members with the invite permission can add people here.'**
+  String get membersEmptyNoInvite;
+
+  /// Chat role 1
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get chatRoleOwner;
+
+  /// Chat role 2
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get chatRoleAdmin;
+
+  /// Chat role 3
+  ///
+  /// In en, this message translates to:
+  /// **'Editor'**
+  String get chatRoleEditor;
+
+  /// Chat role 4, both sides of a one-to-one chat
+  ///
+  /// In en, this message translates to:
+  /// **'Direct'**
+  String get chatRoleDirect;
+
+  /// Chat role 5
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get chatRoleMember;
+
+  /// Chat role 6, a channel subscriber
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get chatRoleViewer;
+
+  /// Chat role the client does not know
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown role'**
+  String get chatRoleUnknown;
+
+  /// Badge on a member a moderator has silenced
+  ///
+  /// In en, this message translates to:
+  /// **'Muted'**
+  String get memberMutedBadge;
+
+  /// Badge on a banned member
+  ///
+  /// In en, this message translates to:
+  /// **'Banned'**
+  String get memberBannedBadge;
+
+  /// Member action
+  ///
+  /// In en, this message translates to:
+  /// **'Open profile'**
+  String get memberOpenProfile;
+
+  /// Member action: open or start a one-to-one chat
+  ///
+  /// In en, this message translates to:
+  /// **'Message privately'**
+  String get memberMessagePrivately;
+
+  /// No description provided for @memberKickConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}?'**
+  String memberKickConfirmTitle(String name);
+
+  /// Body of the remove-member confirmation
+  ///
+  /// In en, this message translates to:
+  /// **'They lose access to this chat, but can be added again later.'**
+  String get memberKickConfirmBody;
+
+  /// No description provided for @memberRoleChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} is now {role}'**
+  String memberRoleChanged(String name, String role);
+
+  /// No description provided for @memberKicked.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was removed'**
+  String memberKicked(String name);
+
+  /// No description provided for @memberBannedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} was banned'**
+  String memberBannedToast(String name);
+
+  /// No description provided for @memberUnbanned.
+  ///
+  /// In en, this message translates to:
+  /// **'The ban on {name} was lifted'**
+  String memberUnbanned(String name);
+
+  /// Fallback message when a moderation action fails
+  ///
+  /// In en, this message translates to:
+  /// **'That did not go through. Please try again.'**
+  String get memberActionFailed;
+
+  /// Footnote in the role picker (api-docs 5.3)
+  ///
+  /// In en, this message translates to:
+  /// **'You can only assign roles below your own.'**
+  String get roleAssignHint;
+
+  /// Footnote in the role picker shown to the owner
+  ///
+  /// In en, this message translates to:
+  /// **'Owner is not in the list: the API has no way to hand a chat over.'**
+  String get roleOwnerTransferHint;
+
+  /// Ban duration option
+  ///
+  /// In en, this message translates to:
+  /// **'For an hour'**
+  String get banForHour;
+
+  /// Ban duration option
+  ///
+  /// In en, this message translates to:
+  /// **'For a day'**
+  String get banForDay;
+
+  /// Ban duration option
+  ///
+  /// In en, this message translates to:
+  /// **'For a week'**
+  String get banForWeek;
+
+  /// Title of the member invite screen
+  ///
+  /// In en, this message translates to:
+  /// **'Add people'**
+  String get inviteMembersTitle;
+
+  /// Label over the role picker on the invite screen
+  ///
+  /// In en, this message translates to:
+  /// **'They join as'**
+  String get inviteRoleLabel;
+
+  /// No description provided for @inviteRoomLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{This chat is full} =1{Room for 1 more person} other{Room for {count} more people}}'**
+  String inviteRoomLeft(int count);
+
+  /// No description provided for @inviteChatFull.
+  ///
+  /// In en, this message translates to:
+  /// **'This chat holds {limit} members, and it is full.'**
+  String inviteChatFull(int limit);
+
+  /// No description provided for @inviteAddSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Add 1 person} other{Add {count} people}}'**
+  String inviteAddSelected(int count);
+
+  /// No description provided for @inviteAddedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person added} other{{count} people added}}'**
+  String inviteAddedCount(int count);
+
+  /// No description provided for @inviteFailedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person could not be added} other{{count} people could not be added}}'**
+  String inviteFailedCount(int count);
+
+  /// Empty state of the invite screen
+  ///
+  /// In en, this message translates to:
+  /// **'Find people by name or @username, then add them all at once.'**
+  String get inviteSearchStart;
+
+  /// Shown when the selection has reached the chat's member limit
+  ///
+  /// In en, this message translates to:
+  /// **'That is everyone this chat has room for.'**
+  String get inviteSelectionFull;
+
+  /// No description provided for @peopleSearchNoneFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No one found for “{query}”'**
+  String peopleSearchNoneFound(String query);
+
+  /// Hint under an empty people-search result
+  ///
+  /// In en, this message translates to:
+  /// **'Search matches any part of a name or @username.'**
+  String get peopleSearchHint;
+
+  /// Action that shares a link to a profile
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get profileShareAction;
+
+  /// No description provided for @profileShareCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile link copied'**
+  String get profileShareCopied;
+
+  /// No description provided for @profileBirthday.
+  ///
+  /// In en, this message translates to:
+  /// **'Birthday'**
+  String get profileBirthday;
+
+  /// Shown on a profile with no bio, skills or links
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get profileEmptyTitle;
+
+  /// No description provided for @profileEmptyHintSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a few words about yourself so people know who they are talking to.'**
+  String get profileEmptyHintSelf;
+
+  /// No description provided for @profileEmptyHintOther.
+  ///
+  /// In en, this message translates to:
+  /// **'This person has not filled in their profile.'**
+  String get profileEmptyHintOther;
+
+  /// No description provided for @profileAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get profileAccount;
+
+  /// Account row subtitle when no email is known
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in'**
+  String get profileAccountNoEmail;
+
+  /// Title of the full-screen avatar viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get profilePhoto;
+
+  /// No description provided for @profileNoPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'No photo yet'**
+  String get profileNoPhoto;
+
+  /// No description provided for @profileOpenLinkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this link'**
+  String get profileOpenLinkFailed;
+
+  /// No description provided for @profileContactCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get profileContactCopied;
+
+  /// No description provided for @profileCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get profileCopyAction;
+
+  /// No description provided for @devicesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No devices} =1{1 device} other{{count} devices}}'**
+  String devicesCount(int count);
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get changePhoto;
+
+  /// No description provided for @choosePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a photo'**
+  String get choosePhoto;
+
+  /// No description provided for @avatarCropTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move and scale'**
+  String get avatarCropTitle;
+
+  /// No description provided for @avatarCropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move, pinch to zoom.'**
+  String get avatarCropHint;
+
+  /// No description provided for @avatarCropConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Use photo'**
+  String get avatarCropConfirm;
+
+  /// No description provided for @avatarStagePreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing…'**
+  String get avatarStagePreparing;
+
+  /// No description provided for @avatarStageUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading…'**
+  String get avatarStageUploading;
+
+  /// No description provided for @avatarStageConfirming.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost done…'**
+  String get avatarStageConfirming;
+
+  /// No description provided for @avatarStageProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing the photo…'**
+  String get avatarStageProcessing;
+
+  /// No description provided for @avatarStageDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo updated'**
+  String get avatarStageDone;
+
+  /// The upload went through but the server never produced an avatar
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update the photo'**
+  String get avatarProcessingFailed;
+
+  /// No description provided for @avatarProcessingFailedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The server did not accept that picture. Try another one.'**
+  String get avatarProcessingFailedHint;
+
+  /// No description provided for @avatarNotAnImage.
+  ///
+  /// In en, this message translates to:
+  /// **'That file is not an image'**
+  String get avatarNotAnImage;
+
+  /// No description provided for @avatarTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'That picture is too large. Pick a smaller one.'**
+  String get avatarTooLarge;
+
+  /// No description provided for @avatarUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'That picture could not be opened'**
+  String get avatarUnreadable;
+
+  /// Section heading of the profile edit form
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get profileEditDetails;
+
+  /// Section heading for the social links of a profile
+  ///
+  /// In en, this message translates to:
+  /// **'Links'**
+  String get profileEditLinks;
+
+  /// No description provided for @profileEditLinksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Links are saved the moment you add or remove one, separately from the form below.'**
+  String get profileEditLinksHint;
+
+  /// No description provided for @profileNoLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'No links yet'**
+  String get profileNoLinks;
+
+  /// No description provided for @removeLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link'**
+  String get removeLink;
+
+  /// No description provided for @clearDateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear date of birth'**
+  String get clearDateOfBirth;
+
+  /// No description provided for @specializationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What you do, in a few words'**
+  String get specializationHint;
+
+  /// No description provided for @bioCounter.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}/{max}'**
+  String bioCounter(int count, int max);
+
+  /// No description provided for @profileSkillsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 30 characters each'**
+  String get profileSkillsHint;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved'**
+  String get profileSaved;
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your edits to this profile will be lost.'**
+  String get discardChangesMessage;
+
+  /// No description provided for @discardAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discardAction;
+
+  /// No description provided for @keepEditingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get keepEditingAction;
+
+  /// Photo source: take a new picture
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// Placeholder while a value is still being fetched
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get loading;
+
+  /// No description provided for @fieldTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'At most {max} characters'**
+  String fieldTooLong(int max);
+
+  /// No description provided for @skillTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'“{skill}” is longer than {max} characters'**
+  String skillTooLong(String skill, int max);
 }
 
 class _AppLocalizationsDelegate

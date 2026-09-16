@@ -19,6 +19,7 @@ import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_profile_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
@@ -138,6 +139,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Widget build(BuildContext context) {
     final detail = ref.watch(chatDetailProvider(widget.chatId));
     final myUserId = ref.watch(authProvider).value?.id;
+
+    // The chat profile has a search button of its own, and the field it
+    // means is this one. It names the chat and comes back here; opening the
+    // field is this screen's to do.
+    ref.listen(chatSearchRequestProvider, (previous, next) {
+      if (next != widget.chatId) return;
+      ref.read(chatSearchRequestProvider.notifier).clear();
+      _setSearchMode(on: true);
+    });
 
     // A reaction that the server refused has already been taken back off the
     // message by the time this fires; all that is left is to say so, quietly.

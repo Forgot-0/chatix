@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chatix/features/profile/domain/entities/profile_update.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
@@ -6,26 +7,18 @@ class ProfileEditController extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
 
-  Future<bool> submit(
-    int profileId, {
-    String? specialization,
-    String? displayName,
-    String? bio,
-    List<String>? skills,
-    DateTime? dateBirthday,
-  }) async {
+  /// Saves [update] as the profile's whole editable state.
+  ///
+  /// Whole, not partial: `PUT /profiles/{id}/` writes the body onto the row
+  /// as it stands, so a field missing from the request is erased rather than
+  /// left alone (api-docs §4.4). The form builds a complete [ProfileUpdate]
+  /// for exactly that reason.
+  Future<bool> submit(int profileId, ProfileUpdate update) async {
     state = const AsyncValue.loading();
 
     final result = await ref
         .read(updateProfileUseCaseProvider)
-        .execute(
-          profileId,
-          specialization: specialization,
-          displayName: displayName,
-          bio: bio,
-          skills: skills,
-          dateBirthday: dateBirthday,
-        );
+        .execute(profileId, update);
 
     return result.fold(
       (failure) {

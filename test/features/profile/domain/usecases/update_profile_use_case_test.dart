@@ -1,7 +1,9 @@
-import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/features/profile/domain/entities/profile_update.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 import 'package:chatix/features/profile/domain/usecases/update_profile_use_case.dart';
 
@@ -11,149 +13,151 @@ void main() {
   late UpdateProfileUseCase useCase;
   late MockProfileRepository mockProfileRepository;
 
+  final tBirthday = DateTime(1995, 5, 20);
+
+  const tUpdate = ProfileUpdate(
+    specialization: 'Backend engineer',
+    displayName: 'Jane',
+    bio: 'Hello',
+    skills: ['dart', 'flutter'],
+  );
+
+  setUpAll(() {
+    registerFallbackValue(const ProfileUpdate());
+  });
+
   setUp(() {
     mockProfileRepository = MockProfileRepository();
     useCase = UpdateProfileUseCase(mockProfileRepository);
   });
 
-  final tBirthday = DateTime(1995, 5, 20);
+  void stubUpdate([Either<Failure, void> answer = const Right(null)]) {
+    when(
+      () => mockProfileRepository.updateProfile(any(), any()),
+    ).thenAnswer((_) async => answer);
+  }
+
+  test('passes the whole update through to the repository', () async {
+    stubUpdate();
+
+    final update = tUpdate.copyWith(dateBirthday: tBirthday);
+    final result = await useCase.execute(1, update);
+
+    expect(result, const Right<Failure, void>(null));
+    verify(() => mockProfileRepository.updateProfile(1, update)).called(1);
+  });
 
   test(
-    'should call ProfileRepository.updateProfile and return void on success',
+    'carries cleared fields as nulls rather than dropping them (§4.4)',
     () async {
-      when(
-        () => mockProfileRepository.updateProfile(
-          1,
-          specialization: any(named: 'specialization'),
-          displayName: any(named: 'displayName'),
-          bio: any(named: 'bio'),
-          skills: any(named: 'skills'),
-          dateBirthday: any(named: 'dateBirthday'),
-        ),
-      ).thenAnswer((_) async => const Right(null));
+      stubUpdate();
 
-      final result = await useCase.execute(
-        1,
-        specialization: 'Backend engineer',
-        displayName: 'Jane',
-        bio: 'Hello',
-        skills: const ['dart', 'flutter'],
-        dateBirthday: tBirthday,
-      );
+      // Everything blanked: a PUT that omitted these would leave the old
+      // values in place, which is the bug this shape exists to prevent.
+      const cleared = ProfileUpdate();
+      await useCase.execute(1, cleared);
 
-      expect(result, const Right<Failure, void>(null));
-      verify(
-        () => mockProfileRepository.updateProfile(
-          1,
-          specialization: 'Backend engineer',
-          displayName: 'Jane',
-          bio: 'Hello',
-          skills: const ['dart', 'flutter'],
-          dateBirthday: tBirthday,
-        ),
-      ).called(1);
+      final captured =
+          verify(
+                () => mockProfileRepository.updateProfile(1, captureAny()),
+              ).captured.single
+              as ProfileUpdate;
+
+      expect(captured.displayName, isNull);
+      expect(captured.specialization, isNull);
+      expect(captured.bio, isNull);
+      expect(captured.dateBirthday, isNull);
+      expect(captured.skills, isEmpty);
     },
   );
 
-  test('should return the repository Failure when the update fails', () async {
+  test('returns the repository Failure when the update fails', () async {
     const tFailure = ApiFailure(
       code: 'ACCESS_DENIED',
       message: 'Cannot edit this profile',
       detail: {},
       status: 403,
     );
-    when(
-      () => mockProfileRepository.updateProfile(
-        1,
-        specialization: any(named: 'specialization'),
-        displayName: any(named: 'displayName'),
-        bio: any(named: 'bio'),
-        skills: any(named: 'skills'),
-        dateBirthday: any(named: 'dateBirthday'),
-      ),
-    ).thenAnswer((_) async => const Left(tFailure));
+    stubUpdate(const Left(tFailure));
 
-    final result = await useCase.execute(1, displayName: 'Jane');
+    final result = await useCase.execute(1, tUpdate);
 
-    expect(result, const Left(tFailure));
+    expect(result, const Left<Failure, void>(tFailure));
   });
 
-  test(
-    'should return InputFailure and never hit the repository for a non-positive profileId',
-    () async {
-      final result = await useCase.execute(0, displayName: 'Jane');
+  test('rejects a non-positive profileId without a request', () async {
+    final result = await useCase.execute(0, tUpdate);
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+    result.fold(
+      (failure) => expect(failure, isA<InputFailure>()),
+      (_) => fail('Should have returned a failure'),
+    );
+    verifyZeroInteractions(mockProfileRepository);
+  });
 
-  test(
-    'should return InputFailure and never hit the repository when displayName is too long',
-    () async {
-      final tooLongName = 'a' * 100;
+  test('rejects a display name of 100 characters (TOO_LONG_*)', () async {
+    final result = await useCase.execute(
+      1,
+      ProfileUpdate(displayName: 'a' * 100),
+    );
 
-      final result = await useCase.execute(1, displayName: tooLongName);
+    result.fold(
+      (failure) => expect(failure, isA<InputFailure>()),
+      (_) => fail('Should have returned a failure'),
+    );
+    verifyZeroInteractions(mockProfileRepository);
+  });
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+  test('allows a display name exactly at the 99 character limit', () async {
+    stubUpdate();
 
-  test(
-    'should return InputFailure and never hit the repository when bio is too long',
-    () async {
-      final tooLongBio = 'a' * 1024;
+    final result = await useCase.execute(
+      1,
+      ProfileUpdate(displayName: 'a' * 99),
+    );
 
-      final result = await useCase.execute(1, bio: tooLongBio);
+    expect(result, const Right<Failure, void>(null));
+  });
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+  test('rejects a bio of 1024 characters', () async {
+    final result = await useCase.execute(1, ProfileUpdate(bio: 'a' * 1024));
 
-  test(
-    'should return InputFailure and never hit the repository when a skill is too long',
-    () async {
-      final tooLongSkill = 'a' * 31;
+    result.fold(
+      (failure) => expect(failure, isA<InputFailure>()),
+      (_) => fail('Should have returned a failure'),
+    );
+    verifyZeroInteractions(mockProfileRepository);
+  });
 
-      final result = await useCase.execute(1, skills: ['dart', tooLongSkill]);
+  test('allows a bio exactly at the 1023 character limit', () async {
+    stubUpdate();
 
-      result.fold(
-        (failure) => expect(failure, isA<InputFailure>()),
-        (_) => fail('Should have returned a failure'),
-      );
-      verifyZeroInteractions(mockProfileRepository);
-    },
-  );
+    final result = await useCase.execute(1, ProfileUpdate(bio: 'a' * 1023));
 
-  test(
-    'should allow a displayName exactly at the 99 character limit',
-    () async {
-      final maxLengthName = 'a' * 99;
-      when(
-        () => mockProfileRepository.updateProfile(
-          1,
-          specialization: any(named: 'specialization'),
-          displayName: any(named: 'displayName'),
-          bio: any(named: 'bio'),
-          skills: any(named: 'skills'),
-          dateBirthday: any(named: 'dateBirthday'),
-        ),
-      ).thenAnswer((_) async => const Right(null));
+    expect(result, const Right<Failure, void>(null));
+  });
 
-      final result = await useCase.execute(1, displayName: maxLengthName);
+  test('rejects a skill longer than 30 characters', () async {
+    final result = await useCase.execute(
+      1,
+      ProfileUpdate(skills: ['dart', 'a' * 31]),
+    );
 
-      expect(result, const Right<Failure, void>(null));
-    },
-  );
+    result.fold(
+      (failure) => expect(failure, isA<InputFailure>()),
+      (_) => fail('Should have returned a failure'),
+    );
+    verifyZeroInteractions(mockProfileRepository);
+  });
+
+  test('allows a skill exactly at the 30 character limit', () async {
+    stubUpdate();
+
+    final result = await useCase.execute(
+      1,
+      ProfileUpdate(skills: ['a' * 30]),
+    );
+
+    expect(result, const Right<Failure, void>(null));
+  });
 }

@@ -141,4 +141,68 @@ void main() {
       expect(captured.single, '/profiles/7/links/github/');
     });
   });
+
+  group('updateProfile — PUT is not a patch (api-docs §4.4)', () {
+    void stubPut() {
+      when(
+        () => apiClient.put(any(), data: any(named: 'data')),
+      ).thenAnswer((_) async => const Right(null));
+    }
+
+    Map<String, dynamic> capturedPutBody() {
+      final captured = verify(
+        () => apiClient.put(any(), data: captureAny(named: 'data')),
+      ).captured;
+      return captured.single as Map<String, dynamic>;
+    }
+
+    test('sends every field, with nulls spelled out rather than omitted', () {
+      stubPut();
+
+      dataSource.updateProfile(
+        7,
+        specialization: null,
+        displayName: 'Jane',
+        bio: null,
+        skills: const [],
+        dateBirthday: null,
+      );
+
+      final body = capturedPutBody();
+
+      // The handler assigns the body onto the row as it stands, so a key
+      // that is absent is not "unchanged" — the old value survives and the
+      // user's deletion is silently lost.
+      expect(body.keys, containsAll(<String>[
+        'specialization',
+        'display_name',
+        'bio',
+        'skills',
+        'date_birthday',
+      ]));
+      expect(body['specialization'], isNull);
+      expect(body['bio'], isNull);
+      expect(body['date_birthday'], isNull);
+      expect(body['display_name'], 'Jane');
+      expect(body['skills'], isEmpty);
+    });
+
+    test('addresses the profile by id, with the mandatory trailing slash', () {
+      stubPut();
+
+      dataSource.updateProfile(
+        7,
+        specialization: null,
+        displayName: null,
+        bio: null,
+        skills: const [],
+        dateBirthday: null,
+      );
+
+      final captured = verify(
+        () => apiClient.put(captureAny(), data: any(named: 'data')),
+      ).captured;
+      expect(captured.single, '/profiles/7/');
+    });
+  });
 }

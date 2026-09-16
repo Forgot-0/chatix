@@ -21,7 +21,9 @@ abstract final class RouteNames {
   static const String createChat = 'createChat';
   static const String chatDetail = 'chatDetail';
   static const String chatMembers = 'chatMembers';
+  static const String chatInvite = 'chatInvite';
   static const String chatInfo = 'chatInfo';
+  static const String chatSettings = 'chatSettings';
   static const String chatCall = 'chatCall';
   static const String chatMedia = 'chatMedia';
   static const String chatAttach = 'chatAttach';
@@ -32,6 +34,8 @@ abstract final class RouteNames {
 
   static const String profile = 'profile';
   static const String profileEdit = 'profileEdit';
+  static const String profileAvatar = 'profileAvatar';
+  static const String profileDetailAvatar = 'profileDetailAvatar';
   static const String profiles = 'profiles';
   static const String profileDetail = 'profileDetail';
 
@@ -224,9 +228,32 @@ abstract final class ChatMembersRoute {
   static String locationOf(String chatId) => '/chats/$chatId/members';
 }
 
+/// `/chats/{chatId}/members/invite` — picking people out of `GET /profiles/`
+/// and adding them to this chat.
+///
+/// Under the member list rather than beside it: it is reached from there, and
+/// going back lands on the list the new people just joined.
+abstract final class ChatInviteRoute {
+  static const String path = 'invite';
+  static String locationOf(String chatId) =>
+      '${ChatMembersRoute.locationOf(chatId)}/$path';
+}
+
+/// `/chats/{chatId}/info` — the chat's profile: its face, what it has
+/// shared, and what can be done to it.
 abstract final class ChatInfoRoute {
   static const String path = 'info';
   static String locationOf(String chatId) => '/chats/$chatId/info';
+}
+
+/// `/chats/{chatId}/settings` — the form behind `PATCH /chats/{chat_id}/`.
+///
+/// A screen of its own rather than a section of the profile: it needs
+/// `chat:update`, it is a form with a save button, and everything on the
+/// profile above it is readable by any member.
+abstract final class ChatSettingsRoute {
+  static const String path = 'settings';
+  static String locationOf(String chatId) => '/chats/$chatId/settings';
 }
 
 abstract final class ChatCallRoute {
@@ -288,21 +315,54 @@ abstract final class ProfileEditRoute {
   static const String location = '/profile/edit';
 }
 
+/// `/profile/avatar` — the signed-in user's own picture, full screen.
+abstract final class ProfileAvatarRoute {
+  static const String path = 'avatar';
+  static const String location = '/profile/avatar';
+}
+
 abstract final class ProfilesRoute {
   static const String path = '/profiles';
   static const String location = '/profiles';
 }
 
+/// `/profiles/{profileId}`, optionally carrying the handle the caller
+/// already knows.
+///
+/// `?username=` exists because `ProfileDTO` has no `username` field
+/// (api-docs §4.3) while the places people open a profile from — a chat's
+/// member list, a message row — get one in `ChatProfileDTO`. Passing it
+/// along means the `@handle` is on screen immediately instead of being
+/// unavailable; without it the line is simply omitted. See
+/// `docs/BACKEND_GAPS.md`.
 class ProfileDetailRoute {
-  const ProfileDetailRoute(this.profileId);
+  const ProfileDetailRoute(this.profileId, {this.username});
 
   final int profileId;
+  final String? username;
 
   static const String path = ':profileId';
-  String get location => '/profiles/$profileId';
+  static const String usernameQueryParam = 'username';
+
+  String get location {
+    final handle = username?.trim();
+    if (handle == null || handle.isEmpty) return '/profiles/$profileId';
+    return '/profiles/$profileId'
+        '?$usernameQueryParam=${Uri.encodeQueryComponent(handle)}';
+  }
 
   static int? idFrom(GoRouterState state) =>
       int.tryParse(state.pathParameters[RouteParams.profileId] ?? '');
+
+  static String? usernameFrom(GoRouterState state) =>
+      _nonEmpty(state.uri.queryParameters[usernameQueryParam]);
+}
+
+/// `/profiles/{profileId}/avatar` — somebody else's picture, full screen.
+abstract final class ProfileDetailAvatarRoute {
+  static const String path = 'avatar';
+
+  static String locationOf(int profileId) => '/profiles/$profileId/$path';
 }
 
 abstract final class SettingsRoute {

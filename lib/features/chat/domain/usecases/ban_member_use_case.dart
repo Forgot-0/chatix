@@ -33,6 +33,27 @@ class BanMemberUseCase {
     );
   }
 
+  /// Lifts a ban through the same endpoint, with a date in the past.
+  ///
+  /// `PATCH .../ban/` is the only way back in: `banned_to` in the past reads
+  /// as an unban server-side (api-docs §5.3). A whole day back rather than a
+  /// second, so a clock that disagrees with the server's still lands behind
+  /// it. [execute] refuses a past expiry on purpose — an unban says what it
+  /// is here instead of arriving as a ban that quietly does the opposite.
+  Future<Either<Failure, void>> lift(String chatId, int userId) {
+    if (chatId.trim().isEmpty) {
+      return _fail('Chat id is required');
+    }
+    if (userId <= 0) {
+      return _fail('A valid user must be selected');
+    }
+    return _repository.banMember(
+      chatId,
+      userId,
+      bannedTo: DateTime.now().toUtc().subtract(const Duration(days: 1)),
+    );
+  }
+
   Future<Either<Failure, void>> _fail(String message) =>
       Future.value(Left(InputFailure(message: message)));
 }

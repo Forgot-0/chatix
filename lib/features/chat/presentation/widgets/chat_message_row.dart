@@ -182,9 +182,9 @@ class ChatMessageRow extends ConsumerWidget {
   ChatMemberLike? _memberFor(String handle) {
     final wanted = handle.toLowerCase();
     for (final member in state.chat?.members ?? const []) {
-      final username = member.profile?.username?.trim().toLowerCase();
-      if (username != null && username == wanted) {
-        return (userId: member.userId);
+      final username = member.profile?.username?.trim();
+      if (username != null && username.toLowerCase() == wanted) {
+        return (userId: member.userId, username: username);
       }
     }
     return null;
@@ -194,7 +194,9 @@ class ChatMessageRow extends ConsumerWidget {
     if (link.kind == MessageLinkKind.mention) {
       final member = _memberFor(link.target);
       if (member == null) return;
-      context.push(ProfileDetailRoute(member.userId).location);
+      context.push(
+        ProfileDetailRoute(member.userId, username: member.username).location,
+      );
       return;
     }
 
@@ -304,7 +306,11 @@ class ChatMessageRow extends ConsumerWidget {
 }
 
 /// Just enough of a member to route to their profile.
-typedef ChatMemberLike = ({int userId});
+///
+/// The handle is carried because a profile cannot look its own up:
+/// `ProfileDTO` has no `username` (api-docs §4.3), while the roster this was
+/// matched against does.
+typedef ChatMemberLike = ({int userId, String username});
 
 /// Holds the left gutter open for incoming messages in a group chat.
 ///

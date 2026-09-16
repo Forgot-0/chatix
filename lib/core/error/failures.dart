@@ -91,3 +91,17 @@ class UnauthorizedFailure extends Failure {
 class InputFailure extends Failure {
   const InputFailure({super.message = 'Invalid input', super.statusCode});
 }
+
+/// The avatar reached the server but never came back as a picture.
+///
+/// There is no HTTP response behind this one. `POST /profiles/avatar/
+/// upload_complete/` answers `200` and queues a background task; that task
+/// decides the real MIME type and the size, and when it refuses the file it
+/// raises `AVATAR_NOT_TYPE_IMAGE` or `AVATAR_SIZE` where no client can see
+/// them — the only symptom is that `ProfileDTO.avatars` never changes
+/// (api-docs §2.5, §4.5). The client waits, gives up, and says so with this.
+class AvatarProcessingFailure extends Failure {
+  const AvatarProcessingFailure({
+    super.message = 'The picture could not be processed',
+  });
+}

@@ -449,10 +449,19 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
 /// Public because the search results draw the same rows and should not
 /// invent a second way of picturing a chat.
 class ChatRowAvatar extends ConsumerWidget {
-  const ChatRowAvatar({super.key, required this.chat, required this.myUserId});
+  const ChatRowAvatar({
+    super.key,
+    required this.chat,
+    required this.myUserId,
+    this.size = ChatAvatarSize.md,
+  });
 
   final ChatEntity chat;
   final int? myUserId;
+
+  /// How big to draw it. Rows want [ChatAvatarSize.md]; the profile header
+  /// wants the largest there is.
+  final ChatAvatarSize size;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -466,14 +475,10 @@ class ChatRowAvatar extends ConsumerWidget {
       // own: its initial on its own colour, not the same grey glyph as every
       // other group on the screen.
       if (faces.isEmpty) {
-        return ChatAvatar(
-          userId: chat.id.hashCode,
-          name: title,
-          size: ChatAvatarSize.md,
-        );
+        return ChatAvatar(userId: chat.id.hashCode, name: title, size: size);
       }
 
-      return ChatAvatarMosaic(faces: faces, size: ChatAvatarSize.md);
+      return ChatAvatarMosaic(faces: faces, size: size);
     }
 
     final peer = chat.peerProfile(myUserId);
@@ -488,7 +493,7 @@ class ChatRowAvatar extends ConsumerWidget {
       // The peer's own profile when the row carries one; the row's title
       // otherwise, which for a direct chat is that same person's name.
       name: peer?.bestName ?? title,
-      size: ChatAvatarSize.md,
+      size: size,
       isOnline: isOnline,
       onlineLabel: l10n.onlineNow,
     );
