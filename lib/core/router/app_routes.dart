@@ -326,36 +326,17 @@ abstract final class ProfilesRoute {
   static const String location = '/profiles';
 }
 
-/// `/profiles/{profileId}`, optionally carrying the handle the caller
-/// already knows.
-///
-/// `?username=` exists because `ProfileDTO` has no `username` field
-/// (api-docs §4.3) while the places people open a profile from — a chat's
-/// member list, a message row — get one in `ChatProfileDTO`. Passing it
-/// along means the `@handle` is on screen immediately instead of being
-/// unavailable; without it the line is simply omitted. See
-/// `docs/BACKEND_GAPS.md`.
 class ProfileDetailRoute {
-  const ProfileDetailRoute(this.profileId, {this.username});
+  const ProfileDetailRoute(this.profileId);
 
   final int profileId;
-  final String? username;
 
   static const String path = ':profileId';
-  static const String usernameQueryParam = 'username';
 
-  String get location {
-    final handle = username?.trim();
-    if (handle == null || handle.isEmpty) return '/profiles/$profileId';
-    return '/profiles/$profileId'
-        '?$usernameQueryParam=${Uri.encodeQueryComponent(handle)}';
-  }
+  String get location => '/profiles/$profileId';
 
   static int? idFrom(GoRouterState state) =>
       int.tryParse(state.pathParameters[RouteParams.profileId] ?? '');
-
-  static String? usernameFrom(GoRouterState state) =>
-      _nonEmpty(state.uri.queryParameters[usernameQueryParam]);
 }
 
 /// `/profiles/{profileId}/avatar` — somebody else's picture, full screen.

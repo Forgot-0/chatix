@@ -34,6 +34,7 @@ void main() {
 
   const tProfile = ProfileEntity(
     id: 7,
+    username: 'me',
     avatars: {},
     specialization: null,
     displayName: null,

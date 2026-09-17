@@ -330,16 +330,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                       if (profileId == null) {
                         return _push(state, const _UnknownProfileScreen());
                       }
-                      return _push(
-                        state,
-                        ProfileScreen(
-                          profileId: profileId,
-                          // `ProfileDTO` carries no username, so the handle
-                          // rides along from whoever opened this — see
-                          // ProfileDetailRoute.
-                          username: ProfileDetailRoute.usernameFrom(state),
-                        ),
-                      );
+                      return _push(state, ProfileScreen(profileId: profileId));
                     },
                     routes: [
                       GoRoute(

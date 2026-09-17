@@ -315,14 +315,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
   ) async {
     switch (action) {
       case ChatMemberAction.openProfile:
-        // The handle rides along: `ProfileDTO` has none, and this list
-        // does (`ChatProfileDTO.username`, api-docs §5.3).
-        await context.push(
-          ProfileDetailRoute(
-            member.userId,
-            username: member.profile?.username,
-          ).location,
-        );
+        await context.push(ProfileDetailRoute(member.userId).location);
 
       case ChatMemberAction.message:
         await _message(member);

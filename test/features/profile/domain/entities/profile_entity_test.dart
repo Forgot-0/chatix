@@ -5,6 +5,7 @@ void main() {
   ProfileEntity profileWithAvatars(Map<String, Map<String, String>> avatars) {
     return ProfileEntity(
       id: 1,
+      username: 'ivan',
       avatars: avatars,
       specialization: null,
       displayName: null,

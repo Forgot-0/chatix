@@ -118,6 +118,7 @@ void main() {
 
   ProfileEntity profile(int id, String name) => ProfileEntity(
     id: id,
+    username: 'user$id',
     avatars: const {},
     specialization: null,
     displayName: name,

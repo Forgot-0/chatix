@@ -14,6 +14,7 @@ void main() {
 
   final tProfileJson = <String, dynamic>{
     'id': 7,
+    'username': 'ivan',
     'avatars': <String, dynamic>{},
     'specialization': null,
     'display_name': null,
@@ -70,6 +71,16 @@ void main() {
       await dataSource.fetchProfile(1);
 
       expect(capturedGetPath(), '/profiles/1/');
+    });
+
+    test('carries the handle, which is never null (api-docs §4.3)', () async {
+      stubGet(tProfileJson);
+
+      final result = await dataSource.fetchProfile(7);
+
+      // The one identifier every profile has: `display_name` is optional and
+      // not unique, `username` is neither.
+      expect(result.getRight().toNullable()?.username, 'ivan');
     });
 
     test('parses the DTO straight from the body, unwrapped', () async {

@@ -20,6 +20,7 @@ client now uses it. Kept here as a record of what moved, not as work:
 | Who to draw on a row | `ChatDTO.peer` for direct chats, `members_preview` for groups |
 | Searching messages | `GET /chats/messages/search/`, cursor over message ids |
 | Searching people in one field | `GET /profiles/?q=`, matching username OR display name |
+| A profile knowing its own handle | `ProfileDTO.username` — non-null, on `GET /profiles/{id}/` and on the list |
 
 On the client: `features/chat/presentation/providers/chat_state_actions.dart`
 writes all three through one endpoint and moves the row while the request is
@@ -291,40 +292,20 @@ already written.
 
 ---
 
-## 10. A profile cannot say who it belongs to 🔴
+## 10. ~~A profile cannot say who it belongs to~~ ✅ closed
 
-`ProfileDTO` (api-docs §4.3) carries `id`, `avatars`, `specialization`,
-`display_name`, `bio`, `date_birthday`, `skills` and `links`. It does not
-carry `username` — and `GET /profiles/{id}/` is the only endpoint that
-returns a profile on its own. Meanwhile the same person's handle is right
-there in every *other* shape the API has for them: `ChatProfileDTO.username`
-in a chat's member list (§5.3), `ContactProfileDTO.username` in the address
-book (§4.7). Even `GET /profiles/?q=` searches by username without ever
-returning one.
+`ProfileDTO` carries `username`, non-nullable, on both `GET /profiles/{id}/`
+and `GET /profiles/` (api-docs §4.3). This entry used to ask for exactly
+that field, and described a workaround that no longer exists: the handle
+used to ride along as `?username=` on `ProfileDetailRoute`, filled in by the
+member list and by `@mention`s, and was simply missing whenever a profile
+was opened from a deep link or a push.
 
-**What the client does.** `ProfileScreen` shows `@handle` when it has one and
-omits the line when it does not. Its own profile takes the handle from
-`GET /users/me/` (`authProvider`); somebody else's arrives as
-`?username=` on `ProfileDetailRoute`, passed along by the screen the profile
-was opened from — the member list and the `@mention` in a message both know
-it. Opened any other way — a deep link, a share link, a push — the handle is
-simply not shown. Nothing is guessed and nothing extra is fetched: finding a
-handle by id would mean paging `GET /profiles/` or `GET /contacts/` and
-matching, at 20 requests a minute.
-
-**What the user loses.** The one identifier that is stable, typeable and
-unique is missing from the screen built to identify a person. Display names
-are optional and not unique, so a profile with no display name falls back to
-"Unknown profile" for somebody who has a perfectly good `@handle`.
-
-**What the backend would need.** One field: `username: string` on
-`ProfileDTO`. It is already denormalised into two other DTOs, so the data is
-at hand.
-
-**Client swap cost once it exists.** `ProfileModel` gains the field,
-`ProfileEntity` carries it, `ProfileScreen` reads `profile.username` instead
-of `widget.username`, and `ProfileDetailRoute`'s `?username=` query parameter
-and the two call sites that fill it are deleted.
+On the client: `ProfileEntity.username` is a required `String`,
+`ProfileScreen` reads it straight off the profile, and the route is back to
+carrying nothing but the id. The people list and the user search field name
+somebody by their handle when they have no display name, instead of
+`User #42`.
 
 ---
 
@@ -345,7 +326,9 @@ ChatiX and are signed in. Sending one to anybody else does nothing.
 
 **What the backend would need.** The same landing-page work §8 asks for — a
 web page on the origin that renders a public sliver of a profile and deep
-links into the app — plus a stable public handle to address it by (see §10).
+links into the app. The handle to address it by now exists
+(`ProfileDTO.username`), so `/u/{username}` is available as a shape; what is
+missing is something that serves it.
 
 ---
 

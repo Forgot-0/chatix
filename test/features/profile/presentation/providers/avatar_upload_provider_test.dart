@@ -27,6 +27,7 @@ void main() {
   ProfileEntity withAvatars(Map<String, Map<String, String>> avatars) =>
       ProfileEntity(
         id: profileId,
+        username: 'ivan',
         avatars: avatars,
         specialization: null,
         displayName: null,

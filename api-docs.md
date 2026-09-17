@@ -535,6 +535,7 @@ Query (`GetProfilesRequest`): `q?, username?, display_name?, skills?: string[], 
 ```ts
 interface ProfileDTO {
   id: number;                                   // === user_id
+  username: string;                             // без "@", всегда есть — не nullable, в отличие от display_name
   avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp"|"avif", string>>;
   specialization: string | null;
   display_name: string | null;
@@ -547,6 +548,10 @@ interface ProfileLinkDTO { profile_id: number; provider: string; contact: string
 ```
 
 Если у пользователя ещё нет аватара, `avatars` — пустой объект `{}`.
+
+`username` приходит и здесь, и в списке `GET /profiles/` — то есть профиль всегда знает свой хэндл,
+и клиенту не нужно доставать его из `ChatProfileDTO` (§5.3) или `ContactProfileDTO` (§4.7).
+Это единственный стабильный идентификатор человека: `display_name` необязателен и не уникален.
 
 ### 4.4 `PUT /profiles/{profile_id}/` 🔒 ⚠️ именно PUT, не PATCH
 

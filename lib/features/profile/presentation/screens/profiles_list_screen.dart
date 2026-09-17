@@ -6,6 +6,7 @@ import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_list_provider.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class ProfilesListScreen extends ConsumerStatefulWidget {
@@ -124,12 +125,8 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                       final profile = state.items[index];
                       return ListTile(
                         leading: ProfileAvatar(profile: profile, radius: 20),
-                        title: Text(
-                          profile.displayName ?? 'Profile #${profile.id}',
-                        ),
-                        subtitle: profile.specialization != null
-                            ? Text(profile.specialization!)
-                            : null,
+                        title: Text(profileLabel(profile)),
+                        subtitle: Text('@${profile.username}'),
                         onTap: () => context.push(
                           ProfileDetailRoute(profile.id).location,
                         ),

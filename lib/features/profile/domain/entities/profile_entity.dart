@@ -6,6 +6,11 @@ import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 class ProfileEntity extends Equatable {
   final int id;
 
+  /// The `@handle`, without the `@` and never null — the one identifier a
+  /// person always has, since `displayName` is optional and not unique
+  /// (api-docs §4.3).
+  final String username;
+
   final Map<String, Map<String, String>> avatars;
   final String? specialization;
   final String? displayName;
@@ -18,6 +23,7 @@ class ProfileEntity extends Equatable {
 
   const ProfileEntity({
     required this.id,
+    required this.username,
     required this.avatars,
     required this.specialization,
     required this.displayName,
@@ -37,6 +43,7 @@ class ProfileEntity extends Equatable {
 
   ProfileEntity copyWith({
     int? id,
+    String? username,
     Map<String, Map<String, String>>? avatars,
     String? specialization,
     String? displayName,
@@ -47,6 +54,7 @@ class ProfileEntity extends Equatable {
   }) {
     return ProfileEntity(
       id: id ?? this.id,
+      username: username ?? this.username,
       avatars: avatars ?? this.avatars,
       specialization: specialization ?? this.specialization,
       displayName: displayName ?? this.displayName,
@@ -60,6 +68,7 @@ class ProfileEntity extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    username,
     avatars,
     specialization,
     displayName,

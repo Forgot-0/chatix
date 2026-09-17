@@ -27,6 +27,7 @@ void main() {
 
   ProfileEntity profile(int id) => ProfileEntity(
     id: id,
+    username: 'user$id',
     avatars: const {},
     specialization: null,
     displayName: null,

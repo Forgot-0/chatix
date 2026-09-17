@@ -16,6 +16,7 @@ class _MockGetProfilesUseCase extends Mock implements GetProfilesUseCase {}
 void main() {
   const tProfile = ProfileEntity(
     id: 42,
+    username: 'ivan',
     avatars: {},
     specialization: null,
     displayName: 'Ivan Petrov',

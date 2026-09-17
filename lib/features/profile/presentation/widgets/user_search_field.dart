@@ -259,9 +259,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
             return ListTile(
               leading: ProfileAvatar(profile: profile, radius: 20),
               title: Text(profileLabel(profile)),
-              subtitle: profile.specialization == null
-                  ? null
-                  : Text(profile.specialization!),
+              subtitle: Text(_secondLine(profile)),
               onTap: () => _select(profile),
             );
           },
@@ -271,10 +269,20 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
   }
 }
 
+/// What to call somebody in a list: their display name, or the handle every
+/// profile has when they have not set one (api-docs §4.3).
 String profileLabel(ProfileEntity profile) {
   final name = profile.displayName?.trim();
   if (name != null && name.isNotEmpty) return name;
-  return 'User #${profile.id}';
+  return '@${profile.username}';
+}
+
+/// The handle, unless the row is already titled with it, in which case
+/// whatever else identifies the person.
+String _secondLine(ProfileEntity profile) {
+  final name = profile.displayName?.trim();
+  if (name == null || name.isEmpty) return profile.specialization?.trim() ?? '';
+  return '@${profile.username}';
 }
 
 class MultiUserSearchField extends StatelessWidget {

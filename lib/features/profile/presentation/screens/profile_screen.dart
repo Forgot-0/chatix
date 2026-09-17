@@ -28,18 +28,10 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// sit under the header and whether the account rows at the bottom are
 /// there at all, not two near-identical layouts drifting apart.
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key, this.profileId, this.username});
+  const ProfileScreen({super.key, this.profileId});
 
   /// Null means the signed-in user's own profile.
   final int? profileId;
-
-  /// The `@handle`, when whoever opened this screen happened to know it.
-  ///
-  /// `ProfileDTO` has no `username` field (api-docs §4.3), so this is the
-  /// only way another person's handle can be on screen — a chat's member
-  /// list has it in `ChatProfileDTO` and passes it along. See
-  /// `docs/BACKEND_GAPS.md`.
-  final String? username;
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -98,13 +90,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required UserEntity? me,
     required bool isMe,
   }) {
-    final handle = isMe ? me?.username : widget.username;
     final specialization = profile.specialization?.trim();
     final bio = profile.bio?.trim();
 
-    // The header falls back to the specialization when there is no handle to
-    // show, so the row below would otherwise say the same thing twice.
-    final subtitle = _subtitleOf(profile, handle: handle);
+    // The header falls back to the specialization when the name is already
+    // the handle, so the row below would otherwise say the same thing twice.
+    final subtitle = _subtitleOf(profile);
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -113,7 +104,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           pinned: true,
           delegate: ProfileHeader(
             profile: profile,
-            title: _titleOf(l10n, profile, handle: handle),
+            title: _titleOf(profile),
             subtitle: subtitle,
             topPadding: MediaQuery.paddingOf(context).top,
             onBack: _back,
@@ -145,7 +136,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 8),
 
               AppQuickActionsRow(
-                actions: _actions(l10n, profile, isMe: isMe, handle: handle),
+                actions: _actions(l10n, profile, isMe: isMe),
               ),
 
               if (specialization != null &&
@@ -231,27 +222,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         profile.dateBirthday == null;
   }
 
-  String _titleOf(
-    AppLocalizations l10n,
-    ProfileEntity profile, {
-    required String? handle,
-  }) {
+  /// The display name, falling back to the handle — which every profile has.
+  String _titleOf(ProfileEntity profile) {
     final name = profile.displayName?.trim();
     if (name != null && name.isNotEmpty) return name;
-
-    final username = handle?.trim();
-    if (username != null && username.isNotEmpty) return '@$username';
-
-    return l10n.unknownProfile;
+    return '@${profile.username}';
   }
 
-  /// The handle when it is known and not already the title, otherwise the
-  /// specialization — whichever second line actually says something.
-  String _subtitleOf(ProfileEntity profile, {required String? handle}) {
+  /// The handle, unless it is already the title, in which case the
+  /// specialization — whichever second line actually says something new.
+  String _subtitleOf(ProfileEntity profile) {
     final name = profile.displayName?.trim() ?? '';
-    final username = handle?.trim() ?? '';
-
-    if (username.isNotEmpty && name.isNotEmpty) return '@$username';
+    if (name.isNotEmpty) return '@${profile.username}';
     return profile.specialization?.trim() ?? '';
   }
 
@@ -265,7 +247,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     AppLocalizations l10n,
     ProfileEntity profile, {
     required bool isMe,
-    required String? handle,
   }) {
     if (isMe) {
       return [
@@ -277,7 +258,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         AppQuickAction(
           icon: Icons.ios_share,
           label: l10n.profileShareAction,
-          onPressed: () => _share(profile, handle: handle),
+          onPressed: () => _share(profile),
         ),
       ];
     }
@@ -298,7 +279,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       AppQuickAction(
         icon: Icons.ios_share,
         label: l10n.profileShareAction,
-        onPressed: () => _share(profile, handle: handle),
+        onPressed: () => _share(profile),
       ),
     ];
   }
@@ -334,7 +315,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// Copies the link rather than opening a system share sheet: the app has
   /// no share plugin, and a clipboard copy works on every platform it ships
   /// to. The link itself only opens in this app — see [ProfileShareLink].
-  Future<void> _share(ProfileEntity profile, {required String? handle}) async {
+  Future<void> _share(ProfileEntity profile) async {
     final l10n = AppLocalizations.of(context);
 
     await Clipboard.setData(
@@ -342,7 +323,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         text: ProfileShareLink.messageFor(
           profile.id,
           displayName: profile.displayName,
-          username: handle,
+          username: profile.username,
         ),
       ),
     );

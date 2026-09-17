@@ -33,6 +33,7 @@ void main() {
 
   final stored = ProfileEntity(
     id: me,
+    username: 'ivan',
     avatars: const {},
     specialization: 'Backend engineer',
     displayName: 'Ivan Petrov',

@@ -65,6 +65,7 @@ void main() {
 
   ProfileEntity profile({
     int id = other,
+    String username = 'ivan_dev',
     String? displayName = 'Ivan Petrov',
     String? specialization = 'Backend engineer',
     String? bio = 'Builds unglamorous things that stay up.',
@@ -73,6 +74,7 @@ void main() {
     DateTime? birthday,
   }) => ProfileEntity(
     id: id,
+    username: username,
     avatars: const {},
     specialization: specialization,
     displayName: displayName,
@@ -86,7 +88,6 @@ void main() {
     WidgetTester tester, {
     required ProfileEntity source,
     int? profileId,
-    String? username,
     ThemeData? theme,
   }) async {
     when(() => profiles.getMyProfile()).thenAnswer((_) async => Right(source));
@@ -99,8 +100,7 @@ void main() {
       routes: [
         GoRoute(
           path: '/here',
-          builder: (_, _) =>
-              ProfileScreen(profileId: profileId, username: username),
+          builder: (_, _) => ProfileScreen(profileId: profileId),
         ),
       ],
     );
@@ -159,15 +159,10 @@ void main() {
       expect(find.text(l10n.myDevices), findsNothing);
     });
 
-    testWidgets('shows the handle the route carried', (tester) async {
-      // `ProfileDTO` has no username, so without this it cannot be shown at
-      // all (api-docs §4.3 — see docs/BACKEND_GAPS.md).
-      await pump(
-        tester,
-        profileId: other,
-        username: 'ivan_dev',
-        source: profile(),
-      );
+    testWidgets('shows the handle the DTO carries', (tester) async {
+      // `username` is a field of ProfileDTO and is never null (api-docs
+      // §4.3), so it is on screen whichever way the profile was opened.
+      await pump(tester, profileId: other, source: profile());
 
       expect(find.text('@ivan_dev'), findsOneWidget);
     });
@@ -178,7 +173,6 @@ void main() {
       await pump(
         tester,
         profileId: other,
-        username: 'ivan_dev',
         source: profile(displayName: null),
       );
 

@@ -8,6 +8,10 @@ part 'profile_model.g.dart';
 @JsonSerializable(fieldRename: FieldRename.snake)
 class ProfileModel extends Equatable {
   final int id;
+
+  /// Always present and never null, unlike `display_name` (api-docs §4.3).
+  final String username;
+
   final Map<String, Map<String, String>> avatars;
   final String? specialization;
   final String? displayName;
@@ -22,6 +26,7 @@ class ProfileModel extends Equatable {
 
   const ProfileModel({
     required this.id,
+    required this.username,
     required this.avatars,
     required this.specialization,
     required this.displayName,
@@ -34,6 +39,7 @@ class ProfileModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    username,
     avatars,
     specialization,
     displayName,
@@ -53,6 +59,7 @@ extension ProfileModelX on ProfileModel {
   ProfileEntity toEntity() {
     return ProfileEntity(
       id: id,
+      username: username,
       avatars: avatars,
       specialization: specialization,
       displayName: displayName,
