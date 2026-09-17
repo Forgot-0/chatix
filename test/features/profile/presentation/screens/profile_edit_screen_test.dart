@@ -5,7 +5,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -65,10 +64,7 @@ void main() {
           path: '/profile',
           builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
           routes: [
-            GoRoute(
-              path: 'edit',
-              builder: (_, _) => const ProfileEditScreen(),
-            ),
+            GoRoute(path: 'edit', builder: (_, _) => const ProfileEditScreen()),
           ],
         ),
       ],
@@ -101,7 +97,9 @@ void main() {
   }
 
   ProfileUpdate capturedUpdate() {
-    return verify(() => profiles.updateProfile(me, captureAny())).captured.single
+    return verify(
+          () => profiles.updateProfile(me, captureAny()),
+        ).captured.single
         as ProfileUpdate;
   }
 
@@ -114,30 +112,29 @@ void main() {
     expect(find.text('dart'), findsOneWidget);
   });
 
-  testWidgets(
-    'saving one edit still sends every other field (api-docs §4.4)',
-    (tester) async {
-      await pump(tester);
+  testWidgets('saving one edit still sends every other field (api-docs §4.4)', (
+    tester,
+  ) async {
+    await pump(tester);
 
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Ivan Petrov'),
-        'Ivan P.',
-      );
-      await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Ivan Petrov'),
+      'Ivan P.',
+    );
+    await tester.pumpAndSettle();
 
-      await save(tester);
+    await save(tester);
 
-      final update = capturedUpdate();
+    final update = capturedUpdate();
 
-      // The PUT applies the body verbatim, so anything missing here would be
-      // wiped on the server even though the user never touched it.
-      expect(update.displayName, 'Ivan P.');
-      expect(update.specialization, 'Backend engineer');
-      expect(update.bio, 'Builds unglamorous things.');
-      expect(update.skills, ['dart']);
-      expect(update.dateBirthday, DateTime(1990, 4, 12));
-    },
-  );
+    // The PUT applies the body verbatim, so anything missing here would be
+    // wiped on the server even though the user never touched it.
+    expect(update.displayName, 'Ivan P.');
+    expect(update.specialization, 'Backend engineer');
+    expect(update.bio, 'Builds unglamorous things.');
+    expect(update.skills, ['dart']);
+    expect(update.dateBirthday, DateTime(1990, 4, 12));
+  });
 
   testWidgets('clearing a field sends it as an explicit null', (tester) async {
     await pump(tester);
@@ -148,7 +145,9 @@ void main() {
     await tester.enterText(bio, '');
     await tester.pumpAndSettle();
     // ignore: avoid_print
-    print('ERRORS: ${tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).where((d) => d != null && d.contains('characters')).toList()}');
+    print(
+      'ERRORS: ${tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).where((d) => d != null && d.contains('characters')).toList()}',
+    );
 
     await save(tester);
 

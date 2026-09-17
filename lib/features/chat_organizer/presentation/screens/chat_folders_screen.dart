@@ -50,7 +50,7 @@ class ChatFoldersScreen extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: data.folders.length,
-              onReorder: (oldIndex, newIndex) => ref
+              onReorderItem: (oldIndex, newIndex) => ref
                   .read(chatOrganizerProvider.notifier)
                   .reorderFolders(oldIndex: oldIndex, newIndex: newIndex),
               itemBuilder: (context, index) {

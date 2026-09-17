@@ -13,7 +13,6 @@ import 'package:chatix/features/auth/domain/entities/session_entity.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
-import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -215,11 +214,7 @@ void main() {
       await pump(
         tester,
         profileId: other,
-        source: profile(
-          specialization: null,
-          bio: null,
-          skills: const [],
-        ),
+        source: profile(specialization: null, bio: null, skills: const []),
       );
 
       expect(find.text(l10n.profileEmptyHintOther), findsOneWidget);

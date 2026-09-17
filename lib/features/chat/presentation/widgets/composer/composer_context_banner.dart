@@ -45,7 +45,7 @@ class ComposerContextBanner extends StatelessWidget {
         transitionBuilder: (child, animation) => FadeTransition(
           opacity: animation,
           child: SizeTransition(
-            axisAlignment: -1,
+            alignment: Alignment.topCenter,
             sizeFactor: animation,
             child: child,
           ),

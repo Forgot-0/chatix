@@ -62,7 +62,7 @@ class FolderTabsBar extends ConsumerWidget implements PreferredSizeWidget {
                       buildDefaultDragHandles: false,
                       padding: const EdgeInsets.only(right: AppSpacing.x2),
                       itemCount: folders.length,
-                      onReorder: (oldIndex, newIndex) => ref
+                      onReorderItem: (oldIndex, newIndex) => ref
                           .read(chatOrganizerProvider.notifier)
                           .reorderFolders(
                             oldIndex: oldIndex,
