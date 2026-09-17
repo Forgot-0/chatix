@@ -1,5 +1,3 @@
-import 'package:form_builder_validators/form_builder_validators.dart';
-
 import 'package:chatix/features/profile/domain/usecases/update_profile_use_case.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -12,18 +10,31 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 class ProfileFieldValidators {
   ProfileFieldValidators._();
 
+  static String? Function(String?) _maxLengthAllowEmpty(
+    int maxLength,
+    AppLocalizations l10n,
+  ) {
+    return (String? value) {
+      if (value == null) return null;
+
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return null;
+      if (trimmed.length > maxLength) {
+        return l10n.fieldTooLong(maxLength);
+      }
+      return null;
+    };
+  }
+
   static String? Function(String?) displayName(AppLocalizations l10n) {
-    return FormBuilderValidators.maxLength(
+    return _maxLengthAllowEmpty(
       UpdateProfileUseCase.maxDisplayNameLength,
-      errorText: l10n.fieldTooLong(UpdateProfileUseCase.maxDisplayNameLength),
+      l10n,
     );
   }
 
   static String? Function(String?) bio(AppLocalizations l10n) {
-    return FormBuilderValidators.maxLength(
-      UpdateProfileUseCase.maxBioLength,
-      errorText: l10n.fieldTooLong(UpdateProfileUseCase.maxBioLength),
-    );
+    return _maxLengthAllowEmpty(UpdateProfileUseCase.maxBioLength, l10n);
   }
 
   /// Per skill, not for the list: the server's limit is on each element.
@@ -31,10 +42,7 @@ class ProfileFieldValidators {
     return (List<String>? value) {
       for (final skill in value ?? const <String>[]) {
         if (skill.length > UpdateProfileUseCase.maxSkillLength) {
-          return l10n.skillTooLong(
-            skill,
-            UpdateProfileUseCase.maxSkillLength,
-          );
+          return l10n.skillTooLong(skill, UpdateProfileUseCase.maxSkillLength);
         }
       }
       return null;

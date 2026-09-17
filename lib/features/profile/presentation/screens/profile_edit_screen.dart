@@ -342,11 +342,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     final added = await ref
         .read(profileEditProvider.notifier)
-        .addContact(
-          profileId,
-          provider: link.provider,
-          contact: link.contact,
-        );
+        .addContact(profileId, provider: link.provider, contact: link.contact);
 
     if (added || !mounted) return;
     AppSnackbar.quiet(context, l10n.saveChangesFailed);

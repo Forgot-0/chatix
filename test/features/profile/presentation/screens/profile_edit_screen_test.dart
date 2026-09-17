@@ -140,14 +140,8 @@ void main() {
     await pump(tester);
 
     final bio = find.widgetWithText(TextField, 'Builds unglamorous things.');
-    // ignore: avoid_print
-    print('BIO MATCHES: ${bio.evaluate().length}');
     await tester.enterText(bio, '');
     await tester.pumpAndSettle();
-    // ignore: avoid_print
-    print(
-      'ERRORS: ${tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).where((d) => d != null && d.contains('characters')).toList()}',
-    );
 
     await save(tester);
 
