@@ -26,6 +26,8 @@ import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/profile/chat_profile_actions.dart';
 import 'package:chatix/features/chat/presentation/widgets/profile/chat_profile_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/profile/chat_shared_content_view.dart';
+import 'package:chatix/features/notification/presentation/providers/notification_preferences_provider.dart';
+import 'package:chatix/features/notification/presentation/widgets/chat_notification_profile_sheet.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// Everything about one chat on one page: who it is, what it has shared,
@@ -319,6 +321,29 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
               leading: const Icon(Icons.notifications_active_outlined),
               title: Text(l10n.unmuteChat),
               onTap: () => Navigator.of(sheetContext).pop(Duration.zero),
+            ),
+            const Divider(height: 1),
+            // The server mute above stops the push being sent at all
+            // (api-docs §5.2); this one decides what this device does with a
+            // push that does arrive, which is the only way to say "only when
+            // they mention me".
+            ListTile(
+              leading: Icon(
+                iconForChatNotificationProfile(
+                  ref.watch(chatNotificationProfileProvider(widget.chatId)),
+                ),
+              ),
+              title: Text(l10n.chatNotificationProfileTitle),
+              subtitle: Text(
+                chatNotificationProfileLabel(
+                  ref.watch(chatNotificationProfileProvider(widget.chatId)),
+                  l10n,
+                ),
+              ),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                showChatNotificationProfileSheet(context, ref, widget.chatId);
+              },
             ),
           ],
         ),

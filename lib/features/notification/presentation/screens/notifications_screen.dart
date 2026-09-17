@@ -1,14 +1,24 @@
-import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/notification/domain/entities/notification_entity.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_list_provider.dart';
 import 'package:chatix/features/notification/presentation/utils/notification_route_resolver.dart';
+import 'package:chatix/features/notification/presentation/utils/notification_timestamp.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
+/// `GET /notifications/` as a screen.
+///
+/// The list is `PageResult`, whose `has_next` the server does not serialise
+/// (api-docs §1.5) — the controller works it out from `total`, `page` and
+/// `page_size`, and this screen only asks for the next page when the bottom
+/// comes into view.
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -45,6 +55,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _onTapNotification(NotificationEntity notification) async {
+    final l10n = AppLocalizations.of(context);
     final route = resolveNotificationRoute(notification);
 
     final failure = await ref
@@ -54,9 +65,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (!mounted) return;
 
     if (failure != null) {
-      ScaffoldMessenger.of(
+      AppSnackbar.quiet(
         context,
-      ).showSnackBar(SnackBar(content: Text(failure.message)));
+        friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+      );
     }
 
     if (route != null && mounted) {
@@ -65,130 +77,172 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Future<void> _onMarkAllAsRead() async {
+    final l10n = AppLocalizations.of(context);
+
     final result = await ref
         .read(notificationListProvider.notifier)
         .markAllAsRead();
     if (!mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     result.match(
-      (failure) =>
-          messenger.showSnackBar(SnackBar(content: Text(failure.message))),
-      (count) => messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            count == 0
-                ? 'No unread notifications'
-                : 'Marked $count notification${count == 1 ? '' : 's'} as read',
-          ),
-        ),
+      (failure) => AppSnackbar.quiet(
+        context,
+        friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
       ),
+      // `PATCH /notifications/read_all/` answers with a bare number, not an
+      // object (api-docs §7.4) — it is how many rows it touched, and saying
+      // so is the whole confirmation.
+      (count) => AppSnackbar.quiet(context, l10n.notificationsMarkedRead(count)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final listState = ref.watch(notificationListProvider);
     final unreadCount = ref.watch(notificationBadgeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).notifications),
+        title: Text(l10n.notifications),
         actions: [
           TextButton(
             onPressed: unreadCount == 0 ? null : _onMarkAllAsRead,
-            child: Text(AppLocalizations.of(context).readAll),
+            child: Text(l10n.readAll),
           ),
           PopupMenuButton<bool?>(
-            tooltip: AppLocalizations.of(context).filter,
-            icon: Icon(Icons.filter_list),
+            tooltip: l10n.filter,
+            icon: const Icon(Icons.filter_list),
             onSelected: (value) => ref
                 .read(notificationListProvider.notifier)
                 .setFilter(isRead: value),
             itemBuilder: (context) => [
-              PopupMenuItem<bool?>(
-                value: null,
-                child: Text(AppLocalizations.of(context).filterAll),
-              ),
+              PopupMenuItem<bool?>(value: null, child: Text(l10n.filterAll)),
               PopupMenuItem<bool?>(
                 value: false,
-                child: Text(AppLocalizations.of(context).filterUnread),
+                child: Text(l10n.filterUnread),
               ),
-              PopupMenuItem<bool?>(
-                value: true,
-                child: Text(AppLocalizations.of(context).filterRead),
-              ),
+              PopupMenuItem<bool?>(value: true, child: Text(l10n.filterRead)),
             ],
           ),
         ],
+        bottom: unreadCount == 0
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(28),
+                child: _UnreadStrip(count: unreadCount),
+              ),
       ),
       body: listState.when(
         loading: () => const AppListSkeleton(hasTrailing: true),
         error: (error, _) => AppErrorState(
           error: error,
-          fallbackMessage: AppLocalizations.of(context).notificationsLoadFailed,
+          fallbackMessage: l10n.notificationsLoadFailed,
           onRetry: () => ref.read(notificationListProvider.notifier).refresh(),
         ),
-        data: (state) {
-          if (state.items.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: () =>
-                  ref.read(notificationListProvider.notifier).refresh(),
-              child: AppEmptyState(
-                icon: switch (state.isReadFilter) {
-                  null => Icons.notifications_none_outlined,
-                  _ => Icons.filter_list_off,
-                },
-                title: switch (state.isReadFilter) {
-                  null => 'No notifications yet',
-                  false => 'Nothing unread',
-                  true => 'Nothing read yet',
-                },
-                message: switch (state.isReadFilter) {
-                  null =>
-                    "We'll let you know about invites, applications and "
-                        'messages here.',
-                  _ => 'Switch the filter to “All” to see everything.',
-                },
-                action: state.isReadFilter == null
-                    ? null
-                    : TextButton(
-                        onPressed: () => ref
-                            .read(notificationListProvider.notifier)
-                            .setFilter(),
-                        child: Text(AppLocalizations.of(context).showAll),
-                      ),
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(notificationListProvider.notifier).refresh(),
-            child: ListView.separated(
-              key: const PageStorageKey<String>('notifications-list'),
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                if (index >= state.items.length) {
-                  return const AppLoadMoreIndicator();
-                }
-                final notification = state.items[index];
-                return _NotificationTile(
-                  notification: notification,
-                  onTap: () => _onTapNotification(notification),
-                );
-              },
-            ),
-          );
-        },
+        data: (state) => RefreshIndicator(
+          onRefresh: () =>
+              ref.read(notificationListProvider.notifier).refresh(),
+          child: state.items.isEmpty
+              ? _EmptyState(filter: state.isReadFilter)
+              : ListView.separated(
+                  key: const PageStorageKey<String>('notifications-list'),
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.x2,
+                  ),
+                  itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpacing.x1),
+                  itemBuilder: (context, index) {
+                    if (index >= state.items.length) {
+                      return const AppLoadMoreIndicator();
+                    }
+                    final notification = state.items[index];
+                    return _NotificationTile(
+                      notification: notification,
+                      onTap: () => _onTapNotification(notification),
+                    );
+                  },
+                ),
+        ),
       ),
     );
   }
 }
 
+/// How many are unread, under the title, so the "read all" button next to it
+/// has a number to mean something against.
+class _UnreadStrip extends StatelessWidget {
+  const _UnreadStrip({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.x4,
+          0,
+          AppSpacing.x4,
+          AppSpacing.x2,
+        ),
+        child: Text(
+          AppLocalizations.of(context).unreadNotificationsCount(count),
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends ConsumerWidget {
+  const _EmptyState({required this.filter});
+
+  /// `null` for "all", otherwise the read flag the list is filtered by.
+  final bool? filter;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+
+    return AppEmptyState(
+      icon: switch (filter) {
+        null => Icons.notifications_none_outlined,
+        _ => Icons.filter_list_off,
+      },
+      title: switch (filter) {
+        null => l10n.notificationsEmptyTitle,
+        false => l10n.notificationsEmptyUnread,
+        true => l10n.notificationsEmptyRead,
+      },
+      message: switch (filter) {
+        null => l10n.notificationsEmptyMessage,
+        _ => l10n.notificationsEmptyFilterHint,
+      },
+      action: filter == null
+          ? null
+          : TextButton(
+              onPressed: () =>
+                  ref.read(notificationListProvider.notifier).setFilter(),
+              child: Text(l10n.showAll),
+            ),
+    );
+  }
+}
+
+/// One row.
+///
+/// Unread is carried by three things at once — a tinted card, a heavier title
+/// and a dot — because a tint alone does not survive a high-contrast theme and
+/// a dot alone is easy to miss in a long list.
 class _NotificationTile extends StatelessWidget {
   const _NotificationTile({required this.notification, required this.onTap});
 
@@ -198,41 +252,112 @@ class _NotificationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isUnread = !notification.isRead;
+    final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
-    return ListTile(
-      onTap: onTap,
-      tileColor: isUnread
-          ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25)
-          : null,
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.secondaryContainer,
-        child: Icon(_iconFor(notification.type), size: 20),
-      ),
-      title: Text(
-        notification.title,
-        style: TextStyle(
-          fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+    final isUnread = !notification.isRead;
+    final message = notification.message?.trim();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
+      child: Material(
+        color: isUnread
+            ? scheme.primaryContainer.withValues(alpha: 0.35)
+            : scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.x3),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: isUnread
+                      ? scheme.primary
+                      : scheme.surfaceContainerHighest,
+                  child: Icon(
+                    _iconFor(notification.type),
+                    size: 20,
+                    color: isUnread ? scheme.onPrimary : scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.x3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: isUnread
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (isUnread)
+                            Container(
+                              margin: const EdgeInsetsDirectional.only(
+                                start: AppSpacing.x2,
+                              ),
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: scheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (message != null && message.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.x1),
+                        Text(
+                          message,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.x1),
+                      Row(
+                        children: [
+                          Text(
+                            formatNotificationTimestamp(
+                              notification.createdAt,
+                              l10n,
+                              MaterialLocalizations.of(context),
+                            ),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (hasNotificationDestination(notification))
+                            Icon(
+                              Icons.chevron_right,
+                              size: 18,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (notification.message != null && notification.message!.isNotEmpty)
-            Text(
-              notification.message!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          Text(
-            _formatTimestamp(notification.createdAt),
-            style: theme.textTheme.bodySmall,
-          ),
-        ],
-      ),
-      trailing: hasNotificationDestination(notification)
-          ? const Icon(Icons.chevron_right)
-          : null,
     );
   }
 
@@ -243,16 +368,5 @@ class _NotificationTile extends StatelessWidget {
       case NotificationType.system:
         return Icons.info_outline;
     }
-  }
-
-  static String _formatTimestamp(DateTime timestamp) {
-    final difference = DateTime.now().difference(timestamp);
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inHours < 1) return '${difference.inMinutes}m ago';
-    if (difference.inDays < 1) return '${difference.inHours}h ago';
-    if (difference.inDays < 7) return '${difference.inDays}d ago';
-    final local = timestamp.toLocal();
-    return '${local.day.toString().padLeft(2, '0')}.'
-        '${local.month.toString().padLeft(2, '0')}.${local.year}';
   }
 }

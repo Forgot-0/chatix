@@ -45,6 +45,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
           ListTile(
+            leading: const Icon(Icons.notifications_none),
+            title: Text(l10n.notificationSettingsTitle),
+            subtitle: Text(l10n.notification_settings),
+            onTap: () => context.push(NotificationSettingsRoute.location),
+          ),
+
+          ListTile(
             leading: const Icon(Icons.devices),
             title: Text(l10n.myDevices),
             onTap: () => context.push(SessionsRoute.location),

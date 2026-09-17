@@ -10,6 +10,7 @@ import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
@@ -117,6 +118,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     _pendingFocusId = widget.focusMessageId;
     _pendingFocusSeq = widget.focusMessageSeq;
+
+    // Whatever this chat put in the shade is answered by being here; leaving
+    // it there would have the reader dismiss the same messages twice.
+    unawaited(
+      ref.read(notificationServiceProvider).cancelGroup('chat_${widget.chatId}'),
+    );
   }
 
   @override

@@ -30,6 +30,7 @@ import 'package:chatix/features/chat/presentation/screens/media_viewer_screen.da
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
+import 'package:chatix/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_avatar_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
@@ -388,6 +389,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                     name: RouteNames.languageSettings,
                     pageBuilder: (context, state) =>
                         _push(state, const LanguageSettingsScreen()),
+                  ),
+                  GoRoute(
+                    path: NotificationSettingsRoute.path,
+                    name: RouteNames.notificationSettings,
+                    pageBuilder: (context, state) =>
+                        _push(state, const NotificationSettingsScreen()),
                   ),
                   GoRoute(
                     path: SessionsRoute.path,

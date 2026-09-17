@@ -5,42 +5,62 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'package:chatix/core/notifications/local_notification_presenter.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
 import 'package:chatix/core/utils/logger.dart';
 
+/// Push, as it arrives from Firebase, and the shade, as this app writes to it.
+///
+/// Deliberately does not decide anything: a foreground message is put on
+/// [notificationStream] and it is the notification feature that consults the
+/// reader's settings and draws it, because those settings are local and this
+/// class has no business knowing about them.
 class FirebaseNotificationService implements NotificationService {
-  FirebaseNotificationService({FlutterLocalNotificationsPlugin? local})
-    : _local = local ?? FlutterLocalNotificationsPlugin();
+  FirebaseNotificationService({
+    LocalNotificationPresenter? presenter,
+    Future<NotificationActionLabels> Function()? labelsLoader,
+    DidReceiveBackgroundNotificationResponseCallback? onBackgroundResponse,
+    Future<void> Function(RemoteMessage message)? onBackgroundMessage,
+  }) : _local = presenter ?? LocalNotificationPresenter(),
+       _labelsLoader =
+           labelsLoader ?? (() async => const NotificationActionLabels()),
+       _onBackgroundResponse = onBackgroundResponse,
+       _onBackgroundMessage = onBackgroundMessage;
 
-  final FlutterLocalNotificationsPlugin _local;
+  final LocalNotificationPresenter _local;
+  final Future<NotificationActionLabels> Function() _labelsLoader;
+  final DidReceiveBackgroundNotificationResponseCallback?
+  _onBackgroundResponse;
+  final Future<void> Function(RemoteMessage message)? _onBackgroundMessage;
 
   final StreamController<NotificationMessage> _messages =
       StreamController<NotificationMessage>.broadcast();
   final StreamController<NotificationMessage> _taps =
       StreamController<NotificationMessage>.broadcast();
+  final StreamController<NotificationActionEvent> _actions =
+      StreamController<NotificationActionEvent>.broadcast();
+  final StreamController<String> _tokens = StreamController<String>.broadcast();
 
   bool _available = false;
 
   bool get isAvailable => _available;
 
-  static const AndroidNotificationChannel _chatChannel =
-      AndroidNotificationChannel(
-        'chat_messages',
-        'Messages',
-        description: 'New messages in your chats',
-        importance: Importance.high,
-      );
-
-  static const AndroidNotificationChannel _systemChannel =
-      AndroidNotificationChannel(
-        'system',
-        'System',
-        description: 'Account and service notices',
-        importance: Importance.defaultImportance,
-      );
+  /// The presenter, for callers that draw notifications themselves.
+  LocalNotificationPresenter get presenter => _local;
 
   @override
   Future<void> init() async {
+    // The shade works whether or not Firebase does — a build without
+    // `google-services.json` still shows what the socket brings in. It is also
+    // the half most likely to be missing on a given platform, so a failure
+    // here must not stop push from being set up, and must never escape: this
+    // runs unawaited from a provider, where a thrown error has nowhere to go.
+    try {
+      await configureChannels();
+    } catch (error, stackTrace) {
+      Logger.error('Local notifications are unavailable', error, stackTrace);
+    }
+
     try {
       await Firebase.initializeApp();
       _available = true;
@@ -52,27 +72,20 @@ class FirebaseNotificationService implements NotificationService {
       return;
     }
 
-    await configureChannels();
+    final backgroundMessage = _onBackgroundMessage;
+    if (backgroundMessage != null) {
+      FirebaseMessaging.onBackgroundMessage(backgroundMessage);
+    }
 
-    FirebaseMessaging.onMessage.listen((message) {
-      _messages.add(_toMessage(message, foreground: true));
-      final notification = message.notification;
-      if (notification != null) {
-        unawaited(
-          showLocalNotification(
-            id: message.messageId ?? '${message.hashCode}',
-            title: notification.title ?? '',
-            body: notification.body ?? '',
-            data: message.data,
-            channel: _channelFor(message.data),
-          ),
-        );
-      }
-    });
+    FirebaseMessaging.onMessage.listen(
+      (message) => _messages.add(_toMessage(message, foreground: true)),
+    );
 
     FirebaseMessaging.onMessageOpenedApp.listen(
       (message) => _taps.add(_toMessage(message, foreground: false)),
     );
+
+    FirebaseMessaging.instance.onTokenRefresh.listen(_tokens.add);
 
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) {
@@ -82,24 +95,47 @@ class FirebaseNotificationService implements NotificationService {
 
   @override
   Future<void> configureChannels() async {
+    final labels = await _labelsLoader();
+
     await _local.initialize(
-      settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-        iOS: DarwinInitializationSettings(),
-      ),
-      onDidReceiveNotificationResponse: (response) {
-        final payload = response.payload;
-        if (payload == null) return;
-        _taps.add(NotificationMessage(id: payload, foreground: false));
-      },
+      replyLabel: labels.reply,
+      replyPlaceholder: labels.replyPlaceholder,
+      markReadLabel: labels.markRead,
+      onResponse: _onResponse,
+      onBackgroundResponse: _onBackgroundResponse,
     );
 
-    final android = _local
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    await android?.createNotificationChannel(_chatChannel);
-    await android?.createNotificationChannel(_systemChannel);
+    _local.setActionLabels(
+      replyLabel: labels.reply,
+      replyPlaceholder: labels.replyPlaceholder,
+      markReadLabel: labels.markRead,
+    );
+  }
+
+  void _onResponse(NotificationResponse response) {
+    final payload = decodeNotificationPayload(response.payload);
+    final action = NotificationActionType.fromId(response.actionId);
+
+    final event = NotificationActionEvent(
+      notificationId: '${response.id ?? ''}',
+      payload: payload,
+      action: action,
+      replyText: response.input,
+    );
+
+    _actions.add(event);
+
+    // A tap on the body itself is a request to open the app at what the
+    // notification was about; a button press is not.
+    if (action == null) {
+      _taps.add(
+        NotificationMessage(
+          id: event.notificationId,
+          data: payload,
+          foreground: false,
+        ),
+      );
+    }
   }
 
   @override
@@ -132,6 +168,9 @@ class FirebaseNotificationService implements NotificationService {
       return null;
     }
   }
+
+  @override
+  Stream<String> get tokenRefreshStream => _tokens.stream;
 
   @override
   Future<void> handleBackgroundMessage(Map<String, dynamic> message) async {
@@ -167,28 +206,26 @@ class FirebaseNotificationService implements NotificationService {
     Map<String, dynamic>? data,
     String? action,
     String? channel,
-  }) async {
-    final resolved = channel == 'system' ? _systemChannel : _chatChannel;
-
-    await _local.show(
-      id: id.hashCode,
-      title: title,
-      body: body,
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          resolved.id,
-          resolved.name,
-          channelDescription: resolved.description,
-          importance: resolved.importance,
-        ),
-        iOS: const DarwinNotificationDetails(),
+  }) {
+    return show(
+      LocalNotificationRequest(
+        id: id,
+        title: title,
+        body: body,
+        payload: data ?? const <String, dynamic>{},
+        channel: channel ?? LocalNotificationPresenter.chatChannelId,
       ),
-      payload: id,
     );
   }
 
   @override
-  Future<void> clearNotification(String id) => _local.cancel(id: id.hashCode);
+  Future<void> show(LocalNotificationRequest request) => _local.show(request);
+
+  @override
+  Future<void> clearNotification(String id) => _local.cancel(id);
+
+  @override
+  Future<void> cancelGroup(String groupKey) => _local.cancelGroup(groupKey);
 
   @override
   Future<void> clearAllNotifications() => _local.cancelAll();
@@ -199,20 +236,32 @@ class FirebaseNotificationService implements NotificationService {
   @override
   Stream<NotificationMessage> get notificationTapStream => _taps.stream;
 
-  static String _channelFor(Map<String, dynamic> data) =>
-      data['chat_id'] != null ? 'chat_messages' : 'system';
+  @override
+  Stream<NotificationActionEvent> get actionStream => _actions.stream;
 
   static NotificationMessage _toMessage(
     RemoteMessage message, {
     required bool foreground,
   }) {
     final notification = message.notification;
+
+    // The two halves arrive separately — a `notification` block the platform
+    // may have drawn itself and a free-form `data` map — and everything
+    // downstream reads one payload, so they are merged here.
+    final data = <String, dynamic>{
+      ...message.data,
+      if (notification?.title != null) 'title': notification!.title,
+      if (notification?.body != null) 'body': notification!.body,
+    };
+
     return NotificationMessage(
       id: message.messageId ?? '${message.hashCode}',
       title: notification?.title,
       body: notification?.body,
-      data: message.data,
-      channel: _channelFor(message.data),
+      data: data,
+      channel: data['chat_id'] != null
+          ? LocalNotificationPresenter.chatChannelId
+          : LocalNotificationPresenter.systemChannelId,
       foreground: foreground,
     );
   }

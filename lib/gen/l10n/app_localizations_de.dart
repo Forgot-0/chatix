@@ -2407,4 +2407,150 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get callDismiss => 'Dismiss';
+
+  @override
+  String get notificationNewMessage => 'Neue Nachricht';
+
+  @override
+  String get notificationReplyHint => 'Nachricht';
+
+  @override
+  String get notificationReplyFailed => 'Deine Antwort wurde nicht gesendet';
+
+  @override
+  String get notificationActionFailed => 'Das hat nicht geklappt';
+
+  @override
+  String get notificationSettingsTitle => 'Benachrichtigungen';
+
+  @override
+  String get notificationSoundTitle => 'Ton';
+
+  @override
+  String get notificationSoundSubtitle =>
+      'Einen Ton abspielen, wenn etwas ankommt';
+
+  @override
+  String get notificationVibrationTitle => 'Vibration';
+
+  @override
+  String get notificationVibrationSubtitle => 'Vibrieren, wenn etwas ankommt';
+
+  @override
+  String get notificationPreviewTitle => 'Nachrichtenvorschau';
+
+  @override
+  String get notificationPreviewSubtitle => 'Absender und Text anzeigen';
+
+  @override
+  String get quietHoursTitle => 'Ruhezeiten';
+
+  @override
+  String get quietHoursSubtitle =>
+      'Benachrichtigungen kommen weiterhin an, nur lautlos';
+
+  @override
+  String get quietHoursFrom => 'Von';
+
+  @override
+  String get quietHoursTo => 'Bis';
+
+  @override
+  String get chatNotificationsTitle => 'Ausnahmen je Chat';
+
+  @override
+  String get chatNotificationsEmpty => 'Noch keine Ausnahmen';
+
+  @override
+  String get chatNotificationsEmptyHint =>
+      'Alle Chats folgen den Einstellungen oben. Ändere einen Chat direkt in ihm.';
+
+  @override
+  String get chatNotificationsReset => 'Alle zurücksetzen';
+
+  @override
+  String get chatNotificationProfileTitle =>
+      'Benachrichtigungen aus diesem Chat';
+
+  @override
+  String get chatNotificationProfileAll => 'Alle Nachrichten';
+
+  @override
+  String get chatNotificationProfileMentions => 'Nur Erwähnungen';
+
+  @override
+  String get chatNotificationProfileOff => 'Nichts';
+
+  @override
+  String get notificationPermissionOffTitle =>
+      'Benachrichtigungen sind ausgeschaltet';
+
+  @override
+  String get notificationPermissionOffHint =>
+      'Nichts davon erreicht dich, solange Benachrichtigungen in den Systemeinstellungen nicht erlaubt sind.';
+
+  @override
+  String get notificationsEmptyTitle => 'Noch keine Benachrichtigungen';
+
+  @override
+  String get notificationsEmptyMessage =>
+      'Einladungen, Erwähnungen und Nachrichten erscheinen hier.';
+
+  @override
+  String get notificationsEmptyUnread => 'Nichts Ungelesenes';
+
+  @override
+  String get notificationsEmptyRead => 'Noch nichts gelesen';
+
+  @override
+  String get notificationsEmptyFilterHint =>
+      'Stelle den Filter auf „Alle“, um alles zu sehen.';
+
+  @override
+  String get timeJustNow => 'Gerade eben';
+
+  @override
+  String notificationsMarkedRead(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Benachrichtigungen als gelesen markiert',
+      one: '1 Benachrichtigung als gelesen markiert',
+      zero: 'Es war nichts ungelesen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vor $count Min.',
+      one: 'vor 1 Min.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vor $count Std.',
+      one: 'vor 1 Std.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vor $count Tagen',
+      one: 'Gestern',
+    );
+    return '$_temp0';
+  }
 }

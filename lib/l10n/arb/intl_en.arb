@@ -2832,7 +2832,6 @@
       }
     }
   },
-
   "callRoomName": "Room {slug}",
   "@callRoomName": {
     "description": "LiveKit room slug shown under the call title",
@@ -3017,5 +3016,165 @@
   "callDismiss": "Dismiss",
   "@callDismiss": {
     "description": "Dismisses a call error banner"
+  },
+  "notificationNewMessage": "New message",
+  "@notificationNewMessage": {
+    "description": "Body of a chat notification whose text is unavailable or hidden."
+  },
+  "notificationReplyHint": "Message",
+  "@notificationReplyHint": {
+    "description": "Placeholder in the direct-reply field of a notification."
+  },
+  "notificationReplyFailed": "Your reply was not sent",
+  "@notificationReplyFailed": {
+    "description": "Shown when a reply typed into the notification shade could not be sent."
+  },
+  "notificationActionFailed": "That could not be done",
+  "@notificationActionFailed": {
+    "description": "Shown when a notification action other than replying could not be carried out."
+  },
+  "notificationSettingsTitle": "Notifications",
+  "@notificationSettingsTitle": {
+    "description": "Title of the notification settings screen."
+  },
+  "notificationSoundTitle": "Sound",
+  "@notificationSoundTitle": {
+    "description": "Toggle: play a sound for notifications."
+  },
+  "notificationSoundSubtitle": "Play a sound when something arrives",
+  "@notificationSoundSubtitle": {
+    "description": "Explains the notification sound toggle."
+  },
+  "notificationVibrationTitle": "Vibration",
+  "@notificationVibrationTitle": {
+    "description": "Toggle: vibrate for notifications."
+  },
+  "notificationVibrationSubtitle": "Vibrate when something arrives",
+  "@notificationVibrationSubtitle": {
+    "description": "Explains the notification vibration toggle."
+  },
+  "notificationPreviewTitle": "Message preview",
+  "@notificationPreviewTitle": {
+    "description": "Toggle: show message text inside notifications."
+  },
+  "notificationPreviewSubtitle": "Show who wrote and what they said",
+  "@notificationPreviewSubtitle": {
+    "description": "Explains the message preview toggle."
+  },
+  "quietHoursTitle": "Quiet hours",
+  "@quietHoursTitle": {
+    "description": "Section title for the nightly silent window."
+  },
+  "quietHoursSubtitle": "Notifications still arrive, just without a sound",
+  "@quietHoursSubtitle": {
+    "description": "Explains that quiet hours silence notifications rather than hide them."
+  },
+  "quietHoursFrom": "From",
+  "@quietHoursFrom": {
+    "description": "Start of the quiet hours window."
+  },
+  "quietHoursTo": "Until",
+  "@quietHoursTo": {
+    "description": "End of the quiet hours window."
+  },
+  "chatNotificationsTitle": "Per-chat exceptions",
+  "@chatNotificationsTitle": {
+    "description": "Section listing chats whose notification profile differs from the default."
+  },
+  "chatNotificationsEmpty": "No exceptions yet",
+  "@chatNotificationsEmpty": {
+    "description": "Empty state for the per-chat exceptions list."
+  },
+  "chatNotificationsEmptyHint": "Every chat follows the settings above. Change one from inside the chat.",
+  "@chatNotificationsEmptyHint": {
+    "description": "Tells the reader where a per-chat exception is set."
+  },
+  "chatNotificationsReset": "Reset all",
+  "@chatNotificationsReset": {
+    "description": "Button that clears every per-chat notification exception."
+  },
+  "chatNotificationProfileTitle": "Notifications from this chat",
+  "@chatNotificationProfileTitle": {
+    "description": "Title of the per-chat notification profile picker."
+  },
+  "chatNotificationProfileAll": "All messages",
+  "@chatNotificationProfileAll": {
+    "description": "Per-chat profile: notify about every message."
+  },
+  "chatNotificationProfileMentions": "Mentions only",
+  "@chatNotificationProfileMentions": {
+    "description": "Per-chat profile: notify only about mentions."
+  },
+  "chatNotificationProfileOff": "Nothing",
+  "@chatNotificationProfileOff": {
+    "description": "Per-chat profile: no notifications at all."
+  },
+  "notificationPermissionOffTitle": "Notifications are switched off",
+  "@notificationPermissionOffTitle": {
+    "description": "Banner shown when the system has notifications switched off for this app."
+  },
+  "notificationPermissionOffHint": "Nothing below can reach you until you allow notifications in system settings.",
+  "@notificationPermissionOffHint": {
+    "description": "Explains that the system grant is missing and settings below cannot take effect."
+  },
+  "notificationsEmptyTitle": "No notifications yet",
+  "@notificationsEmptyTitle": {
+    "description": "Empty state title on the notifications screen."
+  },
+  "notificationsEmptyMessage": "Invites, mentions and messages show up here.",
+  "@notificationsEmptyMessage": {
+    "description": "Empty state body on the notifications screen."
+  },
+  "notificationsEmptyUnread": "Nothing unread",
+  "@notificationsEmptyUnread": {
+    "description": "Empty state title when the unread filter is on."
+  },
+  "notificationsEmptyRead": "Nothing read yet",
+  "@notificationsEmptyRead": {
+    "description": "Empty state title when the read filter is on."
+  },
+  "notificationsEmptyFilterHint": "Switch the filter to “All” to see everything.",
+  "@notificationsEmptyFilterHint": {
+    "description": "Tells the reader that a filter is hiding everything else."
+  },
+  "timeJustNow": "Just now",
+  "@timeJustNow": {
+    "description": "Relative timestamp for something that happened moments ago."
+  },
+  "notificationsMarkedRead": "{count, plural, =0{Nothing was unread} =1{1 notification marked as read} other{{count} notifications marked as read}}",
+  "@notificationsMarkedRead": {
+    "description": "Confirms how many notifications the \"read all\" button marked.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeMinutesAgo": "{count, plural, =1{1 min ago} other{{count} min ago}}",
+  "@timeMinutesAgo": {
+    "description": "Relative timestamp in minutes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{count, plural, =1{1 hr ago} other{{count} hr ago}}",
+  "@timeHoursAgo": {
+    "description": "Relative timestamp in hours.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeDaysAgo": "{count, plural, =1{Yesterday} other{{count} days ago}}",
+  "@timeDaysAgo": {
+    "description": "Relative timestamp in days.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

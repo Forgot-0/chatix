@@ -43,6 +43,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Push arriving while the app is backgrounded is drawn by the
+             system, not by this app, so it needs to be told which channel to
+             put it on — otherwise it lands on a default channel the reader
+             has no way to configure. Matches
+             LocalNotificationPresenter.chatChannelId. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="chat_messages" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

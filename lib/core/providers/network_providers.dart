@@ -4,6 +4,7 @@ import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/network/interceptors/auth_interceptor.dart';
 import 'package:chatix/core/network/interceptors/retry_interceptor.dart';
+import 'package:chatix/core/network/interceptors/set_cookie_compat_interceptor.dart';
 import 'package:chatix/core/network/interceptors/trailing_slash_interceptor.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:cookie_jar/cookie_jar.dart';
@@ -36,6 +37,9 @@ final authSideChannelDioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  // Before the cookie manager: it is the one that would choke on the
+  // refresh cookie the auth endpoints set.
+  dio.interceptors.add(const SetCookieCompatInterceptor());
   dio.interceptors.add(CookieManager(cookieJar));
   dio.interceptors.add(TrailingSlashInterceptor());
 
@@ -72,6 +76,7 @@ Dio dio(Ref ref) {
     ),
   );
 
+  dio.interceptors.add(const SetCookieCompatInterceptor());
   dio.interceptors.add(CookieManager(cookieJar));
   dio.interceptors.add(TrailingSlashInterceptor());
   dio.interceptors.add(

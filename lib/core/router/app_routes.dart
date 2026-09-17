@@ -41,6 +41,7 @@ abstract final class RouteNames {
 
   static const String settings = 'settings';
   static const String languageSettings = 'languageSettings';
+  static const String notificationSettings = 'notificationSettings';
   static const String sessions = 'sessions';
   static const String localizationAssetsDemo = 'localizationAssetsDemo';
   static const String componentShowcase = 'componentShowcase';
@@ -359,6 +360,16 @@ abstract final class SessionsRoute {
 abstract final class LanguageSettingsRoute {
   static const String path = 'language';
   static const String location = '/settings/language';
+}
+
+/// `/settings/notifications` — sound, quiet hours and the per-chat exceptions.
+///
+/// All of it local: api-docs §7 stores devices and a read flag, and nothing
+/// about how a notification should behave, so there is no server screen this
+/// mirrors.
+abstract final class NotificationSettingsRoute {
+  static const String path = 'notifications';
+  static const String location = '/settings/notifications';
 }
 
 /// The design-system showcase. Debug-only, like the other demo surfaces.

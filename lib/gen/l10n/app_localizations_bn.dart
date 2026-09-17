@@ -2385,4 +2385,146 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get callDismiss => 'Dismiss';
+
+  @override
+  String get notificationNewMessage => 'নতুন বার্তা';
+
+  @override
+  String get notificationReplyHint => 'বার্তা';
+
+  @override
+  String get notificationReplyFailed => 'আপনার উত্তর পাঠানো যায়নি';
+
+  @override
+  String get notificationActionFailed => 'কাজটি সম্পন্ন করা যায়নি';
+
+  @override
+  String get notificationSettingsTitle => 'বিজ্ঞপ্তি';
+
+  @override
+  String get notificationSoundTitle => 'শব্দ';
+
+  @override
+  String get notificationSoundSubtitle => 'কিছু এলে একটি শব্দ বাজান';
+
+  @override
+  String get notificationVibrationTitle => 'কম্পন';
+
+  @override
+  String get notificationVibrationSubtitle => 'কিছু এলে কম্পন করুন';
+
+  @override
+  String get notificationPreviewTitle => 'বার্তার প্রিভিউ';
+
+  @override
+  String get notificationPreviewSubtitle => 'কে লিখেছে এবং কী লিখেছে তা দেখান';
+
+  @override
+  String get quietHoursTitle => 'নীরব সময়';
+
+  @override
+  String get quietHoursSubtitle => 'বিজ্ঞপ্তি আসবে, তবে শব্দ ছাড়া';
+
+  @override
+  String get quietHoursFrom => 'থেকে';
+
+  @override
+  String get quietHoursTo => 'পর্যন্ত';
+
+  @override
+  String get chatNotificationsTitle => 'চ্যাট অনুযায়ী ব্যতিক্রম';
+
+  @override
+  String get chatNotificationsEmpty => 'এখনও কোনো ব্যতিক্রম নেই';
+
+  @override
+  String get chatNotificationsEmptyHint =>
+      'সব চ্যাট উপরের সেটিংস অনুসরণ করে। কোনোটি বদলাতে সেই চ্যাটে যান।';
+
+  @override
+  String get chatNotificationsReset => 'সব রিসেট করুন';
+
+  @override
+  String get chatNotificationProfileTitle => 'এই চ্যাটের বিজ্ঞপ্তি';
+
+  @override
+  String get chatNotificationProfileAll => 'সব বার্তা';
+
+  @override
+  String get chatNotificationProfileMentions => 'শুধু উল্লেখ';
+
+  @override
+  String get chatNotificationProfileOff => 'কিছু না';
+
+  @override
+  String get notificationPermissionOffTitle => 'বিজ্ঞপ্তি বন্ধ আছে';
+
+  @override
+  String get notificationPermissionOffHint =>
+      'সিস্টেম সেটিংসে বিজ্ঞপ্তির অনুমতি না দিলে নিচের কিছুই আপনার কাছে পৌঁছাবে না।';
+
+  @override
+  String get notificationsEmptyTitle => 'এখনও কোনো বিজ্ঞপ্তি নেই';
+
+  @override
+  String get notificationsEmptyMessage =>
+      'আমন্ত্রণ, উল্লেখ ও বার্তা এখানে দেখা যাবে।';
+
+  @override
+  String get notificationsEmptyUnread => 'অপঠিত কিছু নেই';
+
+  @override
+  String get notificationsEmptyRead => 'এখনও কিছু পড়া হয়নি';
+
+  @override
+  String get notificationsEmptyFilterHint =>
+      'সবকিছু দেখতে ফিল্টার “সব”-এ বদলান।';
+
+  @override
+  String get timeJustNow => 'এইমাত্র';
+
+  @override
+  String notificationsMarkedRead(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি বিজ্ঞপ্তি পঠিত হিসেবে চিহ্নিত',
+      one: '1টি বিজ্ঞপ্তি পঠিত হিসেবে চিহ্নিত',
+      zero: 'অপঠিত কিছু ছিল না',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count মিনিট আগে',
+      one: '1 মিনিট আগে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ঘণ্টা আগে',
+      one: '1 ঘণ্টা আগে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count দিন আগে',
+      one: 'গতকাল',
+    );
+    return '$_temp0';
+  }
 }

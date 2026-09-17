@@ -9,6 +9,7 @@ import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
+import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/router/app_router.dart';
 import 'package:chatix/core/ui/widgets/app_text_scale.dart';
 import 'package:chatix/core/updates/update_providers.dart';
@@ -17,6 +18,7 @@ import 'package:chatix/features/chat/data/datasources/hive_chat_local_store.dart
 import 'package:chatix/features/chat/presentation/providers/chat_cache_lifecycle_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/call_mini_player.dart';
+import 'package:chatix/features/notification/presentation/providers/push_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
 import 'package:chatix/l10n/app_localizations_delegate.dart';
 import 'package:chatix/l10n/l10n.dart';
@@ -53,6 +55,14 @@ void main() async {
         cookieJarProvider.overrideWithValue(cookieJar),
         chatLocalDataSourceProvider.overrideWithValue(chatStore),
 
+        // Push needs to know about chats, about the reader's local
+        // notification settings and about the ARB catalogue — none of which
+        // `core` may reach for, so the feature's own wiring is handed down
+        // from here.
+        notificationServiceHooksProvider.overrideWithValue(
+          notificationServiceHooks(),
+        ),
+
         defaultLocaleProvider.overrideWith(
           (ref) => ref.watch(persistentLocaleProvider),
         ),
@@ -77,6 +87,7 @@ class MyApp extends ConsumerWidget {
 
     ref.watch(chatSocketLifecycleProvider);
     ref.watch(chatCacheLifecycleProvider);
+    ref.watch(pushLifecycleProvider);
 
     return UpdateChecker(
       autoPrompt: true,

@@ -2358,4 +2358,140 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get callDismiss => 'Dismiss';
+
+  @override
+  String get notificationNewMessage => '新しいメッセージ';
+
+  @override
+  String get notificationReplyHint => 'メッセージ';
+
+  @override
+  String get notificationReplyFailed => '返信を送信できませんでした';
+
+  @override
+  String get notificationActionFailed => 'この操作は完了できませんでした';
+
+  @override
+  String get notificationSettingsTitle => '通知';
+
+  @override
+  String get notificationSoundTitle => 'サウンド';
+
+  @override
+  String get notificationSoundSubtitle => '通知が届いたときに音を鳴らす';
+
+  @override
+  String get notificationVibrationTitle => 'バイブレーション';
+
+  @override
+  String get notificationVibrationSubtitle => '通知が届いたときに振動する';
+
+  @override
+  String get notificationPreviewTitle => 'メッセージのプレビュー';
+
+  @override
+  String get notificationPreviewSubtitle => '送信者と本文を表示する';
+
+  @override
+  String get quietHoursTitle => 'サイレント時間';
+
+  @override
+  String get quietHoursSubtitle => '通知は届きますが、音は鳴りません';
+
+  @override
+  String get quietHoursFrom => '開始';
+
+  @override
+  String get quietHoursTo => '終了';
+
+  @override
+  String get chatNotificationsTitle => 'チャットごとの例外';
+
+  @override
+  String get chatNotificationsEmpty => '例外はまだありません';
+
+  @override
+  String get chatNotificationsEmptyHint =>
+      'すべてのチャットは上の設定に従います。個別の変更はチャット内から行えます。';
+
+  @override
+  String get chatNotificationsReset => 'すべてリセット';
+
+  @override
+  String get chatNotificationProfileTitle => 'このチャットの通知';
+
+  @override
+  String get chatNotificationProfileAll => 'すべてのメッセージ';
+
+  @override
+  String get chatNotificationProfileMentions => 'メンションのみ';
+
+  @override
+  String get chatNotificationProfileOff => 'なし';
+
+  @override
+  String get notificationPermissionOffTitle => '通知がオフになっています';
+
+  @override
+  String get notificationPermissionOffHint => 'システム設定で通知を許可するまで、以下の設定は届きません。';
+
+  @override
+  String get notificationsEmptyTitle => '通知はまだありません';
+
+  @override
+  String get notificationsEmptyMessage => '招待・メンション・メッセージがここに表示されます。';
+
+  @override
+  String get notificationsEmptyUnread => '未読はありません';
+
+  @override
+  String get notificationsEmptyRead => '既読はまだありません';
+
+  @override
+  String get notificationsEmptyFilterHint => 'すべてを表示するにはフィルターを「すべて」に切り替えてください。';
+
+  @override
+  String get timeJustNow => 'たった今';
+
+  @override
+  String notificationsMarkedRead(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 件の通知を既読にしました',
+      zero: '未読はありませんでした',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 分前',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 時間前',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 日前',
+      one: '昨日',
+    );
+    return '$_temp0';
+  }
 }

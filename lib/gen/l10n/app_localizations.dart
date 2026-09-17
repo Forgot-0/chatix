@@ -4203,6 +4203,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dismiss'**
   String get callDismiss;
+
+  /// Body of a chat notification whose text is unavailable or hidden.
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get notificationNewMessage;
+
+  /// Placeholder in the direct-reply field of a notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get notificationReplyHint;
+
+  /// Shown when a reply typed into the notification shade could not be sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reply was not sent'**
+  String get notificationReplyFailed;
+
+  /// Shown when a notification action other than replying could not be carried out.
+  ///
+  /// In en, this message translates to:
+  /// **'That could not be done'**
+  String get notificationActionFailed;
+
+  /// Title of the notification settings screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationSettingsTitle;
+
+  /// Toggle: play a sound for notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get notificationSoundTitle;
+
+  /// Explains the notification sound toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a sound when something arrives'**
+  String get notificationSoundSubtitle;
+
+  /// Toggle: vibrate for notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get notificationVibrationTitle;
+
+  /// Explains the notification vibration toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate when something arrives'**
+  String get notificationVibrationSubtitle;
+
+  /// Toggle: show message text inside notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Message preview'**
+  String get notificationPreviewTitle;
+
+  /// Explains the message preview toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show who wrote and what they said'**
+  String get notificationPreviewSubtitle;
+
+  /// Section title for the nightly silent window.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet hours'**
+  String get quietHoursTitle;
+
+  /// Explains that quiet hours silence notifications rather than hide them.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications still arrive, just without a sound'**
+  String get quietHoursSubtitle;
+
+  /// Start of the quiet hours window.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get quietHoursFrom;
+
+  /// End of the quiet hours window.
+  ///
+  /// In en, this message translates to:
+  /// **'Until'**
+  String get quietHoursTo;
+
+  /// Section listing chats whose notification profile differs from the default.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-chat exceptions'**
+  String get chatNotificationsTitle;
+
+  /// Empty state for the per-chat exceptions list.
+  ///
+  /// In en, this message translates to:
+  /// **'No exceptions yet'**
+  String get chatNotificationsEmpty;
+
+  /// Tells the reader where a per-chat exception is set.
+  ///
+  /// In en, this message translates to:
+  /// **'Every chat follows the settings above. Change one from inside the chat.'**
+  String get chatNotificationsEmptyHint;
+
+  /// Button that clears every per-chat notification exception.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset all'**
+  String get chatNotificationsReset;
+
+  /// Title of the per-chat notification profile picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications from this chat'**
+  String get chatNotificationProfileTitle;
+
+  /// Per-chat profile: notify about every message.
+  ///
+  /// In en, this message translates to:
+  /// **'All messages'**
+  String get chatNotificationProfileAll;
+
+  /// Per-chat profile: notify only about mentions.
+  ///
+  /// In en, this message translates to:
+  /// **'Mentions only'**
+  String get chatNotificationProfileMentions;
+
+  /// Per-chat profile: no notifications at all.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing'**
+  String get chatNotificationProfileOff;
+
+  /// Banner shown when the system has notifications switched off for this app.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are switched off'**
+  String get notificationPermissionOffTitle;
+
+  /// Explains that the system grant is missing and settings below cannot take effect.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing below can reach you until you allow notifications in system settings.'**
+  String get notificationPermissionOffHint;
+
+  /// Empty state title on the notifications screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get notificationsEmptyTitle;
+
+  /// Empty state body on the notifications screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites, mentions and messages show up here.'**
+  String get notificationsEmptyMessage;
+
+  /// Empty state title when the unread filter is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing unread'**
+  String get notificationsEmptyUnread;
+
+  /// Empty state title when the read filter is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing read yet'**
+  String get notificationsEmptyRead;
+
+  /// Tells the reader that a filter is hiding everything else.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch the filter to “All” to see everything.'**
+  String get notificationsEmptyFilterHint;
+
+  /// Relative timestamp for something that happened moments ago.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get timeJustNow;
+
+  /// Confirms how many notifications the "read all" button marked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nothing was unread} =1{1 notification marked as read} other{{count} notifications marked as read}}'**
+  String notificationsMarkedRead(int count);
+
+  /// Relative timestamp in minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 min ago} other{{count} min ago}}'**
+  String timeMinutesAgo(int count);
+
+  /// Relative timestamp in hours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hr ago} other{{count} hr ago}}'**
+  String timeHoursAgo(int count);
+
+  /// Relative timestamp in days.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Yesterday} other{{count} days ago}}'**
+  String timeDaysAgo(int count);
 }
 
 class _AppLocalizationsDelegate

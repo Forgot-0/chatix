@@ -2388,4 +2388,147 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get callDismiss => 'Dismiss';
+
+  @override
+  String get notificationNewMessage => 'New message';
+
+  @override
+  String get notificationReplyHint => 'Message';
+
+  @override
+  String get notificationReplyFailed => 'Your reply was not sent';
+
+  @override
+  String get notificationActionFailed => 'That could not be done';
+
+  @override
+  String get notificationSettingsTitle => 'Notifications';
+
+  @override
+  String get notificationSoundTitle => 'Sound';
+
+  @override
+  String get notificationSoundSubtitle => 'Play a sound when something arrives';
+
+  @override
+  String get notificationVibrationTitle => 'Vibration';
+
+  @override
+  String get notificationVibrationSubtitle => 'Vibrate when something arrives';
+
+  @override
+  String get notificationPreviewTitle => 'Message preview';
+
+  @override
+  String get notificationPreviewSubtitle => 'Show who wrote and what they said';
+
+  @override
+  String get quietHoursTitle => 'Quiet hours';
+
+  @override
+  String get quietHoursSubtitle =>
+      'Notifications still arrive, just without a sound';
+
+  @override
+  String get quietHoursFrom => 'From';
+
+  @override
+  String get quietHoursTo => 'Until';
+
+  @override
+  String get chatNotificationsTitle => 'Per-chat exceptions';
+
+  @override
+  String get chatNotificationsEmpty => 'No exceptions yet';
+
+  @override
+  String get chatNotificationsEmptyHint =>
+      'Every chat follows the settings above. Change one from inside the chat.';
+
+  @override
+  String get chatNotificationsReset => 'Reset all';
+
+  @override
+  String get chatNotificationProfileTitle => 'Notifications from this chat';
+
+  @override
+  String get chatNotificationProfileAll => 'All messages';
+
+  @override
+  String get chatNotificationProfileMentions => 'Mentions only';
+
+  @override
+  String get chatNotificationProfileOff => 'Nothing';
+
+  @override
+  String get notificationPermissionOffTitle => 'Notifications are switched off';
+
+  @override
+  String get notificationPermissionOffHint =>
+      'Nothing below can reach you until you allow notifications in system settings.';
+
+  @override
+  String get notificationsEmptyTitle => 'No notifications yet';
+
+  @override
+  String get notificationsEmptyMessage =>
+      'Invites, mentions and messages show up here.';
+
+  @override
+  String get notificationsEmptyUnread => 'Nothing unread';
+
+  @override
+  String get notificationsEmptyRead => 'Nothing read yet';
+
+  @override
+  String get notificationsEmptyFilterHint =>
+      'Switch the filter to “All” to see everything.';
+
+  @override
+  String get timeJustNow => 'Just now';
+
+  @override
+  String notificationsMarkedRead(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notifications marked as read',
+      one: '1 notification marked as read',
+      zero: 'Nothing was unread',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count min ago',
+      one: '1 min ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hr ago',
+      one: '1 hr ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: 'Yesterday',
+    );
+    return '$_temp0';
+  }
 }

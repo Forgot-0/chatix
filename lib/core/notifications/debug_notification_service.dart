@@ -7,6 +7,9 @@ class DebugNotificationService implements NotificationService {
       StreamController<NotificationMessage>.broadcast();
   final _notificationTapStreamController =
       StreamController<NotificationMessage>.broadcast();
+  final _actionStreamController =
+      StreamController<NotificationActionEvent>.broadcast();
+  final _tokenRefreshController = StreamController<String>.broadcast();
 
   NotificationPermissionStatus _permissionStatus =
       NotificationPermissionStatus.notDetermined;
@@ -34,6 +37,9 @@ class DebugNotificationService implements NotificationService {
     debugPrint('🔔 Generated debug token: $token');
     return token;
   }
+
+  @override
+  Stream<String> get tokenRefreshStream => _tokenRefreshController.stream;
 
   @override
   Future<void> handleBackgroundMessage(Map<String, dynamic> message) async {
@@ -89,8 +95,32 @@ class DebugNotificationService implements NotificationService {
   }
 
   @override
+  Future<void> show(LocalNotificationRequest request) async {
+    debugPrint(
+      '🔔 Showing ${request.channel} notification ${request.id} '
+      'in group ${request.groupKey ?? '-'} '
+      'with actions ${request.actions.map((a) => a.id).join(',')}',
+    );
+
+    _notificationStreamController.add(
+      NotificationMessage(
+        id: request.id,
+        title: request.title,
+        body: request.body,
+        data: request.payload,
+        channel: request.channel,
+      ),
+    );
+  }
+
+  @override
   Future<void> clearNotification(String id) async {
     debugPrint('🔔 Cleared notification: $id');
+  }
+
+  @override
+  Future<void> cancelGroup(String groupKey) async {
+    debugPrint('🔔 Cleared notification group: $groupKey');
   }
 
   @override
@@ -106,6 +136,18 @@ class DebugNotificationService implements NotificationService {
   Stream<NotificationMessage> get notificationTapStream =>
       _notificationTapStreamController.stream;
 
+  @override
+  Stream<NotificationActionEvent> get actionStream =>
+      _actionStreamController.stream;
+
+  void simulateAction(NotificationActionEvent event) {
+    _actionStreamController.add(event);
+  }
+
+  void simulateTokenRefresh(String token) {
+    _tokenRefreshController.add(token);
+  }
+
   void simulateTap(NotificationMessage notification) {
     _notificationTapStreamController.add(notification);
   }
@@ -113,5 +155,7 @@ class DebugNotificationService implements NotificationService {
   void dispose() {
     _notificationStreamController.close();
     _notificationTapStreamController.close();
+    _actionStreamController.close();
+    _tokenRefreshController.close();
   }
 }

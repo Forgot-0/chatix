@@ -1,13 +1,11 @@
-import 'package:flutter/foundation.dart' show debugPrint, debugPrintStack;
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
-import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
-import 'package:chatix/features/notification/presentation/providers/notification_providers.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
@@ -48,8 +46,6 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     await _refreshCurrentUser();
 
     await _ensureMyProfile();
-
-    await _registerDeviceForPush();
   }
 
   Future<void> register({
@@ -145,22 +141,6 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     );
   }
 
-  Future<void> _registerDeviceForPush() async {
-    if (state.value == null) return;
-
-    try {
-      final notificationService = ref.read(notificationServiceProvider);
-      final token = await notificationService.getToken();
-      if (token == null || token.isEmpty) return;
-
-      await ref
-          .read(registerDeviceUseCaseProvider)
-          .execute(token: token, deviceName: AppConstants.appName);
-    } catch (error, stackTrace) {
-      debugPrint('Push device registration skipped: $error');
-      debugPrintStack(stackTrace: stackTrace);
-    }
-  }
 }
 
 final authProvider = AsyncNotifierProvider<AuthController, UserEntity?>(
