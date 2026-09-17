@@ -16,6 +16,7 @@ import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dar
 import 'package:chatix/features/chat/data/datasources/hive_chat_local_store.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_cache_lifecycle_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/call_mini_player.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
 import 'package:chatix/l10n/app_localizations_delegate.dart';
 import 'package:chatix/l10n/l10n.dart';
@@ -88,9 +89,11 @@ class MyApp extends ConsumerWidget {
           themeMode: themeMode,
           routerConfig: router,
           debugShowCheckedModeBanner: false,
+          // The mini player is mounted above the router, not inside a route,
+          // so a live call keeps a window on itself through every navigation.
           builder: (context, child) => AppTextScale(
             scale: textScale,
-            child: child ?? const SizedBox.shrink(),
+            child: CallOverlay(child: child ?? const SizedBox.shrink()),
           ),
 
           locale: locale,

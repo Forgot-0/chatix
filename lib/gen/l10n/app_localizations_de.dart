@@ -2264,4 +2264,147 @@ class AppLocalizationsDe extends AppLocalizations {
   String skillTooLong(String skill, int max) {
     return '“$skill” is longer than $max characters';
   }
+
+  @override
+  String callRoomName(String slug) {
+    return 'Room $slug';
+  }
+
+  @override
+  String get callJoinExplanation =>
+      'A call here is a room: join it, and anyone else in this chat can join you.';
+
+  @override
+  String get callNoIncomingNotice =>
+      'Ringing for incoming calls is not available yet — the server does not announce them.';
+
+  @override
+  String get callWaitingForOthers => 'Waiting for someone else to join…';
+
+  @override
+  String get callReconnecting => 'Reconnecting…';
+
+  @override
+  String get callYou => 'You';
+
+  @override
+  String callParticipantsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+      zero: 'No one here yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get callMicrophoneMute => 'Mute';
+
+  @override
+  String get callMicrophoneUnmute => 'Unmute';
+
+  @override
+  String get callCameraStart => 'Start video';
+
+  @override
+  String get callCameraStop => 'Stop video';
+
+  @override
+  String get callSpeakerOn => 'Speaker';
+
+  @override
+  String get callSpeakerOff => 'Earpiece';
+
+  @override
+  String get callLayoutGrid => 'Grid';
+
+  @override
+  String get callLayoutSpeaker => 'Speaker view';
+
+  @override
+  String callPinParticipant(String name) {
+    return 'Pin $name';
+  }
+
+  @override
+  String callUnpinParticipant(String name) {
+    return 'Unpin $name';
+  }
+
+  @override
+  String get callMuteForEveryone => 'Mute for everyone';
+
+  @override
+  String get callUnmuteForEveryone => 'Let them speak';
+
+  @override
+  String get callQualityExcellent => 'Excellent connection';
+
+  @override
+  String get callQualityGood => 'Good connection';
+
+  @override
+  String get callQualityPoor => 'Weak connection';
+
+  @override
+  String get callQualityLost => 'Connection lost';
+
+  @override
+  String get callMicrophonePermissionTitle => 'Let ChatiX use the microphone';
+
+  @override
+  String get callMicrophonePermissionBody =>
+      'The others can only hear you if ChatiX may use the microphone. You can mute yourself again at any time.';
+
+  @override
+  String get callCameraPermissionTitle => 'Let ChatiX use the camera';
+
+  @override
+  String get callCameraPermissionBody =>
+      'Your video is only sent while the camera is on, and you can turn it off at any time.';
+
+  @override
+  String get callPermissionContinue => 'Continue';
+
+  @override
+  String get callPermissionNotNow => 'Not now';
+
+  @override
+  String get callPermissionOpenSettings => 'Open settings';
+
+  @override
+  String get callMicrophoneBlocked =>
+      'Microphone is off: ChatiX has no permission for it.';
+
+  @override
+  String get callCameraBlocked =>
+      'Camera is off: ChatiX has no permission for it.';
+
+  @override
+  String get callSelfPreview => 'Your camera';
+
+  @override
+  String get callSelfPreviewHint => 'Drag to move';
+
+  @override
+  String get callShowControls => 'Show call controls';
+
+  @override
+  String get callOngoingInChat => 'You are in a call in this chat';
+
+  @override
+  String get callReturn => 'Return';
+
+  @override
+  String callMiniPlayerLabel(String name) {
+    return 'Call with $name';
+  }
+
+  @override
+  String get callMinimize => 'Minimize call';
+
+  @override
+  String get callDismiss => 'Dismiss';
 }

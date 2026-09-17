@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/network/connectivity_providers.dart';
+import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/feedback/connection_strip.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
+import 'package:chatix/features/chat/presentation/providers/active_call_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -162,6 +165,68 @@ class ChatRealtimeRejectedBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "You are in a call in this chat" — with a way back into it.
+///
+/// Only ever about *this* device's call. A call somebody else started is not
+/// knowable: `call_started`/`call_joined` are declared in `WSEventType` but
+/// never published, there is no REST listing of a room's occupants, and
+/// LiveKit only reports participants to a client that has already joined
+/// (api-docs §5.6). So this says what is true rather than guessing.
+class ChatOngoingCallBanner extends ConsumerWidget {
+  const ChatOngoingCallBanner({super.key, required this.chatId});
+
+  final String chatId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeChatId = ref.watch(activeCallChatIdProvider);
+    if (activeChatId != chatId) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Material(
+      color: theme.colorScheme.primaryContainer,
+      child: InkWell(
+        onTap: () => context.push(ChatCallRoute.locationOf(chatId)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                Icons.call,
+                size: 16,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.callOngoingInChat,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ),
+              Text(
+                l10n.callReturn,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

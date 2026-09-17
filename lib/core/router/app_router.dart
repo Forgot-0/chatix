@@ -292,6 +292,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                             },
                           ),
                           // A call takes over the screen: no shell, no panes.
+                          // It fades through rather than sliding in — it is
+                          // not a sibling of the chat but a different surface
+                          // that the chat is still running behind, and the
+                          // mini player brings it back once it is dismissed.
                           GoRoute(
                             path: ChatCallRoute.path,
                             name: RouteNames.chatCall,
@@ -301,7 +305,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                               if (chatId == null) {
                                 return _push(state, const _UnknownChatScreen());
                               }
-                              return _push(state, CallScreen(chatId: chatId));
+                              return _root(state, CallScreen(chatId: chatId));
                             },
                           ),
                         ],

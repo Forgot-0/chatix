@@ -3963,6 +3963,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'“{skill}” is longer than {max} characters'**
   String skillTooLong(String skill, int max);
+
+  /// LiveKit room slug shown under the call title
+  ///
+  /// In en, this message translates to:
+  /// **'Room {slug}'**
+  String callRoomName(String slug);
+
+  /// Explains the join-a-room model on the call screen
+  ///
+  /// In en, this message translates to:
+  /// **'A call here is a room: join it, and anyone else in this chat can join you.'**
+  String get callJoinExplanation;
+
+  /// Honest note about missing call_* events (api-docs 5.6)
+  ///
+  /// In en, this message translates to:
+  /// **'Ringing for incoming calls is not available yet — the server does not announce them.'**
+  String get callNoIncomingNotice;
+
+  /// Shown while alone in the room
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for someone else to join…'**
+  String get callWaitingForOthers;
+
+  /// LiveKit is rebuilding the connection
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting…'**
+  String get callReconnecting;
+
+  /// Label for the local participant's tile
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get callYou;
+
+  /// How many people are in the room
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No one here yet} =1{1 participant} other{{count} participants}}'**
+  String callParticipantsCount(int count);
+
+  /// Turns the local microphone off
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get callMicrophoneMute;
+
+  /// Turns the local microphone on
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get callMicrophoneUnmute;
+
+  /// Turns the local camera on
+  ///
+  /// In en, this message translates to:
+  /// **'Start video'**
+  String get callCameraStart;
+
+  /// Turns the local camera off
+  ///
+  /// In en, this message translates to:
+  /// **'Stop video'**
+  String get callCameraStop;
+
+  /// Audio goes out of the loudspeaker
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker'**
+  String get callSpeakerOn;
+
+  /// Audio goes out of the earpiece
+  ///
+  /// In en, this message translates to:
+  /// **'Earpiece'**
+  String get callSpeakerOff;
+
+  /// Equal-sized tiles layout
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get callLayoutGrid;
+
+  /// One large tile plus a filmstrip
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker view'**
+  String get callLayoutSpeaker;
+
+  /// Pins a participant to the large tile
+  ///
+  /// In en, this message translates to:
+  /// **'Pin {name}'**
+  String callPinParticipant(String name);
+
+  /// Releases the pinned participant
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin {name}'**
+  String callUnpinParticipant(String name);
+
+  /// Moderator mutes a participant server-side
+  ///
+  /// In en, this message translates to:
+  /// **'Mute for everyone'**
+  String get callMuteForEveryone;
+
+  /// Moderator lifts a server-side mute
+  ///
+  /// In en, this message translates to:
+  /// **'Let them speak'**
+  String get callUnmuteForEveryone;
+
+  /// Connection quality label
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent connection'**
+  String get callQualityExcellent;
+
+  /// Connection quality label
+  ///
+  /// In en, this message translates to:
+  /// **'Good connection'**
+  String get callQualityGood;
+
+  /// Connection quality label
+  ///
+  /// In en, this message translates to:
+  /// **'Weak connection'**
+  String get callQualityPoor;
+
+  /// Connection quality label
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost'**
+  String get callQualityLost;
+
+  /// Rationale dialog title before the OS microphone prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Let ChatiX use the microphone'**
+  String get callMicrophonePermissionTitle;
+
+  /// Rationale dialog body for the microphone
+  ///
+  /// In en, this message translates to:
+  /// **'The others can only hear you if ChatiX may use the microphone. You can mute yourself again at any time.'**
+  String get callMicrophonePermissionBody;
+
+  /// Rationale dialog title before the OS camera prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Let ChatiX use the camera'**
+  String get callCameraPermissionTitle;
+
+  /// Rationale dialog body for the camera
+  ///
+  /// In en, this message translates to:
+  /// **'Your video is only sent while the camera is on, and you can turn it off at any time.'**
+  String get callCameraPermissionBody;
+
+  /// Proceeds to the platform permission prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get callPermissionContinue;
+
+  /// Declines the rationale dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get callPermissionNotNow;
+
+  /// Sends the user to the app settings page
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get callPermissionOpenSettings;
+
+  /// Banner after the microphone permission was refused
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone is off: ChatiX has no permission for it.'**
+  String get callMicrophoneBlocked;
+
+  /// Banner after the camera permission was refused
+  ///
+  /// In en, this message translates to:
+  /// **'Camera is off: ChatiX has no permission for it.'**
+  String get callCameraBlocked;
+
+  /// Accessibility label for the floating self preview
+  ///
+  /// In en, this message translates to:
+  /// **'Your camera'**
+  String get callSelfPreview;
+
+  /// Accessibility hint for the draggable self preview
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to move'**
+  String get callSelfPreviewHint;
+
+  /// Accessibility action that brings the auto-hidden bar back
+  ///
+  /// In en, this message translates to:
+  /// **'Show call controls'**
+  String get callShowControls;
+
+  /// Banner in the chat while this device is in its call
+  ///
+  /// In en, this message translates to:
+  /// **'You are in a call in this chat'**
+  String get callOngoingInChat;
+
+  /// Goes back to the call screen
+  ///
+  /// In en, this message translates to:
+  /// **'Return'**
+  String get callReturn;
+
+  /// Accessibility label for the floating mini player
+  ///
+  /// In en, this message translates to:
+  /// **'Call with {name}'**
+  String callMiniPlayerLabel(String name);
+
+  /// Leaves the call screen without leaving the call
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize call'**
+  String get callMinimize;
+
+  /// Dismisses a call error banner
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get callDismiss;
 }
 
 class _AppLocalizationsDelegate

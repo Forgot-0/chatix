@@ -204,6 +204,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       children: [
         const ChatConnectionStrip(),
         if (state.isRealtimeRejected) const ChatRealtimeRejectedBanner(),
+        ChatOngoingCallBanner(chatId: widget.chatId),
         Expanded(
           child: ChatFeed(
             chatId: widget.chatId,
