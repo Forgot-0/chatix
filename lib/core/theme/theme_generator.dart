@@ -11,8 +11,22 @@ import 'package:chatix/core/theme/theme_config.dart';
 /// theme on every settings change without a restart.
 abstract final class ThemeGenerator {
   /// Builds the theme for [brightness] under [settings].
-  static ThemeData build(AppearanceSettings settings, Brightness brightness) {
-    final scheme = schemeFor(settings.accentSeed, brightness);
+  ///
+  /// [highContrast] comes from the platform, not from [settings]: it is the
+  /// system's accessibility switch, and the app's job is to answer it, not to
+  /// offer a second copy of it in its own preferences.
+  static ThemeData build(
+    AppearanceSettings settings,
+    Brightness brightness, {
+    bool highContrast = false,
+  }) {
+    final amoled = settings.amoled && brightness == Brightness.dark;
+    final scheme = schemeFor(
+      settings.accentSeed,
+      brightness,
+      amoled: amoled,
+      highContrast: highContrast,
+    );
     final density = settings.density;
     final isDark = brightness == Brightness.dark;
 
@@ -32,6 +46,13 @@ abstract final class ThemeGenerator {
           scheme: scheme,
           density: density,
           accent: settings.accentSeed,
+          bubbleRadius: settings.bubbleRadius,
+          bubbleAnchorRadius: settings.bubbleAnchorRadius,
+          wallpaperStyle: settings.wallpaper,
+          wallpaperIntensity: settings.wallpaperIntensity,
+          wallpaperPattern: settings.wallpaperPattern,
+          amoled: amoled,
+          highContrast: highContrast,
         ),
       ],
       textTheme: _textTheme(base.textTheme),
@@ -173,9 +194,15 @@ abstract final class ThemeGenerator {
   /// noticeably, so the brand accent is put back on `primary` verbatim in
   /// light and lifted just enough to stay legible in dark; the surfaces come
   /// from the warm graphite ramp rather than Material's cool default.
-  static ColorScheme schemeFor(Color seed, Brightness brightness) {
+  static ColorScheme schemeFor(
+    Color seed,
+    Brightness brightness, {
+    bool amoled = false,
+    bool highContrast = false,
+  }) {
     final isDark = brightness == Brightness.dark;
     final primary = isDark ? _liftForDark(seed) : seed;
+    final black = amoled && isDark;
 
     return ColorScheme.fromSeed(
       seedColor: seed,
@@ -189,16 +216,34 @@ abstract final class ThemeGenerator {
       onTertiary: _foregroundOn(AppPalette.amber),
       error: AppPalette.coral,
       onError: _foregroundOn(AppPalette.coral),
-      surface: AppNeutrals.canvas(brightness),
-      onSurface: AppNeutrals.text(brightness),
-      onSurfaceVariant: AppNeutrals.textMuted(brightness),
-      surfaceContainerLowest: AppNeutrals.step(brightness, isDark ? 11 : 0),
-      surfaceContainerLow: AppNeutrals.step(brightness, isDark ? 10 : 1),
-      surfaceContainer: AppNeutrals.step(brightness, isDark ? 9 : 2),
-      surfaceContainerHigh: AppNeutrals.step(brightness, isDark ? 8 : 3),
-      surfaceContainerHighest: AppNeutrals.step(brightness, isDark ? 7 : 4),
-      outline: AppNeutrals.outline(brightness),
-      outlineVariant: AppNeutrals.border(brightness),
+      surface: black ? AppAmoled.canvas : AppNeutrals.canvas(brightness),
+      onSurface: highContrast
+          ? (isDark ? Colors.white : Colors.black)
+          : AppNeutrals.text(brightness),
+      onSurfaceVariant: highContrast
+          ? AppNeutrals.step(brightness, isDark ? 1 : 9)
+          : AppNeutrals.textMuted(brightness),
+      surfaceContainerLowest: black
+          ? AppAmoled.canvas
+          : AppNeutrals.step(brightness, isDark ? 11 : 0),
+      surfaceContainerLow: black
+          ? AppAmoled.step(0)
+          : AppNeutrals.step(brightness, isDark ? 10 : 1),
+      surfaceContainer: black
+          ? AppAmoled.step(1)
+          : AppNeutrals.step(brightness, isDark ? 9 : 2),
+      surfaceContainerHigh: black
+          ? AppAmoled.step(2)
+          : AppNeutrals.step(brightness, isDark ? 8 : 3),
+      surfaceContainerHighest: black
+          ? AppAmoled.step(3)
+          : AppNeutrals.step(brightness, isDark ? 7 : 4),
+      outline: highContrast
+          ? AppNeutrals.step(brightness, isDark ? 2 : 8)
+          : AppNeutrals.outline(brightness),
+      outlineVariant: highContrast
+          ? AppNeutrals.step(brightness, isDark ? 4 : 6)
+          : (black ? AppAmoled.border : AppNeutrals.border(brightness)),
     );
   }
 
@@ -253,6 +298,13 @@ class _SharedAxisTransitionBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    // Reduced motion gets the page, not a gentler version of the animation:
+    // a smaller movement is still a movement.
+    if (context != null &&
+        (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
+      return child;
+    }
+
     final curved = CurvedAnimation(
       parent: animation,
       curve: AppMotion.curve,

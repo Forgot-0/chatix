@@ -138,6 +138,128 @@ void main() {
       );
     });
 
+    group('black', () {
+      const black = AppearanceSettings(amoled: true);
+
+      test('takes the dark ground all the way down', () {
+        final theme = AppTheme.dark(black);
+
+        expect(theme.colorScheme.surface, AppAmoled.canvas);
+        expect(
+          theme.extension<ChatixTheme>()!.chatBackground,
+          AppAmoled.canvas,
+        );
+        expect(theme.scaffoldBackgroundColor, AppAmoled.canvas);
+      });
+
+      test('gives an incoming bubble the hairline it now needs', () {
+        // On the ordinary dark ground the bubble separates by elevation; on
+        // black there is no elevation left to separate by.
+        expect(
+          AppTheme.dark().extension<ChatixTheme>()!.bubbleIncomingBorder,
+          Colors.transparent,
+        );
+        expect(
+          AppTheme.dark(black).extension<ChatixTheme>()!.bubbleIncomingBorder,
+          isNot(Colors.transparent),
+        );
+      });
+
+      test('keeps raised surfaces apart from the ground', () {
+        final scheme = AppTheme.dark(black).colorScheme;
+
+        expect(scheme.surfaceContainerHigh, isNot(scheme.surface));
+        expect(
+          scheme.surfaceContainerHighest.computeLuminance(),
+          greaterThan(scheme.surfaceContainerLow.computeLuminance()),
+        );
+      });
+
+      test('does nothing at all to the light theme', () {
+        expect(
+          AppTheme.light(black).colorScheme,
+          AppTheme.lightTheme.colorScheme,
+        );
+      });
+    });
+
+    group('high contrast', () {
+      test('pushes text and outlines further from the ground', () {
+        for (final brightness in Brightness.values) {
+          final plain = ThemeGenerator.build(
+            const AppearanceSettings(),
+            brightness,
+          );
+          final contrasted = ThemeGenerator.build(
+            const AppearanceSettings(),
+            brightness,
+            highContrast: true,
+          );
+
+          expect(
+            AppContrast.ratio(
+              contrasted.colorScheme.onSurface,
+              contrasted.colorScheme.surface,
+            ),
+            greaterThan(
+              AppContrast.ratio(
+                plain.colorScheme.onSurface,
+                plain.colorScheme.surface,
+              ),
+            ),
+            reason: brightness.name,
+          );
+          expect(
+            AppContrast.ratio(
+              contrasted.colorScheme.outline,
+              contrasted.colorScheme.surface,
+            ),
+            greaterThan(
+              AppContrast.ratio(
+                plain.colorScheme.outline,
+                plain.colorScheme.surface,
+              ),
+            ),
+            reason: brightness.name,
+          );
+        }
+      });
+
+      test('draws the bubble outline even where dark usually has none', () {
+        final contrasted = ThemeGenerator.build(
+          const AppearanceSettings(),
+          Brightness.dark,
+          highContrast: true,
+        ).extension<ChatixTheme>()!;
+
+        expect(contrasted.bubbleIncomingBorder, isNot(Colors.transparent));
+      });
+    });
+
+    test('the bubble shape follows the settings', () {
+      final settings = const AppearanceSettings().copyWith(
+        bubbleRadius: 13,
+        bubbleAnchored: false,
+      );
+      final chatix = AppTheme.light(settings).extension<ChatixTheme>()!;
+
+      expect(chatix.bubbleRadius, 13);
+      expect(chatix.bubbleAnchorRadius, 13);
+    });
+
+    test('the wallpaper recipe rides on the theme', () {
+      final settings = const AppearanceSettings().copyWith(
+        wallpaperId: AppWallpaper.prism.id,
+        wallpaperIntensity: 0.75,
+        wallpaperPattern: 0.25,
+      );
+      final chatix = AppTheme.dark(settings).extension<ChatixTheme>()!;
+
+      expect(chatix.wallpaperStyle, AppWallpaper.prism);
+      expect(chatix.wallpaperIntensity, 0.75);
+      expect(chatix.wallpaperPattern, 0.25);
+    });
+
     test('animates with the system curve and duration', () {
       final builder = AppTheme
           .lightTheme

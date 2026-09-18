@@ -6,6 +6,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
+import 'package:chatix/features/auth/presentation/providers/session_cleanup_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
@@ -76,10 +77,22 @@ class AuthController extends AsyncNotifier<UserEntity?> {
     await login(username: username, password: password);
   }
 
+  /// Ends the session on the server and wipes what it left on this device.
+  ///
+  /// `POST /auth/logout/` deactivates the refresh session and drops its
+  /// cookie (api-docs §3.5); it does not, and cannot, do anything about the
+  /// access token, the cached messages, the drafts or the downloaded files
+  /// sitting here. [SessionCleaner] does that part, and it runs even when
+  /// the request failed — a network error is not a reason to leave a signed
+  /// -in device behind. The access token is stateless and lives five
+  /// minutes, so the worst a failed request costs is one refresh session
+  /// that expires on its own.
   Future<void> logout() async {
     state = const AsyncValue.loading();
 
     final result = await ref.read(logoutUseCaseProvider).execute();
+
+    await ref.read(sessionCleanerProvider).clearEverything();
 
     final tokenStillPresent = await ref
         .read(secureStorageServiceProvider)

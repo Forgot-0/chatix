@@ -9,6 +9,7 @@ abstract final class RouteParams {
 
 abstract final class RouteNames {
   static const String splash = 'splash';
+  static const String welcome = 'welcome';
   static const String login = 'login';
   static const String register = 'register';
   static const String verifyEmail = 'verifyEmail';
@@ -40,6 +41,7 @@ abstract final class RouteNames {
   static const String profileDetail = 'profileDetail';
 
   static const String settings = 'settings';
+  static const String appearanceSettings = 'appearanceSettings';
   static const String languageSettings = 'languageSettings';
   static const String notificationSettings = 'notificationSettings';
   static const String sessions = 'sessions';
@@ -52,6 +54,16 @@ abstract final class SplashRoute {
   static const String location = '/';
 }
 
+/// The first-launch tour: a welcome page and three "why ChatiX" pages.
+///
+/// Public, and reached only from the splash redirect — once the device has
+/// been through it the flag in `onboardingSeenProvider` keeps it out of the
+/// way for good.
+abstract final class WelcomeRoute {
+  static const String path = '/welcome';
+  static const String location = '/welcome';
+}
+
 abstract final class LoginRoute {
   static const String path = '/login';
   static const String location = '/login';
@@ -62,9 +74,24 @@ abstract final class RegisterRoute {
   static const String location = '/register';
 }
 
+/// `/verify-email`, optionally carrying the address the code was sent to.
+///
+/// The address travels in the query rather than in `extra` so the screen
+/// survives a cold link out of the confirmation email and a restore of the
+/// app, both of which arrive as a URL and nothing else.
 abstract final class VerifyEmailRoute {
   static const String path = '/verify-email';
   static const String location = '/verify-email';
+
+  static const String emailQueryParam = 'email';
+
+  static String locationFor(String email) =>
+      '$location?$emailQueryParam=${Uri.encodeQueryComponent(email)}';
+
+  static String? emailFrom(GoRouterState state) {
+    final email = state.uri.queryParameters[emailQueryParam]?.trim();
+    return (email == null || email.isEmpty) ? null : email;
+  }
 }
 
 abstract final class ResetPasswordRoute {
@@ -357,6 +384,12 @@ abstract final class SessionsRoute {
   static const String location = '/settings/devices';
 }
 
+/// `/settings/appearance` — theme, accent, wallpaper, bubbles and media.
+abstract final class AppearanceSettingsRoute {
+  static const String path = 'appearance';
+  static const String location = '/settings/appearance';
+}
+
 abstract final class LanguageSettingsRoute {
   static const String path = 'language';
   static const String location = '/settings/language';
@@ -384,6 +417,7 @@ abstract final class LocalizationAssetsDemoRoute {
 }
 
 const Set<String> publicRoutePrefixes = {
+  WelcomeRoute.path,
   LoginRoute.path,
   RegisterRoute.path,
   VerifyEmailRoute.path,

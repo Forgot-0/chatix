@@ -30,14 +30,34 @@ abstract final class AppPalette {
   /// Warnings and "needs attention" affordances.
   static const Color amber = Color(0xFFF5A524);
 
-  /// Accents offered in appearance settings, violet first.
+  /// Cool, corporate blue.
+  static const Color azure = Color(0xFF2563C9);
+
+  /// Warm green, far enough from [mint] to read as its own hue.
+  static const Color moss = Color(0xFF4E9A3F);
+
+  /// Pink end of the warm half.
+  static const Color rose = Color(0xFFE0457B);
+
+  /// Magenta-violet, the far end of the cool half.
+  static const Color orchid = Color(0xFFB13FA8);
+
+  /// The eight curated accents offered in appearance settings.
+  ///
+  /// Eight rather than a free colour wheel, and spaced roughly evenly around
+  /// it: every one of them has been checked to carry white or graphite text
+  /// at the bubble lightness the generator pins it to, which an arbitrary
+  /// hand-picked colour has not. The eyedropper is the escape hatch for
+  /// anyone who wants something else, and it lands on this same ramp.
   static const List<Color> accentSeeds = <Color>[
     violet,
+    azure,
     mint,
-    coral,
+    moss,
     amber,
-    Color(0xFF2563C9), // azure
-    Color(0xFFB13FA8), // orchid
+    coral,
+    rose,
+    orchid,
   ];
 }
 
@@ -117,6 +137,31 @@ abstract final class AppNeutrals {
   /// Primary text.
   static Color text(Brightness brightness) =>
       brightness == Brightness.dark ? dark[0] : light[11];
+}
+
+/// The ramp the dark theme swaps to when "black" is switched on.
+///
+/// Not a darker end of [AppNeutrals.dark] but its own short scale, because
+/// the point of an OLED theme is the one colour the neutral ramp deliberately
+/// avoids: true black, which costs no light at all on an emissive panel. The
+/// steps above it stay warm and close together so that cards, sheets and the
+/// composer are still distinguishable from the void behind them.
+abstract final class AppAmoled {
+  /// The ground. Actually black — anything else defeats the point.
+  static const Color canvas = Color(0xFF000000);
+
+  /// Raised surfaces, darkest first.
+  static const List<Color> surfaces = <Color>[
+    Color(0xFF0A0908),
+    Color(0xFF121110),
+    Color(0xFF1A1816),
+    Color(0xFF232120),
+  ];
+
+  /// Hairlines. Visible on black, where the neutral border is not.
+  static const Color border = Color(0xFF2A2724);
+
+  static Color step(int index) => surfaces[index.clamp(0, surfaces.length - 1)];
 }
 
 /// Corner radii. [full] is a large finite value rather than `double.infinity`

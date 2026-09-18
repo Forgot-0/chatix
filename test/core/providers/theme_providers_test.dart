@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:chatix/core/accessibility/accessibility_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
@@ -68,17 +69,26 @@ void main() {
     );
   });
 
-  test('the wallpaper and text scale are published on their own', () async {
-    final container = await boot();
+  test(
+    'the wallpaper reaches the theme and the text scale its own provider',
+    () async {
+      final container = await boot();
 
-    await container
-        .read(appearanceProvider.notifier)
-        .setWallpaper(AppWallpaper.plain);
-    await container.read(appearanceProvider.notifier).setTextScale(1.15);
+      await container
+          .read(appearanceProvider.notifier)
+          .setWallpaper(AppWallpaper.plain);
+      await container.read(appearanceProvider.notifier).setTextScale(1.15);
 
-    expect(container.read(wallpaperProvider), AppWallpaper.plain);
-    expect(container.read(textScaleProvider), 1.15);
-  });
+      expect(
+        container
+            .read(lightThemeProvider)
+            .extension<ChatixTheme>()!
+            .wallpaperStyle,
+        AppWallpaper.plain,
+      );
+      expect(container.read(textScaleProvider), 1.15);
+    },
+  );
 
   test('an out-of-range text scale is clamped before it is stored', () async {
     final container = await boot();
@@ -86,6 +96,93 @@ void main() {
     await container.read(appearanceProvider.notifier).setTextScale(4);
 
     expect(container.read(textScaleProvider), AppearanceSettings.maxTextScale);
+  });
+
+  test('black is remembered, and only changes the dark theme', () async {
+    final container = await boot();
+
+    await container.read(appearanceProvider.notifier).setAmoled(true);
+
+    expect(
+      container.read(darkThemeProvider).colorScheme.surface,
+      AppAmoled.canvas,
+    );
+    expect(
+      container.read(lightThemeProvider).colorScheme.surface,
+      isNot(AppAmoled.canvas),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    final relaunched = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(relaunched.dispose);
+
+    expect(relaunched.read(appearanceProvider).amoled, isTrue);
+  });
+
+  test('the system high-contrast switch rebuilds both themes', () async {
+    final container = await boot();
+    final before = container.read(lightThemeProvider);
+
+    container.read(systemHighContrastProvider.notifier).setEnabled(true);
+
+    final after = container.read(lightThemeProvider);
+    expect(after.colorScheme.onSurface, isNot(before.colorScheme.onSurface));
+    expect(
+      AppContrast.ratio(after.colorScheme.onSurface, after.colorScheme.surface),
+      greaterThan(
+        AppContrast.ratio(
+          before.colorScheme.onSurface,
+          before.colorScheme.surface,
+        ),
+      ),
+    );
+  });
+
+  test('a slider preview re-themes at once but waits to be written', () async {
+    final container = await boot();
+    final notifier = container.read(appearanceProvider.notifier);
+
+    notifier.previewBubbleRadius(13);
+
+    // On screen immediately: that is what makes a slider a slider.
+    expect(
+      container.read(lightThemeProvider).extension<ChatixTheme>()!.bubbleRadius,
+      13,
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    ProviderContainer relaunch() {
+      final next = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(next.dispose);
+      return next;
+    }
+
+    // Not on disk until the finger lifts — a drag emits a value per frame.
+    expect(
+      relaunch().read(appearanceProvider).bubbleRadius,
+      AppearanceSettings.defaultBubbleRadius,
+    );
+
+    await notifier.commit();
+
+    expect(relaunch().read(appearanceProvider).bubbleRadius, 13);
+  });
+
+  test('the wallpaper knobs reach the theme', () async {
+    final container = await boot();
+    final notifier = container.read(appearanceProvider.notifier);
+
+    notifier.previewWallpaperIntensity(0.9);
+    notifier.previewWallpaperPattern(0.1);
+    await notifier.commit();
+
+    final chatix = container.read(darkThemeProvider).extension<ChatixTheme>()!;
+    expect(chatix.wallpaperIntensity, 0.9);
+    expect(chatix.wallpaperPattern, 0.1);
   });
 
   test('reset returns every field to its default', () async {

@@ -2531,4 +2531,398 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get appearanceTitle => 'Appearance';
+
+  @override
+  String get appearanceHint => 'Theme, accent, wallpaper, bubbles and media';
+
+  @override
+  String get appearancePreview => 'Preview';
+
+  @override
+  String get previewIncomingMessage =>
+      'Everything here is drawn from your accent.';
+
+  @override
+  String get previewOutgoingMessage => 'No wallpaper images. Just code.';
+
+  @override
+  String get previewIncomingReply => 'Slide the knobs and watch.';
+
+  @override
+  String get amoledTitle => 'Black (AMOLED)';
+
+  @override
+  String get amoledHint =>
+      'True black backgrounds. On an OLED screen the black pixels cost no power at all.';
+
+  @override
+  String get accentFromAvatar => 'Take the colour from my photo';
+
+  @override
+  String get accentFromAvatarApplied => 'Accent taken from your photo.';
+
+  @override
+  String get accentFromAvatarEmpty =>
+      'Your photo has no colour to take — it reads as grey.';
+
+  @override
+  String get accentFromAvatarMissing => 'Add a profile photo first.';
+
+  @override
+  String get accentFromAvatarFailed => 'Could not read your photo. Try again.';
+
+  @override
+  String get accentCustom => 'Your colour';
+
+  @override
+  String get wallpaperNebula => 'Nebula';
+
+  @override
+  String get wallpaperRibbons => 'Ribbons';
+
+  @override
+  String get wallpaperPrism => 'Prism';
+
+  @override
+  String get wallpaperHalo => 'Halo';
+
+  @override
+  String get wallpaperDunes => 'Dunes';
+
+  @override
+  String get wallpaperIntensity => 'Intensity';
+
+  @override
+  String get wallpaperPattern => 'Pattern';
+
+  @override
+  String get appearanceDensity => 'Density';
+
+  @override
+  String get appearanceDensityHint =>
+      'How much room rows and message bubbles take.';
+
+  @override
+  String get textSizeHint => 'Applied on top of your system text size.';
+
+  @override
+  String get bubbleShape => 'Bubble shape';
+
+  @override
+  String get bubbleCorners => 'Corners';
+
+  @override
+  String get bubbleAnchor => 'Anchor corner';
+
+  @override
+  String get bubbleAnchorHint =>
+      'Pulls the last bubble of a run tight on the sender\'s side, so it points at whoever sent it.';
+
+  @override
+  String get mediaSectionTitle => 'Media';
+
+  @override
+  String get autoDownload => 'Auto-download';
+
+  @override
+  String get autoDownloadHint =>
+      'Which attachments are fetched before you open them.';
+
+  @override
+  String get autoDownloadPhotos => 'Photos';
+
+  @override
+  String get autoDownloadVideos => 'Videos';
+
+  @override
+  String get autoDownloadFiles => 'Files';
+
+  @override
+  String get autoDownloadVoice => 'Voice messages';
+
+  @override
+  String get autoDownloadWifi => 'Wi-Fi';
+
+  @override
+  String get autoDownloadMobile => 'Mobile data';
+
+  @override
+  String get autoDownloadNever => 'Never';
+
+  @override
+  String get cacheLimit => 'Cache limit';
+
+  @override
+  String get cacheLimitHint =>
+      'Downloaded attachments are kept until they pass this, then the oldest go first.';
+
+  @override
+  String get cacheEmpty => 'Nothing cached yet';
+
+  @override
+  String get cacheClear => 'Clear cache';
+
+  @override
+  String get cacheMeasuring => 'Measuring…';
+
+  @override
+  String get appearanceReduceMotionNotice =>
+      'Your system asks for reduced motion, so nothing here animates.';
+
+  @override
+  String get appearanceHighContrastNotice =>
+      'High contrast is on, so wallpapers are painted quietly to keep text readable.';
+
+  @override
+  String cacheInUse(String size) {
+    return '$size in use';
+  }
+
+  @override
+  String cacheCleared(String size) {
+    return 'Freed $size';
+  }
+
+  @override
+  String sizeMegabytes(String value) {
+    return '$value MB';
+  }
+
+  @override
+  String sizeGigabytes(String value) {
+    return '$value GB';
+  }
+
+  @override
+  String get attachmentTapToDownload => 'Tap to download';
+
+  @override
+  String get welcomeHeadline => 'Welcome to ChatiX';
+
+  @override
+  String get welcomeTagline => 'Messages that keep up with you.';
+
+  @override
+  String get welcomeGetStarted => 'Get started';
+
+  @override
+  String get welcomeSignIn => 'I already have an account';
+
+  @override
+  String get onboardingSkip => 'Skip';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingDone => 'Create an account';
+
+  @override
+  String get onboardingRealtimeTitle => 'Everything in real time';
+
+  @override
+  String get onboardingRealtimeBody =>
+      'Messages, edits and reactions arrive the moment they happen — and the app opens on the conversation you left, before the network even answers.';
+
+  @override
+  String get onboardingTogetherTitle => 'Chats, groups, channels, calls';
+
+  @override
+  String get onboardingTogetherBody =>
+      'One to one, a group of five hundred, or a channel for everyone — with a voice or video call always one tap away.';
+
+  @override
+  String get onboardingPrivacyTitle => 'Only yours';
+
+  @override
+  String get onboardingPrivacyBody =>
+      'See every signed-in device and end any of them, lock the app behind your fingerprint, and keep files on the phone until you send them.';
+
+  @override
+  String onboardingPageOf(int current, int total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get loginHeadline => 'Welcome back';
+
+  @override
+  String get loginSubtitle => 'Sign in to keep the conversation going.';
+
+  @override
+  String get registerHeadline => 'Create your account';
+
+  @override
+  String get registerSubtitle => 'It takes about a minute.';
+
+  @override
+  String get authOrContinueWith => 'or continue with';
+
+  @override
+  String get authNoAccount => 'Don\'t have an account?';
+
+  @override
+  String get authHaveAccount => 'Already have an account?';
+
+  @override
+  String get authErrorWrongLoginData => 'Wrong username or password.';
+
+  @override
+  String get authErrorEmailNotConfirmed =>
+      'Confirm your email address before signing in.';
+
+  @override
+  String authErrorEmailNotConfirmedFor(String email) {
+    return 'Confirm $email before signing in.';
+  }
+
+  @override
+  String get authResendEmail => 'Send the email again';
+
+  @override
+  String get authErrorTooManyAttempts =>
+      'Too many attempts. Wait a minute and try again.';
+
+  @override
+  String get authErrorDuplicateUsername => 'This username is already taken.';
+
+  @override
+  String get authErrorDuplicateEmail =>
+      'An account with this email already exists.';
+
+  @override
+  String authErrorDuplicateField(String field) {
+    return '$field is already in use.';
+  }
+
+  @override
+  String get authErrorPasswordMismatch => 'The passwords do not match.';
+
+  @override
+  String get authErrorInvalidCode =>
+      'This code is no longer valid. Ask for a new one.';
+
+  @override
+  String get authErrorUserNotFound =>
+      'We could not find an account with these details.';
+
+  @override
+  String get authErrorOffline =>
+      'No connection. Check your network and try again.';
+
+  @override
+  String get authErrorGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get passwordStrengthLabel => 'Password strength';
+
+  @override
+  String get passwordStrengthWeak => 'Weak';
+
+  @override
+  String get passwordStrengthFair => 'Fair';
+
+  @override
+  String get passwordStrengthGood => 'Good';
+
+  @override
+  String get passwordStrengthStrong => 'Strong';
+
+  @override
+  String get passwordShow => 'Show password';
+
+  @override
+  String get passwordHide => 'Hide password';
+
+  @override
+  String get verifyEmailHeadline => 'Check your mail';
+
+  @override
+  String verifyEmailSentTo(String email) {
+    return 'We sent a confirmation code to $email.';
+  }
+
+  @override
+  String get verifyEmailSentToYou => 'We sent you a confirmation code.';
+
+  @override
+  String get verifyEmailClipboardHint =>
+      'Copy the code from the email — ChatiX picks it up as soon as you come back.';
+
+  @override
+  String get verifyEmailCodeFromClipboard => 'Code taken from the clipboard';
+
+  @override
+  String verifyEmailResendIn(int seconds) {
+    return 'You can ask for a new email in ${seconds}s';
+  }
+
+  @override
+  String get verifyEmailWrongAddress => 'Wrong address?';
+
+  @override
+  String get verifyEmailChangeAddress => 'Use a different one';
+
+  @override
+  String get biometricUnlockTitle => 'Unlock with biometrics';
+
+  @override
+  String get biometricUnlockSubtitle =>
+      'Ask for a fingerprint or face scan when ChatiX is reopened.';
+
+  @override
+  String get biometricUnlockUnavailable =>
+      'No biometrics are set up on this device.';
+
+  @override
+  String get biometricUnlockReason => 'Unlock ChatiX';
+
+  @override
+  String get biometricUnlockLockedTitle => 'ChatiX is locked';
+
+  @override
+  String get biometricUnlockLockedBody => 'Unlock to get back to your chats.';
+
+  @override
+  String get biometricUnlockAction => 'Unlock';
+
+  @override
+  String get biometricUnlockFailed => 'The check did not pass. Try again.';
+
+  @override
+  String get biometricUnlockLockedOut =>
+      'Biometrics are blocked by the system after too many attempts.';
+
+  @override
+  String get biometricUnlockNotEnrolled =>
+      'No fingerprint or face is enrolled on this device.';
+
+  @override
+  String get biometricUnlockEnableFailed =>
+      'Biometrics could not be turned on.';
+
+  @override
+  String get settingsSecuritySection => 'Security';
+
+  @override
+  String get settingsAccountSection => 'Account';
+
+  @override
+  String get logoutConfirmTitle => 'Sign out?';
+
+  @override
+  String get logoutConfirmBody =>
+      'This device forgets your messages, drafts and downloaded files. Your account stays as it is.';
+
+  @override
+  String get logoutAction => 'Sign out';
+
+  @override
+  String get logoutFailed => 'Could not sign out. Try again.';
+
+  @override
+  String get logoutInProgress => 'Signing out…';
 }

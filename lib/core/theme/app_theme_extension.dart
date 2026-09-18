@@ -27,6 +27,9 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     required this.authorPalette,
     required this.composerSurface,
     required this.wallpaperSeed,
+    required this.wallpaperStyle,
+    required this.wallpaperIntensity,
+    required this.wallpaperPattern,
     required this.success,
     required this.danger,
     required this.attention,
@@ -81,6 +84,21 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
 
   /// Accent the chat wallpaper blooms from.
   final Color wallpaperSeed;
+
+  /// Which procedural recipe the wallpaper is painted with.
+  ///
+  /// The wallpaper lives on the theme rather than being read from settings
+  /// where it is drawn, for the same reason the bubble radius does: it is a
+  /// derived appearance value, and a widget that takes the whole look from
+  /// one `Theme.of` can be previewed, golden-tested and rendered under a
+  /// hand-built theme without a settings store behind it.
+  final AppWallpaper wallpaperStyle;
+
+  /// How loudly that recipe is painted, 0..1.
+  final double wallpaperIntensity;
+
+  /// Which arrangement of it is drawn, 0..1.
+  final double wallpaperPattern;
 
   /// Delivered/read ticks, confirmations.
   final Color success;
@@ -138,6 +156,13 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     required ColorScheme scheme,
     required AppDensity density,
     Color? accent,
+    double bubbleRadius = AppearanceSettings.defaultBubbleRadius,
+    double bubbleAnchorRadius = AppearanceSettings.anchorRadius,
+    AppWallpaper wallpaperStyle = AppWallpaper.fallback,
+    double wallpaperIntensity = AppearanceSettings.defaultWallpaperIntensity,
+    double wallpaperPattern = AppearanceSettings.defaultWallpaperPattern,
+    bool amoled = false,
+    bool highContrast = false,
   }) {
     final brightness = scheme.brightness;
     final isDark = brightness == Brightness.dark;
@@ -161,9 +186,25 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
         )
         .toColor();
 
-    final incoming = isDark
-        ? AppElevations.surfaceOf(brightness, AppNeutrals.dark[8], 1)
-        : AppNeutrals.light[0];
+    final incoming = switch ((isDark, amoled)) {
+      (true, true) => AppAmoled.step(2),
+      (true, false) => AppElevations.surfaceOf(
+        brightness,
+        AppNeutrals.dark[8],
+        1,
+      ),
+      (false, _) => AppNeutrals.light[0],
+    };
+
+    // On a true-black ground an incoming bubble has no elevation tint to
+    // separate it, and under high contrast a hairline is the point — so both
+    // get a border where the ordinary dark theme deliberately has none.
+    final incomingBorder = switch ((isDark, amoled, highContrast)) {
+      (_, _, true) => scheme.outline,
+      (true, true, false) => AppAmoled.border,
+      (true, false, false) => Colors.transparent,
+      (false, _, false) => AppNeutrals.border(brightness),
+    };
 
     return ChatixTheme(
       brightness: brightness,
@@ -174,32 +215,44 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
       ),
       bubbleOutgoingForeground: AppContrast.foregroundOn(head),
       bubbleIncoming: incoming,
-      bubbleIncomingForeground: AppNeutrals.text(brightness),
-      bubbleIncomingBorder: isDark
-          ? Colors.transparent
-          : AppNeutrals.border(brightness),
-      chatBackground: AppNeutrals.canvas(brightness),
-      dateChip: (isDark ? AppNeutrals.dark[7] : AppNeutrals.light[3])
-          .withValues(alpha: 0.92),
-      unreadDivider: scheme.primary.withValues(alpha: 0.4),
-      reactionChip: AppNeutrals.surfaceMuted(brightness),
+      bubbleIncomingForeground: scheme.onSurface,
+      bubbleIncomingBorder: incomingBorder,
+      chatBackground: isDark && amoled
+          ? AppAmoled.canvas
+          : AppNeutrals.canvas(brightness),
+      dateChip:
+          (isDark
+                  ? (amoled ? AppAmoled.step(3) : AppNeutrals.dark[7])
+                  : AppNeutrals.light[3])
+              .withValues(alpha: highContrast ? 1 : 0.92),
+      unreadDivider: scheme.primary.withValues(
+        alpha: highContrast ? 0.85 : 0.4,
+      ),
+      reactionChip: isDark && amoled
+          ? AppAmoled.step(2)
+          : AppNeutrals.surfaceMuted(brightness),
       reactionChipSelected: Color.alphaBlend(
         scheme.primary.withValues(alpha: 0.16),
-        AppNeutrals.surface(brightness),
+        isDark && amoled ? AppAmoled.step(2) : AppNeutrals.surface(brightness),
       ),
       onlineDot: AppPalette.mint,
       authorPalette: AppAuthorPalette.of(brightness),
-      composerSurface: AppElevations.surfaceOf(
-        brightness,
-        isDark ? AppNeutrals.dark[9] : AppNeutrals.light[0],
-        2,
-      ),
+      composerSurface: isDark && amoled
+          ? AppAmoled.step(1)
+          : AppElevations.surfaceOf(
+              brightness,
+              isDark ? AppNeutrals.dark[9] : AppNeutrals.light[0],
+              2,
+            ),
       wallpaperSeed: scheme.primary,
+      wallpaperStyle: wallpaperStyle,
+      wallpaperIntensity: wallpaperIntensity,
+      wallpaperPattern: wallpaperPattern,
       success: AppPalette.mint,
       danger: AppPalette.coral,
       attention: AppPalette.amber,
-      bubbleRadius: AppRadii.xl,
-      bubbleAnchorRadius: AppRadii.xs + 2,
+      bubbleRadius: bubbleRadius,
+      bubbleAnchorRadius: bubbleAnchorRadius,
       density: density,
     );
   }
@@ -237,6 +290,9 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     List<Color>? authorPalette,
     Color? composerSurface,
     Color? wallpaperSeed,
+    AppWallpaper? wallpaperStyle,
+    double? wallpaperIntensity,
+    double? wallpaperPattern,
     Color? success,
     Color? danger,
     Color? attention,
@@ -263,6 +319,9 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
       authorPalette: authorPalette ?? this.authorPalette,
       composerSurface: composerSurface ?? this.composerSurface,
       wallpaperSeed: wallpaperSeed ?? this.wallpaperSeed,
+      wallpaperStyle: wallpaperStyle ?? this.wallpaperStyle,
+      wallpaperIntensity: wallpaperIntensity ?? this.wallpaperIntensity,
+      wallpaperPattern: wallpaperPattern ?? this.wallpaperPattern,
       success: success ?? this.success,
       danger: danger ?? this.danger,
       attention: attention ?? this.attention,
@@ -322,6 +381,15 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
       ],
       composerSurface: Color.lerp(composerSurface, other.composerSurface, t)!,
       wallpaperSeed: Color.lerp(wallpaperSeed, other.wallpaperSeed, t)!,
+      // A style is a recipe, not a number: it swaps at the halfway point
+      // rather than cross-fading into something neither of them is.
+      wallpaperStyle: t < 0.5 ? wallpaperStyle : other.wallpaperStyle,
+      wallpaperIntensity: lerpDouble(
+        wallpaperIntensity,
+        other.wallpaperIntensity,
+        t,
+      ),
+      wallpaperPattern: lerpDouble(wallpaperPattern, other.wallpaperPattern, t),
       success: Color.lerp(success, other.success, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       attention: Color.lerp(attention, other.attention, t)!,

@@ -4413,6 +4413,708 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{Yesterday} other{{count} days ago}}'**
   String timeDaysAgo(int count);
+
+  /// The appearance settings screen's title.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearanceTitle;
+
+  /// Subtitle of the entry that opens appearance settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme, accent, wallpaper, bubbles and media'**
+  String get appearanceHint;
+
+  /// Heading over the live sample conversation on the appearance screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get appearancePreview;
+
+  /// Sample incoming message in the appearance preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything here is drawn from your accent.'**
+  String get previewIncomingMessage;
+
+  /// Sample outgoing message in the appearance preview.
+  ///
+  /// In en, this message translates to:
+  /// **'No wallpaper images. Just code.'**
+  String get previewOutgoingMessage;
+
+  /// Second sample incoming message in the appearance preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide the knobs and watch.'**
+  String get previewIncomingReply;
+
+  /// Switch that makes the dark theme true black.
+  ///
+  /// In en, this message translates to:
+  /// **'Black (AMOLED)'**
+  String get amoledTitle;
+
+  /// Explains what the AMOLED switch does.
+  ///
+  /// In en, this message translates to:
+  /// **'True black backgrounds. On an OLED screen the black pixels cost no power at all.'**
+  String get amoledHint;
+
+  /// Button that seeds the accent from the user's avatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Take the colour from my photo'**
+  String get accentFromAvatar;
+
+  /// Confirms the eyedropper found a colour and applied it.
+  ///
+  /// In en, this message translates to:
+  /// **'Accent taken from your photo.'**
+  String get accentFromAvatarApplied;
+
+  /// Shown when the avatar holds no usable accent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your photo has no colour to take — it reads as grey.'**
+  String get accentFromAvatarEmpty;
+
+  /// Shown when the eyedropper is pressed with no avatar set.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a profile photo first.'**
+  String get accentFromAvatarMissing;
+
+  /// Shown when the avatar image could not be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read your photo. Try again.'**
+  String get accentFromAvatarFailed;
+
+  /// Label for an accent that is not one of the curated eight.
+  ///
+  /// In en, this message translates to:
+  /// **'Your colour'**
+  String get accentCustom;
+
+  /// Name of the nebula chat wallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Nebula'**
+  String get wallpaperNebula;
+
+  /// Name of the ribbons chat wallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Ribbons'**
+  String get wallpaperRibbons;
+
+  /// Name of the prism chat wallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Prism'**
+  String get wallpaperPrism;
+
+  /// Name of the halo chat wallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Halo'**
+  String get wallpaperHalo;
+
+  /// Name of the dunes chat wallpaper.
+  ///
+  /// In en, this message translates to:
+  /// **'Dunes'**
+  String get wallpaperDunes;
+
+  /// Slider controlling how strongly the wallpaper pattern is painted.
+  ///
+  /// In en, this message translates to:
+  /// **'Intensity'**
+  String get wallpaperIntensity;
+
+  /// Slider controlling the wallpaper's arrangement.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get wallpaperPattern;
+
+  /// Section heading for list and bubble spacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Density'**
+  String get appearanceDensity;
+
+  /// Explains the density setting.
+  ///
+  /// In en, this message translates to:
+  /// **'How much room rows and message bubbles take.'**
+  String get appearanceDensityHint;
+
+  /// Explains that the app's text scale multiplies the platform one.
+  ///
+  /// In en, this message translates to:
+  /// **'Applied on top of your system text size.'**
+  String get textSizeHint;
+
+  /// Section heading for the message bubble geometry.
+  ///
+  /// In en, this message translates to:
+  /// **'Bubble shape'**
+  String get bubbleShape;
+
+  /// Slider controlling the message bubble corner radius.
+  ///
+  /// In en, this message translates to:
+  /// **'Corners'**
+  String get bubbleCorners;
+
+  /// Switch that pulls a bubble's corner tight on the sender's side.
+  ///
+  /// In en, this message translates to:
+  /// **'Anchor corner'**
+  String get bubbleAnchor;
+
+  /// Explains the anchor corner switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulls the last bubble of a run tight on the sender\'s side, so it points at whoever sent it.'**
+  String get bubbleAnchorHint;
+
+  /// Section heading for the media settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Media'**
+  String get mediaSectionTitle;
+
+  /// Heading for the per-kind auto-download settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-download'**
+  String get autoDownload;
+
+  /// Explains auto-download.
+  ///
+  /// In en, this message translates to:
+  /// **'Which attachments are fetched before you open them.'**
+  String get autoDownloadHint;
+
+  /// Auto-download row for photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get autoDownloadPhotos;
+
+  /// Auto-download row for videos.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get autoDownloadVideos;
+
+  /// Auto-download row for documents.
+  ///
+  /// In en, this message translates to:
+  /// **'Files'**
+  String get autoDownloadFiles;
+
+  /// Auto-download row for voice messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice messages'**
+  String get autoDownloadVoice;
+
+  /// Auto-download on an unmetered connection only.
+  ///
+  /// In en, this message translates to:
+  /// **'Wi-Fi'**
+  String get autoDownloadWifi;
+
+  /// Auto-download on any connection, mobile data included.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile data'**
+  String get autoDownloadMobile;
+
+  /// Auto-download off; the attachment waits for a tap.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get autoDownloadNever;
+
+  /// Heading for the attachment cache size limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache limit'**
+  String get cacheLimit;
+
+  /// Explains the cache limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded attachments are kept until they pass this, then the oldest go first.'**
+  String get cacheLimitHint;
+
+  /// Shown when the attachment cache holds no files.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing cached yet'**
+  String get cacheEmpty;
+
+  /// Button that empties the attachment cache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cache'**
+  String get cacheClear;
+
+  /// Shown while the cache size is being counted.
+  ///
+  /// In en, this message translates to:
+  /// **'Measuring…'**
+  String get cacheMeasuring;
+
+  /// Notice shown on the appearance screen when reduced motion is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Your system asks for reduced motion, so nothing here animates.'**
+  String get appearanceReduceMotionNotice;
+
+  /// Notice shown on the appearance screen when high contrast is on.
+  ///
+  /// In en, this message translates to:
+  /// **'High contrast is on, so wallpapers are painted quietly to keep text readable.'**
+  String get appearanceHighContrastNotice;
+
+  /// Shows how much disk the attachment cache holds.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} in use'**
+  String cacheInUse(String size);
+
+  /// Confirms how much disk clearing the cache freed.
+  ///
+  /// In en, this message translates to:
+  /// **'Freed {size}'**
+  String cacheCleared(String size);
+
+  /// A size in megabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} MB'**
+  String sizeMegabytes(String value);
+
+  /// A size in gigabytes.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} GB'**
+  String sizeGigabytes(String value);
+
+  /// Shown over an attachment that auto-download is holding back until the reader asks for it.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to download'**
+  String get attachmentTapToDownload;
+
+  /// Headline on the first launch screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to ChatiX'**
+  String get welcomeHeadline;
+
+  /// One-line promise under the welcome headline.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages that keep up with you.'**
+  String get welcomeTagline;
+
+  /// Button that opens the onboarding pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get welcomeGetStarted;
+
+  /// Button that skips onboarding straight to sign in.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get welcomeSignIn;
+
+  /// Dismisses the onboarding pages.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboardingSkip;
+
+  /// Advances to the next onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// Last onboarding button; opens registration.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account'**
+  String get onboardingDone;
+
+  /// Title of the first onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in real time'**
+  String get onboardingRealtimeTitle;
+
+  /// Body of the first onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages, edits and reactions arrive the moment they happen — and the app opens on the conversation you left, before the network even answers.'**
+  String get onboardingRealtimeBody;
+
+  /// Title of the second onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'Chats, groups, channels, calls'**
+  String get onboardingTogetherTitle;
+
+  /// Body of the second onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'One to one, a group of five hundred, or a channel for everyone — with a voice or video call always one tap away.'**
+  String get onboardingTogetherBody;
+
+  /// Title of the third onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'Only yours'**
+  String get onboardingPrivacyTitle;
+
+  /// Body of the third onboarding page.
+  ///
+  /// In en, this message translates to:
+  /// **'See every signed-in device and end any of them, lock the app behind your fingerprint, and keep files on the phone until you send them.'**
+  String get onboardingPrivacyBody;
+
+  /// Screen-reader label for the onboarding page indicator.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String onboardingPageOf(int current, int total);
+
+  /// Headline of the sign-in screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get loginHeadline;
+
+  /// Subtitle of the sign-in screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to keep the conversation going.'**
+  String get loginSubtitle;
+
+  /// Headline of the registration screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get registerHeadline;
+
+  /// Subtitle of the registration screen.
+  ///
+  /// In en, this message translates to:
+  /// **'It takes about a minute.'**
+  String get registerSubtitle;
+
+  /// Divider above the OAuth provider buttons.
+  ///
+  /// In en, this message translates to:
+  /// **'or continue with'**
+  String get authOrContinueWith;
+
+  /// Precedes the link to registration.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get authNoAccount;
+
+  /// Precedes the link to sign in.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authHaveAccount;
+
+  /// Shown for WRONG_LOGIN_DATA.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong username or password.'**
+  String get authErrorWrongLoginData;
+
+  /// Shown for EMAIL_NOT_CONFIRMED with no address in the detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your email address before signing in.'**
+  String get authErrorEmailNotConfirmed;
+
+  /// Shown for EMAIL_NOT_CONFIRMED, naming the address from the error detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm {email} before signing in.'**
+  String authErrorEmailNotConfirmedFor(String email);
+
+  /// Action offered next to the unconfirmed-email error.
+  ///
+  /// In en, this message translates to:
+  /// **'Send the email again'**
+  String get authResendEmail;
+
+  /// Shown for HTTP 429, which carries a bare {detail} instead of an error envelope.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a minute and try again.'**
+  String get authErrorTooManyAttempts;
+
+  /// Shown for DUPLICATE_USER on the username field.
+  ///
+  /// In en, this message translates to:
+  /// **'This username is already taken.'**
+  String get authErrorDuplicateUsername;
+
+  /// Shown for DUPLICATE_USER on the email field.
+  ///
+  /// In en, this message translates to:
+  /// **'An account with this email already exists.'**
+  String get authErrorDuplicateEmail;
+
+  /// Shown for DUPLICATE_USER on a field the client does not know.
+  ///
+  /// In en, this message translates to:
+  /// **'{field} is already in use.'**
+  String authErrorDuplicateField(String field);
+
+  /// Shown for PASSWORD_MISMATCH.
+  ///
+  /// In en, this message translates to:
+  /// **'The passwords do not match.'**
+  String get authErrorPasswordMismatch;
+
+  /// Shown for INVALID_TOKEN / EXPIRED_TOKEN on a verification or reset code.
+  ///
+  /// In en, this message translates to:
+  /// **'This code is no longer valid. Ask for a new one.'**
+  String get authErrorInvalidCode;
+
+  /// Shown for NOT_FOUND_USER.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not find an account with these details.'**
+  String get authErrorUserNotFound;
+
+  /// Shown when the request never reached the server.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Check your network and try again.'**
+  String get authErrorOffline;
+
+  /// Fallback for an auth failure with no friendlier wording.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get authErrorGeneric;
+
+  /// Label above the password strength meter.
+  ///
+  /// In en, this message translates to:
+  /// **'Password strength'**
+  String get passwordStrengthLabel;
+
+  /// Weakest password strength level.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get passwordStrengthWeak;
+
+  /// Second password strength level.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get passwordStrengthFair;
+
+  /// Third password strength level.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get passwordStrengthGood;
+
+  /// Strongest password strength level.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get passwordStrengthStrong;
+
+  /// Tooltip on the reveal-password button.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get passwordShow;
+
+  /// Tooltip on the hide-password button.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get passwordHide;
+
+  /// Headline of the email confirmation screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your mail'**
+  String get verifyEmailHeadline;
+
+  /// Says where the confirmation code went.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a confirmation code to {email}.'**
+  String verifyEmailSentTo(String email);
+
+  /// Said when the address is not known to this screen.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent you a confirmation code.'**
+  String get verifyEmailSentToYou;
+
+  /// Explains the clipboard auto-check.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the code from the email — ChatiX picks it up as soon as you come back.'**
+  String get verifyEmailClipboardHint;
+
+  /// Confirms that the code was filled in automatically.
+  ///
+  /// In en, this message translates to:
+  /// **'Code taken from the clipboard'**
+  String get verifyEmailCodeFromClipboard;
+
+  /// Countdown on the disabled resend button.
+  ///
+  /// In en, this message translates to:
+  /// **'You can ask for a new email in {seconds}s'**
+  String verifyEmailResendIn(int seconds);
+
+  /// Precedes the change-address action.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong address?'**
+  String get verifyEmailWrongAddress;
+
+  /// Opens the field for another email address.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a different one'**
+  String get verifyEmailChangeAddress;
+
+  /// Settings switch for the app lock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with biometrics'**
+  String get biometricUnlockTitle;
+
+  /// Explains what the app lock switch does.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a fingerprint or face scan when ChatiX is reopened.'**
+  String get biometricUnlockSubtitle;
+
+  /// Subtitle of the disabled app lock switch.
+  ///
+  /// In en, this message translates to:
+  /// **'No biometrics are set up on this device.'**
+  String get biometricUnlockUnavailable;
+
+  /// Reason shown in the system biometric prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock ChatiX'**
+  String get biometricUnlockReason;
+
+  /// Headline of the lock screen.
+  ///
+  /// In en, this message translates to:
+  /// **'ChatiX is locked'**
+  String get biometricUnlockLockedTitle;
+
+  /// Body of the lock screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock to get back to your chats.'**
+  String get biometricUnlockLockedBody;
+
+  /// Button on the lock screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get biometricUnlockAction;
+
+  /// Shown after a failed biometric attempt.
+  ///
+  /// In en, this message translates to:
+  /// **'The check did not pass. Try again.'**
+  String get biometricUnlockFailed;
+
+  /// Shown when the platform locks biometrics out.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometrics are blocked by the system after too many attempts.'**
+  String get biometricUnlockLockedOut;
+
+  /// Shown when biometrics exist but nothing is enrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'No fingerprint or face is enrolled on this device.'**
+  String get biometricUnlockNotEnrolled;
+
+  /// Shown when enabling the app lock fails its confirming scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometrics could not be turned on.'**
+  String get biometricUnlockEnableFailed;
+
+  /// Section header above the app lock switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get settingsSecuritySection;
+
+  /// Section header above the sign-out entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccountSection;
+
+  /// Title of the sign-out confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
+  String get logoutConfirmTitle;
+
+  /// Body of the sign-out confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'This device forgets your messages, drafts and downloaded files. Your account stays as it is.'**
+  String get logoutConfirmBody;
+
+  /// Confirming button of the sign-out dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get logoutAction;
+
+  /// Shown when the sign-out request fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign out. Try again.'**
+  String get logoutFailed;
+
+  /// Shown while the sign-out is running.
+  ///
+  /// In en, this message translates to:
+  /// **'Signing out…'**
+  String get logoutInProgress;
 }
 
 class _AppLocalizationsDelegate

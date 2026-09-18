@@ -32,7 +32,7 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// It starts on its own when it scrolls into view — without sound, and only
 /// when the reader's autoplay setting allows it on this connection. A tap
 /// adds the sound; a long press opens it full screen.
-class VideoNotePlayer extends ConsumerWidget {
+class VideoNotePlayer extends ConsumerStatefulWidget {
   const VideoNotePlayer({
     super.key,
     required this.attachment,
@@ -46,31 +46,62 @@ class VideoNotePlayer extends ConsumerWidget {
   static const double diameter = 200;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final key = attachmentFileKey(attachment, messageId: messageId);
+  ConsumerState<VideoNotePlayer> createState() => _VideoNotePlayerState();
+}
 
+class _VideoNotePlayerState extends ConsumerState<VideoNotePlayer> {
+  /// Set once the reader has tapped a note their auto-download settings were
+  /// holding back. A note is video, and video is the bucket most people turn
+  /// off on mobile data.
+  bool _asked = false;
+
+  AttachmentFileKey get _key =>
+      attachmentFileKey(widget.attachment, messageId: widget.messageId);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: SizedBox.square(
-        dimension: diameter,
-        child: ref
-            .watch(attachmentFileProvider(key))
-            .when(
-              loading: () => const ClipOval(child: AttachmentImagePlaceholder()),
-              error: (_, _) => ClipOval(
-                child: AttachmentImageFailure(
-                  onRetry: () => ref.invalidate(attachmentFileProvider(key)),
-                ),
-              ),
-              data: (file) => _Round(
-                file: file,
-                attachmentId: attachment.id,
-                declared: attachment.durationSeconds,
-              ),
-            ),
+        dimension: VideoNotePlayer.diameter,
+        child: ClipOval(child: _body()),
       ),
     );
   }
+
+  Widget _body() {
+    if (_asked) {
+      return ref
+          .watch(attachmentFileProvider(_key))
+          .when(
+            loading: () => const AttachmentImagePlaceholder(),
+            error: (_, _) => AttachmentImageFailure(
+              onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+            ),
+            data: _round,
+          );
+    }
+
+    return ref
+        .watch(autoAttachmentFileProvider(_key))
+        .when(
+          loading: () => const AttachmentImagePlaceholder(),
+          error: (_, _) => AttachmentImageFailure(
+            onRetry: () => ref.invalidate(autoAttachmentFileProvider(_key)),
+          ),
+          data: (file) => file == null
+              ? AttachmentTapToDownload(
+                  onTap: () => setState(() => _asked = true),
+                )
+              : _round(file),
+        );
+  }
+
+  Widget _round(File file) => _Round(
+    file: file,
+    attachmentId: widget.attachment.id,
+    declared: widget.attachment.durationSeconds,
+  );
 }
 
 class _Round extends ConsumerStatefulWidget {

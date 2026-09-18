@@ -3176,5 +3176,521 @@
         "type": "int"
       }
     }
+  },
+  "appearanceTitle": "Appearance",
+  "@appearanceTitle": {
+    "description": "The appearance settings screen's title."
+  },
+  "appearanceHint": "Theme, accent, wallpaper, bubbles and media",
+  "@appearanceHint": {
+    "description": "Subtitle of the entry that opens appearance settings."
+  },
+  "appearancePreview": "Preview",
+  "@appearancePreview": {
+    "description": "Heading over the live sample conversation on the appearance screen."
+  },
+  "previewIncomingMessage": "Everything here is drawn from your accent.",
+  "@previewIncomingMessage": {
+    "description": "Sample incoming message in the appearance preview."
+  },
+  "previewOutgoingMessage": "No wallpaper images. Just code.",
+  "@previewOutgoingMessage": {
+    "description": "Sample outgoing message in the appearance preview."
+  },
+  "previewIncomingReply": "Slide the knobs and watch.",
+  "@previewIncomingReply": {
+    "description": "Second sample incoming message in the appearance preview."
+  },
+  "amoledTitle": "Black (AMOLED)",
+  "@amoledTitle": {
+    "description": "Switch that makes the dark theme true black."
+  },
+  "amoledHint": "True black backgrounds. On an OLED screen the black pixels cost no power at all.",
+  "@amoledHint": {
+    "description": "Explains what the AMOLED switch does."
+  },
+  "accentFromAvatar": "Take the colour from my photo",
+  "@accentFromAvatar": {
+    "description": "Button that seeds the accent from the user's avatar."
+  },
+  "accentFromAvatarApplied": "Accent taken from your photo.",
+  "@accentFromAvatarApplied": {
+    "description": "Confirms the eyedropper found a colour and applied it."
+  },
+  "accentFromAvatarEmpty": "Your photo has no colour to take — it reads as grey.",
+  "@accentFromAvatarEmpty": {
+    "description": "Shown when the avatar holds no usable accent."
+  },
+  "accentFromAvatarMissing": "Add a profile photo first.",
+  "@accentFromAvatarMissing": {
+    "description": "Shown when the eyedropper is pressed with no avatar set."
+  },
+  "accentFromAvatarFailed": "Could not read your photo. Try again.",
+  "@accentFromAvatarFailed": {
+    "description": "Shown when the avatar image could not be loaded."
+  },
+  "accentCustom": "Your colour",
+  "@accentCustom": {
+    "description": "Label for an accent that is not one of the curated eight."
+  },
+  "wallpaperNebula": "Nebula",
+  "@wallpaperNebula": {
+    "description": "Name of the nebula chat wallpaper."
+  },
+  "wallpaperRibbons": "Ribbons",
+  "@wallpaperRibbons": {
+    "description": "Name of the ribbons chat wallpaper."
+  },
+  "wallpaperPrism": "Prism",
+  "@wallpaperPrism": {
+    "description": "Name of the prism chat wallpaper."
+  },
+  "wallpaperHalo": "Halo",
+  "@wallpaperHalo": {
+    "description": "Name of the halo chat wallpaper."
+  },
+  "wallpaperDunes": "Dunes",
+  "@wallpaperDunes": {
+    "description": "Name of the dunes chat wallpaper."
+  },
+  "wallpaperIntensity": "Intensity",
+  "@wallpaperIntensity": {
+    "description": "Slider controlling how strongly the wallpaper pattern is painted."
+  },
+  "wallpaperPattern": "Pattern",
+  "@wallpaperPattern": {
+    "description": "Slider controlling the wallpaper's arrangement."
+  },
+  "appearanceDensity": "Density",
+  "@appearanceDensity": {
+    "description": "Section heading for list and bubble spacing."
+  },
+  "appearanceDensityHint": "How much room rows and message bubbles take.",
+  "@appearanceDensityHint": {
+    "description": "Explains the density setting."
+  },
+  "textSizeHint": "Applied on top of your system text size.",
+  "@textSizeHint": {
+    "description": "Explains that the app's text scale multiplies the platform one."
+  },
+  "bubbleShape": "Bubble shape",
+  "@bubbleShape": {
+    "description": "Section heading for the message bubble geometry."
+  },
+  "bubbleCorners": "Corners",
+  "@bubbleCorners": {
+    "description": "Slider controlling the message bubble corner radius."
+  },
+  "bubbleAnchor": "Anchor corner",
+  "@bubbleAnchor": {
+    "description": "Switch that pulls a bubble's corner tight on the sender's side."
+  },
+  "bubbleAnchorHint": "Pulls the last bubble of a run tight on the sender's side, so it points at whoever sent it.",
+  "@bubbleAnchorHint": {
+    "description": "Explains the anchor corner switch."
+  },
+  "mediaSectionTitle": "Media",
+  "@mediaSectionTitle": {
+    "description": "Section heading for the media settings."
+  },
+  "autoDownload": "Auto-download",
+  "@autoDownload": {
+    "description": "Heading for the per-kind auto-download settings."
+  },
+  "autoDownloadHint": "Which attachments are fetched before you open them.",
+  "@autoDownloadHint": {
+    "description": "Explains auto-download."
+  },
+  "autoDownloadPhotos": "Photos",
+  "@autoDownloadPhotos": {
+    "description": "Auto-download row for photos."
+  },
+  "autoDownloadVideos": "Videos",
+  "@autoDownloadVideos": {
+    "description": "Auto-download row for videos."
+  },
+  "autoDownloadFiles": "Files",
+  "@autoDownloadFiles": {
+    "description": "Auto-download row for documents."
+  },
+  "autoDownloadVoice": "Voice messages",
+  "@autoDownloadVoice": {
+    "description": "Auto-download row for voice messages."
+  },
+  "autoDownloadWifi": "Wi-Fi",
+  "@autoDownloadWifi": {
+    "description": "Auto-download on an unmetered connection only."
+  },
+  "autoDownloadMobile": "Mobile data",
+  "@autoDownloadMobile": {
+    "description": "Auto-download on any connection, mobile data included."
+  },
+  "autoDownloadNever": "Never",
+  "@autoDownloadNever": {
+    "description": "Auto-download off; the attachment waits for a tap."
+  },
+  "cacheLimit": "Cache limit",
+  "@cacheLimit": {
+    "description": "Heading for the attachment cache size limit."
+  },
+  "cacheLimitHint": "Downloaded attachments are kept until they pass this, then the oldest go first.",
+  "@cacheLimitHint": {
+    "description": "Explains the cache limit."
+  },
+  "cacheEmpty": "Nothing cached yet",
+  "@cacheEmpty": {
+    "description": "Shown when the attachment cache holds no files."
+  },
+  "cacheClear": "Clear cache",
+  "@cacheClear": {
+    "description": "Button that empties the attachment cache."
+  },
+  "cacheMeasuring": "Measuring…",
+  "@cacheMeasuring": {
+    "description": "Shown while the cache size is being counted."
+  },
+  "appearanceReduceMotionNotice": "Your system asks for reduced motion, so nothing here animates.",
+  "@appearanceReduceMotionNotice": {
+    "description": "Notice shown on the appearance screen when reduced motion is on."
+  },
+  "appearanceHighContrastNotice": "High contrast is on, so wallpapers are painted quietly to keep text readable.",
+  "@appearanceHighContrastNotice": {
+    "description": "Notice shown on the appearance screen when high contrast is on."
+  },
+  "cacheInUse": "{size} in use",
+  "@cacheInUse": {
+    "description": "Shows how much disk the attachment cache holds.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "cacheCleared": "Freed {size}",
+  "@cacheCleared": {
+    "description": "Confirms how much disk clearing the cache freed.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeMegabytes": "{value} MB",
+  "@sizeMegabytes": {
+    "description": "A size in megabytes.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeGigabytes": "{value} GB",
+  "@sizeGigabytes": {
+    "description": "A size in gigabytes.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentTapToDownload": "Tap to download",
+  "@attachmentTapToDownload": {
+    "description": "Shown over an attachment that auto-download is holding back until the reader asks for it."
+  },
+  "welcomeHeadline": "Welcome to ChatiX",
+  "@welcomeHeadline": {
+    "description": "Headline on the first launch screen."
+  },
+  "welcomeTagline": "Messages that keep up with you.",
+  "@welcomeTagline": {
+    "description": "One-line promise under the welcome headline."
+  },
+  "welcomeGetStarted": "Get started",
+  "@welcomeGetStarted": {
+    "description": "Button that opens the onboarding pages."
+  },
+  "welcomeSignIn": "I already have an account",
+  "@welcomeSignIn": {
+    "description": "Button that skips onboarding straight to sign in."
+  },
+  "onboardingSkip": "Skip",
+  "@onboardingSkip": {
+    "description": "Dismisses the onboarding pages."
+  },
+  "onboardingNext": "Next",
+  "@onboardingNext": {
+    "description": "Advances to the next onboarding page."
+  },
+  "onboardingDone": "Create an account",
+  "@onboardingDone": {
+    "description": "Last onboarding button; opens registration."
+  },
+  "onboardingRealtimeTitle": "Everything in real time",
+  "@onboardingRealtimeTitle": {
+    "description": "Title of the first onboarding page."
+  },
+  "onboardingRealtimeBody": "Messages, edits and reactions arrive the moment they happen — and the app opens on the conversation you left, before the network even answers.",
+  "@onboardingRealtimeBody": {
+    "description": "Body of the first onboarding page."
+  },
+  "onboardingTogetherTitle": "Chats, groups, channels, calls",
+  "@onboardingTogetherTitle": {
+    "description": "Title of the second onboarding page."
+  },
+  "onboardingTogetherBody": "One to one, a group of five hundred, or a channel for everyone — with a voice or video call always one tap away.",
+  "@onboardingTogetherBody": {
+    "description": "Body of the second onboarding page."
+  },
+  "onboardingPrivacyTitle": "Only yours",
+  "@onboardingPrivacyTitle": {
+    "description": "Title of the third onboarding page."
+  },
+  "onboardingPrivacyBody": "See every signed-in device and end any of them, lock the app behind your fingerprint, and keep files on the phone until you send them.",
+  "@onboardingPrivacyBody": {
+    "description": "Body of the third onboarding page."
+  },
+  "onboardingPageOf": "Page {current} of {total}",
+  "@onboardingPageOf": {
+    "description": "Screen-reader label for the onboarding page indicator.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "loginHeadline": "Welcome back",
+  "@loginHeadline": {
+    "description": "Headline of the sign-in screen."
+  },
+  "loginSubtitle": "Sign in to keep the conversation going.",
+  "@loginSubtitle": {
+    "description": "Subtitle of the sign-in screen."
+  },
+  "registerHeadline": "Create your account",
+  "@registerHeadline": {
+    "description": "Headline of the registration screen."
+  },
+  "registerSubtitle": "It takes about a minute.",
+  "@registerSubtitle": {
+    "description": "Subtitle of the registration screen."
+  },
+  "authOrContinueWith": "or continue with",
+  "@authOrContinueWith": {
+    "description": "Divider above the OAuth provider buttons."
+  },
+  "authNoAccount": "Don't have an account?",
+  "@authNoAccount": {
+    "description": "Precedes the link to registration."
+  },
+  "authHaveAccount": "Already have an account?",
+  "@authHaveAccount": {
+    "description": "Precedes the link to sign in."
+  },
+  "authErrorWrongLoginData": "Wrong username or password.",
+  "@authErrorWrongLoginData": {
+    "description": "Shown for WRONG_LOGIN_DATA."
+  },
+  "authErrorEmailNotConfirmed": "Confirm your email address before signing in.",
+  "@authErrorEmailNotConfirmed": {
+    "description": "Shown for EMAIL_NOT_CONFIRMED with no address in the detail."
+  },
+  "authErrorEmailNotConfirmedFor": "Confirm {email} before signing in.",
+  "@authErrorEmailNotConfirmedFor": {
+    "description": "Shown for EMAIL_NOT_CONFIRMED, naming the address from the error detail.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authResendEmail": "Send the email again",
+  "@authResendEmail": {
+    "description": "Action offered next to the unconfirmed-email error."
+  },
+  "authErrorTooManyAttempts": "Too many attempts. Wait a minute and try again.",
+  "@authErrorTooManyAttempts": {
+    "description": "Shown for HTTP 429, which carries a bare {detail} instead of an error envelope."
+  },
+  "authErrorDuplicateUsername": "This username is already taken.",
+  "@authErrorDuplicateUsername": {
+    "description": "Shown for DUPLICATE_USER on the username field."
+  },
+  "authErrorDuplicateEmail": "An account with this email already exists.",
+  "@authErrorDuplicateEmail": {
+    "description": "Shown for DUPLICATE_USER on the email field."
+  },
+  "authErrorDuplicateField": "{field} is already in use.",
+  "@authErrorDuplicateField": {
+    "description": "Shown for DUPLICATE_USER on a field the client does not know.",
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "authErrorPasswordMismatch": "The passwords do not match.",
+  "@authErrorPasswordMismatch": {
+    "description": "Shown for PASSWORD_MISMATCH."
+  },
+  "authErrorInvalidCode": "This code is no longer valid. Ask for a new one.",
+  "@authErrorInvalidCode": {
+    "description": "Shown for INVALID_TOKEN / EXPIRED_TOKEN on a verification or reset code."
+  },
+  "authErrorUserNotFound": "We could not find an account with these details.",
+  "@authErrorUserNotFound": {
+    "description": "Shown for NOT_FOUND_USER."
+  },
+  "authErrorOffline": "No connection. Check your network and try again.",
+  "@authErrorOffline": {
+    "description": "Shown when the request never reached the server."
+  },
+  "authErrorGeneric": "Something went wrong. Please try again.",
+  "@authErrorGeneric": {
+    "description": "Fallback for an auth failure with no friendlier wording."
+  },
+  "passwordStrengthLabel": "Password strength",
+  "@passwordStrengthLabel": {
+    "description": "Label above the password strength meter."
+  },
+  "passwordStrengthWeak": "Weak",
+  "@passwordStrengthWeak": {
+    "description": "Weakest password strength level."
+  },
+  "passwordStrengthFair": "Fair",
+  "@passwordStrengthFair": {
+    "description": "Second password strength level."
+  },
+  "passwordStrengthGood": "Good",
+  "@passwordStrengthGood": {
+    "description": "Third password strength level."
+  },
+  "passwordStrengthStrong": "Strong",
+  "@passwordStrengthStrong": {
+    "description": "Strongest password strength level."
+  },
+  "passwordShow": "Show password",
+  "@passwordShow": {
+    "description": "Tooltip on the reveal-password button."
+  },
+  "passwordHide": "Hide password",
+  "@passwordHide": {
+    "description": "Tooltip on the hide-password button."
+  },
+  "verifyEmailHeadline": "Check your mail",
+  "@verifyEmailHeadline": {
+    "description": "Headline of the email confirmation screen."
+  },
+  "verifyEmailSentTo": "We sent a confirmation code to {email}.",
+  "@verifyEmailSentTo": {
+    "description": "Says where the confirmation code went.",
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyEmailSentToYou": "We sent you a confirmation code.",
+  "@verifyEmailSentToYou": {
+    "description": "Said when the address is not known to this screen."
+  },
+  "verifyEmailClipboardHint": "Copy the code from the email — ChatiX picks it up as soon as you come back.",
+  "@verifyEmailClipboardHint": {
+    "description": "Explains the clipboard auto-check."
+  },
+  "verifyEmailCodeFromClipboard": "Code taken from the clipboard",
+  "@verifyEmailCodeFromClipboard": {
+    "description": "Confirms that the code was filled in automatically."
+  },
+  "verifyEmailResendIn": "You can ask for a new email in {seconds}s",
+  "@verifyEmailResendIn": {
+    "description": "Countdown on the disabled resend button.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "verifyEmailWrongAddress": "Wrong address?",
+  "@verifyEmailWrongAddress": {
+    "description": "Precedes the change-address action."
+  },
+  "verifyEmailChangeAddress": "Use a different one",
+  "@verifyEmailChangeAddress": {
+    "description": "Opens the field for another email address."
+  },
+  "biometricUnlockTitle": "Unlock with biometrics",
+  "@biometricUnlockTitle": {
+    "description": "Settings switch for the app lock."
+  },
+  "biometricUnlockSubtitle": "Ask for a fingerprint or face scan when ChatiX is reopened.",
+  "@biometricUnlockSubtitle": {
+    "description": "Explains what the app lock switch does."
+  },
+  "biometricUnlockUnavailable": "No biometrics are set up on this device.",
+  "@biometricUnlockUnavailable": {
+    "description": "Subtitle of the disabled app lock switch."
+  },
+  "biometricUnlockReason": "Unlock ChatiX",
+  "@biometricUnlockReason": {
+    "description": "Reason shown in the system biometric prompt."
+  },
+  "biometricUnlockLockedTitle": "ChatiX is locked",
+  "@biometricUnlockLockedTitle": {
+    "description": "Headline of the lock screen."
+  },
+  "biometricUnlockLockedBody": "Unlock to get back to your chats.",
+  "@biometricUnlockLockedBody": {
+    "description": "Body of the lock screen."
+  },
+  "biometricUnlockAction": "Unlock",
+  "@biometricUnlockAction": {
+    "description": "Button on the lock screen."
+  },
+  "biometricUnlockFailed": "The check did not pass. Try again.",
+  "@biometricUnlockFailed": {
+    "description": "Shown after a failed biometric attempt."
+  },
+  "biometricUnlockLockedOut": "Biometrics are blocked by the system after too many attempts.",
+  "@biometricUnlockLockedOut": {
+    "description": "Shown when the platform locks biometrics out."
+  },
+  "biometricUnlockNotEnrolled": "No fingerprint or face is enrolled on this device.",
+  "@biometricUnlockNotEnrolled": {
+    "description": "Shown when biometrics exist but nothing is enrolled."
+  },
+  "biometricUnlockEnableFailed": "Biometrics could not be turned on.",
+  "@biometricUnlockEnableFailed": {
+    "description": "Shown when enabling the app lock fails its confirming scan."
+  },
+  "settingsSecuritySection": "Security",
+  "@settingsSecuritySection": {
+    "description": "Section header above the app lock switch."
+  },
+  "settingsAccountSection": "Account",
+  "@settingsAccountSection": {
+    "description": "Section header above the sign-out entry."
+  },
+  "logoutConfirmTitle": "Sign out?",
+  "@logoutConfirmTitle": {
+    "description": "Title of the sign-out confirmation dialog."
+  },
+  "logoutConfirmBody": "This device forgets your messages, drafts and downloaded files. Your account stays as it is.",
+  "@logoutConfirmBody": {
+    "description": "Body of the sign-out confirmation dialog."
+  },
+  "logoutAction": "Sign out",
+  "@logoutAction": {
+    "description": "Confirming button of the sign-out dialog."
+  },
+  "logoutFailed": "Could not sign out. Try again.",
+  "@logoutFailed": {
+    "description": "Shown when the sign-out request fails."
+  },
+  "logoutInProgress": "Signing out…",
+  "@logoutInProgress": {
+    "description": "Shown while the sign-out is running."
   }
 }

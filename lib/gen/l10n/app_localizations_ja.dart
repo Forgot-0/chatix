@@ -2494,4 +2494,380 @@ class AppLocalizationsJa extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get appearanceTitle => '外観';
+
+  @override
+  String get appearanceHint => 'テーマ、アクセント、壁紙、吹き出し、メディア';
+
+  @override
+  String get appearancePreview => 'プレビュー';
+
+  @override
+  String get previewIncomingMessage => 'ここにあるものはすべてアクセントカラーから描かれています。';
+
+  @override
+  String get previewOutgoingMessage => '壁紙画像はありません。すべてコードです。';
+
+  @override
+  String get previewIncomingReply => 'スライダーを動かして確かめてください。';
+
+  @override
+  String get amoledTitle => 'ブラック（AMOLED）';
+
+  @override
+  String get amoledHint => '背景を純黒にします。OLED画面では黒い画素に電力がかかりません。';
+
+  @override
+  String get accentFromAvatar => '写真から色を取り込む';
+
+  @override
+  String get accentFromAvatarApplied => '写真からアクセントを取り込みました。';
+
+  @override
+  String get accentFromAvatarEmpty => '写真から取り込める色がありません。ほぼグレーです。';
+
+  @override
+  String get accentFromAvatarMissing => '先にプロフィール写真を追加してください。';
+
+  @override
+  String get accentFromAvatarFailed => '写真を読み取れませんでした。もう一度お試しください。';
+
+  @override
+  String get accentCustom => 'あなたの色';
+
+  @override
+  String get wallpaperNebula => 'ネビュラ';
+
+  @override
+  String get wallpaperRibbons => 'リボン';
+
+  @override
+  String get wallpaperPrism => 'プリズム';
+
+  @override
+  String get wallpaperHalo => 'ハロー';
+
+  @override
+  String get wallpaperDunes => 'デューン';
+
+  @override
+  String get wallpaperIntensity => '強さ';
+
+  @override
+  String get wallpaperPattern => 'パターン';
+
+  @override
+  String get appearanceDensity => '密度';
+
+  @override
+  String get appearanceDensityHint => '行と吹き出しが取る余白の量です。';
+
+  @override
+  String get textSizeHint => 'システムの文字サイズに重ねて適用されます。';
+
+  @override
+  String get bubbleShape => '吹き出しの形';
+
+  @override
+  String get bubbleCorners => '角の丸み';
+
+  @override
+  String get bubbleAnchor => 'アンカーの角';
+
+  @override
+  String get bubbleAnchorHint => '送信者側の角を絞り、吹き出しが送信者を指すようにします。';
+
+  @override
+  String get mediaSectionTitle => 'メディア';
+
+  @override
+  String get autoDownload => '自動ダウンロード';
+
+  @override
+  String get autoDownloadHint => '開く前に取得する添付ファイルを選びます。';
+
+  @override
+  String get autoDownloadPhotos => '写真';
+
+  @override
+  String get autoDownloadVideos => '動画';
+
+  @override
+  String get autoDownloadFiles => 'ファイル';
+
+  @override
+  String get autoDownloadVoice => 'ボイスメッセージ';
+
+  @override
+  String get autoDownloadWifi => 'Wi-Fi';
+
+  @override
+  String get autoDownloadMobile => 'モバイルデータ';
+
+  @override
+  String get autoDownloadNever => 'しない';
+
+  @override
+  String get cacheLimit => 'キャッシュの上限';
+
+  @override
+  String get cacheLimitHint => 'ダウンロードした添付ファイルは上限を超えるまで保持され、超えると古いものから削除されます。';
+
+  @override
+  String get cacheEmpty => 'キャッシュはまだありません';
+
+  @override
+  String get cacheClear => 'キャッシュを削除';
+
+  @override
+  String get cacheMeasuring => '計算中…';
+
+  @override
+  String get appearanceReduceMotionNotice =>
+      'システムがアニメーションの軽減を求めているため、ここでは何も動きません。';
+
+  @override
+  String get appearanceHighContrastNotice =>
+      'ハイコントラストが有効です。文字を読みやすくするため壁紙は控えめに描かれます。';
+
+  @override
+  String cacheInUse(String size) {
+    return '$size 使用中';
+  }
+
+  @override
+  String cacheCleared(String size) {
+    return '$size を解放しました';
+  }
+
+  @override
+  String sizeMegabytes(String value) {
+    return '$value MB';
+  }
+
+  @override
+  String sizeGigabytes(String value) {
+    return '$value GB';
+  }
+
+  @override
+  String get attachmentTapToDownload => 'タップしてダウンロード';
+
+  @override
+  String get welcomeHeadline => 'ChatiX へようこそ';
+
+  @override
+  String get welcomeTagline => 'あなたのテンポに合うメッセージを。';
+
+  @override
+  String get welcomeGetStarted => 'はじめる';
+
+  @override
+  String get welcomeSignIn => 'すでにアカウントがあります';
+
+  @override
+  String get onboardingSkip => 'スキップ';
+
+  @override
+  String get onboardingNext => '次へ';
+
+  @override
+  String get onboardingDone => 'アカウントを作成';
+
+  @override
+  String get onboardingRealtimeTitle => 'すべてリアルタイムで';
+
+  @override
+  String get onboardingRealtimeBody =>
+      'メッセージも編集もリアクションも起きたその瞬間に届きます。アプリは通信の返事を待たずに、前回の続きから開きます。';
+
+  @override
+  String get onboardingTogetherTitle => 'チャット、グループ、チャンネル、通話';
+
+  @override
+  String get onboardingTogetherBody =>
+      '1 対 1 でも、500 人のグループでも、誰でも読めるチャンネルでも。音声通話とビデオ通話はいつでもワンタップです。';
+
+  @override
+  String get onboardingPrivacyTitle => 'あなただけのもの';
+
+  @override
+  String get onboardingPrivacyBody =>
+      'ログイン中の端末をすべて確認して終了でき、指紋でアプリをロックでき、ファイルは送信するまで端末の中に留まります。';
+
+  @override
+  String onboardingPageOf(int current, int total) {
+    return '$total ページ中 $current ページ目';
+  }
+
+  @override
+  String get loginHeadline => 'おかえりなさい';
+
+  @override
+  String get loginSubtitle => 'ログインして会話の続きを。';
+
+  @override
+  String get registerHeadline => 'アカウントを作成';
+
+  @override
+  String get registerSubtitle => '1 分ほどで終わります。';
+
+  @override
+  String get authOrContinueWith => 'または次で続ける';
+
+  @override
+  String get authNoAccount => 'アカウントをお持ちでないですか？';
+
+  @override
+  String get authHaveAccount => 'すでにアカウントをお持ちですか？';
+
+  @override
+  String get authErrorWrongLoginData => 'ユーザー名またはパスワードが違います。';
+
+  @override
+  String get authErrorEmailNotConfirmed => 'ログインする前にメールアドレスを確認してください。';
+
+  @override
+  String authErrorEmailNotConfirmedFor(String email) {
+    return 'ログインする前に $email を確認してください。';
+  }
+
+  @override
+  String get authResendEmail => 'メールを再送する';
+
+  @override
+  String get authErrorTooManyAttempts => '試行回数が多すぎます。1 分ほど待ってからやり直してください。';
+
+  @override
+  String get authErrorDuplicateUsername => 'このユーザー名はすでに使われています。';
+
+  @override
+  String get authErrorDuplicateEmail => 'このメールアドレスのアカウントはすでにあります。';
+
+  @override
+  String authErrorDuplicateField(String field) {
+    return '$field はすでに使われています。';
+  }
+
+  @override
+  String get authErrorPasswordMismatch => 'パスワードが一致しません。';
+
+  @override
+  String get authErrorInvalidCode => 'このコードはもう使えません。新しいものを取得してください。';
+
+  @override
+  String get authErrorUserNotFound => 'その情報のアカウントは見つかりませんでした。';
+
+  @override
+  String get authErrorOffline => '接続がありません。ネットワークを確認してやり直してください。';
+
+  @override
+  String get authErrorGeneric => '問題が発生しました。もう一度お試しください。';
+
+  @override
+  String get passwordStrengthLabel => 'パスワードの強度';
+
+  @override
+  String get passwordStrengthWeak => '弱い';
+
+  @override
+  String get passwordStrengthFair => 'ふつう';
+
+  @override
+  String get passwordStrengthGood => '良い';
+
+  @override
+  String get passwordStrengthStrong => '強い';
+
+  @override
+  String get passwordShow => 'パスワードを表示';
+
+  @override
+  String get passwordHide => 'パスワードを隠す';
+
+  @override
+  String get verifyEmailHeadline => 'メールを確認してください';
+
+  @override
+  String verifyEmailSentTo(String email) {
+    return '$email に確認コードを送りました。';
+  }
+
+  @override
+  String get verifyEmailSentToYou => '確認コードを送りました。';
+
+  @override
+  String get verifyEmailClipboardHint =>
+      'メールのコードをコピーしてください。戻ってきた時点で ChatiX が自動で読み取ります。';
+
+  @override
+  String get verifyEmailCodeFromClipboard => 'クリップボードからコードを入力しました';
+
+  @override
+  String verifyEmailResendIn(int seconds) {
+    return '次のメールは $seconds 秒後に送れます';
+  }
+
+  @override
+  String get verifyEmailWrongAddress => 'アドレスが違いますか？';
+
+  @override
+  String get verifyEmailChangeAddress => '別のアドレスを使う';
+
+  @override
+  String get biometricUnlockTitle => '生体認証でロック解除';
+
+  @override
+  String get biometricUnlockSubtitle => 'ChatiX を開き直すたびに指紋または顔で確認します。';
+
+  @override
+  String get biometricUnlockUnavailable => 'この端末では生体認証が設定されていません。';
+
+  @override
+  String get biometricUnlockReason => 'ChatiX のロックを解除';
+
+  @override
+  String get biometricUnlockLockedTitle => 'ChatiX はロック中です';
+
+  @override
+  String get biometricUnlockLockedBody => 'ロックを解除してチャットに戻ります。';
+
+  @override
+  String get biometricUnlockAction => 'ロック解除';
+
+  @override
+  String get biometricUnlockFailed => '認証できませんでした。もう一度お試しください。';
+
+  @override
+  String get biometricUnlockLockedOut => '試行回数が多すぎるため、システムが生体認証を停止しました。';
+
+  @override
+  String get biometricUnlockNotEnrolled => 'この端末には指紋も顔も登録されていません。';
+
+  @override
+  String get biometricUnlockEnableFailed => '生体認証を有効にできませんでした。';
+
+  @override
+  String get settingsSecuritySection => 'セキュリティ';
+
+  @override
+  String get settingsAccountSection => 'アカウント';
+
+  @override
+  String get logoutConfirmTitle => 'ログアウトしますか？';
+
+  @override
+  String get logoutConfirmBody =>
+      'この端末からメッセージ、下書き、ダウンロードしたファイルが消えます。アカウントはそのままです。';
+
+  @override
+  String get logoutAction => 'ログアウト';
+
+  @override
+  String get logoutFailed => 'ログアウトできませんでした。もう一度お試しください。';
+
+  @override
+  String get logoutInProgress => 'ログアウトしています…';
 }

@@ -9,6 +9,7 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/attachment_actions.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What a document looks like in a bubble: the kind of file it is, how big,
@@ -99,6 +100,16 @@ class _DocumentAttachmentRowState extends ConsumerState<DocumentAttachmentRow> {
     final l10n = AppLocalizations.of(context);
 
     final attachment = widget.attachment;
+
+    // Watched for its side effect: with auto-download on for files this puts
+    // the document on disk before it is tapped, and with it off — the
+    // default, a document being the most expensive thing in a chat — it does
+    // nothing. Opening one fetches it either way.
+    ref.watch(
+      autoAttachmentFileProvider(
+        attachmentFileKey(attachment, messageId: widget.messageId),
+      ),
+    );
 
     final confirmed = ref.watch(confirmedAttachmentTokensProvider);
     final isReady =

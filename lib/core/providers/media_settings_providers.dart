@@ -19,6 +19,14 @@ class MediaSettingsController extends Notifier<MediaSettings> {
   Future<void> setVideoNoteAutoplay(MediaAutoplay value) =>
       _apply(state.copyWith(videoNoteAutoplay: value));
 
+  Future<void> setAutoDownload(MediaKind kind, MediaAutoDownload policy) =>
+      _apply(state.withPolicy(kind, policy));
+
+  Future<void> setCacheLimit(int bytes) =>
+      _apply(state.copyWith(cacheLimitBytes: bytes));
+
+  Future<void> reset() => _apply(const MediaSettings());
+
   Future<void> _apply(MediaSettings next) async {
     if (next == state) return;
     state = next;
@@ -64,4 +72,17 @@ final videoNoteAutoplayProvider = Provider<bool>((ref) {
     MediaAutoplay.always => true,
     MediaAutoplay.wifiOnly => ref.watch(isOnUnmeteredNetworkProvider),
   };
+});
+
+/// Whether [kind] may be fetched before anyone asks for it, right now.
+///
+/// The setting and the connection answered as one thing, the same way
+/// [videoNoteAutoplayProvider] does it — every caller wants the answer and
+/// none of them want the two halves.
+final autoDownloadProvider = Provider.family<bool, MediaKind>((ref, kind) {
+  final policy = ref.watch(
+    mediaSettingsProvider.select((settings) => settings.policyFor(kind)),
+  );
+
+  return policy.allowsOn(unmetered: ref.watch(isOnUnmeteredNetworkProvider));
 });

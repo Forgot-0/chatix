@@ -1,19 +1,17 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart' show ValueListenable;
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/theme_config.dart';
+import 'package:chatix/core/ui/wallpaper/mesh_wallpaper.dart';
 
 /// The ground a conversation is painted on.
 ///
-/// Which pattern it draws comes from appearance settings; [seed] only varies
-/// the layout so two chats do not look identical.
-class ChatWallpaper extends ConsumerWidget {
+/// Style, intensity, pattern and colour all come off the theme, which the
+/// generator builds from appearance settings — so the wallpaper the settings
+/// gallery shows and the one a chat gets are the same recipe run twice.
+/// [seed] only varies the layout, so two chats do not look identical.
+class ChatWallpaper extends StatelessWidget {
   const ChatWallpaper({
     super.key,
     required this.child,
@@ -40,23 +38,15 @@ class ChatWallpaper extends ConsumerWidget {
   final int seed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final chatix = ChatixTheme.of(context);
-    final wallpaper = ref.watch(wallpaperProvider);
-
     final ground = BoxDecoration(color: chatix.chatBackground);
 
-    if (wallpaper == AppWallpaper.plain) {
+    if (chatix.wallpaperStyle == AppWallpaper.plain) {
       return DecoratedBox(decoration: ground, child: child);
     }
 
-    final painter = _MeshPainter(
-      accent: chatix.wallpaperSeed,
-      secondary: chatix.success,
-      isDark: chatix.brightness == Brightness.dark,
-      seed: seed,
-      showLattice: wallpaper.hasLattice,
-    );
+    final spec = wallpaperSpecOf(context, layoutSeed: seed);
 
     return DecoratedBox(
       decoration: ground,
@@ -68,7 +58,10 @@ class ChatWallpaper extends ConsumerWidget {
             right: 0,
             top: -maxParallax,
             bottom: -maxParallax,
-            child: _DriftingMesh(painter: painter, parallax: parallax),
+            child: _DriftingMesh(
+              painter: MeshWallpaperPainter(spec),
+              parallax: parallax,
+            ),
           ),
           child,
         ],
@@ -107,79 +100,4 @@ class _DriftingMesh extends StatelessWidget {
       child: mesh,
     );
   }
-}
-
-class _MeshPainter extends CustomPainter {
-  _MeshPainter({
-    required this.accent,
-    required this.secondary,
-    required this.isDark,
-    required this.seed,
-    required this.showLattice,
-  });
-
-  final Color accent;
-  final Color secondary;
-  final bool isDark;
-  final int seed;
-  final bool showLattice;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rng = math.Random(seed);
-
-    final strength = isDark ? 0.22 : 0.14;
-
-    final blooms = [
-      (color: accent, alpha: strength),
-      (color: secondary, alpha: strength * 0.75),
-      (color: accent, alpha: strength * 0.6),
-      (color: secondary, alpha: strength * 0.5),
-    ];
-
-    for (final bloom in blooms) {
-      final center = Offset(
-        size.width * (0.1 + rng.nextDouble() * 0.8),
-        size.height * (0.05 + rng.nextDouble() * 0.9),
-      );
-      final radius = size.shortestSide * (0.45 + rng.nextDouble() * 0.5);
-
-      canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..shader = RadialGradient(
-            colors: [
-              bloom.color.withValues(alpha: bloom.alpha),
-              bloom.color.withValues(alpha: 0),
-            ],
-          ).createShader(Rect.fromCircle(center: center, radius: radius)),
-      );
-    }
-
-    if (!showLattice) return;
-
-    final lattice = Paint()
-      ..color = (isDark ? Colors.white : Colors.black).withValues(
-        alpha: isDark ? 0.025 : 0.02,
-      )
-      ..strokeWidth = 1;
-
-    const step = 44.0;
-    for (var x = -size.height; x < size.width; x += step) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x + size.height, size.height),
-        lattice,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_MeshPainter old) =>
-      old.accent != accent ||
-      old.secondary != secondary ||
-      old.isDark != isDark ||
-      old.seed != seed ||
-      old.showLattice != showLattice;
 }

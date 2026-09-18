@@ -52,13 +52,63 @@ class AccessibilitySettingsNotifier extends Notifier<AccessibilitySettings> {
   }
 }
 
-class AccessibilityWrapper extends ConsumerWidget {
+/// The platform's high-contrast switch, mirrored where the theme generator
+/// can see it.
+///
+/// The generator runs above `MediaQuery` — a theme has to exist before there
+/// is a `MaterialApp` to read one from — so the flag cannot simply be looked
+/// up where it is needed. It is pushed here instead, by
+/// [AccessibilityWrapper], and defaults to off: a harness that never mounts
+/// the wrapper gets the ordinary theme rather than a half-applied one.
+class SystemHighContrast extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setEnabled(bool value) {
+    if (state != value) state = value;
+  }
+}
+
+final systemHighContrastProvider = NotifierProvider<SystemHighContrast, bool>(
+  SystemHighContrast.new,
+);
+
+class AccessibilityWrapper extends ConsumerStatefulWidget {
   final Widget child;
 
   const AccessibilityWrapper({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AccessibilityWrapper> createState() =>
+      _AccessibilityWrapperState();
+}
+
+class _AccessibilityWrapperState extends ConsumerState<AccessibilityWrapper> {
+  @override
+  void initState() {
+    super.initState();
+
+    // The first reading. Deferred by a frame because a provider may not be
+    // written to while one is being built, and this runs inside the build
+    // that creates them.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _mirrorHighContrast(
+        ref.read(accessibilitySettingsProvider).isHighContrastEnabled,
+      );
+    });
+  }
+
+  void _mirrorHighContrast(bool value) =>
+      ref.read(systemHighContrastProvider.notifier).setEnabled(value);
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<bool>(
+      accessibilitySettingsProvider.select((s) => s.isHighContrastEnabled),
+      (_, next) => _mirrorHighContrast(next),
+    );
+
     final settings = ref.watch(accessibilitySettingsProvider);
 
     return MediaQuery(
@@ -68,7 +118,7 @@ class AccessibilityWrapper extends ConsumerWidget {
         textScaler: TextScaler.linear(settings.fontScale),
         boldText: settings.isBoldTextEnabled,
       ),
-      child: child,
+      child: widget.child,
     );
   }
 }

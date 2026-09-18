@@ -9,7 +9,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/theme/theme_config.dart';
-import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -165,6 +164,10 @@ void main() {
       ),
     );
 
+    final appearance = const AppearanceSettings().copyWith(
+      wallpaperId: wallpaper.id,
+    );
+
     final container = ProviderContainer(
       overrides: [
         getChatUseCaseProvider.overrideWithValue(getChat),
@@ -173,7 +176,6 @@ void main() {
         markReadUseCaseProvider.overrideWithValue(markRead),
         chatSocketServiceProvider.overrideWithValue(socket),
         authProvider.overrideWith(() => FakeAuthController(me)),
-        wallpaperProvider.overrideWithValue(wallpaper),
       ],
     );
     addTearDown(container.dispose);
@@ -187,7 +189,9 @@ void main() {
         container: container,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
+          // The wallpaper travels on the theme, not in a provider: it is a
+          // derived appearance value, like the bubble radius.
+          theme: dark ? AppTheme.dark(appearance) : AppTheme.light(appearance),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: Scaffold(
             body: Center(

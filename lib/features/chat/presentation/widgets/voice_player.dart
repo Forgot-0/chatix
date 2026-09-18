@@ -11,6 +11,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_detail_provider
 import 'package:chatix/features/chat/presentation/providers/voice_playback_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_waveform_bars.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// A voice message in a bubble: who said it, what it looks like, how long it
@@ -58,6 +59,17 @@ class VoicePlayer extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // Watched for its side effect: with auto-download on for voice — which
+    // is the default, a voice message being small — this has the file on
+    // disk before the play button is pressed, and with it off it does
+    // nothing at all. Playback fetches on demand either way; this is only
+    // the difference between instant and a moment's wait.
+    ref.watch(
+      autoAttachmentFileProvider(
+        attachmentFileKey(attachment, messageId: messageId),
+      ),
+    );
+
     final playback = ref.watch(voicePlaybackProvider);
     final isCurrent = playback.isCurrent(attachment.id);
     final isPlaying = playback.isPlayingNow(attachment.id);
@@ -81,11 +93,7 @@ class VoicePlayer extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ChatAvatar.profile(
-            author,
-            userId: authorId,
-            size: ChatAvatarSize.xs,
-          ),
+          ChatAvatar.profile(author, userId: authorId, size: ChatAvatarSize.xs),
           const SizedBox(width: AppSpacing.x2),
           _PlayButton(
             isPlaying: isPlaying,
@@ -274,9 +282,7 @@ class _PlayButton extends StatelessWidget {
                           : (isPlaying
                                 ? Icons.pause_rounded
                                 : Icons.play_arrow_rounded),
-                      key: ValueKey<int>(
-                        failed ? 2 : (isPlaying ? 1 : 0),
-                      ),
+                      key: ValueKey<int>(failed ? 2 : (isPlaying ? 1 : 0)),
                       size: 30,
                       color: foreground,
                     ),

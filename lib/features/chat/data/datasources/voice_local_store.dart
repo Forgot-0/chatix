@@ -25,6 +25,10 @@ abstract interface class VoiceLocalStore {
   Set<String> readListened();
 
   Future<void> markListened(String attachmentId);
+
+  /// Drops both maps, for signing out: they are keyed by attachment id and
+  /// mean nothing to the next account on this device.
+  Future<void> clear();
 }
 
 class SharedPrefsVoiceLocalStore implements VoiceLocalStore {
@@ -94,6 +98,14 @@ class SharedPrefsVoiceLocalStore implements VoiceLocalStore {
     await _storage.setStringList(_listenedKey, next);
   }
 
+  @override
+  Future<void> clear() async {
+    _waveformCache = <String, String>{};
+    _listenedCache = <String>[];
+    await _storage.remove(_waveformsKey);
+    await _storage.remove(_listenedKey);
+  }
+
   Map<String, String> _waveforms() {
     final cached = _waveformCache;
     if (cached != null) return cached;
@@ -144,5 +156,11 @@ class InMemoryVoiceLocalStore implements VoiceLocalStore {
   @override
   Future<void> markListened(String attachmentId) async {
     _listened.add(attachmentId);
+  }
+
+  @override
+  Future<void> clear() async {
+    _waveforms.clear();
+    _listened.clear();
   }
 }

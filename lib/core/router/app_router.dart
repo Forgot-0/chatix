@@ -32,10 +32,13 @@ import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
+import 'package:chatix/features/onboarding/presentation/providers/onboarding_providers.dart';
+import 'package:chatix/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_avatar_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/appearance_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/ui_showcase/ui_showcase.dart';
@@ -385,6 +388,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                     _root(state, const SettingsScreen()),
                 routes: [
                   GoRoute(
+                    path: AppearanceSettingsRoute.path,
+                    name: RouteNames.appearanceSettings,
+                    pageBuilder: (context, state) =>
+                        _push(state, const AppearanceSettingsScreen()),
+                  ),
+                  GoRoute(
                     path: LanguageSettingsRoute.path,
                     name: RouteNames.languageSettings,
                     pageBuilder: (context, state) =>
@@ -449,6 +458,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
 
       GoRoute(
+        path: WelcomeRoute.path,
+        name: RouteNames.welcome,
+        builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
         path: LoginRoute.path,
         name: RouteNames.login,
         builder: (context, state) => const LoginScreen(),
@@ -461,7 +475,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: VerifyEmailRoute.path,
         name: RouteNames.verifyEmail,
-        builder: (context, state) => const VerifyEmailScreen(),
+        builder: (context, state) =>
+            VerifyEmailScreen(email: VerifyEmailRoute.emailFrom(state)),
       ),
       GoRoute(
         path: ResetPasswordRoute.path,
@@ -489,9 +504,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         redirect: (context, state) {
           final authState = ref.read(authProvider);
           if (authState.isSessionUnresolved) return null;
-          return authState.isAuthenticated
-              ? ChatsRoute.location
-              : LoginRoute.location;
+          if (authState.isAuthenticated) return ChatsRoute.location;
+
+          // First launch on this device lands on the tour instead of on a
+          // form. The flag is read synchronously — a redirect cannot await
+          // anything — which is why the store keeps it in shared
+          // preferences rather than behind a request.
+          return ref.read(onboardingSeenProvider)
+              ? LoginRoute.location
+              : WelcomeRoute.location;
         },
         builder: (context, state) => const _SessionLoadingScreen(),
       ),
@@ -516,7 +537,9 @@ String? resolveAuthRedirect({
     return LoginRoute.location;
   }
 
-  if (location == LoginRoute.path || location == RegisterRoute.path) {
+  if (location == LoginRoute.path ||
+      location == RegisterRoute.path ||
+      location == WelcomeRoute.path) {
     return ChatsRoute.location;
   }
 

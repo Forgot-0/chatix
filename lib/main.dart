@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:chatix/core/accessibility/accessibility_providers.dart';
+import 'package:chatix/core/auth/app_lock_gate.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/core/providers/network_providers.dart';
@@ -102,9 +103,14 @@ class MyApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           // The mini player is mounted above the router, not inside a route,
           // so a live call keeps a window on itself through every navigation.
+          // The lock sits above the router and below the call overlay: no
+          // navigation can land behind it, and a call in progress is still
+          // drawn on top of it.
           builder: (context, child) => AppTextScale(
             scale: textScale,
-            child: CallOverlay(child: child ?? const SizedBox.shrink()),
+            child: CallOverlay(
+              child: AppLockGate(child: child ?? const SizedBox.shrink()),
+            ),
           ),
 
           locale: locale,

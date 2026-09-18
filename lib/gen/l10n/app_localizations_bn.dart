@@ -2527,4 +2527,399 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get appearanceTitle => 'চেহারা';
+
+  @override
+  String get appearanceHint => 'থিম, অ্যাকসেন্ট, ওয়ালপেপার, বাবল ও মিডিয়া';
+
+  @override
+  String get appearancePreview => 'প্রিভিউ';
+
+  @override
+  String get previewIncomingMessage =>
+      'এখানকার সবকিছুই আপনার অ্যাকসেন্ট রং থেকে আঁকা।';
+
+  @override
+  String get previewOutgoingMessage => 'কোনো ওয়ালপেপার ছবি নেই। শুধু কোড।';
+
+  @override
+  String get previewIncomingReply => 'স্লাইডার নাড়ুন আর দেখুন।';
+
+  @override
+  String get amoledTitle => 'কালো (AMOLED)';
+
+  @override
+  String get amoledHint =>
+      'একদম কালো ব্যাকগ্রাউন্ড। OLED স্ক্রিনে কালো পিক্সেলে কোনো বিদ্যুৎ খরচ হয় না।';
+
+  @override
+  String get accentFromAvatar => 'আমার ছবি থেকে রং নিন';
+
+  @override
+  String get accentFromAvatarApplied =>
+      'আপনার ছবি থেকে অ্যাকসেন্ট নেওয়া হয়েছে।';
+
+  @override
+  String get accentFromAvatarEmpty =>
+      'আপনার ছবিতে নেওয়ার মতো রং নেই — এটি ধূসর দেখায়।';
+
+  @override
+  String get accentFromAvatarMissing => 'আগে একটি প্রোফাইল ছবি যোগ করুন।';
+
+  @override
+  String get accentFromAvatarFailed =>
+      'আপনার ছবি পড়া যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get accentCustom => 'আপনার রং';
+
+  @override
+  String get wallpaperNebula => 'নেবুলা';
+
+  @override
+  String get wallpaperRibbons => 'রিবন';
+
+  @override
+  String get wallpaperPrism => 'প্রিজম';
+
+  @override
+  String get wallpaperHalo => 'হ্যালো';
+
+  @override
+  String get wallpaperDunes => 'ডিউন';
+
+  @override
+  String get wallpaperIntensity => 'তীব্রতা';
+
+  @override
+  String get wallpaperPattern => 'প্যাটার্ন';
+
+  @override
+  String get appearanceDensity => 'ঘনত্ব';
+
+  @override
+  String get appearanceDensityHint => 'সারি ও মেসেজ বাবল কতটা জায়গা নেবে।';
+
+  @override
+  String get textSizeHint => 'সিস্টেমের লেখার আকারের উপরে প্রয়োগ হয়।';
+
+  @override
+  String get bubbleShape => 'বাবলের আকার';
+
+  @override
+  String get bubbleCorners => 'কোণ';
+
+  @override
+  String get bubbleAnchor => 'অ্যাঙ্কর কোণ';
+
+  @override
+  String get bubbleAnchorHint =>
+      'প্রেরকের দিকের কোণ সরু করে, যাতে বাবলটি তার দিকে নির্দেশ করে।';
+
+  @override
+  String get mediaSectionTitle => 'মিডিয়া';
+
+  @override
+  String get autoDownload => 'স্বয়ংক্রিয় ডাউনলোড';
+
+  @override
+  String get autoDownloadHint => 'খোলার আগেই কোন সংযুক্তিগুলো নামানো হবে।';
+
+  @override
+  String get autoDownloadPhotos => 'ছবি';
+
+  @override
+  String get autoDownloadVideos => 'ভিডিও';
+
+  @override
+  String get autoDownloadFiles => 'ফাইল';
+
+  @override
+  String get autoDownloadVoice => 'ভয়েস মেসেজ';
+
+  @override
+  String get autoDownloadWifi => 'ওয়াই-ফাই';
+
+  @override
+  String get autoDownloadMobile => 'মোবাইল ডেটা';
+
+  @override
+  String get autoDownloadNever => 'কখনো নয়';
+
+  @override
+  String get cacheLimit => 'ক্যাশের সীমা';
+
+  @override
+  String get cacheLimitHint =>
+      'ডাউনলোড করা সংযুক্তি এই সীমা পর্যন্ত রাখা হয়, তারপর পুরনোগুলো আগে মুছে যায়।';
+
+  @override
+  String get cacheEmpty => 'এখনো কিছু ক্যাশে নেই';
+
+  @override
+  String get cacheClear => 'ক্যাশ খালি করুন';
+
+  @override
+  String get cacheMeasuring => 'হিসাব করা হচ্ছে…';
+
+  @override
+  String get appearanceReduceMotionNotice =>
+      'আপনার সিস্টেম কম অ্যানিমেশন চাইছে, তাই এখানে কিছু নড়ে না।';
+
+  @override
+  String get appearanceHighContrastNotice =>
+      'হাই কনট্রাস্ট চালু আছে, তাই লেখা পড়ার সুবিধার্থে ওয়ালপেপার হালকা করে আঁকা হয়।';
+
+  @override
+  String cacheInUse(String size) {
+    return '$size ব্যবহৃত';
+  }
+
+  @override
+  String cacheCleared(String size) {
+    return '$size খালি হয়েছে';
+  }
+
+  @override
+  String sizeMegabytes(String value) {
+    return '$value MB';
+  }
+
+  @override
+  String sizeGigabytes(String value) {
+    return '$value GB';
+  }
+
+  @override
+  String get attachmentTapToDownload => 'ডাউনলোড করতে ট্যাপ করুন';
+
+  @override
+  String get welcomeHeadline => 'ChatiX-এ স্বাগতম';
+
+  @override
+  String get welcomeTagline => 'যে বার্তা আপনার সঙ্গে তাল মিলিয়ে চলে।';
+
+  @override
+  String get welcomeGetStarted => 'শুরু করুন';
+
+  @override
+  String get welcomeSignIn => 'আমার অ্যাকাউন্ট আছে';
+
+  @override
+  String get onboardingSkip => 'এড়িয়ে যান';
+
+  @override
+  String get onboardingNext => 'পরবর্তী';
+
+  @override
+  String get onboardingDone => 'অ্যাকাউন্ট তৈরি করুন';
+
+  @override
+  String get onboardingRealtimeTitle => 'সবকিছু রিয়েল টাইমে';
+
+  @override
+  String get onboardingRealtimeBody =>
+      'বার্তা, সম্পাদনা আর প্রতিক্রিয়া ঘটার মুহূর্তেই পৌঁছে যায় — আর নেটওয়ার্ক উত্তর দেওয়ার আগেই অ্যাপ সেই আলাপেই খোলে যেখানে আপনি থেমেছিলেন।';
+
+  @override
+  String get onboardingTogetherTitle => 'চ্যাট, গ্রুপ, চ্যানেল, কল';
+
+  @override
+  String get onboardingTogetherBody =>
+      'একজনের সঙ্গে একজন, পাঁচশো জনের গ্রুপ, বা সবার জন্য চ্যানেল — ভয়েস বা ভিডিও কল সবসময় এক ট্যাপ দূরে।';
+
+  @override
+  String get onboardingPrivacyTitle => 'কেবল আপনারই';
+
+  @override
+  String get onboardingPrivacyBody =>
+      'লগ-ইন করা প্রতিটি ডিভাইস দেখুন ও বন্ধ করুন, আঙুলের ছাপ দিয়ে অ্যাপ লক করুন, আর ফাইল পাঠানোর আগে সেগুলো ফোনেই থাকুক।';
+
+  @override
+  String onboardingPageOf(int current, int total) {
+    return '$total-এর মধ্যে $current নম্বর পাতা';
+  }
+
+  @override
+  String get loginHeadline => 'আবার স্বাগতম';
+
+  @override
+  String get loginSubtitle => 'সাইন ইন করে আলাপ চালিয়ে যান।';
+
+  @override
+  String get registerHeadline => 'আপনার অ্যাকাউন্ট তৈরি করুন';
+
+  @override
+  String get registerSubtitle => 'প্রায় এক মিনিট লাগে।';
+
+  @override
+  String get authOrContinueWith => 'অথবা এর মাধ্যমে চালিয়ে যান';
+
+  @override
+  String get authNoAccount => 'অ্যাকাউন্ট নেই?';
+
+  @override
+  String get authHaveAccount => 'আগে থেকেই অ্যাকাউন্ট আছে?';
+
+  @override
+  String get authErrorWrongLoginData =>
+      'ব্যবহারকারীর নাম বা পাসওয়ার্ড ঠিক নয়।';
+
+  @override
+  String get authErrorEmailNotConfirmed =>
+      'সাইন ইন করার আগে আপনার ইমেল ঠিকানা নিশ্চিত করুন।';
+
+  @override
+  String authErrorEmailNotConfirmedFor(String email) {
+    return 'সাইন ইন করার আগে $email নিশ্চিত করুন।';
+  }
+
+  @override
+  String get authResendEmail => 'ইমেলটি আবার পাঠান';
+
+  @override
+  String get authErrorTooManyAttempts =>
+      'অনেকবার চেষ্টা হয়েছে। এক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
+  String get authErrorDuplicateUsername =>
+      'এই ব্যবহারকারীর নাম আগেই নেওয়া হয়েছে।';
+
+  @override
+  String get authErrorDuplicateEmail =>
+      'এই ইমেল দিয়ে আগেই একটি অ্যাকাউন্ট আছে।';
+
+  @override
+  String authErrorDuplicateField(String field) {
+    return '$field আগে থেকেই ব্যবহৃত হচ্ছে।';
+  }
+
+  @override
+  String get authErrorPasswordMismatch => 'পাসওয়ার্ড দুটি মিলছে না।';
+
+  @override
+  String get authErrorInvalidCode =>
+      'এই কোডটি আর কাজ করে না। নতুন একটি চেয়ে নিন।';
+
+  @override
+  String get authErrorUserNotFound =>
+      'এই তথ্য দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি।';
+
+  @override
+  String get authErrorOffline => 'সংযোগ নেই। নেটওয়ার্ক দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get authErrorGeneric => 'কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get passwordStrengthLabel => 'পাসওয়ার্ডের শক্তি';
+
+  @override
+  String get passwordStrengthWeak => 'দুর্বল';
+
+  @override
+  String get passwordStrengthFair => 'মোটামুটি';
+
+  @override
+  String get passwordStrengthGood => 'ভালো';
+
+  @override
+  String get passwordStrengthStrong => 'শক্ত';
+
+  @override
+  String get passwordShow => 'পাসওয়ার্ড দেখান';
+
+  @override
+  String get passwordHide => 'পাসওয়ার্ড লুকান';
+
+  @override
+  String get verifyEmailHeadline => 'আপনার ইমেল দেখুন';
+
+  @override
+  String verifyEmailSentTo(String email) {
+    return 'আমরা $email ঠিকানায় একটি নিশ্চিতকরণ কোড পাঠিয়েছি।';
+  }
+
+  @override
+  String get verifyEmailSentToYou =>
+      'আমরা আপনাকে একটি নিশ্চিতকরণ কোড পাঠিয়েছি।';
+
+  @override
+  String get verifyEmailClipboardHint =>
+      'ইমেল থেকে কোডটি কপি করুন — ফিরে আসামাত্র ChatiX সেটি তুলে নেবে।';
+
+  @override
+  String get verifyEmailCodeFromClipboard => 'ক্লিপবোর্ড থেকে কোড বসানো হয়েছে';
+
+  @override
+  String verifyEmailResendIn(int seconds) {
+    return '$seconds সেকেন্ড পরে নতুন ইমেল চাইতে পারবেন';
+  }
+
+  @override
+  String get verifyEmailWrongAddress => 'ঠিকানা ভুল?';
+
+  @override
+  String get verifyEmailChangeAddress => 'অন্যটি ব্যবহার করুন';
+
+  @override
+  String get biometricUnlockTitle => 'বায়োমেট্রিক দিয়ে আনলক';
+
+  @override
+  String get biometricUnlockSubtitle =>
+      'ChatiX আবার খুললে আঙুলের ছাপ বা মুখ চাওয়া হবে।';
+
+  @override
+  String get biometricUnlockUnavailable =>
+      'এই ডিভাইসে কোনো বায়োমেট্রিক সেট করা নেই।';
+
+  @override
+  String get biometricUnlockReason => 'ChatiX আনলক করুন';
+
+  @override
+  String get biometricUnlockLockedTitle => 'ChatiX লক করা আছে';
+
+  @override
+  String get biometricUnlockLockedBody => 'চ্যাটে ফিরতে আনলক করুন।';
+
+  @override
+  String get biometricUnlockAction => 'আনলক';
+
+  @override
+  String get biometricUnlockFailed => 'যাচাই হয়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get biometricUnlockLockedOut =>
+      'বহুবার চেষ্টার পর সিস্টেম বায়োমেট্রিক বন্ধ করে দিয়েছে।';
+
+  @override
+  String get biometricUnlockNotEnrolled =>
+      'এই ডিভাইসে কোনো আঙুলের ছাপ বা মুখ নথিভুক্ত নেই।';
+
+  @override
+  String get biometricUnlockEnableFailed => 'বায়োমেট্রিক চালু করা যায়নি।';
+
+  @override
+  String get settingsSecuritySection => 'নিরাপত্তা';
+
+  @override
+  String get settingsAccountSection => 'অ্যাকাউন্ট';
+
+  @override
+  String get logoutConfirmTitle => 'লগ আউট করবেন?';
+
+  @override
+  String get logoutConfirmBody =>
+      'এই ডিভাইস আপনার বার্তা, খসড়া ও ডাউনলোড করা ফাইল ভুলে যাবে। আপনার অ্যাকাউন্ট যেমন আছে তেমনই থাকবে।';
+
+  @override
+  String get logoutAction => 'লগ আউট';
+
+  @override
+  String get logoutFailed => 'লগ আউট করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get logoutInProgress => 'লগ আউট করা হচ্ছে…';
 }

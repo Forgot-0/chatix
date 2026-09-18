@@ -2553,4 +2553,410 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get appearanceTitle => 'Darstellung';
+
+  @override
+  String get appearanceHint =>
+      'Design, Akzent, Hintergrund, Sprechblasen und Medien';
+
+  @override
+  String get appearancePreview => 'Vorschau';
+
+  @override
+  String get previewIncomingMessage =>
+      'Alles hier entsteht aus deiner Akzentfarbe.';
+
+  @override
+  String get previewOutgoingMessage => 'Keine Hintergrundbilder. Nur Code.';
+
+  @override
+  String get previewIncomingReply => 'Schieb die Regler und sieh zu.';
+
+  @override
+  String get amoledTitle => 'Schwarz (AMOLED)';
+
+  @override
+  String get amoledHint =>
+      'Echtes Schwarz als Hintergrund. Auf einem OLED-Display kosten schwarze Pixel gar keinen Strom.';
+
+  @override
+  String get accentFromAvatar => 'Farbe aus meinem Foto übernehmen';
+
+  @override
+  String get accentFromAvatarApplied => 'Akzent aus deinem Foto übernommen.';
+
+  @override
+  String get accentFromAvatarEmpty =>
+      'Dein Foto hat keine Farbe herzugeben – es wirkt grau.';
+
+  @override
+  String get accentFromAvatarMissing => 'Füge zuerst ein Profilfoto hinzu.';
+
+  @override
+  String get accentFromAvatarFailed =>
+      'Dein Foto konnte nicht gelesen werden. Versuch es noch einmal.';
+
+  @override
+  String get accentCustom => 'Deine Farbe';
+
+  @override
+  String get wallpaperNebula => 'Nebel';
+
+  @override
+  String get wallpaperRibbons => 'Bänder';
+
+  @override
+  String get wallpaperPrism => 'Prisma';
+
+  @override
+  String get wallpaperHalo => 'Halo';
+
+  @override
+  String get wallpaperDunes => 'Dünen';
+
+  @override
+  String get wallpaperIntensity => 'Intensität';
+
+  @override
+  String get wallpaperPattern => 'Muster';
+
+  @override
+  String get appearanceDensity => 'Dichte';
+
+  @override
+  String get appearanceDensityHint =>
+      'Wie viel Platz Zeilen und Sprechblasen einnehmen.';
+
+  @override
+  String get textSizeHint =>
+      'Wird zusätzlich zur Textgröße des Systems angewendet.';
+
+  @override
+  String get bubbleShape => 'Form der Sprechblasen';
+
+  @override
+  String get bubbleCorners => 'Ecken';
+
+  @override
+  String get bubbleAnchor => 'Ankerecke';
+
+  @override
+  String get bubbleAnchorHint =>
+      'Zieht die Ecke auf der Seite des Absenders schmal, sodass die Blase auf ihn zeigt.';
+
+  @override
+  String get mediaSectionTitle => 'Medien';
+
+  @override
+  String get autoDownload => 'Automatischer Download';
+
+  @override
+  String get autoDownloadHint =>
+      'Welche Anhänge geladen werden, bevor du sie öffnest.';
+
+  @override
+  String get autoDownloadPhotos => 'Fotos';
+
+  @override
+  String get autoDownloadVideos => 'Videos';
+
+  @override
+  String get autoDownloadFiles => 'Dateien';
+
+  @override
+  String get autoDownloadVoice => 'Sprachnachrichten';
+
+  @override
+  String get autoDownloadWifi => 'WLAN';
+
+  @override
+  String get autoDownloadMobile => 'Mobile Daten';
+
+  @override
+  String get autoDownloadNever => 'Nie';
+
+  @override
+  String get cacheLimit => 'Cache-Limit';
+
+  @override
+  String get cacheLimitHint =>
+      'Heruntergeladene Anhänge bleiben bis zu diesem Limit erhalten, danach gehen die ältesten zuerst.';
+
+  @override
+  String get cacheEmpty => 'Noch nichts im Cache';
+
+  @override
+  String get cacheClear => 'Cache leeren';
+
+  @override
+  String get cacheMeasuring => 'Wird berechnet…';
+
+  @override
+  String get appearanceReduceMotionNotice =>
+      'Dein System bittet um weniger Bewegung – hier animiert sich nichts.';
+
+  @override
+  String get appearanceHighContrastNotice =>
+      'Hoher Kontrast ist an: Hintergründe werden zurückhaltend gezeichnet, damit Text lesbar bleibt.';
+
+  @override
+  String cacheInUse(String size) {
+    return '$size belegt';
+  }
+
+  @override
+  String cacheCleared(String size) {
+    return '$size freigegeben';
+  }
+
+  @override
+  String sizeMegabytes(String value) {
+    return '$value MB';
+  }
+
+  @override
+  String sizeGigabytes(String value) {
+    return '$value GB';
+  }
+
+  @override
+  String get attachmentTapToDownload => 'Zum Laden tippen';
+
+  @override
+  String get welcomeHeadline => 'Willkommen bei ChatiX';
+
+  @override
+  String get welcomeTagline => 'Nachrichten, die mit dir Schritt halten.';
+
+  @override
+  String get welcomeGetStarted => 'Los geht’s';
+
+  @override
+  String get welcomeSignIn => 'Ich habe schon ein Konto';
+
+  @override
+  String get onboardingSkip => 'Überspringen';
+
+  @override
+  String get onboardingNext => 'Weiter';
+
+  @override
+  String get onboardingDone => 'Konto erstellen';
+
+  @override
+  String get onboardingRealtimeTitle => 'Alles in Echtzeit';
+
+  @override
+  String get onboardingRealtimeBody =>
+      'Nachrichten, Änderungen und Reaktionen kommen in dem Moment an, in dem sie passieren – und die App öffnet sich dort, wo du aufgehört hast, noch bevor das Netz antwortet.';
+
+  @override
+  String get onboardingTogetherTitle => 'Chats, Gruppen, Kanäle, Anrufe';
+
+  @override
+  String get onboardingTogetherBody =>
+      'Zu zweit, in einer Gruppe mit fünfhundert Leuten oder in einem Kanal für alle – ein Sprach- oder Videoanruf ist immer einen Tipp entfernt.';
+
+  @override
+  String get onboardingPrivacyTitle => 'Nur deins';
+
+  @override
+  String get onboardingPrivacyBody =>
+      'Sieh jedes angemeldete Gerät und beende es, sperre die App hinter deinem Fingerabdruck und behalte Dateien auf dem Gerät, bis du sie sendest.';
+
+  @override
+  String onboardingPageOf(int current, int total) {
+    return 'Seite $current von $total';
+  }
+
+  @override
+  String get loginHeadline => 'Willkommen zurück';
+
+  @override
+  String get loginSubtitle => 'Melde dich an und mach da weiter, wo du warst.';
+
+  @override
+  String get registerHeadline => 'Konto erstellen';
+
+  @override
+  String get registerSubtitle => 'Dauert etwa eine Minute.';
+
+  @override
+  String get authOrContinueWith => 'oder weiter mit';
+
+  @override
+  String get authNoAccount => 'Noch kein Konto?';
+
+  @override
+  String get authHaveAccount => 'Schon ein Konto?';
+
+  @override
+  String get authErrorWrongLoginData =>
+      'Benutzername oder Passwort stimmt nicht.';
+
+  @override
+  String get authErrorEmailNotConfirmed =>
+      'Bestätige deine E-Mail-Adresse, bevor du dich anmeldest.';
+
+  @override
+  String authErrorEmailNotConfirmedFor(String email) {
+    return 'Bestätige $email, bevor du dich anmeldest.';
+  }
+
+  @override
+  String get authResendEmail => 'E-Mail erneut senden';
+
+  @override
+  String get authErrorTooManyAttempts =>
+      'Zu viele Versuche. Warte eine Minute und versuch es noch einmal.';
+
+  @override
+  String get authErrorDuplicateUsername =>
+      'Dieser Benutzername ist schon vergeben.';
+
+  @override
+  String get authErrorDuplicateEmail =>
+      'Mit dieser E-Mail-Adresse gibt es bereits ein Konto.';
+
+  @override
+  String authErrorDuplicateField(String field) {
+    return '$field wird bereits verwendet.';
+  }
+
+  @override
+  String get authErrorPasswordMismatch =>
+      'Die Passwörter stimmen nicht überein.';
+
+  @override
+  String get authErrorInvalidCode =>
+      'Dieser Code gilt nicht mehr. Fordere einen neuen an.';
+
+  @override
+  String get authErrorUserNotFound =>
+      'Wir haben kein Konto mit diesen Angaben gefunden.';
+
+  @override
+  String get authErrorOffline =>
+      'Keine Verbindung. Prüfe dein Netz und versuch es erneut.';
+
+  @override
+  String get authErrorGeneric =>
+      'Etwas ist schiefgelaufen. Bitte versuch es noch einmal.';
+
+  @override
+  String get passwordStrengthLabel => 'Passwortstärke';
+
+  @override
+  String get passwordStrengthWeak => 'Schwach';
+
+  @override
+  String get passwordStrengthFair => 'Mittel';
+
+  @override
+  String get passwordStrengthGood => 'Gut';
+
+  @override
+  String get passwordStrengthStrong => 'Stark';
+
+  @override
+  String get passwordShow => 'Passwort anzeigen';
+
+  @override
+  String get passwordHide => 'Passwort verbergen';
+
+  @override
+  String get verifyEmailHeadline => 'Sieh in deine Mails';
+
+  @override
+  String verifyEmailSentTo(String email) {
+    return 'Wir haben einen Bestätigungscode an $email geschickt.';
+  }
+
+  @override
+  String get verifyEmailSentToYou =>
+      'Wir haben dir einen Bestätigungscode geschickt.';
+
+  @override
+  String get verifyEmailClipboardHint =>
+      'Kopiere den Code aus der E-Mail – ChatiX übernimmt ihn, sobald du zurückkommst.';
+
+  @override
+  String get verifyEmailCodeFromClipboard =>
+      'Code aus der Zwischenablage übernommen';
+
+  @override
+  String verifyEmailResendIn(int seconds) {
+    return 'Neue E-Mail in ${seconds}s möglich';
+  }
+
+  @override
+  String get verifyEmailWrongAddress => 'Falsche Adresse?';
+
+  @override
+  String get verifyEmailChangeAddress => 'Eine andere verwenden';
+
+  @override
+  String get biometricUnlockTitle => 'Mit Biometrie entsperren';
+
+  @override
+  String get biometricUnlockSubtitle =>
+      'Beim erneuten Öffnen von ChatiX nach Fingerabdruck oder Gesicht fragen.';
+
+  @override
+  String get biometricUnlockUnavailable =>
+      'Auf diesem Gerät ist keine Biometrie eingerichtet.';
+
+  @override
+  String get biometricUnlockReason => 'ChatiX entsperren';
+
+  @override
+  String get biometricUnlockLockedTitle => 'ChatiX ist gesperrt';
+
+  @override
+  String get biometricUnlockLockedBody =>
+      'Entsperre die App, um zurück zu deinen Chats zu kommen.';
+
+  @override
+  String get biometricUnlockAction => 'Entsperren';
+
+  @override
+  String get biometricUnlockFailed =>
+      'Die Prüfung ist fehlgeschlagen. Versuch es noch einmal.';
+
+  @override
+  String get biometricUnlockLockedOut =>
+      'Das System hat die Biometrie nach zu vielen Versuchen gesperrt.';
+
+  @override
+  String get biometricUnlockNotEnrolled =>
+      'Auf diesem Gerät ist kein Fingerabdruck und kein Gesicht hinterlegt.';
+
+  @override
+  String get biometricUnlockEnableFailed =>
+      'Biometrie konnte nicht aktiviert werden.';
+
+  @override
+  String get settingsSecuritySection => 'Sicherheit';
+
+  @override
+  String get settingsAccountSection => 'Konto';
+
+  @override
+  String get logoutConfirmTitle => 'Abmelden?';
+
+  @override
+  String get logoutConfirmBody =>
+      'Dieses Gerät vergisst deine Nachrichten, Entwürfe und geladenen Dateien. Dein Konto bleibt unverändert.';
+
+  @override
+  String get logoutAction => 'Abmelden';
+
+  @override
+  String get logoutFailed =>
+      'Abmelden hat nicht geklappt. Versuch es noch einmal.';
+
+  @override
+  String get logoutInProgress => 'Wird abgemeldet …';
 }

@@ -6,8 +6,7 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
-import 'package:chatix/features/settings/presentation/screens/settings_screen.dart'
-    show AccentPicker;
+import 'package:chatix/features/settings/presentation/widgets/accent_picker.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// One screen that renders the whole ChatiX design system.

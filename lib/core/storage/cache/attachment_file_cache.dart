@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:synchronized/synchronized.dart';
 
+import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/utils/logger.dart';
 
 /// Downloaded attachments, kept on disk under their `s3_key`.
@@ -246,6 +247,16 @@ class _CacheEntry {
   final DateTime modified;
 }
 
+/// The attachment cache, sized by the reader's own limit.
+///
+/// Watched rather than read, so raising or lowering the budget in settings
+/// takes effect on the next download instead of on the next launch — and
+/// lowering it starts evicting straight away, which is the whole point of
+/// being able to lower it.
 final attachmentFileCacheProvider = Provider<AttachmentFileCache>((ref) {
-  return AttachmentFileCache();
+  return AttachmentFileCache(
+    maxBytes: ref.watch(
+      mediaSettingsProvider.select((settings) => settings.cacheLimitBytes),
+    ),
+  );
 });

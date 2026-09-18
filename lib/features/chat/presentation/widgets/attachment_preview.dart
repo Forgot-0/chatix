@@ -14,7 +14,7 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// its `s3_key` and the link is re-requested behind the scenes whenever it
 /// has gone stale. From here that is invisible — there is a file, or there
 /// is a failure with a way to try again.
-class AttachmentImage extends ConsumerWidget {
+class AttachmentImage extends ConsumerStatefulWidget {
   const AttachmentImage({
     super.key,
     required this.attachment,
@@ -28,31 +28,61 @@ class AttachmentImage extends ConsumerWidget {
   final BoxFit fit;
   final BorderRadius? borderRadius;
 
+  @override
+  ConsumerState<AttachmentImage> createState() => _AttachmentImageState();
+}
+
+class _AttachmentImageState extends ConsumerState<AttachmentImage> {
+  /// Set once the reader has tapped a picture their settings were holding
+  /// back. From then on this image is fetched like any other — the setting
+  /// is about what happens without being asked, not about what may be
+  /// downloaded at all.
+  bool _asked = false;
+
   AttachmentFileKey get _key =>
-      attachmentFileKey(attachment, messageId: messageId);
+      attachmentFileKey(widget.attachment, messageId: widget.messageId);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final radius = borderRadius ?? BorderRadius.circular(12);
+  Widget build(BuildContext context) {
+    final radius = widget.borderRadius ?? BorderRadius.circular(12);
 
-    return ClipRRect(
-      borderRadius: radius,
-      child: ref
+    return ClipRRect(borderRadius: radius, child: _body());
+  }
+
+  Widget _body() {
+    if (_asked) {
+      return ref
           .watch(attachmentFileProvider(_key))
           .when(
             loading: () => const AttachmentImagePlaceholder(),
             error: (_, _) => AttachmentImageFailure(
               onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
             ),
-            data: (file) => _image(context, ref, file),
+            data: _image,
+          );
+    }
+
+    return ref
+        .watch(autoAttachmentFileProvider(_key))
+        .when(
+          loading: () => const AttachmentImagePlaceholder(),
+          error: (_, _) => AttachmentImageFailure(
+            onRetry: () => ref.invalidate(autoAttachmentFileProvider(_key)),
           ),
-    );
+          // Null is the settings answer: not on this connection, not before
+          // you ask. So ask.
+          data: (file) => file == null
+              ? AttachmentTapToDownload(
+                  onTap: () => setState(() => _asked = true),
+                )
+              : _image(file),
+        );
   }
 
-  Widget _image(BuildContext context, WidgetRef ref, File file) {
+  Widget _image(File file) {
     return Image.file(
       file,
-      fit: fit,
+      fit: widget.fit,
       width: double.infinity,
       height: double.infinity,
       // The bytes behind an `s3_key` never change, so a frame already
@@ -60,6 +90,51 @@ class AttachmentImage extends ConsumerWidget {
       gaplessPlayback: true,
       errorBuilder: (_, _, _) => AttachmentImageFailure(
         onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+      ),
+    );
+  }
+}
+
+/// What a picture looks like when auto-download says to wait for a tap.
+///
+/// Deliberately not a spinner: nothing is happening, and nothing will until
+/// the reader says so.
+class AttachmentTapToDownload extends StatelessWidget {
+  const AttachmentTapToDownload({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: scheme.surfaceContainerHighest,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.download_rounded,
+              size: 22,
+              color: scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.attachmentTapToDownload,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

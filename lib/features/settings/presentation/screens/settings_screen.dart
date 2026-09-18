@@ -5,15 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
-import 'package:chatix/core/providers/media_settings_providers.dart';
-import 'package:chatix/core/providers/theme_providers.dart';
-import 'package:chatix/core/settings/media_settings.dart';
 import 'package:chatix/core/router/app_routes.dart';
-import 'package:chatix/core/theme/app_tokens.dart';
-import 'package:chatix/core/theme/theme_config.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/websocket/socket_protocol_log.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/settings/presentation/widgets/biometric_unlock_tile.dart';
+import 'package:chatix/features/settings/presentation/widgets/sign_out_tile.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -22,8 +19,6 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final appearance = ref.watch(appearanceProvider);
-    final controller = ref.read(appearanceProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
@@ -45,11 +40,20 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
           ListTile(
+            leading: const Icon(Icons.palette_outlined),
+            title: Text(l10n.appearanceTitle),
+            subtitle: Text(l10n.appearanceHint),
+            onTap: () => context.push(AppearanceSettingsRoute.location),
+          ),
+
+          ListTile(
             leading: const Icon(Icons.notifications_none),
             title: Text(l10n.notificationSettingsTitle),
             subtitle: Text(l10n.notification_settings),
             onTap: () => context.push(NotificationSettingsRoute.location),
           ),
+
+          _SectionHeader(title: l10n.settingsSecuritySection),
 
           ListTile(
             leading: const Icon(Icons.devices),
@@ -57,269 +61,40 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(SessionsRoute.location),
           ),
 
+          const BiometricUnlockTile(),
+
           if (kDebugMode)
             ListTile(
-              leading: const Icon(Icons.palette_outlined),
+              leading: const Icon(Icons.widgets_outlined),
               title: Text(l10n.designSystem),
               onTap: () => context.push(ComponentShowcaseRoute.location),
             ),
 
           const _WsDiagnosticsTile(),
 
-          const Divider(),
+          _SectionHeader(title: l10n.settingsAccountSection),
 
-          _SectionLabel(label: l10n.theme),
-          RadioGroup<AppThemeMode>(
-            groupValue: appearance.themeMode,
-            onChanged: (mode) {
-              if (mode != null) {
-                controller.setThemeMode(mode);
-              }
-            },
-            child: Column(
-              children: [
-                RadioListTile<AppThemeMode>(
-                  value: AppThemeMode.system,
-                  title: Text(l10n.systemMode),
-                ),
-                RadioListTile<AppThemeMode>(
-                  value: AppThemeMode.light,
-                  title: Text(l10n.lightMode),
-                ),
-                RadioListTile<AppThemeMode>(
-                  value: AppThemeMode.dark,
-                  title: Text(l10n.darkMode),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(),
-
-          _SectionLabel(label: l10n.accentColor),
-          AccentPicker(
-            selected: appearance.accentSeed,
-            onSelected: controller.setAccentSeed,
-          ),
-
-          const Divider(),
-
-          _SectionLabel(label: l10n.messageDensity),
-          RadioGroup<AppDensity>(
-            groupValue: appearance.density,
-            onChanged: (value) {
-              if (value != null) {
-                controller.setDensity(value);
-              }
-            },
-            child: Column(
-              children: [
-                RadioListTile<AppDensity>(
-                  value: AppDensity.compact,
-                  title: Text(l10n.densityCompact),
-                ),
-                RadioListTile<AppDensity>(
-                  value: AppDensity.cozy,
-                  title: Text(l10n.densityCozy),
-                ),
-                RadioListTile<AppDensity>(
-                  value: AppDensity.comfortable,
-                  title: Text(l10n.densityComfortable),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(),
-
-          _SectionLabel(label: l10n.chatWallpaper),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<AppWallpaper>(
-              segments: [
-                ButtonSegment(
-                  value: AppWallpaper.aurora,
-                  label: Text(l10n.wallpaperAurora),
-                ),
-                ButtonSegment(
-                  value: AppWallpaper.mesh,
-                  label: Text(l10n.wallpaperMesh),
-                ),
-                ButtonSegment(
-                  value: AppWallpaper.plain,
-                  label: Text(l10n.wallpaperPlain),
-                ),
-              ],
-              selected: {appearance.wallpaper},
-              onSelectionChanged: (selection) =>
-                  controller.setWallpaper(selection.first),
-            ),
-          ),
-
-          const Divider(height: AppSpacing.x8),
-
-          _SectionLabel(label: l10n.mediaAutoplay),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              0,
-              AppSpacing.x4,
-              AppSpacing.x3,
-            ),
-            child: Text(
-              l10n.mediaAutoplayHint,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<MediaAutoplay>(
-              segments: [
-                ButtonSegment(
-                  value: MediaAutoplay.always,
-                  label: Text(l10n.mediaAutoplayAlways),
-                ),
-                ButtonSegment(
-                  value: MediaAutoplay.wifiOnly,
-                  label: Text(l10n.mediaAutoplayWifi),
-                ),
-                ButtonSegment(
-                  value: MediaAutoplay.never,
-                  label: Text(l10n.mediaAutoplayNever),
-                ),
-              ],
-              selected: {
-                ref.watch(
-                  mediaSettingsProvider.select((s) => s.videoNoteAutoplay),
-                ),
-              },
-              onSelectionChanged: (selection) => ref
-                  .read(mediaSettingsProvider.notifier)
-                  .setVideoNoteAutoplay(selection.first),
-            ),
-          ),
-
-          const Divider(height: AppSpacing.x8),
-
-          _SectionLabel(label: l10n.textSize),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<double>(
-              segments: [
-                ButtonSegment(value: 0.85, label: Text(l10n.textSizeSmall)),
-                ButtonSegment(value: 1, label: Text(l10n.textSizeDefault)),
-                ButtonSegment(value: 1.15, label: Text(l10n.textSizeLarge)),
-                ButtonSegment(value: 1.3, label: Text(l10n.textSizeExtraLarge)),
-              ],
-              selected: {appearance.textScale},
-              onSelectionChanged: (selection) =>
-                  controller.setTextScale(selection.first),
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x5,
-              AppSpacing.x4,
-              AppSpacing.x6,
-            ),
-            child: OutlinedButton.icon(
-              onPressed: controller.reset,
-              icon: const Icon(Icons.restart_alt),
-              label: Text(l10n.resetAppearance),
-            ),
-          ),
+          const SignOutTile(),
         ],
       ),
     );
   }
 }
 
-/// The accent swatches. Lives here rather than in `core/ui` because picking a
-/// brand accent is a settings affordance, not a general primitive.
-class AccentPicker extends StatelessWidget {
-  const AccentPicker({
-    super.key,
-    required this.selected,
-    required this.onSelected,
-  });
+/// The label that turns a flat list of tiles into groups.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
 
-  final Color selected;
-  final ValueChanged<Color> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.x4,
-        vertical: AppSpacing.x2,
-      ),
-      child: Wrap(
-        spacing: AppSpacing.x3,
-        runSpacing: AppSpacing.x3,
-        children: [
-          for (final seed in AppPalette.accentSeeds)
-            Semantics(
-              selected: seed == selected,
-              button: true,
-              child: InkWell(
-                onTap: () => onSelected(seed),
-                customBorder: const CircleBorder(),
-                child: AnimatedContainer(
-                  duration: AppMotion.fast,
-                  curve: AppMotion.curve,
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: seed,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: seed == selected ? scheme.onSurface : seed,
-                      width: 2,
-                    ),
-                  ),
-                  child: seed == selected
-                      ? Icon(
-                          Icons.check,
-                          size: 20,
-                          color:
-                              ThemeData.estimateBrightnessForColor(seed) ==
-                                  Brightness.dark
-                              ? Colors.white
-                              : AppNeutrals.light[11],
-                        )
-                      : null,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-
-  final String label;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x4,
-        AppSpacing.x4,
-        AppSpacing.x4,
-        AppSpacing.x1,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(
-        label,
+        title,
         style: theme.textTheme.labelLarge?.copyWith(
           color: theme.colorScheme.primary,
           fontWeight: FontWeight.w700,
