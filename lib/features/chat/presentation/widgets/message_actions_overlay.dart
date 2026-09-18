@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -271,8 +272,16 @@ class _PanelIn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final opacity = t.clamp(0.0, 1.0);
+
+    // Reduced motion keeps the fade and drops the travel: the panels still
+    // arrive, they simply arrive where they belong.
+    if (context.prefersReducedMotion) {
+      return Opacity(opacity: opacity, child: child);
+    }
+
     return Opacity(
-      opacity: t.clamp(0.0, 1.0),
+      opacity: opacity,
       child: Transform.translate(
         offset: Offset(0, (fromBelow ? 1 : -1) * 12 * (1 - t)),
         child: Transform.scale(

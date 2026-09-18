@@ -19,7 +19,7 @@ class ReactionBloom extends StatefulWidget {
 
   final Widget child;
 
-  static const Duration duration = Duration(milliseconds: 320);
+  static const Duration duration = AppMotion.slow;
 
   @override
   State<ReactionBloom> createState() => _ReactionBloomState();
@@ -37,21 +37,21 @@ class _ReactionBloomState extends State<ReactionBloom>
       tween: Tween<double>(
         begin: 0.4,
         end: 1.12,
-      ).chain(CurveTween(curve: Curves.easeOutBack)),
+      ).chain(CurveTween(curve: AppMotion.arrive)),
       weight: 65,
     ),
     TweenSequenceItem(
       tween: Tween<double>(
         begin: 1.12,
         end: 1,
-      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+      ).chain(CurveTween(curve: AppMotion.curve)),
       weight: 35,
     ),
   ]).animate(_controller);
 
   late final Animation<double> _opacity = CurvedAnimation(
     parent: _controller,
-    curve: const Interval(0, 0.45, curve: Curves.easeOut),
+    curve: const Interval(0, 0.45, curve: AppMotion.curve),
   );
 
   bool _started = false;
@@ -108,7 +108,7 @@ class ReactionBurst extends StatefulWidget {
 
   final Widget child;
 
-  static const Duration duration = Duration(milliseconds: 620);
+  static const Duration duration = AppMotion.expressive;
 
   static const int particleCount = 12;
 
@@ -237,7 +237,7 @@ class _BurstPainter extends CustomPainter {
     if (t <= 0 || t >= 1) return;
 
     // Out fast, then coast — the opposite of the chip, which settles.
-    final travel = Curves.easeOutCubic.transform(t);
+    final travel = AppMotion.curve.transform(t);
     final fade = t < 0.6 ? 1.0 : 1 - (t - 0.6) / 0.4;
 
     final origin = Offset(

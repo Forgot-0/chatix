@@ -917,5 +917,8 @@
   "logoutConfirmBody": "この端末からメッセージ、下書き、ダウンロードしたファイルが消えます。アカウントはそのままです。",
   "logoutAction": "ログアウト",
   "logoutFailed": "ログアウトできませんでした。もう一度お試しください。",
-  "logoutInProgress": "ログアウトしています…"
+  "logoutInProgress": "ログアウトしています…",
+  "appearanceFeel": "\u89e6\u611f",
+  "appearanceHaptics": "\u89e6\u899a\u30d5\u30a3\u30fc\u30c9\u30d0\u30c3\u30af",
+  "appearanceHapticsHint": "\u30e1\u30c3\u30bb\u30fc\u30b8\u306e\u9001\u4fe1\u3001\u30ea\u30a2\u30af\u30b7\u30e7\u30f3\u3001\u30b8\u30a7\u30b9\u30c1\u30e3\u30fc\u306e\u5b8c\u4e86\u6642\u306b\u77ed\u304f\u632f\u52d5\u3057\u307e\u3059\u3002\u7aef\u672b\u5074\u306e\u632f\u52d5\u8a2d\u5b9a\u304c\u512a\u5148\u3055\u308c\u307e\u3059\u3002"
 }

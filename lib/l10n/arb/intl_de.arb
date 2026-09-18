@@ -917,5 +917,8 @@
   "logoutConfirmBody": "Dieses Gerät vergisst deine Nachrichten, Entwürfe und geladenen Dateien. Dein Konto bleibt unverändert.",
   "logoutAction": "Abmelden",
   "logoutFailed": "Abmelden hat nicht geklappt. Versuch es noch einmal.",
-  "logoutInProgress": "Wird abgemeldet …"
+  "logoutInProgress": "Wird abgemeldet …",
+  "appearanceFeel": "Haptik",
+  "appearanceHaptics": "Vibration",
+  "appearanceHapticsHint": "Kurze Vibrationen, wenn eine Nachricht rausgeht, eine Reaktion ankommt oder eine Geste greift. Die Vibrationseinstellung deines Ger\u00e4ts gilt weiterhin."
 }

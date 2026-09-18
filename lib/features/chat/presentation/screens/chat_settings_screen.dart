@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
@@ -89,7 +90,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
           if (!hasChatPermission(chat, state.me, ChatPermissions.chatUpdate)) {
             return AppEmptyState(
-              icon: Icons.lock_outline,
+              illustration: AppIllustrationKind.locked,
               title: l10n.chatSettingsNoPermission,
             );
           }
@@ -184,9 +185,8 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
                       : l10n.chatSlowModeSeconds(preset),
                 ),
                 selected: int.tryParse(_slowModeController.text) == preset,
-                onSelected: (_) => setState(
-                  () => _slowModeController.text = '$preset',
-                ),
+                onSelected: (_) =>
+                    setState(() => _slowModeController.text = '$preset'),
               ),
           ],
         ),
@@ -197,9 +197,8 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
       _SectionLabel(l10n.chatReactionsMode),
       RadioGroup<ChatReactionsMode>(
         groupValue: _reactionsMode,
-        onChanged: (value) => setState(
-          () => _reactionsMode = value ?? _reactionsMode,
-        ),
+        onChanged: (value) =>
+            setState(() => _reactionsMode = value ?? _reactionsMode),
         child: Column(
           children: [
             for (final mode in ChatReactionsMode.values)

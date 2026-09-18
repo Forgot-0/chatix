@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
@@ -293,7 +294,7 @@ class _SearchStart extends ConsumerWidget {
 
     if (history.queries.isEmpty && recent.isEmpty) {
       return AppEmptyState(
-        icon: Icons.search,
+        illustration: AppIllustrationKind.search,
         title: l10n.searchStartTitle,
         message: l10n.searchStartHint,
       );
@@ -350,7 +351,7 @@ class _ChatResults extends ConsumerWidget {
 
     if (hits.isEmpty) {
       return AppEmptyState(
-        icon: Icons.forum_outlined,
+        illustration: AppIllustrationKind.conversations,
         title: l10n.noChatsFound,
         message: l10n.noChatsFoundHint,
       );
@@ -418,7 +419,7 @@ class _PeopleResultsState extends ConsumerState<_PeopleResults> {
 
     if (widget.query.trim().length < PeopleSearchController.minQueryLength) {
       return AppEmptyState(
-        icon: Icons.keyboard_outlined,
+        illustration: AppIllustrationKind.search,
         title: l10n.searchTypeMore(PeopleSearchController.minQueryLength),
         message: l10n.searchStartHint,
       );
@@ -436,7 +437,7 @@ class _PeopleResultsState extends ConsumerState<_PeopleResults> {
       data: (state) {
         if (state.isEmpty) {
           return AppEmptyState(
-            icon: Icons.person_search_outlined,
+            illustration: AppIllustrationKind.people,
             title: l10n.noPeopleFound,
             message: l10n.noPeopleFoundHint,
           );
@@ -506,7 +507,7 @@ class _MessageResultsState extends ConsumerState<_MessageResults> {
 
     if (widget.query.trim().length < SearchMessagesUseCase.minQueryLength) {
       return AppEmptyState(
-        icon: Icons.keyboard_outlined,
+        illustration: AppIllustrationKind.search,
         title: l10n.searchTypeMore(SearchMessagesUseCase.minQueryLength),
         message: l10n.searchStartHint,
       );
@@ -538,7 +539,7 @@ class _MessageResultsState extends ConsumerState<_MessageResults> {
               if (state.isLocal) const LocalSearchNotice(),
               Expanded(
                 child: AppEmptyState(
-                  icon: Icons.chat_bubble_outline,
+                  illustration: AppIllustrationKind.messages,
                   title: l10n.noMessagesFound,
                   message: state.isLocal
                       ? l10n.searchLoadedHistoryExplained

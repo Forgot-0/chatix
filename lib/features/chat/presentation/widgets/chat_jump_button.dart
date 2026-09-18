@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The way back down to the live end of a conversation.
@@ -32,12 +33,16 @@ class ChatJumpToBottomButton extends StatelessWidget {
       builder: (context, count, child) {
         final visible = count != null;
 
+        final still = context.prefersReducedMotion;
+
         return AnimatedSlide(
-          duration: ChatixTheme.duration,
+          duration: context.motion(ChatixTheme.duration),
           curve: ChatixTheme.curve,
-          offset: visible ? Offset.zero : const Offset(0, 1.4),
+          // Parked where it belongs when motion is reduced, so the opacity
+          // below is the whole of the entrance.
+          offset: visible || still ? Offset.zero : const Offset(0, 1.4),
           child: AnimatedOpacity(
-            duration: ChatixTheme.duration,
+            duration: context.motion(ChatixTheme.duration),
             opacity: visible ? 1 : 0,
             child: IgnorePointer(
               ignoring: !visible,

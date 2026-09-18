@@ -12,6 +12,8 @@ import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/router/app_router.dart';
+import 'package:chatix/core/ui/haptics.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/core/ui/widgets/app_text_scale.dart';
 import 'package:chatix/core/updates/update_providers.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
@@ -94,34 +96,46 @@ class MyApp extends ConsumerWidget {
       autoPrompt: true,
       enforceCriticalUpdates: true,
       child: AccessibilityWrapper(
-        child: MaterialApp.router(
-          title: AppConstants.appName,
-          theme: ref.watch(lightThemeProvider),
-          darkTheme: ref.watch(darkThemeProvider),
-          themeMode: themeMode,
-          routerConfig: router,
-          debugShowCheckedModeBanner: false,
-          // The mini player is mounted above the router, not inside a route,
-          // so a live call keeps a window on itself through every navigation.
-          // The lock sits above the router and below the call overlay: no
-          // navigation can land behind it, and a call in progress is still
-          // drawn on top of it.
-          builder: (context, child) => AppTextScale(
-            scale: textScale,
-            child: CallOverlay(
-              child: AppLockGate(child: child ?? const SizedBox.shrink()),
+        // Above the app rather than inside it: the haptics switch has to
+        // reach gesture code that has no ref of its own, so one widget
+        // mirrors it across, the way the accessibility flags are mirrored.
+        child: HapticsSettingsSync(
+          child: MaterialApp.router(
+            title: AppConstants.appName,
+            theme: ref.watch(lightThemeProvider),
+            darkTheme: ref.watch(darkThemeProvider),
+            themeMode: themeMode,
+            routerConfig: router,
+            debugShowCheckedModeBanner: false,
+            // The mini player is mounted above the router, not inside a route,
+            // so a live call keeps a window on itself through every navigation.
+            // The lock sits above the router and below the call overlay: no
+            // navigation can land behind it, and a call in progress is still
+            // drawn on top of it.
+            builder: (context, child) => AppTextScale(
+              scale: textScale,
+              // Heroes are the one transition a route builder cannot reach:
+              // they fly from the navigator's overlay, above every page. With
+              // reduced motion on they are switched off here rather than
+              // shortened, so a tapped photo simply opens.
+              child: HeroMode(
+                enabled: !context.prefersReducedMotion,
+                child: CallOverlay(
+                  child: AppLockGate(child: child ?? const SizedBox.shrink()),
+                ),
+              ),
             ),
-          ),
 
-          locale: locale,
-          localizationsDelegates: [
-            const AppLocalizationsDelegate(),
-            arb.AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
+            locale: locale,
+            localizationsDelegates: [
+              const AppLocalizationsDelegate(),
+              arb.AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+          ),
         ),
       ),
     );

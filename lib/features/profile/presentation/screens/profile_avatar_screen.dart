@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
@@ -41,8 +42,9 @@ class ProfileAvatarScreen extends ConsumerWidget {
           leading: IconButton(
             tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
             icon: const Icon(Icons.close),
-            onPressed: () =>
-                context.canPop() ? context.pop() : context.go(ProfileRoute.location),
+            onPressed: () => context.canPop()
+                ? context.pop()
+                : context.go(ProfileRoute.location),
           ),
         ),
         body: resolvedId == null
@@ -64,7 +66,7 @@ class _Body extends ConsumerWidget {
     final profileAsync = ref.watch(profileDetailProvider(profileId));
 
     return profileAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const _PhotoSkeleton(),
       error: (error, _) => AppErrorState(
         error: error,
         fallbackMessage: l10n.profileLoadFailed,
@@ -90,11 +92,11 @@ class _Body extends ConsumerWidget {
             maxScale: 5,
             child: Hero(
               tag: profileAvatarHeroTag(profile.id),
+              flightShuttleBuilder: profileAvatarHeroFlight,
               child: CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.contain,
-                placeholder: (_, _) =>
-                    const Center(child: CircularProgressIndicator()),
+                placeholder: (_, _) => const _PhotoSkeleton(),
                 errorWidget: (_, _, _) => Center(
                   child: Text(
                     l10n.profileLoadFailed,
@@ -106,6 +108,27 @@ class _Body extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// A photo-shaped placeholder for the one screen that is nothing but a
+/// photo.
+class _PhotoSkeleton extends StatelessWidget {
+  const _PhotoSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.x8),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: AppSkeleton(
+            child: AppBone(height: double.infinity, radius: AppRadii.xl),
+          ),
+        ),
+      ),
     );
   }
 }

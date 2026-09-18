@@ -9,6 +9,7 @@ import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/widgets/app_text_scale.dart';
 
 void main() {
@@ -238,5 +239,38 @@ void main() {
     );
 
     expect(resolved.scale(10), 12.5);
+  });
+
+  group('haptics', () {
+    testWidgets('the switch reaches AppHaptics, and survives a relaunch', (
+      tester,
+    ) async {
+      addTearDown(AppHaptics.reset);
+
+      final container = await boot();
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const HapticsSettingsSync(child: SizedBox.shrink()),
+        ),
+      );
+      expect(AppHaptics.enabled, isTrue);
+
+      await container.read(appearanceProvider.notifier).setHaptics(false);
+      await tester.pump();
+      expect(AppHaptics.enabled, isFalse);
+
+      // Written through, so the next launch starts silent rather than
+      // buzzing once before the setting is read back.
+      final prefs = await SharedPreferences.getInstance();
+      final relaunched = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(relaunched.dispose);
+
+      expect(relaunched.read(appearanceProvider).haptics, isFalse);
+      expect(relaunched.read(hapticsEnabledProvider), isFalse);
+    });
   });
 }

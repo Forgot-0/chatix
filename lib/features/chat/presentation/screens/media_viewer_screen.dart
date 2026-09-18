@@ -199,9 +199,7 @@ class _MediaViewerScreenState extends ConsumerState<MediaViewerScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: ColoredBox(
-              color: Colors.black.withValues(alpha: backdrop),
-            ),
+            child: ColoredBox(color: Colors.black.withValues(alpha: backdrop)),
           ),
           Positioned.fill(
             child: GestureDetector(
@@ -364,6 +362,7 @@ class _MediaPageState extends State<_MediaPage> {
         onInteractionEnd: _onInteractionEnd,
         child: Hero(
           tag: attachmentHeroTag(item.attachmentId),
+          flightShuttleBuilder: attachmentHeroFlight,
           child: content,
         ),
       ),
@@ -451,9 +450,7 @@ class _ViewerVideoState extends ConsumerState<_ViewerVideo> {
             // The file is in hand; opening it is not something build can
             // do, so it happens once the frame is out. [_prepare] is a
             // no-op for a file it has already opened.
-            WidgetsBinding.instance.addPostFrameCallback(
-              (_) => _prepare(file),
-            );
+            WidgetsBinding.instance.addPostFrameCallback((_) => _prepare(file));
 
             final controller = _controller;
             if (controller == null) {
@@ -609,10 +606,7 @@ class _Header extends StatelessWidget {
                 IconButton(
                   tooltip: l10n.save,
                   onPressed: onSave,
-                  icon: const Icon(
-                    Icons.download_rounded,
-                    color: Colors.white,
-                  ),
+                  icon: const Icon(Icons.download_rounded, color: Colors.white),
                 ),
               IconButton(
                 tooltip: l10n.messageForward,

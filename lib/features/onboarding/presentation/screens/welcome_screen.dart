@@ -68,10 +68,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       return;
     }
 
-    _pages.nextPage(
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-    );
+    _pages.nextPage(duration: AppMotion.slow, curve: AppMotion.curve);
   }
 
   @override
@@ -140,13 +137,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           vertical: AppSpacing.x4,
                         ),
                       ),
-                      child: Text(
-                        switch (_index) {
-                          0 => l10n.welcomeGetStarted,
-                          _ when _isLastPage => l10n.onboardingDone,
-                          _ => l10n.onboardingNext,
-                        },
-                      ),
+                      child: Text(switch (_index) {
+                        0 => l10n.welcomeGetStarted,
+                        _ when _isLastPage => l10n.onboardingDone,
+                        _ => l10n.onboardingNext,
+                      }),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.x2),
@@ -182,8 +177,9 @@ class _WelcomeIntro extends StatelessWidget {
     final scheme = theme.colorScheme;
     final still = MediaQuery.disableAnimationsOf(context);
 
-    Duration at(int milliseconds) =>
-        still ? Duration.zero : Duration(milliseconds: milliseconds);
+    // The entrance is staggered, not choreographed to the millisecond: each
+    // step is one of the motion tokens, and the delays are tokens too.
+    Duration at(Duration duration) => still ? Duration.zero : duration;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x6),
@@ -192,11 +188,11 @@ class _WelcomeIntro extends StatelessWidget {
         children: [
           AnimatedScale(
             scale: entered ? 1 : 0.82,
-            duration: at(520),
-            curve: Curves.easeOutBack,
+            duration: at(AppMotion.expressive),
+            curve: AppMotion.arrive,
             child: AnimatedOpacity(
               opacity: entered ? 1 : 0,
-              duration: at(320),
+              duration: at(AppMotion.slow),
               child: const OnboardingGlyph(
                 icon: Icons.chat_bubble_outline,
                 size: 128,
@@ -206,8 +202,8 @@ class _WelcomeIntro extends StatelessWidget {
           const SizedBox(height: AppSpacing.x8),
           _FadeUp(
             entered: entered,
-            duration: at(380),
-            delay: at(140),
+            duration: at(AppMotion.slow),
+            delay: at(AppMotion.fast),
             child: Text(
               l10n.welcomeHeadline,
               textAlign: TextAlign.center,
@@ -220,8 +216,8 @@ class _WelcomeIntro extends StatelessWidget {
           const SizedBox(height: AppSpacing.x3),
           _FadeUp(
             entered: entered,
-            duration: at(380),
-            delay: at(260),
+            duration: at(AppMotion.slow),
+            delay: at(AppMotion.base),
             child: Text(
               l10n.welcomeTagline,
               textAlign: TextAlign.center,
@@ -257,7 +253,7 @@ class _FadeUp extends StatelessWidget {
     // longer animation whose curve holds its starting value for the first
     // stretch of it.
     final total = duration + delay;
-    final curve = Interval(_fraction(delay, total), 1, curve: Curves.easeOutCubic);
+    final curve = Interval(_fraction(delay, total), 1, curve: AppMotion.curve);
 
     return AnimatedSlide(
       offset: entered ? Offset.zero : const Offset(0, 0.25),

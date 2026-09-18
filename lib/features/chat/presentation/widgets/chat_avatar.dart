@@ -5,7 +5,17 @@ import 'package:flutter/material.dart';
 
 import 'package:chatix/core/media/avatar_variants.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
+
+/// The tag that ties a conversation's face in the chat's app bar to the big
+/// one at the top of its profile.
+String chatAvatarHeroTag(String chatId) => 'chat-avatar-$chatId';
+
+/// A face growing from the app bar into a profile header: round at both
+/// ends, which it would not be without this — the circle is a clip inside
+/// the avatar, and a flight leaves the tree it was clipped in behind.
+final HeroFlightShuttleBuilder chatAvatarHeroFlight = AppHeroFlight.circle;
 
 /// The sizes an avatar is allowed to be.
 ///

@@ -156,6 +156,7 @@ class AppearanceSettings {
     this.bubbleRadius = defaultBubbleRadius,
     this.bubbleAnchored = true,
     this.textScale = 1,
+    this.haptics = true,
   });
 
   /// Rebuilds settings from storage.
@@ -185,6 +186,7 @@ class AppearanceSettings {
       ),
       bubbleAnchored: json['bubbleAnchored'] != false,
       textScale: clampTextScale(_number(json['textScale']) ?? defaultTextScale),
+      haptics: json['haptics'] != false,
     );
   }
 
@@ -258,6 +260,14 @@ class AppearanceSettings {
 
   final double textScale;
 
+  /// Whether the app may vibrate at all.
+  ///
+  /// The system's own touch-feedback switch sits below this one and is
+  /// enforced by the platform; this is the app's, for the people who want
+  /// their phone to buzz for notifications but not for every message they
+  /// send. Defaults to on — see `core/ui/haptics.dart` for what it gates.
+  final bool haptics;
+
   AppWallpaper get wallpaper => AppWallpaper.fromId(wallpaperId);
 
   /// The radius of the anchor corner: tight when the anchor is on, the same
@@ -275,6 +285,7 @@ class AppearanceSettings {
     double? bubbleRadius,
     bool? bubbleAnchored,
     double? textScale,
+    bool? haptics,
   }) {
     return AppearanceSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -293,6 +304,7 @@ class AppearanceSettings {
           : clampBubbleRadius(bubbleRadius),
       bubbleAnchored: bubbleAnchored ?? this.bubbleAnchored,
       textScale: textScale == null ? this.textScale : clampTextScale(textScale),
+      haptics: haptics ?? this.haptics,
     );
   }
 
@@ -307,6 +319,7 @@ class AppearanceSettings {
     'bubbleRadius': bubbleRadius,
     'bubbleAnchored': bubbleAnchored,
     'textScale': textScale,
+    'haptics': haptics,
   };
 
   @override
@@ -322,7 +335,8 @@ class AppearanceSettings {
           other.wallpaperPattern == wallpaperPattern &&
           other.bubbleRadius == bubbleRadius &&
           other.bubbleAnchored == bubbleAnchored &&
-          other.textScale == textScale;
+          other.textScale == textScale &&
+          other.haptics == haptics;
 
   @override
   int get hashCode => Object.hash(
@@ -336,6 +350,7 @@ class AppearanceSettings {
     bubbleRadius,
     bubbleAnchored,
     textScale,
+    haptics,
   );
 
   @override
@@ -344,5 +359,6 @@ class AppearanceSettings {
       'density: ${density.name}, accentSeed: $accentSeed, '
       'wallpaperId: $wallpaperId, wallpaperIntensity: $wallpaperIntensity, '
       'wallpaperPattern: $wallpaperPattern, bubbleRadius: $bubbleRadius, '
-      'bubbleAnchored: $bubbleAnchored, textScale: $textScale)';
+      'bubbleAnchored: $bubbleAnchored, textScale: $textScale, '
+      'haptics: $haptics)';
 }

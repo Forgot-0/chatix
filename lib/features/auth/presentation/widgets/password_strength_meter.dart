@@ -52,10 +52,8 @@ class PasswordStrengthMeter extends StatelessWidget {
                     Container(height: 4, color: scheme.surfaceContainerHighest),
                     LayoutBuilder(
                       builder: (context, constraints) => AnimatedContainer(
-                        duration: still
-                            ? Duration.zero
-                            : const Duration(milliseconds: 240),
-                        curve: Curves.easeOut,
+                        duration: still ? Duration.zero : AppMotion.base,
+                        curve: AppMotion.curve,
                         height: 4,
                         width: constraints.maxWidth * strength.fraction,
                         color: colour,

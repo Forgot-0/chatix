@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/router/app_router.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/presentation/providers/active_call_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/call_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_preview.dart'
@@ -99,9 +101,9 @@ class _CallMiniPlayerState extends ConsumerState<CallMiniPlayer> {
           children: [
             AnimatedPositioned(
               duration: _dragTopLeft == null
-                  ? const Duration(milliseconds: 220)
+                  ? context.motion(AppMotion.base)
                   : Duration.zero,
-              curve: Curves.easeOutCubic,
+              curve: AppMotion.curve,
               left: position.dx,
               top: position.dy,
               width: _width,

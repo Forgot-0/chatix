@@ -135,9 +135,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               const SizedBox(height: 8),
 
-              AppQuickActionsRow(
-                actions: _actions(l10n, profile, isMe: isMe),
-              ),
+              AppQuickActionsRow(actions: _actions(l10n, profile, isMe: isMe)),
 
               if (specialization != null &&
                   specialization.isNotEmpty &&
@@ -199,10 +197,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       : l10n.profileEmptyHintOther,
                 ),
 
-              if (isMe) ...[
-                const Divider(height: 1),
-                _AccountRows(user: me),
-              ],
+              if (isMe) ...[const Divider(height: 1), _AccountRows(user: me)],
 
               const SizedBox(height: 32),
             ],
@@ -296,7 +291,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _isOpeningChat = false);
 
     result.match(
-      (failure) => AppSnackbar.quiet(
+      (failure) => AppSnackbar.failure(
         context,
         chatFailureMessage(failure) ??
             friendlyFailureMessage(
@@ -338,7 +333,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (opened || !mounted) return;
 
-    AppSnackbar.quiet(context, l10n.profileOpenLinkFailed);
+    AppSnackbar.failure(context, l10n.profileOpenLinkFailed);
   }
 
   Future<void> _copy(String value) async {
@@ -449,9 +444,7 @@ class _ContactTile extends StatelessWidget {
         link.value,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: uri == null
-            ? null
-            : TextStyle(color: theme.colorScheme.primary),
+        style: uri == null ? null : TextStyle(color: theme.colorScheme.primary),
       ),
       subtitle: Text(link.label, style: theme.textTheme.labelSmall),
       // A row with nothing to open still copies, which is the only thing

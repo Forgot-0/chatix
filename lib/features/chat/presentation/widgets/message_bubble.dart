@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
@@ -245,7 +245,6 @@ class _MessageBubbleState extends State<MessageBubble> {
     final toggle = widget.onToggleReaction;
     if (emoji == null || toggle == null) return;
 
-    HapticFeedback.selectionClick();
     toggle(emoji);
   }
 
@@ -253,7 +252,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     final anchor = _anchorRect();
     if (anchor == null || !mounted) return;
 
-    HapticFeedback.mediumImpact();
+    AppHaptics.longPress();
     setState(() => _menuOpen = true);
 
     final reactions = widget.reactions;

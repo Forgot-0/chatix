@@ -2957,4 +2957,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get logoutInProgress => 'Déconnexion…';
+
+  @override
+  String get appearanceFeel => 'Sensations';
+
+  @override
+  String get appearanceHaptics => 'Retour haptique';
+
+  @override
+  String get appearanceHapticsHint =>
+      'De brèves vibrations quand un message part, qu\'une réaction arrive ou qu\'un geste aboutit. Le réglage de vibration de votre appareil reste prioritaire.';
 }

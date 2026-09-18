@@ -9,6 +9,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -33,6 +34,8 @@ import 'package:chatix/features/chat/presentation/screens/media_preview_screen.d
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_banners.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_skeleton.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_wallpaper.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/chat_composer.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_tray.dart';
@@ -122,7 +125,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // Whatever this chat put in the shade is answered by being here; leaving
     // it there would have the reader dismiss the same messages twice.
     unawaited(
-      ref.read(notificationServiceProvider).cancelGroup('chat_${widget.chatId}'),
+      ref
+          .read(notificationServiceProvider)
+          .cancelGroup('chat_${widget.chatId}'),
     );
   }
 
@@ -160,7 +165,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // message by the time this fires; all that is left is to say so, quietly.
     ref.listen(reactionNoticeProvider, (previous, next) {
       if (next == null || next == previous) return;
-      AppSnackbar.quiet(
+      AppSnackbar.failure(
         context,
         reactionNoticeText(AppLocalizations.of(context), next.reason),
       );
@@ -180,7 +185,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Scaffold(
       appBar: _buildAppBar(detail.value, myUserId),
       body: detail.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        // The shape of the conversation, not a spinner: the bubbles land in
+        // the space their placeholders were already holding — on the
+        // wallpaper they will land on, so nothing under them changes either.
+        loading: () => ChatWallpaper(
+          seed: widget.chatId.hashCode,
+          child: const ChatFeedSkeleton(),
+        ),
         error: (error, _) => AppErrorState(
           error: error,
           fallbackMessage: AppLocalizations.of(context).chatLoadFailed,
@@ -662,6 +673,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _setText('');
     ref.read(chatDraftsProvider.notifier).clear(widget.chatId);
 
+    // The message is gone from the composer as of this line — the bubble it
+    // becomes is optimistic, so the confirmation has to be too.
+    AppHaptics.messageSent();
+
     // Optimistic, like the pending bubble it puts on screen: the wait starts
     // now and a 429 replaces it with the server's own `retry_after`.
     _composer.markSent();
@@ -738,6 +753,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Future<void> _sendExclusive(
     AttachmentUploadRequestEntity upload,
     MessageType type, {
+
     /// Called with the confirmed slots before the message goes out, for
     /// anything that has to be filed against the attachment id.
     Future<void> Function(List<String> tokens)? onTokens,
@@ -761,6 +777,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     await onTokens?.call(tokens);
     if (!mounted) return;
 
+    AppHaptics.messageSent();
     _composer.markSent();
 
     await ref
@@ -872,6 +889,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       return;
     }
 
+    AppHaptics.messageSent();
     _composer.markSent();
     _composer.setSending(value: true);
 

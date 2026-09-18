@@ -2946,4 +2946,14 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get logoutInProgress => 'Cerrando sesión…';
+
+  @override
+  String get appearanceFeel => 'Tacto';
+
+  @override
+  String get appearanceHaptics => 'Vibración';
+
+  @override
+  String get appearanceHapticsHint =>
+      'Vibraciones breves al enviar un mensaje, al reaccionar o al completar un gesto. La configuración de vibración de tu dispositivo sigue mandando.';
 }

@@ -236,10 +236,7 @@ class _CancelTrack extends StatelessWidget {
             scale: committed ? 1.25 : 1,
             duration: AppMotion.fast,
             curve: AppMotion.curve,
-            child: _TrashCan(
-              lidAngle: -0.5 * progress,
-              color: chatix.danger,
-            ),
+            child: _TrashCan(lidAngle: -0.5 * progress, color: chatix.danger),
           ),
         ),
       ],
@@ -299,7 +296,7 @@ class _PulsingDotState extends State<_PulsingDot>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
+    duration: AppMotion.pulse,
   )..repeat(reverse: true);
 
   @override

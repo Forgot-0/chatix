@@ -101,7 +101,7 @@ class _AvatarPickerButtonState extends ConsumerState<AvatarPickerButton> {
     try {
       picked = await ImagePicker().pickImage(source: source, imageQuality: 95);
     } catch (_) {
-      if (mounted) AppSnackbar.quiet(context, l10n.photoLibraryFailed);
+      if (mounted) AppSnackbar.failure(context, l10n.photoLibraryFailed);
       return;
     }
     if (picked == null) return;
@@ -134,7 +134,7 @@ class _AvatarPickerButtonState extends ConsumerState<AvatarPickerButton> {
           );
     } on AvatarPreparationException catch (error) {
       if (mounted) {
-        AppSnackbar.quiet(context, _preparationMessage(l10n, error.reason));
+        AppSnackbar.failure(context, _preparationMessage(l10n, error.reason));
       }
     } finally {
       decoded?.dispose();
@@ -193,8 +193,7 @@ class AvatarUploadStatus extends ConsumerWidget {
             ),
           if (canRetry)
             TextButton.icon(
-              onPressed: () =>
-                  ref.read(avatarUploadProvider.notifier).retry(),
+              onPressed: () => ref.read(avatarUploadProvider.notifier).retry(),
               icon: const Icon(Icons.refresh, size: 18),
               label: Text(l10n.retry),
             ),

@@ -3692,5 +3692,17 @@
   "logoutInProgress": "Signing out…",
   "@logoutInProgress": {
     "description": "Shown while the sign-out is running."
+  },
+  "appearanceFeel": "Feel",
+  "@appearanceFeel": {
+    "description": "Section header above the haptics switch in appearance settings."
+  },
+  "appearanceHaptics": "Haptic feedback",
+  "@appearanceHaptics": {
+    "description": "Title of the switch that turns the app's vibrations on and off."
+  },
+  "appearanceHapticsHint": "Short vibrations when a message goes out, a reaction lands or a gesture takes. Your device's own vibration setting still applies.",
+  "@appearanceHapticsHint": {
+    "description": "Subtitle of the haptics switch."
   }
 }

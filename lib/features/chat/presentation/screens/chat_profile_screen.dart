@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
@@ -124,7 +126,11 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
     );
   }
 
-  Widget _profile(AppLocalizations l10n, ChatEntity chat, ChatMemberEntity? me) {
+  Widget _profile(
+    AppLocalizations l10n,
+    ChatEntity chat,
+    ChatMemberEntity? me,
+  ) {
     final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
     final content = ref.watch(chatSharedContentProvider(widget.chatId));
     final canUpdate = hasChatPermission(chat, me, ChatPermissions.chatUpdate);
@@ -169,8 +175,7 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
                 title: Text(l10n.membersTitle),
                 subtitle: Text(l10n.membersCount(chat.memberCount)),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () =>
-                    context.push(ChatMembersRoute.locationOf(chat.id)),
+                onTap: () => context.push(ChatMembersRoute.locationOf(chat.id)),
               ),
               const Divider(height: 1),
               _DangerZone(
@@ -275,8 +280,8 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
 
     _scrollController.animateTo(
       extent < enough ? extent : enough,
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutCubic,
+      duration: context.motion(AppMotion.slow),
+      curve: AppMotion.curve,
     );
   }
 
@@ -555,7 +560,9 @@ class _InviteLinkBlock extends StatelessWidget {
   void _copy(BuildContext context, String link) {
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context).chatInviteLinkCopied)),
+      SnackBar(
+        content: Text(AppLocalizations.of(context).chatInviteLinkCopied),
+      ),
     );
   }
 }
@@ -605,9 +612,9 @@ class _DangerZone extends StatelessWidget {
               options.notice == ChatExitNotice.creatorMustDelete
                   ? l10n.leaveChatOwnerBlocked
                   : l10n.leaveChatOwnerStuck,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ),
         if (options.canDelete)

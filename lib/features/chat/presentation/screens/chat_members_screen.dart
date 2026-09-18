@@ -6,6 +6,7 @@ import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
@@ -149,7 +150,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
                     context.push(ChatInviteRoute.locationOf(widget.chatId)),
               )
             : AppEmptyState(
-                icon: Icons.person_search_outlined,
+                illustration: AppIllustrationKind.search,
                 title: l10n.membersSearchEmpty(_query.trim()),
                 message: state.canLoadMore
                     ? l10n.membersSearchLoadedOnly
@@ -859,7 +860,7 @@ class _EmptyMembersView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return AppEmptyState(
-      icon: Icons.group_outlined,
+      illustration: AppIllustrationKind.people,
       title: l10n.membersEmptyTitle,
       message: canInvite ? l10n.membersEmptyInvite : l10n.membersEmptyNoInvite,
       action: canInvite

@@ -2,11 +2,21 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 
 /// The tag that ties the header's avatar to the full-screen one.
 String profileAvatarHeroTag(int profileId) => 'profile-avatar-$profileId';
+
+/// How a face flies from the header into the full-screen photo: a circle
+/// that relaxes into a rectangle as it grows.
+///
+/// The avatar is round because of a clip *inside* it, and the flight would
+/// otherwise carry that clip all the way to a full-bleed photo — landing on
+/// a circular picture that snaps square on the last frame.
+final HeroFlightShuttleBuilder profileAvatarHeroFlight =
+    AppHeroFlight.circleToRect;
 
 /// A person's face at the top of their profile, shrinking as the page
 /// scrolls.
@@ -142,13 +152,17 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
             height: avatar,
             child: GestureDetector(
               onTap: onAvatarTap,
-              child: FittedBox(
-                // Resolved once at the largest size it will be drawn at and
-                // scaled down from there: shrinking costs no second decode
-                // and never looks soft.
-                fit: BoxFit.contain,
-                child: Hero(
-                  tag: profileAvatarHeroTag(profile.id),
+              child: Hero(
+                tag: profileAvatarHeroTag(profile.id),
+                flightShuttleBuilder: profileAvatarHeroFlight,
+                // The fit sits inside the Hero, not outside it: a flight
+                // resizes the box it carries, and a child with a hard-coded
+                // diameter would overflow it the whole way across.
+                child: FittedBox(
+                  // Resolved once at the largest size it will be drawn at and
+                  // scaled down from there: shrinking costs no second decode
+                  // and never looks soft.
+                  fit: BoxFit.contain,
                   child: ProfileAvatar(
                     profile: profile,
                     radius: _bigAvatar / 2,
@@ -164,10 +178,7 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
               top: avatarTop + avatar - 18,
               child: Opacity(
                 opacity: (1 - t * 2).clamp(0.0, 1.0),
-                child: IgnorePointer(
-                  ignoring: t > 0.4,
-                  child: avatarAction,
-                ),
+                child: IgnorePointer(ignoring: t > 0.4, child: avatarAction),
               ),
             ),
 

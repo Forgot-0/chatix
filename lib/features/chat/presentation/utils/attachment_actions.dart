@@ -51,7 +51,7 @@ abstract final class AttachmentActions {
       // A cancel is an answer, not a problem worth a message.
       if (!context.mounted || failure is CancelledFailure) return null;
 
-      AppSnackbar.quiet(context, l10n.attachmentSaveFailed);
+      AppSnackbar.failure(context, l10n.attachmentSaveFailed);
       return null;
     }
 
@@ -65,7 +65,9 @@ abstract final class AttachmentActions {
       }
       return saved;
     } on FileSystemException {
-      if (context.mounted) AppSnackbar.quiet(context, l10n.attachmentSaveFailed);
+      if (context.mounted) {
+        AppSnackbar.failure(context, l10n.attachmentSaveFailed);
+      }
       return null;
     }
   }
@@ -90,7 +92,8 @@ abstract final class AttachmentActions {
     final l10n = AppLocalizations.of(context);
 
     await result.match(
-      (failure) async => AppSnackbar.quiet(context, l10n.attachmentOpenFailed),
+      (failure) async =>
+          AppSnackbar.failure(context, l10n.attachmentOpenFailed),
       (download) async {
         final uri = Uri.tryParse(download.url);
         final opened =
@@ -98,7 +101,7 @@ abstract final class AttachmentActions {
             await launchUrl(uri, mode: LaunchMode.externalApplication);
 
         if (opened || !context.mounted) return;
-        AppSnackbar.quiet(context, l10n.attachmentOpenFailed);
+        AppSnackbar.failure(context, l10n.attachmentOpenFailed);
       },
     );
   }

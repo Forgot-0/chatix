@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/haptics.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
+
 /// One button behind a swipeable row.
 @immutable
 class SwipeAction {
@@ -70,11 +74,12 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
   /// element is being torn down is too late to look one up.
   late final AnimationController _reveal;
 
-  static const Duration _settle = Duration(milliseconds: 220);
-  static const Curve _settleCurve = Curves.easeOutCubic;
-
   /// Past this, a flick decides the direction on its own.
   static const double _flingVelocity = 420;
+
+  /// Whether the drag is far enough that letting go would leave the row
+  /// open. Tracked so the haptic fires on the crossing rather than per frame.
+  bool _armed = false;
 
   double get _leadingExtent => widget.leading.length * widget.actionExtent;
 
@@ -109,13 +114,24 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
 
   void _onDragUpdate(DragUpdateDetails details, double sign) {
     final delta = (details.primaryDelta ?? 0) * sign;
-    _reveal.value = (_reveal.value + delta).clamp(
+    final next = (_reveal.value + delta).clamp(
       -_trailingExtent,
       _leadingExtent,
     );
+    _reveal.value = next;
+
+    // The same rule the release uses: past halfway the row stays open. Felt
+    // once, on the way in, so a wobble at the line does not buzz.
+    final armed = next > _leadingExtent / 2 || next < -_trailingExtent / 2;
+    if (armed == _armed) return;
+
+    _armed = armed;
+    if (armed) AppHaptics.gestureThreshold();
   }
 
   void _onDragEnd(DragEndDetails details, double sign) {
+    _armed = false;
+
     final velocity = (details.primaryVelocity ?? 0) * sign;
     final value = _reveal.value;
 
@@ -135,7 +151,11 @@ class _AppSwipeActionsState extends State<AppSwipeActions>
 
   void _settleTo(double target) {
     if (target == _reveal.value) return;
-    _reveal.animateTo(target, duration: _settle, curve: _settleCurve);
+    _reveal.animateTo(
+      target,
+      duration: context.motion(AppMotion.base),
+      curve: AppMotion.curve,
+    );
   }
 
   void _close() => _settleTo(0);

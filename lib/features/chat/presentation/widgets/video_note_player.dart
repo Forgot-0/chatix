@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/ui/feedback/progress_ring.dart';
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/widgets/viewport_visibility.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
@@ -233,7 +233,7 @@ class _RoundState extends ConsumerState<_Round> {
     final controller = _controller;
     if (controller == null) return;
 
-    unawaited(HapticFeedback.mediumImpact());
+    AppHaptics.longPress();
 
     setState(() => _handedOver = true);
     _sync();

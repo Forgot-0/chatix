@@ -249,10 +249,7 @@ class _ReactionUsersListState extends ConsumerState<ReactionUsersList> {
     }
 
     if (_isLoading && _users.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(AppSpacing.x8),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const AppInlineSkeleton(itemCount: 4, lines: 1);
     }
 
     if (_users.isEmpty) {

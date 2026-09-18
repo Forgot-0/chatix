@@ -240,6 +240,14 @@ abstract final class AppElevations {
 }
 
 /// Animation timing. One curve for everything so motion feels of a piece.
+///
+/// Every duration and curve the app animates with is one of these. A widget
+/// reaching for a `Duration(milliseconds: 240)` of its own is how a design
+/// system drifts: six hand-picked numbers within 40 ms of each other read as
+/// sloppiness rather than as intent, and none of them can be tuned at once.
+/// The scale below is deliberately short — if a new piece of motion does not
+/// fit it, the question is usually what it is trying to say, not which
+/// millisecond it needs.
 abstract final class AppMotion {
   /// Taps, ripples, small state flips.
   static const Duration fast = Duration(milliseconds: 120);
@@ -250,10 +258,55 @@ abstract final class AppMotion {
   /// Page transitions, sheets, anything travelling a long distance.
   static const Duration slow = Duration(milliseconds: 320);
 
+  /// A beat longer than [slow], for the few one-shots that are meant to be
+  /// watched rather than got out of the way: a reaction landing, a sent
+  /// message settling into the feed.
+  static const Duration expressive = Duration(milliseconds: 480);
+
+  /// One breath of something that is happening right now — the recording
+  /// bar's pulse, a live indicator.
+  static const Duration pulse = Duration(milliseconds: 900);
+
+  /// One turn of an ambient loop: typing dots, a shimmer sweep, a connection
+  /// banner. Slow on purpose; a loop faster than this reads as a flicker.
+  static const Duration loop = Duration(milliseconds: 1200);
+
+  /// How long a one-shot stays put before it lets go — a jumped-to message
+  /// staying lit, a toast holding still.
+  static const Duration dwell = Duration(milliseconds: 1400);
+
   static const Curve curve = Curves.easeOutCubic;
 
   /// For the "leaving" half of a transition.
   static const Curve reverseCurve = Curves.easeInCubic;
+
+  /// For a value that travels and stops in one gesture — a slider settling,
+  /// a header collapsing — where easing only one end looks lopsided.
+  static const Curve standard = Curves.easeInOutCubic;
+
+  /// Arrival with a little weight behind it. Used where something has
+  /// travelled and lands: never for something merely appearing.
+  static const Curve arrive = Curves.easeOutBack;
+
+  /// The spring a dragged thing returns on.
+  ///
+  /// Under-damped just enough to overshoot once at speed and not at all when
+  /// let go gently, which is what makes a gesture feel attached to the finger
+  /// rather than animated at it.
+  static const SpringDescription gestureSpring = SpringDescription(
+    mass: 1,
+    stiffness: 420,
+    damping: 26,
+  );
+
+  /// A heavier spring for something with a longer way to travel — a sheet
+  /// snapping shut, a bubble taking off. Critically damped: no overshoot,
+  /// because the thing that overshoots here is a whole card.
+  static const SpringDescription travelSpring = SpringDescription(
+    mass: 1,
+    stiffness: 260,
+    damping: 32,
+  );
 }
 
 /// Picks foregrounds by measured contrast rather than by eye.

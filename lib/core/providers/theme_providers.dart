@@ -49,6 +49,9 @@ class AppearanceController extends Notifier<AppearanceSettings> {
   Future<void> setTextScale(double scale) =>
       _apply(state.copyWith(textScale: scale));
 
+  Future<void> setHaptics(bool enabled) =>
+      _apply(state.copyWith(haptics: enabled));
+
   Future<void> reset() => _apply(const AppearanceSettings());
 
   /// Follows a slider without writing to disk.
@@ -113,4 +116,9 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
 /// The user's own text scale, applied on top of the platform's.
 final textScaleProvider = Provider<double>((ref) {
   return ref.watch(appearanceProvider.select((s) => s.textScale));
+});
+
+/// Whether the app may vibrate, as the user set it.
+final hapticsEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(appearanceProvider.select((s) => s.haptics));
 });

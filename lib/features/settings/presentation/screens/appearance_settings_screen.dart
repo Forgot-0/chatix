@@ -213,6 +213,18 @@ class AppearanceSettingsScreen extends ConsumerWidget {
 
           const Divider(height: AppSpacing.x6),
 
+          // ── Feel ───────────────────────────────────────────────────────
+          _SectionLabel(label: l10n.appearanceFeel),
+          SwitchListTile(
+            value: settings.haptics,
+            onChanged: controller.setHaptics,
+            title: Text(l10n.appearanceHaptics),
+            subtitle: Text(l10n.appearanceHapticsHint),
+            secondary: const Icon(Icons.vibration_outlined),
+          ),
+
+          const Divider(height: AppSpacing.x6),
+
           // ── Media ──────────────────────────────────────────────────────
           _SectionLabel(label: l10n.mediaSectionTitle),
           _Hint(text: l10n.autoDownloadHint),

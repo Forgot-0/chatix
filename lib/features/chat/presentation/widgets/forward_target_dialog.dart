@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
@@ -73,7 +74,7 @@ class ForwardTargetDialogState extends ConsumerState<ForwardTargetDialog> {
       content: SizedBox(
         width: double.maxFinite,
         child: chats.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const AppInlineSkeleton(itemCount: 4, lines: 1),
           error: (_, _) => Text(l10n.chatsLoadFailedShort),
           data: (state) {
             final targets = state.items

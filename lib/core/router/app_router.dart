@@ -8,6 +8,7 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/chats_pane_shell.dart';
 import 'package:chatix/core/router/locale_aware_router.dart';
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/examples/localization_assets_demo.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -546,12 +547,19 @@ String? resolveAuthRedirect({
   return null;
 }
 
+/// The frame or two between "there is a stored session" and knowing whether
+/// it is still good.
+///
+/// Dressed as the chat list it is about to become rather than as a spinner:
+/// this is the first thing the app shows on a cold start, and a list that
+/// fades into focus reads as an app opening where a spinner reads as an app
+/// stalling.
 class _SessionLoadingScreen extends StatelessWidget {
   const _SessionLoadingScreen();
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(body: AppListSkeleton(hasTrailing: true));
   }
 }
 

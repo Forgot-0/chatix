@@ -96,6 +96,7 @@ void main() {
       expect(settings.accentSeed, AppPalette.violet);
       expect(settings.wallpaper, AppWallpaper.aurora);
       expect(settings.textScale, 1);
+      expect(settings.haptics, isTrue);
     });
 
     test('survives a JSON round trip', () {
@@ -105,9 +106,24 @@ void main() {
         accentSeed: AppPalette.mint,
         wallpaperId: 'plain',
         textScale: 1.15,
+        haptics: false,
       );
 
       expect(AppearanceSettings.fromJson(settings.toJson()), settings);
+    });
+
+    test('haptics are on unless they were switched off', () {
+      // Absent, junk and true all mean on: the switch has to be turned off
+      // deliberately, and a corrupt preference is not a decision.
+      expect(AppearanceSettings.fromJson(const {}).haptics, isTrue);
+      expect(
+        AppearanceSettings.fromJson(const {'haptics': 'maybe'}).haptics,
+        isTrue,
+      );
+      expect(
+        AppearanceSettings.fromJson(const {'haptics': false}).haptics,
+        isFalse,
+      );
     });
 
     test('clamps a text scale that would break the layout', () {

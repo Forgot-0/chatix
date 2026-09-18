@@ -146,7 +146,7 @@ class _AccentEyedropperButtonState
       return;
     }
 
-    AppSnackbar.quiet(context, switch (result.status) {
+    AppSnackbar.failure(context, switch (result.status) {
       AvatarAccentStatus.noAvatar => l10n.accentFromAvatarMissing,
       AvatarAccentStatus.noColour => l10n.accentFromAvatarEmpty,
       _ => l10n.accentFromAvatarFailed,

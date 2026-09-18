@@ -2959,4 +2959,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get logoutInProgress => 'Wird abgemeldet …';
+
+  @override
+  String get appearanceFeel => 'Haptik';
+
+  @override
+  String get appearanceHaptics => 'Vibration';
+
+  @override
+  String get appearanceHapticsHint =>
+      'Kurze Vibrationen, wenn eine Nachricht rausgeht, eine Reaktion ankommt oder eine Geste greift. Die Vibrationseinstellung deines Geräts gilt weiterhin.';
 }

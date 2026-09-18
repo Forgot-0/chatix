@@ -65,7 +65,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     ref.listen(profileEditProvider, (previous, next) {
       if (next.hasError && !next.isLoading) {
-        AppSnackbar.quiet(
+        AppSnackbar.failure(
           context,
           friendlyFailureMessage(next.error, fallback: l10n.saveChangesFailed),
         );
@@ -345,7 +345,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         .addContact(profileId, provider: link.provider, contact: link.contact);
 
     if (added || !mounted) return;
-    AppSnackbar.quiet(context, l10n.saveChangesFailed);
+    AppSnackbar.failure(context, l10n.saveChangesFailed);
   }
 
   Future<void> _removeLink(int profileId, ContactEntity contact) async {
@@ -356,7 +356,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         .removeContact(profileId, provider: contact.provider);
 
     if (removed || !mounted) return;
-    AppSnackbar.quiet(context, l10n.saveChangesFailed);
+    AppSnackbar.failure(context, l10n.saveChangesFailed);
   }
 
   Future<({String provider, String contact})?> _askForLink() {

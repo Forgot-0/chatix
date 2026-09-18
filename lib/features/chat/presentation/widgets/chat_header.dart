@@ -63,7 +63,18 @@ class ChatHeaderTitle extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (peer != null) ChatAvatar.profile(peer),
+            if (peer != null)
+              // Flies up into the profile header when the title is tapped.
+              // Only direct chats have a face here; a group's header has
+              // none, so its profile avatar simply arrives.
+              Hero(
+                tag: chatAvatarHeroTag(chatId),
+                flightShuttleBuilder: chatAvatarHeroFlight,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: ChatAvatar.profile(peer),
+                ),
+              ),
             if (peer != null) const SizedBox(width: 10),
             Flexible(
               child: Column(

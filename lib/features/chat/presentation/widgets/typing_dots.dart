@@ -14,7 +14,7 @@ class TypingDots extends StatefulWidget {
     this.color,
     this.dotSize = 5,
     this.spacing = 3,
-    this.period = const Duration(milliseconds: 1200),
+    this.period = AppMotion.loop,
   });
 
   final Color? color;
@@ -100,7 +100,7 @@ class _TypingDotsState extends State<TypingDots>
     final offset = index / TypingDots.dotCount;
     final local = (_controller.value - offset) % 1;
     final wave = local < 0.5 ? local * 2 : (1 - local) * 2;
-    return Curves.easeOutCubic.transform(wave.clamp(0.0, 1.0));
+    return AppMotion.curve.transform(wave.clamp(0.0, 1.0));
   }
 }
 

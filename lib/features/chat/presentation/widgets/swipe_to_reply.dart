@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
-import 'package:flutter/services.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/haptics.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 
 /// Drag a message sideways to reply to it.
 ///
@@ -46,20 +46,14 @@ class _SwipeToReplyState extends State<SwipeToReply>
   // Built in initState rather than lazily: a message that never gets dragged
   // would otherwise create its ticker inside dispose(), which is too late to
   // look up the TickerMode above it.
-  late final AnimationController _offset;
-
-  static const SpringDescription _spring = SpringDescription(
-    mass: 1,
-    stiffness: 420,
-    damping: 26,
-  );
+  late final GestureSpring _offset;
 
   bool _armed = false;
 
   @override
   void initState() {
     super.initState();
-    _offset = AnimationController.unbounded(vsync: this);
+    _offset = GestureSpring(vsync: this);
   }
 
   @override
@@ -71,27 +65,22 @@ class _SwipeToReplyState extends State<SwipeToReply>
   bool get _active => widget.enabled && widget.onReply != null;
 
   void _onUpdate(DragUpdateDetails details) {
-    final next = _resist(_offset.value + details.delta.dx);
-    _offset.value = next;
+    // Rubber-banded past the trigger point: the message keeps following the
+    // finger, with diminishing returns, so the gesture has an obvious
+    // ceiling without hitting a hard stop.
+    _offset.drag(
+      details.delta.dx,
+      threshold: widget.threshold,
+      limit: widget.maxDrag,
+    );
 
-    final armed = next >= widget.threshold;
+    final armed = _offset.value >= widget.threshold;
     if (armed == _armed) return;
 
     _armed = armed;
     // Only on the way in: a haptic on every crossing turns a wobble at the
     // threshold into a burst of buzzing.
-    if (armed) HapticFeedback.selectionClick();
-  }
-
-  /// Past the threshold the message keeps moving, but a third as fast, so the
-  /// drag has an obvious ceiling without hitting a hard stop.
-  double _resist(double raw) {
-    if (raw <= 0) return 0;
-    if (raw <= widget.threshold) return raw;
-
-    final over = raw - widget.threshold;
-    final room = widget.maxDrag - widget.threshold;
-    return widget.threshold + room * (1 - 1 / (1 + over / room));
+    if (armed) AppHaptics.gestureThreshold();
   }
 
   void _onEnd(DragEndDetails details) {
@@ -101,9 +90,11 @@ class _SwipeToReplyState extends State<SwipeToReply>
   }
 
   void _settle(double velocity) {
-    if (_offset.value == 0) return;
-    _offset.animateWith(
-      SpringSimulation(_spring, _offset.value, 0, velocity.clamp(-4000, 4000)),
+    _offset.settle(
+      velocity: velocity,
+      // A spring is a rubber band snapping back. With reduced motion on, the
+      // message simply is where it was before the drag.
+      reducedMotion: context.prefersReducedMotion,
     );
   }
 
@@ -122,7 +113,7 @@ class _SwipeToReplyState extends State<SwipeToReply>
         _settle(0);
       },
       child: AnimatedBuilder(
-        animation: _offset,
+        animation: _offset.animation,
         builder: (context, child) {
           final travel = _offset.value.clamp(0.0, widget.maxDrag);
           final progress = (travel / widget.threshold).clamp(0.0, 1.0);

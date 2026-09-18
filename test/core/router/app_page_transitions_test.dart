@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:chatix/core/router/app_page_transitions.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 
 void main() {
   Widget harness({
@@ -81,7 +82,7 @@ void main() {
       expect(ltr, greaterThan(rtl));
     });
 
-    testWidgets('reduced motion hands the page back untouched', (tester) async {
+    testWidgets('reduced motion degenerates to a cross-fade', (tester) async {
       await tester.pumpWidget(
         harness(
           reduceMotion: true,
@@ -89,8 +90,10 @@ void main() {
         ),
       );
 
+      // The travel is what reduced motion is about: the pages still swap,
+      // they simply do not fly past each other to do it.
       expect(find.byType(SlideTransition), findsNothing);
-      expect(find.byType(FadeTransition), findsNothing);
+      expect(find.byType(FadeTransition), findsWidgets);
       expect(find.text('page'), findsOneWidget);
     });
   });
@@ -109,7 +112,9 @@ void main() {
       expect(find.byType(SlideTransition), findsNothing);
     });
 
-    testWidgets('reduced motion hands the page back untouched', (tester) async {
+    testWidgets('reduced motion drops the scale, keeps the fade', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         harness(
           reduceMotion: true,
@@ -117,8 +122,9 @@ void main() {
         ),
       );
 
-      expect(find.byType(FadeTransition), findsNothing);
       expect(find.byType(ScaleTransition), findsNothing);
+      expect(find.byType(FadeTransition), findsWidgets);
+      expect(find.text('page'), findsOneWidget);
     });
   });
 

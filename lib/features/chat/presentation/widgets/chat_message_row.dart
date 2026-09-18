@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
@@ -117,6 +118,10 @@ class ChatMessageRow extends ConsumerWidget {
           : null,
       onToggleReaction: canReact
           ? (emoji) {
+              // The one place a reaction is put on or taken off, whichever
+              // of the four ways it was asked for — double tap, the menu's
+              // row, the picker, or tapping the chip.
+              AppHaptics.reactionToggled();
               ref.read(recentReactionsProvider.notifier).remember(emoji);
               notifier.toggleReaction(message.id, emoji);
             }
@@ -194,9 +199,7 @@ class ChatMessageRow extends ConsumerWidget {
     if (link.kind == MessageLinkKind.mention) {
       final member = _memberFor(link.target);
       if (member == null) return;
-      context.push(
-        ProfileDetailRoute(member.userId).location,
-      );
+      context.push(ProfileDetailRoute(member.userId).location);
       return;
     }
 

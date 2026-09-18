@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/widgets/app_swipe_actions.dart';
+
+class _RecordingDriver implements HapticDriver {
+  final List<HapticStrength> fired = <HapticStrength>[];
+
+  @override
+  void impact(HapticStrength strength) => fired.add(strength);
+}
 
 void main() {
   late List<String> pressed;
   late int rowTaps;
+  late _RecordingDriver haptics;
 
   setUp(() {
     pressed = <String>[];
     rowTaps = 0;
+    haptics = _RecordingDriver();
+    AppHaptics.reset();
+    AppHaptics.driver = haptics;
   });
+
+  tearDown(AppHaptics.reset);
 
   SwipeAction action(String label) => SwipeAction(
     icon: Icons.check,
@@ -139,5 +153,51 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Archive'), findsNothing);
+  });
+
+  testWidgets('the drag ticks once as it passes the point of no return', (
+    tester,
+  ) async {
+    await pumpRow(tester, trailing: [action('Archive')]);
+
+    final row = find.text('row');
+    final start = tester.getCenter(row);
+    final gesture = await tester.startGesture(start);
+
+    // Short of halfway: nothing has changed meaning yet.
+    await gesture.moveBy(const Offset(-20, 0));
+    await tester.pump();
+    expect(haptics.fired, isEmpty);
+
+    // Past it, in several steps — one crossing, one tick.
+    for (var i = 0; i < 4; i++) {
+      await gesture.moveBy(const Offset(-20, 0));
+      await tester.pump();
+    }
+    expect(haptics.fired, [HapticStrength.selection]);
+
+    // Wobbling back and forth over the line does not turn it into a buzz.
+    await gesture.moveBy(const Offset(40, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(-40, 0));
+    await tester.pump();
+    expect(haptics.fired, hasLength(2));
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('with haptics switched off the gesture is silent', (
+    tester,
+  ) async {
+    AppHaptics.setEnabled(false);
+    await pumpRow(tester, trailing: [action('Archive')]);
+
+    await tester.drag(find.text('row'), const Offset(-160, 0));
+    await tester.pumpAndSettle();
+
+    expect(haptics.fired, isEmpty);
+    // And the gesture itself still worked.
+    expect(find.text('Archive'), findsOneWidget);
   });
 }

@@ -2870,4 +2870,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get logoutInProgress => 'ログアウトしています…';
+
+  @override
+  String get appearanceFeel => '触感';
+
+  @override
+  String get appearanceHaptics => '触覚フィードバック';
+
+  @override
+  String get appearanceHapticsHint =>
+      'メッセージの送信、リアクション、ジェスチャーの完了時に短く振動します。端末側の振動設定が優先されます。';
 }

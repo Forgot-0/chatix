@@ -2922,4 +2922,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get logoutInProgress => 'লগ আউট করা হচ্ছে…';
+
+  @override
+  String get appearanceFeel => 'অনুভব';
+
+  @override
+  String get appearanceHaptics => 'হ্যাপটিক ফিডব্যাক';
+
+  @override
+  String get appearanceHapticsHint =>
+      'বার্তা পাঠানো, রিঅ্যাকশন বসানো বা কোনও জেসচার সম্পূর্ণ হলে ছোট কম্পন। আপনার ডিভাইসের নিজস্ব কম্পন সেটিং আগের মতোই কার্যকর।';
 }

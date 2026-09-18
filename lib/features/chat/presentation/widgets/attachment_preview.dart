@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -148,13 +149,12 @@ class AttachmentImagePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
+    // A shimmering tile rather than a spinner on a tile: the picture is on
+    // its way, and the placeholder is the same shape it will be.
+    return ColoredBox(
       color: scheme.surfaceContainerHighest,
-      alignment: Alignment.center,
-      child: const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
+      child: const AppSkeleton(
+        child: SizedBox.expand(child: AppBone(height: double.infinity)),
       ),
     );
   }

@@ -2925,4 +2925,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logoutInProgress => 'Signing out…';
+
+  @override
+  String get appearanceFeel => 'Feel';
+
+  @override
+  String get appearanceHaptics => 'Haptic feedback';
+
+  @override
+  String get appearanceHapticsHint =>
+      'Short vibrations when a message goes out, a reaction lands or a gesture takes. Your device\'s own vibration setting still applies.';
 }

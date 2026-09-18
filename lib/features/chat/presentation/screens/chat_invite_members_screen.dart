@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
@@ -66,7 +67,10 @@ class _ChatInviteMembersScreenState
     final me = state.me;
 
     if (!hasChatPermission(chat, me, ChatPermissions.memberInvite)) {
-      return AppEmptyState(title: l10n.membersEmptyNoInvite);
+      return AppEmptyState(
+        illustration: AppIllustrationKind.locked,
+        title: l10n.membersEmptyNoInvite,
+      );
     }
 
     final room = remainingMemberSlots(
@@ -75,6 +79,7 @@ class _ChatInviteMembersScreenState
     );
     if (room == 0) {
       return AppEmptyState(
+        illustration: AppIllustrationKind.people,
         title: l10n.inviteChatFull(
           chatMemberCapacity(chat?.type ?? ChatType.group),
         ),

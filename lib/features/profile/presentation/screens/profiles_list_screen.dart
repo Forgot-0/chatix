@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_list_provider.dart';
@@ -96,9 +97,9 @@ class _ProfilesListScreenState extends ConsumerState<ProfilesListScreen> {
                     onRefresh: () =>
                         ref.read(profileListProvider.notifier).refresh(),
                     child: AppEmptyState(
-                      icon: isSearching
-                          ? Icons.person_search_outlined
-                          : Icons.people_outline,
+                      illustration: isSearching
+                          ? AppIllustrationKind.search
+                          : AppIllustrationKind.people,
                       title: isSearching
                           ? AppLocalizations.of(context).noContactsFound
                           : AppLocalizations.of(context).noContactsYet,

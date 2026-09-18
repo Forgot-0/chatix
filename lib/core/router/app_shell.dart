@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_layout.dart';
-import 'package:chatix/core/router/app_page_transitions.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/ui/haptics.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -171,7 +171,7 @@ class _AppShellScaffold extends ConsumerWidget {
   }
 
   Future<void> _openChatQuickActions(BuildContext context) async {
-    HapticFeedback.selectionClick();
+    AppHaptics.longPress();
 
     // A long press is a shortcut, not a navigation: it should not move the
     // user off whatever tab they are on if they dismiss the sheet.

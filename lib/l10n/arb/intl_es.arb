@@ -917,5 +917,8 @@
   "logoutConfirmBody": "Este dispositivo olvidará tus mensajes, borradores y archivos descargados. Tu cuenta no cambia.",
   "logoutAction": "Cerrar sesión",
   "logoutFailed": "No se ha podido cerrar la sesión. Inténtalo de nuevo.",
-  "logoutInProgress": "Cerrando sesión…"
+  "logoutInProgress": "Cerrando sesión…",
+  "appearanceFeel": "Tacto",
+  "appearanceHaptics": "Vibraci\u00f3n",
+  "appearanceHapticsHint": "Vibraciones breves al enviar un mensaje, al reaccionar o al completar un gesto. La configuraci\u00f3n de vibraci\u00f3n de tu dispositivo sigue mandando."
 }

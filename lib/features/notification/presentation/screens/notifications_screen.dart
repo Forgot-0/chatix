@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/notification/domain/entities/notification_entity.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
@@ -65,7 +66,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (!mounted) return;
 
     if (failure != null) {
-      AppSnackbar.quiet(
+      AppSnackbar.failure(
         context,
         friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
       );
@@ -85,14 +86,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (!mounted) return;
 
     result.match(
-      (failure) => AppSnackbar.quiet(
+      (failure) => AppSnackbar.failure(
         context,
         friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
       ),
       // `PATCH /notifications/read_all/` answers with a bare number, not an
       // object (api-docs §7.4) — it is how many rows it touched, and saying
       // so is the whole confirmation.
-      (count) => AppSnackbar.quiet(context, l10n.notificationsMarkedRead(count)),
+      (count) =>
+          AppSnackbar.quiet(context, l10n.notificationsMarkedRead(count)),
     );
   }
 
@@ -149,9 +151,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   key: const PageStorageKey<String>('notifications-list'),
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.x2,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.x2),
                   itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
                   separatorBuilder: (_, _) =>
                       const SizedBox(height: AppSpacing.x1),
@@ -214,9 +214,9 @@ class _EmptyState extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return AppEmptyState(
-      icon: switch (filter) {
-        null => Icons.notifications_none_outlined,
-        _ => Icons.filter_list_off,
+      illustration: switch (filter) {
+        null => AppIllustrationKind.notifications,
+        _ => AppIllustrationKind.search,
       },
       title: switch (filter) {
         null => l10n.notificationsEmptyTitle,
@@ -281,7 +281,9 @@ class _NotificationTile extends StatelessWidget {
                   child: Icon(
                     _iconFor(notification.type),
                     size: 20,
-                    color: isUnread ? scheme.onPrimary : scheme.onSurfaceVariant,
+                    color: isUnread
+                        ? scheme.onPrimary
+                        : scheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(width: AppSpacing.x3),

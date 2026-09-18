@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart'
     show VideoTrackRenderer, VideoViewFit;
 
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/call_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/call_quality_indicator.dart';
@@ -67,7 +69,7 @@ class CallParticipantTile extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: context.motion(AppMotion.base),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(radius),

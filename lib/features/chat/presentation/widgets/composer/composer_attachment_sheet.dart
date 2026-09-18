@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/data/datasources/recent_media_source.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
@@ -370,10 +371,7 @@ class RecentMediaStrip extends StatelessWidget {
 
     if (state.items.isEmpty) {
       return state.isLoading
-          ? const SizedBox(
-              height: tile,
-              child: Center(child: CircularProgressIndicator()),
-            )
+          ? const _GallerySkeleton(height: tile)
           : const SizedBox.shrink();
     }
 
@@ -534,6 +532,39 @@ class _Badge extends StatelessWidget {
           color: scheme.onPrimary,
           fontSize: 11,
           fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// The gallery strip before the first thumbnails are decoded.
+///
+/// The same tiles in the same places, so the sheet does not resize under the
+/// thumb when they arrive.
+class _GallerySkeleton extends StatelessWidget {
+  const _GallerySkeleton({required this.height});
+
+  final double height;
+
+  static const int _tiles = 4;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height,
+      child: AppSkeleton(
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+          itemCount: _tiles,
+          itemBuilder: (context, index) => AppBone(
+            width: height,
+            height: height,
+            radius: AppRadii.md,
+            margin: const EdgeInsets.only(right: AppSpacing.x2),
+          ),
         ),
       ),
     );

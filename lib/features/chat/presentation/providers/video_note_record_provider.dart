@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 
@@ -20,7 +20,7 @@ class ComposerRecordModeController extends Notifier<ComposerRecordMode> {
   ComposerRecordMode build() => ComposerRecordMode.voice;
 
   void toggle() {
-    unawaited(HapticFeedback.selectionClick());
+    AppHaptics.selection();
     state = state == ComposerRecordMode.voice
         ? ComposerRecordMode.videoNote
         : ComposerRecordMode.voice;
@@ -209,7 +209,7 @@ class VideoNoteRecordController extends Notifier<VideoNoteRecordState> {
 
     // The start of a take is the one moment the thumb is over the button and
     // cannot see it.
-    unawaited(HapticFeedback.mediumImpact());
+    AppHaptics.recordingStarted();
 
     state = VideoNoteRecordState(
       stage: VideoNoteStage.recording,
@@ -245,7 +245,7 @@ class VideoNoteRecordController extends Notifier<VideoNoteRecordState> {
       return;
     }
 
-    unawaited(HapticFeedback.heavyImpact());
+    AppHaptics.recordingLimit();
     state = VideoNoteRecordState(
       stage: VideoNoteStage.completed,
       elapsed: elapsed,
@@ -264,7 +264,7 @@ class VideoNoteRecordController extends Notifier<VideoNoteRecordState> {
     }
 
     if (willCancel && !state.willCancel) {
-      unawaited(HapticFeedback.selectionClick());
+      AppHaptics.gestureThreshold();
     }
 
     state = state.copyWith(cancelProgress: clamped, willCancel: willCancel);
@@ -273,7 +273,7 @@ class VideoNoteRecordController extends Notifier<VideoNoteRecordState> {
   void lock() {
     if (state.stage != VideoNoteStage.recording) return;
 
-    unawaited(HapticFeedback.mediumImpact());
+    AppHaptics.recordingLocked();
     state = state.copyWith(
       stage: VideoNoteStage.locked,
       willCancel: false,
@@ -287,7 +287,7 @@ class VideoNoteRecordController extends Notifier<VideoNoteRecordState> {
     final recorder = _recorder;
     if (recorder == null || !recorder.canSwitchLens) return;
 
-    unawaited(HapticFeedback.selectionClick());
+    AppHaptics.selection();
     await recorder.switchLens();
 
     state = state.copyWith(
@@ -337,7 +337,7 @@ class VideoNoteRecordController extends Notifier<VideoNoteRecordState> {
     _completed = null;
     state = const VideoNoteRecordState();
 
-    unawaited(HapticFeedback.lightImpact());
+    AppHaptics.recordingCancelled();
 
     await _recorder?.cancel();
     await _release();

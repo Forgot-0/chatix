@@ -6,6 +6,9 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
@@ -17,6 +20,7 @@ import 'package:chatix/features/chat/presentation/widgets/chat_jump_button.dart'
 import 'package:chatix/features/chat/presentation/widgets/chat_message_row.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_pending_bubble.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_wallpaper.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_takeoff.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The conversation itself: the wallpaper it sits on, the messages, and the
@@ -77,7 +81,7 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
   static const Duration _settleDelay = Duration(milliseconds: 700);
 
   /// How long a jumped-to message stays lit before it fades back.
-  static const Duration _flash = Duration(milliseconds: 1400);
+  static const Duration _flash = AppMotion.dwell;
 
   final _scrollController = ScrollController();
   final _listKey = GlobalKey();
@@ -253,11 +257,26 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
   }
 
   Widget _buildEmpty(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // Scrollable even with nothing in it, so pull-to-refresh still works on
+    // a conversation that has not started yet.
     return ListView(
       controller: _scrollController,
       children: [
-        const SizedBox(height: 120),
-        Center(child: Text(AppLocalizations.of(context).noMessagesYet)),
+        const SizedBox(height: 96),
+        const Center(
+          child: AppIllustration(kind: AppIllustrationKind.messages),
+        ),
+        const SizedBox(height: AppSpacing.x4),
+        Center(
+          child: Text(
+            AppLocalizations.of(context).noMessagesYet,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -294,10 +313,15 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
         FeedLoadMoreItem() => const RepaintBoundary(
           child: AppLoadMoreIndicator(),
         ),
+        // The one row that was put there by this device rather than by the
+        // server, and the only one that gets an entrance: it flies up out of
+        // the composer it just left.
         FeedPendingItem() => RepaintBoundary(
-          child: ChatPendingBubble(
-            pending: widget.state.pending[item.index],
-            chatId: widget.chatId,
+          child: MessageTakeoff(
+            child: ChatPendingBubble(
+              pending: widget.state.pending[item.index],
+              chatId: widget.chatId,
+            ),
           ),
         ),
         FeedMessageItem() => ChatMessageRow(
@@ -408,7 +432,9 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
     if (!_scrollController.hasClients) return;
     _scrollController.animateTo(
       0,
-      duration: ChatixTheme.duration,
+      // Reduced motion means the list is simply at the bottom: a page of
+      // messages flying past is the loudest movement in the app.
+      duration: context.motion(ChatixTheme.duration),
       curve: ChatixTheme.curve,
     );
   }
@@ -520,7 +546,7 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
       _finishTarget(
         _scrollController.animateTo(
           reveal.clamp(position.minScrollExtent, position.maxScrollExtent),
-          duration: ChatixTheme.duration,
+          duration: context.motion(ChatixTheme.duration),
           curve: ChatixTheme.curve,
         ),
       );

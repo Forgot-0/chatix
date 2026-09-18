@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/router/app_layout.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -74,7 +75,7 @@ class NoChatSelectedPane extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       body: AppEmptyState(
-        icon: Icons.forum_outlined,
+        illustration: AppIllustrationKind.conversations,
         title: l10n.noChatSelected,
         message: l10n.noChatSelectedHint,
       ),

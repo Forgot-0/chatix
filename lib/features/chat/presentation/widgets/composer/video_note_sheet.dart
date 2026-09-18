@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/presentation/widgets/video_note_lens_view.dart';
@@ -98,7 +98,7 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
   }
 
   Future<void> _begin() async {
-    HapticFeedback.mediumImpact();
+    AppHaptics.recordingStarted();
     await _recorder.start();
     if (!mounted) return;
 
@@ -121,7 +121,7 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
 
     _ticker?.cancel();
     _ticker = null;
-    HapticFeedback.selectionClick();
+    AppHaptics.recordingLocked();
 
     final take = await _recorder.stop();
     if (!mounted) return;
@@ -147,7 +147,7 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
     if (_isSwitchingLens || _recorder.isRecording) return;
 
     setState(() => _isSwitchingLens = true);
-    HapticFeedback.selectionClick();
+    AppHaptics.selection();
 
     await _recorder.switchLens();
     if (!mounted) return;

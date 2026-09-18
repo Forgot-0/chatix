@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/permissions/media_permissions.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
@@ -159,8 +161,8 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                       },
                     ),
                     AnimatedSize(
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOutCubic,
+                      duration: context.motion(AppMotion.base),
+                      curve: AppMotion.curve,
                       child: call.isLive && _controlsVisible
                           ? CallControlsBar(
                               isMicrophoneEnabled: call.isMicrophoneEnabled,
@@ -481,7 +483,7 @@ class _Header extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 180),
+      duration: context.motion(AppMotion.base),
       opacity: visible ? 1 : 0,
       child: IgnorePointer(
         ignoring: !visible,

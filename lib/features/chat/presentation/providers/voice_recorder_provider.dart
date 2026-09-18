@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/voice_waveform.dart';
@@ -78,9 +78,8 @@ class VoiceRecordState extends Equatable {
       elapsed.inSeconds >= ChatAttachmentLimits.voiceWarnAfterSeconds;
 
   Duration get remaining => Duration(
-    seconds:
-        (ChatAttachmentLimits.maxVoiceDurationSeconds - elapsed.inSeconds)
-            .clamp(0, ChatAttachmentLimits.maxVoiceDurationSeconds),
+    seconds: (ChatAttachmentLimits.maxVoiceDurationSeconds - elapsed.inSeconds)
+        .clamp(0, ChatAttachmentLimits.maxVoiceDurationSeconds),
   );
 
   VoiceRecordState copyWith({
@@ -168,7 +167,7 @@ class VoiceRecordController extends Notifier<VoiceRecordState> {
 
     // The start of a recording is the one moment the thumb is covering the
     // button and cannot see it.
-    unawaited(HapticFeedback.mediumImpact());
+    AppHaptics.recordingStarted();
 
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
 
@@ -189,7 +188,7 @@ class VoiceRecordController extends Notifier<VoiceRecordState> {
     }
     if (next.isNearLimit && !_warned) {
       _warned = true;
-      unawaited(HapticFeedback.heavyImpact());
+      AppHaptics.recordingLimit();
     }
   }
 
@@ -221,7 +220,7 @@ class VoiceRecordController extends Notifier<VoiceRecordState> {
 
     // The limit is worth feeling: the microphone closing is the one thing
     // here that nobody asked for.
-    unawaited(HapticFeedback.heavyImpact());
+    AppHaptics.recordingLimit();
     state = VoiceRecordState(
       stage: VoiceRecordStage.completed,
       elapsed: elapsed,
@@ -255,7 +254,7 @@ class VoiceRecordController extends Notifier<VoiceRecordState> {
 
     // Felt once, as the slide crosses the line — the moment the gesture
     // changes meaning is the moment worth reporting.
-    if (willCancel && !state.willCancel) unawaited(HapticFeedback.selectionClick());
+    if (willCancel && !state.willCancel) AppHaptics.gestureThreshold();
 
     state = state.copyWith(cancelProgress: clamped, willCancel: willCancel);
   }
@@ -263,7 +262,7 @@ class VoiceRecordController extends Notifier<VoiceRecordState> {
   void lock() {
     if (state.stage != VoiceRecordStage.holding) return;
 
-    unawaited(HapticFeedback.mediumImpact());
+    AppHaptics.recordingLocked();
     state = state.copyWith(
       stage: VoiceRecordStage.locked,
       willCancel: false,
@@ -303,7 +302,7 @@ class VoiceRecordController extends Notifier<VoiceRecordState> {
     _completed = null;
     state = const VoiceRecordState();
 
-    unawaited(HapticFeedback.lightImpact());
+    AppHaptics.recordingCancelled();
 
     // Either the microphone is still open and the recorder throws the file
     // away with it, or the cap already closed it and the file is ours to

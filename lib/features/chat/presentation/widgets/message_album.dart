@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/album_mosaic.dart';
@@ -11,6 +12,16 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// The Hero tag shared by an attachment's tile in the feed and its page in
 /// the viewer. Ids are UUIDs, so one tag per attachment is enough.
 String attachmentHeroTag(String attachmentId) => 'attachment-$attachmentId';
+
+/// How an attachment flies between the mosaic and the viewer: rounded like a
+/// tile at one end, full-bleed at the other, unrounding on the way.
+///
+/// The fraction is the mosaic's own corner as a share of a tile's shortest
+/// side — small, because a tile is much bigger than its 4 px radius.
+final HeroFlightShuttleBuilder attachmentHeroFlight = AppHeroFlight.corners(
+  fromFactor: 0.03,
+  toFactor: 0,
+);
 
 /// The photos and videos of one message, as a mosaic.
 ///
@@ -140,7 +151,14 @@ class _AlbumTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => onOpen!(attachment),
-      child: Hero(tag: attachmentHeroTag(attachment.id), child: content),
+      child: Hero(
+        tag: attachmentHeroTag(attachment.id),
+        // The mosaic's rounding lives in an ancestor clip, which the flight
+        // leaves behind: without this the tile squares off the instant it is
+        // tapped. Named on both ends of the pair so the pop rounds it back.
+        flightShuttleBuilder: attachmentHeroFlight,
+        child: content,
+      ),
     );
   }
 }
@@ -174,10 +192,7 @@ class _VideoTile extends StatelessWidget {
               left: 6,
               bottom: 6,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(8),

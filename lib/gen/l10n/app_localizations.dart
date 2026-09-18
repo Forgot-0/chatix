@@ -5115,6 +5115,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signing out…'**
   String get logoutInProgress;
+
+  /// Section header above the haptics switch in appearance settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Feel'**
+  String get appearanceFeel;
+
+  /// Title of the switch that turns the app's vibrations on and off.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptic feedback'**
+  String get appearanceHaptics;
+
+  /// Subtitle of the haptics switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Short vibrations when a message goes out, a reaction lands or a gesture takes. Your device\'s own vibration setting still applies.'**
+  String get appearanceHapticsHint;
 }
 
 class _AppLocalizationsDelegate

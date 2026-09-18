@@ -4,7 +4,73 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
+import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
+
+/// The shimmer every skeleton in the app sweeps with.
+///
+/// Wrap a layout of [AppBone]s in it. Two things it does that a bare
+/// [Shimmer] does not: it takes its colours from the theme, so a skeleton is
+/// right in both themes without the caller thinking about it, and it stops
+/// sweeping when the reader has asked for less motion — a loading placeholder
+/// is the last thing that should be pulsing at somebody who turned animation
+/// off. The bones are still there; they simply hold still.
+class AppSkeleton extends StatelessWidget {
+  const AppSkeleton({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final base = scheme.surfaceContainerHighest;
+
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: Color.alphaBlend(
+        scheme.surface.withValues(alpha: 0.6),
+        base,
+      ),
+      period: AppMotion.loop,
+      enabled: !context.prefersReducedMotion,
+      child: ExcludeSemantics(child: child),
+    );
+  }
+}
+
+/// One rectangle of a skeleton: where a line of text or a thumbnail will be.
+///
+/// Painted white on purpose — [AppSkeleton] is what gives it its colour, and
+/// the shimmer gradient needs an opaque child to mask.
+class AppBone extends StatelessWidget {
+  const AppBone({
+    super.key,
+    this.width,
+    required this.height,
+    this.radius = AppRadii.sm,
+    this.margin,
+  });
+
+  final double? width;
+  final double height;
+  final double radius;
+  final EdgeInsetsGeometry? margin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+}
 
 class AppListSkeleton extends StatelessWidget {
   const AppListSkeleton({
@@ -28,27 +94,16 @@ class AppListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final base = theme.colorScheme.surfaceContainerHighest;
-    final highlight = Color.alphaBlend(
-      theme.colorScheme.surface.withValues(alpha: 0.6),
-      base,
-    );
-
-    return Shimmer.fromColors(
-      baseColor: base,
-      highlightColor: highlight,
-      child: ExcludeSemantics(
-        child: ListView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          padding: padding,
-          itemCount: itemCount,
-          itemBuilder: (context, index) => _SkeletonRow(
-            hasLeading: hasLeading,
-            hasTrailing: hasTrailing,
-            lines: lines,
-            titleWidthFactor: _titleWidths[index % _titleWidths.length],
-          ),
+    return AppSkeleton(
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: padding,
+        itemCount: itemCount,
+        itemBuilder: (context, index) => _SkeletonRow(
+          hasLeading: hasLeading,
+          hasTrailing: hasTrailing,
+          lines: lines,
+          titleWidthFactor: _titleWidths[index % _titleWidths.length],
         ),
       ),
     );
@@ -78,7 +133,7 @@ class _SkeletonRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (hasLeading) ...[
-            const _Bone(width: 40, height: 40, radius: 20),
+            const AppBone(width: 40, height: 40, radius: AppRadii.full),
             const SizedBox(width: 12),
           ],
           Expanded(
@@ -88,14 +143,14 @@ class _SkeletonRow extends StatelessWidget {
                 FractionallySizedBox(
                   alignment: Alignment.centerLeft,
                   widthFactor: titleWidthFactor,
-                  child: const _Bone(height: 14),
+                  child: const AppBone(height: 14),
                 ),
                 if (lines > 1) ...[
                   const SizedBox(height: 8),
                   const FractionallySizedBox(
                     alignment: Alignment.centerLeft,
                     widthFactor: 0.85,
-                    child: _Bone(height: 11),
+                    child: AppBone(height: 11),
                   ),
                 ],
               ],
@@ -103,7 +158,7 @@ class _SkeletonRow extends StatelessWidget {
           ),
           if (hasTrailing) ...[
             const SizedBox(width: 12),
-            const _Bone(width: 32, height: 12),
+            const AppBone(width: 32, height: 12),
           ],
         ],
       ),
@@ -111,32 +166,20 @@ class _SkeletonRow extends StatelessWidget {
   }
 }
 
-class _Bone extends StatelessWidget {
-  const _Bone({this.width, required this.height, this.radius = 6});
-
-  final double? width;
-  final double height;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(radius),
-      ),
-    );
-  }
-}
-
+/// Nothing to show, said properly.
+///
+/// The picture is a drawing rather than an icon wherever the caller can name
+/// what the screen is empty of — see [AppIllustrationKind]. A 56 px outlined
+/// glyph is what a list looks like when it has failed to load; a drawing is
+/// what it looks like when it is simply new, and telling those two apart
+/// without reading is most of this widget's job.
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     super.key,
     required this.title,
     this.message,
     this.icon = Icons.inbox_outlined,
+    this.illustration,
     this.action,
   });
 
@@ -144,7 +187,12 @@ class AppEmptyState extends StatelessWidget {
 
   final String? message;
 
+  /// Drawn only when [illustration] is null — the fallback for a state
+  /// nobody has drawn a picture for yet.
   final IconData icon;
+
+  /// What the screen is empty of. Preferred over [icon].
+  final AppIllustrationKind? illustration;
 
   final Widget? action;
 
@@ -163,8 +211,11 @@ class AppEmptyState extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, size: 56, color: theme.colorScheme.outline),
-                  const SizedBox(height: 16),
+                  if (illustration case final kind?)
+                    AppIllustration(kind: kind)
+                  else
+                    Icon(icon, size: 56, color: theme.colorScheme.outline),
+                  const SizedBox(height: AppSpacing.x4),
                   Text(
                     title,
                     style: theme.textTheme.titleMedium,
@@ -345,28 +396,17 @@ class AppInlineSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final base = theme.colorScheme.surfaceContainerHighest;
-    final highlight = Color.alphaBlend(
-      theme.colorScheme.surface.withValues(alpha: 0.6),
-      base,
-    );
-
-    return Shimmer.fromColors(
-      baseColor: base,
-      highlightColor: highlight,
-      child: ExcludeSemantics(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(
-            itemCount,
-            (index) => _SkeletonRow(
-              hasLeading: hasLeading,
-              hasTrailing: false,
-              lines: lines,
-              titleWidthFactor: AppListSkeleton
-                  ._titleWidths[index % AppListSkeleton._titleWidths.length],
-            ),
+    return AppSkeleton(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(
+          itemCount,
+          (index) => _SkeletonRow(
+            hasLeading: hasLeading,
+            hasTrailing: false,
+            lines: lines,
+            titleWidthFactor: AppListSkeleton
+                ._titleWidths[index % AppListSkeleton._titleWidths.length],
           ),
         ),
       ),

@@ -917,5 +917,8 @@
   "logoutConfirmBody": "Cet appareil oubliera vos messages, vos brouillons et vos fichiers téléchargés. Votre compte reste inchangé.",
   "logoutAction": "Se déconnecter",
   "logoutFailed": "La déconnexion a échoué. Réessayez.",
-  "logoutInProgress": "Déconnexion…"
+  "logoutInProgress": "Déconnexion…",
+  "appearanceFeel": "Sensations",
+  "appearanceHaptics": "Retour haptique",
+  "appearanceHapticsHint": "De br\u00e8ves vibrations quand un message part, qu'une r\u00e9action arrive ou qu'un geste aboutit. Le r\u00e9glage de vibration de votre appareil reste prioritaire."
 }

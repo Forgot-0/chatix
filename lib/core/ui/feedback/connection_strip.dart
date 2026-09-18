@@ -57,7 +57,7 @@ class _ConnectionStripState extends State<ConnectionStrip>
     with SingleTickerProviderStateMixin {
   late final AnimationController _sweep = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: AppMotion.loop,
   );
 
   @override

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -178,7 +179,7 @@ class _ChatsList extends ConsumerWidget {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: AppEmptyState(
-          icon: Icons.forum_outlined,
+          illustration: AppIllustrationKind.conversations,
           title: l10n.noChatsYet,
           message: l10n.noChatsYetHint,
           action: FilledButton.icon(
@@ -208,7 +209,9 @@ class _ChatsList extends ConsumerWidget {
             ),
           if (archived.isNotEmpty && archiveOpen)
             _rows(archived, isLast: false, readState: archive),
-          if (archived.isNotEmpty && archiveOpen && (archive?.canLoadMore ?? false))
+          if (archived.isNotEmpty &&
+              archiveOpen &&
+              (archive?.canLoadMore ?? false))
             SliverToBoxAdapter(
               child: Center(
                 child: TextButton(

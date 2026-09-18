@@ -48,15 +48,12 @@ class _BiometricUnlockTileState extends ConsumerState<BiometricUnlockTile> {
     setState(() => _busy = false);
 
     if (result != BiometricResult.success) {
-      AppSnackbar.quiet(
-        context,
-        switch (result) {
-          BiometricResult.lockedOut => l10n.biometricUnlockLockedOut,
-          BiometricResult.notEnrolled ||
-          BiometricResult.notAvailable => l10n.biometricUnlockNotEnrolled,
-          _ => l10n.biometricUnlockEnableFailed,
-        },
-      );
+      AppSnackbar.failure(context, switch (result) {
+        BiometricResult.lockedOut => l10n.biometricUnlockLockedOut,
+        BiometricResult.notEnrolled ||
+        BiometricResult.notAvailable => l10n.biometricUnlockNotEnrolled,
+        _ => l10n.biometricUnlockEnableFailed,
+      });
       return;
     }
 

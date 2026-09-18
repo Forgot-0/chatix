@@ -31,8 +31,9 @@ class AppConstants {
   static const String cacheBox = 'cache';
   static const String offlineSyncBox = 'offlineSync';
 
-  static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
-
+  /// How long a tooltip stays up once it has been asked for. Reading time
+  /// rather than motion, so it is not one of the `AppMotion` tokens — those
+  /// are the only place an animation's duration may come from.
   static const Duration accessibilityTooltipDuration = Duration(seconds: 5);
   static const double accessibilityTouchTargetMinSize = 48.0;
 

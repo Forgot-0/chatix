@@ -81,11 +81,7 @@ class OnboardingGlyph extends StatelessWidget {
 
 /// The row of dots under the pages.
 class OnboardingDots extends StatelessWidget {
-  const OnboardingDots({
-    required this.count,
-    required this.current,
-    super.key,
-  });
+  const OnboardingDots({required this.count, required this.current, super.key});
 
   final int count;
   final int current;
@@ -100,16 +96,14 @@ class OnboardingDots extends StatelessWidget {
       children: [
         for (var index = 0; index < count; index++)
           AnimatedContainer(
-            duration: still ? Duration.zero : const Duration(milliseconds: 240),
-            curve: Curves.easeOut,
+            duration: still ? Duration.zero : AppMotion.base,
+            curve: AppMotion.curve,
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.x1),
             height: 6,
             width: index == current ? 22 : 6,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadii.full),
-              color: index == current
-                  ? scheme.primary
-                  : scheme.outlineVariant,
+              color: index == current ? scheme.primary : scheme.outlineVariant,
             ),
           ),
       ],

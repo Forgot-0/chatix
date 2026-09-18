@@ -55,7 +55,7 @@ class _SignOutTileState extends ConsumerState<SignOutTile> {
     setState(() => _busy = false);
 
     if (ref.read(authProvider).hasError) {
-      AppSnackbar.quiet(context, l10n.logoutFailed);
+      AppSnackbar.failure(context, l10n.logoutFailed);
     }
   }
 

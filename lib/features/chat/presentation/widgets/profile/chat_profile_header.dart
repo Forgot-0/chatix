@@ -71,11 +71,7 @@ class ChatProfileHeader extends SliverPersistentHeaderDelegate {
     final avatar = lerpDouble(_bigAvatar, _smallAvatar, t)!;
     final width = MediaQuery.sizeOf(context).width;
 
-    final avatarLeft = lerpDouble(
-      (width - _bigAvatar) / 2,
-      _leadingInset,
-      t,
-    )!;
+    final avatarLeft = lerpDouble((width - _bigAvatar) / 2, _leadingInset, t)!;
     final avatarTop = lerpDouble(
       topPadding + 20,
       topPadding + (collapsedHeight - _smallAvatar) / 2,
@@ -135,15 +131,21 @@ class ChatProfileHeader extends SliverPersistentHeaderDelegate {
             top: avatarTop,
             width: avatar,
             height: avatar,
-            child: FittedBox(
-              // The picture is resolved at the largest size it will be drawn
-              // at and scaled down from there, so shrinking it costs no
-              // second decode and never looks soft.
-              fit: BoxFit.contain,
-              child: ChatRowAvatar(
-                chat: chat,
-                myUserId: myUserId,
-                size: ChatAvatarSize.lg,
+            child: Hero(
+              tag: chatAvatarHeroTag(chat.id),
+              flightShuttleBuilder: chatAvatarHeroFlight,
+              // The fit is inside the Hero: the flight resizes the box it
+              // carries, and a fixed 96 px avatar would overflow it.
+              child: FittedBox(
+                // The picture is resolved at the largest size it will be
+                // drawn at and scaled down from there, so shrinking it costs
+                // no second decode and never looks soft.
+                fit: BoxFit.contain,
+                child: ChatRowAvatar(
+                  chat: chat,
+                  myUserId: myUserId,
+                  size: ChatAvatarSize.lg,
+                ),
               ),
             ),
           ),
