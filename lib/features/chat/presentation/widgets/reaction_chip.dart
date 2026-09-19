@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// Draws the face of one of the people behind a reaction.
 ///
@@ -68,10 +69,19 @@ class ReactionChip extends StatelessWidget {
 
     final faces = recentUserIds.take(maxFaces).toList();
 
+    final l10n = AppLocalizations.of(context);
+
+    // "👍 2" is what the eye reads; a screen reader needs the noun and the
+    // plural rule of the reader's own language, and whether one of the two
+    // is theirs.
+    final label = selected
+        ? '$emoji, ${l10n.a11yReactions(count)}, ${l10n.a11yReactionYours}'
+        : '$emoji, ${l10n.a11yReactions(count)}';
+
     return Semantics(
       button: onTap != null,
       selected: selected,
-      label: '$emoji $count',
+      label: label,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,

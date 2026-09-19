@@ -18,7 +18,23 @@ void main() {
     test('is violet, not the Material default blue', () {
       expect(AppTheme.lightTheme.colorScheme.primary, AppPalette.violet);
       expect(AppTheme.lightTheme.colorScheme.secondary, AppPalette.mint);
-      expect(AppTheme.lightTheme.colorScheme.error, AppPalette.coral);
+    });
+
+    test('the error colour is the one that reads on its own ground', () {
+      // Coral is 2.9:1 on the light canvas — a fill colour, not a word.
+      expect(AppTheme.lightTheme.colorScheme.error, AppPalette.coralDeep);
+      expect(AppTheme.darkTheme.colorScheme.error, AppPalette.coral);
+
+      for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
+        expect(
+          AppContrast.ratio(
+            theme.colorScheme.error,
+            theme.colorScheme.surface,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: theme.brightness.name,
+        );
+      }
     });
 
     test('follows a chosen accent instead of the default', () {

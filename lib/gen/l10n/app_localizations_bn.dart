@@ -48,75 +48,73 @@ class AppLocalizationsBn extends AppLocalizations {
   String get notifications => 'বিজ্ঞপ্তি';
 
   @override
-  String get notification_settings => 'Configure notification preferences';
+  String get notification_settings => 'বিজ্ঞপ্তির পছন্দ ঠিক করুন';
 
   @override
-  String get localization_demo => 'Localization Demo';
+  String get localization_demo => 'লোকালাইজেশন ডেমো';
 
   @override
   String get localization_demo_description =>
-      'View localization features in action';
+      'লোকালাইজেশন কীভাবে কাজ করে দেখুন';
 
   @override
-  String get language_settings => 'Language Settings';
+  String get language_settings => 'ভাষার সেটিংস';
 
   @override
-  String get select_your_language => 'Select your preferred language';
+  String get select_your_language => 'আপনার ভাষা বেছে নিন';
 
   @override
   String get language_explanation =>
-      'The selected language will be applied across the entire application';
+      'বেছে নেওয়া ভাষা পুরো অ্যাপে প্রযোজ্য হবে';
 
   @override
-  String get localization_assets_demo => 'Localization & Assets Demo';
+  String get localization_assets_demo => 'লোকালাইজেশন ও অ্যাসেট';
 
   @override
-  String get current_language => 'Current Language';
+  String get current_language => 'বর্তমান ভাষা';
 
   @override
-  String get language_code => 'Language code';
+  String get language_code => 'ভাষার কোড';
 
   @override
-  String get language_name => 'Language name';
+  String get language_name => 'ভাষার নাম';
 
   @override
-  String get formatting_examples => 'Formatting Examples';
+  String get formatting_examples => 'ফরম্যাটের উদাহরণ';
 
   @override
-  String get date_full => 'Date (full)';
+  String get date_full => 'তারিখ (পূর্ণ)';
 
   @override
-  String get date_short => 'Date (short)';
+  String get date_short => 'তারিখ (সংক্ষিপ্ত)';
 
   @override
-  String get time => 'Time';
+  String get time => 'সময়';
 
   @override
-  String get currency => 'Currency';
+  String get currency => 'মুদ্রা';
 
   @override
-  String get percent => 'Percent';
+  String get percent => 'শতাংশ';
 
   @override
-  String get localized_assets => 'Localized Assets';
+  String get localized_assets => 'লোকালাইজ করা অ্যাসেট';
 
   @override
   String get localized_assets_explanation =>
-      'This section demonstrates how to load different assets based on the selected language. Images, audio, and other resources can be language-specific.';
+      'এই অংশে দেখানো হয়েছে কীভাবে ভাষা অনুযায়ী আলাদা অ্যাসেট লোড করা যায়। ছবি, অডিও ও অন্যান্য ফাইল ভাষাভেদে আলাদা হতে পারে।';
 
   @override
-  String get image_example => 'Localized Image Example';
+  String get image_example => 'লোকালাইজ করা ছবির উদাহরণ';
 
   @override
-  String get welcome_image_caption =>
-      'This image is loaded based on your selected language';
+  String get welcome_image_caption => 'এই ছবিটি আপনার ভাষা অনুযায়ী লোড হয়';
 
   @override
-  String get common_image_example => 'Common Image Example';
+  String get common_image_example => 'সাধারণ ছবির উদাহরণ';
 
   @override
-  String get common_image_caption =>
-      'This image is the same across all languages';
+  String get common_image_caption => 'এই ছবিটি সব ভাষাতেই এক';
 
   @override
   String get logout => 'লগআউট';
@@ -326,53 +324,53 @@ class AppLocalizationsBn extends AppLocalizations {
   String get messageSelect => 'নির্বাচন';
 
   @override
-  String get messageReact => 'React';
+  String get messageReact => 'প্রতিক্রিয়া';
 
   @override
-  String get messageCopy => 'Copy text';
+  String get messageCopy => 'লেখা কপি করুন';
 
   @override
-  String get messageCopied => 'Copied';
+  String get messageCopied => 'কপি হয়েছে';
 
   @override
-  String get linkOpenFailed => 'Nothing here can open that link';
+  String get linkOpenFailed => 'এই লিংক খোলার মতো কিছু নেই';
 
   @override
-  String get messageDetails => 'Details';
+  String get messageDetails => 'বিস্তারিত';
 
   @override
   String replyingTo(String author) {
-    return 'Replying to $author';
+    return '$author-কে উত্তর';
   }
 
   @override
   String forwardedFrom(String author) {
-    return 'Forwarded from $author';
+    return '$author থেকে ফরওয়ার্ড';
   }
 
   @override
-  String get forwardedMessage => 'Forwarded message';
+  String get forwardedMessage => 'ফরওয়ার্ড করা বার্তা';
 
   @override
-  String get detailsSentAt => 'Sent';
+  String get detailsSentAt => 'পাঠানো হয়েছে';
 
   @override
-  String get detailsAuthor => 'From';
+  String get detailsAuthor => 'থেকে';
 
   @override
-  String get detailsSequence => 'Number in chat';
+  String get detailsSequence => 'চ্যাটে ক্রমিক';
 
   @override
-  String get detailsEdited => 'Edited';
+  String get detailsEdited => 'সম্পাদিত';
 
   @override
-  String get detailsEditedYes => 'Yes';
+  String get detailsEditedYes => 'হ্যাঁ';
 
   @override
-  String get detailsDelivery => 'Delivery';
+  String get detailsDelivery => 'ডেলিভারি';
 
   @override
-  String get detailsAttachments => 'Attachments';
+  String get detailsAttachments => 'সংযুক্তি';
 
   @override
   String get backToLatest => 'সাম্প্রতিক বার্তায় ফিরুন';
@@ -406,60 +404,59 @@ class AppLocalizationsBn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count new messages below',
-      one: '1 new message below',
-      zero: 'No new messages',
+      other: 'নিচে $countটি নতুন বার্তা',
+      one: 'নিচে ১টি নতুন বার্তা',
+      zero: 'নতুন বার্তা নেই',
     );
     return '$_temp0';
   }
 
   @override
-  String get connectionReconnecting => 'Reconnecting…';
+  String get connectionReconnecting => 'আবার যুক্ত হচ্ছে…';
 
   @override
-  String get connectionOffline => 'Offline — pull to refresh';
+  String get connectionOffline => 'অফলাইন — রিফ্রেশ করতে টানুন';
 
   @override
-  String get attachmentFallbackLabel => 'Attachment';
+  String get attachmentFallbackLabel => 'সংযুক্তি';
 
   @override
-  String get composerJoinToSend => 'Join this chat to send messages';
+  String get composerJoinToSend => 'বার্তা পাঠাতে এই চ্যাটে যোগ দিন';
 
   @override
-  String get composerBanned => 'You are banned from this chat';
+  String get composerBanned => 'এই চ্যাটে আপনি নিষিদ্ধ';
 
   @override
-  String get composerMuted => 'You are muted in this chat';
+  String get composerMuted => 'এই চ্যাটে আপনি লিখতে পারবেন না';
 
   @override
-  String get composerAdminsOnly => 'Only admins can post in this chat';
+  String get composerAdminsOnly => 'এই চ্যাটে শুধু অ্যাডমিনরা লিখতে পারেন';
 
   @override
-  String get composerNoPermission =>
-      'You do not have permission to send messages here';
+  String get composerNoPermission => 'এখানে বার্তা পাঠানোর অনুমতি আপনার নেই';
 
   @override
   String attachmentSelection(int count, String size) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count files',
-      one: '1 file',
+      other: '$countটি ফাইল',
+      one: '১টি ফাইল',
     );
     return '$_temp0, $size';
   }
 
   @override
-  String get attachmentReady => 'Ready to send';
+  String get attachmentReady => 'পাঠানোর জন্য প্রস্তুত';
 
   @override
   String attachMediaLimits(int count, String size) {
-    return 'Up to $count, $size each';
+    return 'সর্বোচ্চ $countটি, প্রতিটি $size পর্যন্ত';
   }
 
   @override
   String attachDocumentLimits(String size) {
-    return 'One file, up to $size';
+    return 'একটি ফাইল, $size পর্যন্ত';
   }
 
   @override
@@ -1810,227 +1807,228 @@ class AppLocalizationsBn extends AppLocalizations {
       'অনুসন্ধান শুধু বার্তার লেখায় চলে, ফাইলের নাম বা চ্যাটের নামে নয়।';
 
   @override
-  String get chatSettings => 'Chat settings';
+  String get chatSettings => 'চ্যাটের সেটিংস';
 
   @override
   String get chatSettingsNoPermission =>
-      'Only an owner or admin can change this chat';
+      'শুধু মালিক বা অ্যাডমিন এই চ্যাট বদলাতে পারেন';
 
   @override
   String get chatNameCannotBeCleared =>
-      'A name cannot be removed once the chat has one';
+      'চ্যাটের একবার নাম হয়ে গেলে তা মোছা যায় না';
 
   @override
   String chatSlowModeRange(int max) {
-    return '0 to $max seconds';
+    return '০ থেকে $max সেকেন্ড';
   }
 
   @override
-  String get chatReactionsPickHint => 'Pick the emoji people may react with';
+  String get chatReactionsPickHint =>
+      'যেসব ইমোজি দিয়ে প্রতিক্রিয়া দেওয়া যাবে বেছে নিন';
 
   @override
-  String get chatNotMutedLabel => 'Notifications on';
+  String get chatNotMutedLabel => 'বিজ্ঞপ্তি চালু';
 
   @override
-  String get chatMutedToast => 'Notifications off for this chat';
+  String get chatMutedToast => 'এই চ্যাটের বিজ্ঞপ্তি বন্ধ';
 
   @override
-  String get chatUnmutedToast => 'Notifications back on for this chat';
+  String get chatUnmutedToast => 'এই চ্যাটের বিজ্ঞপ্তি আবার চালু';
 
   @override
-  String get muteForHour => 'Mute for 1 hour';
+  String get muteForHour => '১ ঘণ্টা নীরব';
 
   @override
-  String get muteForEightHours => 'Mute for 8 hours';
+  String get muteForEightHours => '৮ ঘণ্টা নীরব';
 
   @override
-  String get muteForever => 'Mute until I turn it back on';
+  String get muteForever => 'আমি নিজে চালু করা পর্যন্ত নীরব';
 
   @override
   String get leaveChatOwnerStuck =>
-      'The chat creator cannot leave, and you no longer have permission to delete this chat.';
+      'চ্যাটের নির্মাতা বেরোতে পারেন না, আর এই চ্যাট মোছার অনুমতিও আপনার আর নেই।';
 
   @override
-  String get chatInviteLink => 'Invite link';
+  String get chatInviteLink => 'আমন্ত্রণ লিংক';
 
   @override
   String get chatInviteLinkHint =>
-      'Anyone signed in to ChatiX can open this link and join. It only opens in the app.';
+      'ChatiX-এ সাইন ইন করা যে কেউ এই লিংক খুলে যোগ দিতে পারেন। এটি কেবল অ্যাপেই খোলে।';
 
   @override
-  String get chatInviteLinkCopied => 'Invite link copied';
+  String get chatInviteLinkCopied => 'আমন্ত্রণ লিংক কপি হয়েছে';
 
   @override
-  String get sharedMedia => 'Media';
+  String get sharedMedia => 'মিডিয়া';
 
   @override
-  String get sharedFiles => 'Files';
+  String get sharedFiles => 'ফাইল';
 
   @override
-  String get sharedLinks => 'Links';
+  String get sharedLinks => 'লিংক';
 
   @override
-  String get sharedVoice => 'Voice';
+  String get sharedVoice => 'ভয়েস';
 
   @override
-  String get sharedMediaEmpty => 'No photos or videos here yet';
+  String get sharedMediaEmpty => 'এখানে এখনো কোনো ছবি বা ভিডিও নেই';
 
   @override
-  String get sharedFilesEmpty => 'No files here yet';
+  String get sharedFilesEmpty => 'এখানে এখনো কোনো ফাইল নেই';
 
   @override
-  String get sharedLinksEmpty => 'No links here yet';
+  String get sharedLinksEmpty => 'এখানে এখনো কোনো লিংক নেই';
 
   @override
-  String get sharedVoiceEmpty => 'No voice messages here yet';
+  String get sharedVoiceEmpty => 'এখানে এখনো কোনো ভয়েস বার্তা নেই';
 
   @override
   String get sharedContentLocalOnly =>
-      'Shows what this device has loaded from the chat — the server has no shared-media index.';
+      'এই ডিভাইস চ্যাট থেকে যা নামিয়েছে তা-ই দেখায় — সার্ভারে শেয়ার করা মিডিয়ার কোনো সূচি নেই।';
 
   @override
-  String get chatSettingsUnchanged => 'Nothing has changed yet';
+  String get chatSettingsUnchanged => 'এখনো কিছু বদলায়নি';
 
   @override
-  String get membersSearchHint => 'Search members';
+  String get membersSearchHint => 'সদস্য খুঁজুন';
 
   @override
   String get membersSearchLoadedOnly =>
-      'Only the members loaded so far are searched.';
+      'শুধু এ পর্যন্ত লোড হওয়া সদস্যদের মধ্যেই খোঁজা হয়।';
 
   @override
   String membersSearchEmpty(String query) {
-    return 'No one here matches “$query”';
+    return 'এখানে «$query»-এর সাথে কারও মিল নেই';
   }
 
   @override
-  String get membersLoadMore => 'Load more people';
+  String get membersLoadMore => 'আরও লোড করুন';
 
   @override
-  String get membersSectionAdmins => 'Administration';
+  String get membersSectionAdmins => 'পরিচালনা';
 
   @override
-  String get membersSectionMembers => 'Members';
+  String get membersSectionMembers => 'সদস্য';
 
   @override
-  String get membersSectionBanned => 'Banned members';
+  String get membersSectionBanned => 'নিষিদ্ধ সদস্য';
 
   @override
   String get membersBannedHint =>
-      'Banned people cannot read or write here until the ban is lifted.';
+      'নিষেধাজ্ঞা না ওঠা পর্যন্ত নিষিদ্ধ ব্যক্তিরা এখানে পড়তে বা লিখতে পারবেন না।';
 
   @override
-  String get membersEmptyTitle => 'No members to show';
+  String get membersEmptyTitle => 'দেখানোর মতো সদস্য নেই';
 
   @override
-  String get membersEmptyInvite => 'Add someone to get this chat started.';
+  String get membersEmptyInvite => 'চ্যাট শুরু করতে কাউকে যোগ করুন।';
 
   @override
   String get membersEmptyNoInvite =>
-      'Only members with the invite permission can add people here.';
+      'শুধু আমন্ত্রণের অনুমতি আছে এমন সদস্যরাই এখানে লোক যোগ করতে পারেন।';
 
   @override
-  String get chatRoleOwner => 'Owner';
+  String get chatRoleOwner => 'মালিক';
 
   @override
-  String get chatRoleAdmin => 'Admin';
+  String get chatRoleAdmin => 'অ্যাডমিন';
 
   @override
-  String get chatRoleEditor => 'Editor';
+  String get chatRoleEditor => 'সম্পাদক';
 
   @override
-  String get chatRoleDirect => 'Direct';
+  String get chatRoleDirect => 'সরাসরি';
 
   @override
-  String get chatRoleMember => 'Member';
+  String get chatRoleMember => 'সদস্য';
 
   @override
-  String get chatRoleViewer => 'Viewer';
+  String get chatRoleViewer => 'পাঠক';
 
   @override
-  String get chatRoleUnknown => 'Unknown role';
+  String get chatRoleUnknown => 'অজানা ভূমিকা';
 
   @override
-  String get memberMutedBadge => 'Muted';
+  String get memberMutedBadge => 'নীরব';
 
   @override
-  String get memberBannedBadge => 'Banned';
+  String get memberBannedBadge => 'নিষিদ্ধ';
 
   @override
-  String get memberOpenProfile => 'Open profile';
+  String get memberOpenProfile => 'প্রোফাইল খুলুন';
 
   @override
-  String get memberMessagePrivately => 'Message privately';
+  String get memberMessagePrivately => 'ব্যক্তিগতভাবে লিখুন';
 
   @override
   String memberKickConfirmTitle(String name) {
-    return 'Remove $name?';
+    return '$name-কে সরাবেন?';
   }
 
   @override
   String get memberKickConfirmBody =>
-      'They lose access to this chat, but can be added again later.';
+      'এই চ্যাটে তাঁর প্রবেশ বন্ধ হবে, তবে পরে আবার যোগ করা যাবে।';
 
   @override
   String memberRoleChanged(String name, String role) {
-    return '$name is now $role';
+    return '$name এখন $role';
   }
 
   @override
   String memberKicked(String name) {
-    return '$name was removed';
+    return '$name-কে সরানো হয়েছে';
   }
 
   @override
   String memberBannedToast(String name) {
-    return '$name was banned';
+    return '$name-কে নিষিদ্ধ করা হয়েছে';
   }
 
   @override
   String memberUnbanned(String name) {
-    return 'The ban on $name was lifted';
+    return '$name-এর নিষেধাজ্ঞা উঠেছে';
   }
 
   @override
-  String get memberActionFailed => 'That did not go through. Please try again.';
+  String get memberActionFailed => 'কাজটি হয়নি। আবার চেষ্টা করুন।';
 
   @override
-  String get roleAssignHint => 'You can only assign roles below your own.';
+  String get roleAssignHint => 'আপনি কেবল নিজের নিচের ভূমিকাগুলো দিতে পারেন।';
 
   @override
   String get roleOwnerTransferHint =>
-      'Owner is not in the list: the API has no way to hand a chat over.';
+      'তালিকায় মালিক নেই: API-তে চ্যাট হস্তান্তরের উপায় নেই।';
 
   @override
-  String get banForHour => 'For an hour';
+  String get banForHour => 'এক ঘণ্টার জন্য';
 
   @override
-  String get banForDay => 'For a day';
+  String get banForDay => 'এক দিনের জন্য';
 
   @override
-  String get banForWeek => 'For a week';
+  String get banForWeek => 'এক সপ্তাহের জন্য';
 
   @override
-  String get inviteMembersTitle => 'Add people';
+  String get inviteMembersTitle => 'লোক যোগ করুন';
 
   @override
-  String get inviteRoleLabel => 'They join as';
+  String get inviteRoleLabel => 'যোগ দেবেন';
 
   @override
   String inviteRoomLeft(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Room for $count more people',
-      one: 'Room for 1 more person',
-      zero: 'This chat is full',
+      other: 'আর $count জনের জায়গা আছে',
+      one: 'আর ১ জনের জায়গা আছে',
+      zero: 'এই চ্যাট পূর্ণ',
     );
     return '$_temp0';
   }
 
   @override
   String inviteChatFull(int limit) {
-    return 'This chat holds $limit members, and it is full.';
+    return 'এই চ্যাটে $limit জন সদস্য ধরে, আর তা পূর্ণ।';
   }
 
   @override
@@ -2038,8 +2036,8 @@ class AppLocalizationsBn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Add $count people',
-      one: 'Add 1 person',
+      other: '$count জনকে যোগ করুন',
+      one: '১ জনকে যোগ করুন',
     );
     return '$_temp0';
   }
@@ -2049,8 +2047,8 @@ class AppLocalizationsBn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count people added',
-      one: '1 person added',
+      other: '$count জন যোগ হয়েছেন',
+      one: '১ জন যোগ হয়েছেন',
     );
     return '$_temp0';
   }
@@ -2060,148 +2058,148 @@ class AppLocalizationsBn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count people could not be added',
-      one: '1 person could not be added',
+      other: '$count জনকে যোগ করা যায়নি',
+      one: '১ জনকে যোগ করা যায়নি',
     );
     return '$_temp0';
   }
 
   @override
   String get inviteSearchStart =>
-      'Find people by name or @username, then add them all at once.';
+      'নাম বা @username দিয়ে লোক খুঁজে একসাথে সবাইকে যোগ করুন।';
 
   @override
-  String get inviteSelectionFull => 'That is everyone this chat has room for.';
+  String get inviteSelectionFull => 'এই চ্যাটে এর বেশি জায়গা নেই।';
 
   @override
   String peopleSearchNoneFound(String query) {
-    return 'No one found for “$query”';
+    return '«$query»-এর জন্য কাউকে পাওয়া যায়নি';
   }
 
   @override
   String get peopleSearchHint =>
-      'Search matches any part of a name or @username.';
+      'নাম বা @username-এর যেকোনো অংশ দিয়েই খোঁজা যায়।';
 
   @override
-  String get profileShareAction => 'Share';
+  String get profileShareAction => 'শেয়ার';
 
   @override
-  String get profileShareCopied => 'Profile link copied';
+  String get profileShareCopied => 'প্রোফাইলের লিংক কপি হয়েছে';
 
   @override
-  String get profileBirthday => 'Birthday';
+  String get profileBirthday => 'জন্মদিন';
 
   @override
-  String get profileEmptyTitle => 'Nothing here yet';
+  String get profileEmptyTitle => 'এখানে এখনো কিছু নেই';
 
   @override
   String get profileEmptyHintSelf =>
-      'Add a few words about yourself so people know who they are talking to.';
+      'নিজের সম্পর্কে কয়েকটি কথা লিখুন, যাতে কার সাথে কথা হচ্ছে তা বোঝা যায়।';
 
   @override
-  String get profileEmptyHintOther =>
-      'This person has not filled in their profile.';
+  String get profileEmptyHintOther => 'এই ব্যক্তি তাঁর প্রোফাইল পূরণ করেননি।';
 
   @override
-  String get profileAccount => 'Account';
+  String get profileAccount => 'অ্যাকাউন্ট';
 
   @override
-  String get profileAccountNoEmail => 'Signed in';
+  String get profileAccountNoEmail => 'সাইন ইন করা';
 
   @override
-  String get profilePhoto => 'Photo';
+  String get profilePhoto => 'ছবি';
 
   @override
-  String get profileNoPhoto => 'No photo yet';
+  String get profileNoPhoto => 'এখনো ছবি নেই';
 
   @override
-  String get profileOpenLinkFailed => 'Could not open this link';
+  String get profileOpenLinkFailed => 'এই লিংকটি খোলা যায়নি';
 
   @override
-  String get profileContactCopied => 'Copied to clipboard';
+  String get profileContactCopied => 'ক্লিপবোর্ডে কপি হয়েছে';
 
   @override
-  String get profileCopyAction => 'Copy';
+  String get profileCopyAction => 'কপি';
 
   @override
   String devicesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count devices',
-      one: '1 device',
-      zero: 'No devices',
+      other: '$countটি ডিভাইস',
+      one: '১টি ডিভাইস',
+      zero: 'কোনো ডিভাইস নেই',
     );
     return '$_temp0';
   }
 
   @override
-  String get changePhoto => 'Change photo';
+  String get changePhoto => 'ছবি বদলান';
 
   @override
-  String get choosePhoto => 'Choose a photo';
+  String get choosePhoto => 'একটি ছবি বেছে নিন';
 
   @override
-  String get avatarCropTitle => 'Move and scale';
+  String get avatarCropTitle => 'সরান ও বড় করুন';
 
   @override
-  String get avatarCropHint => 'Drag to move, pinch to zoom.';
+  String get avatarCropHint =>
+      'সরাতে টানুন, বড়-ছোট করতে দুই আঙুল ব্যবহার করুন।';
 
   @override
-  String get avatarCropConfirm => 'Use photo';
+  String get avatarCropConfirm => 'এই ছবিটি নিন';
 
   @override
-  String get avatarStagePreparing => 'Preparing…';
+  String get avatarStagePreparing => 'প্রস্তুত হচ্ছে…';
 
   @override
-  String get avatarStageUploading => 'Uploading…';
+  String get avatarStageUploading => 'আপলোড হচ্ছে…';
 
   @override
-  String get avatarStageConfirming => 'Almost done…';
+  String get avatarStageConfirming => 'প্রায় শেষ…';
 
   @override
-  String get avatarStageProcessing => 'Processing the photo…';
+  String get avatarStageProcessing => 'ছবিটি প্রক্রিয়া করা হচ্ছে…';
 
   @override
-  String get avatarStageDone => 'Photo updated';
+  String get avatarStageDone => 'ছবি হালনাগাদ হয়েছে';
 
   @override
-  String get avatarProcessingFailed => 'Could not update the photo';
+  String get avatarProcessingFailed => 'ছবিটি হালনাগাদ করা যায়নি';
 
   @override
   String get avatarProcessingFailedHint =>
-      'The server did not accept that picture. Try another one.';
+      'সার্ভার এই ছবিটি নেয়নি। অন্য একটি দিন।';
 
   @override
-  String get avatarNotAnImage => 'That file is not an image';
+  String get avatarNotAnImage => 'এই ফাইলটি ছবি নয়';
 
   @override
-  String get avatarTooLarge => 'That picture is too large. Pick a smaller one.';
+  String get avatarTooLarge => 'এই ছবিটি অনেক বড়। ছোট একটি বেছে নিন।';
 
   @override
-  String get avatarUnreadable => 'That picture could not be opened';
+  String get avatarUnreadable => 'এই ছবিটি খোলা যায়নি';
 
   @override
-  String get profileEditDetails => 'Details';
+  String get profileEditDetails => 'বিবরণ';
 
   @override
-  String get profileEditLinks => 'Links';
+  String get profileEditLinks => 'লিংক';
 
   @override
   String get profileEditLinksHint =>
-      'Links are saved the moment you add or remove one, separately from the form below.';
+      'লিংক যোগ বা মোছার সাথে সাথেই সংরক্ষিত হয়, নিচের ফর্ম থেকে আলাদাভাবে।';
 
   @override
-  String get profileNoLinks => 'No links yet';
+  String get profileNoLinks => 'এখনো কোনো লিংক নেই';
 
   @override
-  String get removeLink => 'Remove link';
+  String get removeLink => 'লিংক সরান';
 
   @override
-  String get clearDateOfBirth => 'Clear date of birth';
+  String get clearDateOfBirth => 'জন্মতারিখ মুছুন';
 
   @override
-  String get specializationHint => 'What you do, in a few words';
+  String get specializationHint => 'আপনি কী করেন, কয়েকটি শব্দে';
 
   @override
   String bioCounter(int count, int max) {
@@ -2209,182 +2207,181 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get profileSkillsHint => 'Up to 30 characters each';
+  String get profileSkillsHint => 'প্রতিটি সর্বোচ্চ ৩০ অক্ষর';
 
   @override
-  String get profileSaved => 'Profile saved';
+  String get profileSaved => 'প্রোফাইল সংরক্ষিত হয়েছে';
 
   @override
-  String get discardChangesTitle => 'Discard changes?';
+  String get discardChangesTitle => 'পরিবর্তন বাতিল করবেন?';
 
   @override
-  String get discardChangesMessage =>
-      'Your edits to this profile will be lost.';
+  String get discardChangesMessage => 'এই প্রোফাইলে করা সম্পাদনা হারিয়ে যাবে।';
 
   @override
-  String get discardAction => 'Discard';
+  String get discardAction => 'বাতিল';
 
   @override
-  String get keepEditingAction => 'Keep editing';
+  String get keepEditingAction => 'সম্পাদনা চালিয়ে যান';
 
   @override
-  String get camera => 'Camera';
+  String get camera => 'ক্যামেরা';
 
   @override
-  String get loading => 'Loading…';
+  String get loading => 'লোড হচ্ছে…';
 
   @override
   String fieldTooLong(int max) {
-    return 'At most $max characters';
+    return 'সর্বোচ্চ $max অক্ষর';
   }
 
   @override
   String skillTooLong(String skill, int max) {
-    return '“$skill” is longer than $max characters';
+    return '«$skill» $max অক্ষরের চেয়ে বড়';
   }
 
   @override
   String callRoomName(String slug) {
-    return 'Room $slug';
+    return 'রুম $slug';
   }
 
   @override
   String get callJoinExplanation =>
-      'A call here is a room: join it, and anyone else in this chat can join you.';
+      'এখানে কল মানে একটি রুম: যোগ দিন, আর এই চ্যাটের যে কেউ আপনার সাথে যোগ দিতে পারবেন।';
 
   @override
   String get callNoIncomingNotice =>
-      'Ringing for incoming calls is not available yet — the server does not announce them.';
+      'ইনকামিং কলের রিং এখনো নেই — সার্ভার সেগুলোর কথা জানায় না।';
 
   @override
-  String get callWaitingForOthers => 'Waiting for someone else to join…';
+  String get callWaitingForOthers => 'আর কেউ যোগ দেওয়ার অপেক্ষায়…';
 
   @override
-  String get callReconnecting => 'Reconnecting…';
+  String get callReconnecting => 'আবার যুক্ত হচ্ছে…';
 
   @override
-  String get callYou => 'You';
+  String get callYou => 'আপনি';
 
   @override
   String callParticipantsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count participants',
-      one: '1 participant',
-      zero: 'No one here yet',
+      other: '$count জন অংশগ্রহণকারী',
+      one: '১ জন অংশগ্রহণকারী',
+      zero: 'এখনো কেউ নেই',
     );
     return '$_temp0';
   }
 
   @override
-  String get callMicrophoneMute => 'Mute';
+  String get callMicrophoneMute => 'মাইক বন্ধ';
 
   @override
-  String get callMicrophoneUnmute => 'Unmute';
+  String get callMicrophoneUnmute => 'মাইক চালু';
 
   @override
-  String get callCameraStart => 'Start video';
+  String get callCameraStart => 'ভিডিও চালু';
 
   @override
-  String get callCameraStop => 'Stop video';
+  String get callCameraStop => 'ভিডিও বন্ধ';
 
   @override
-  String get callSpeakerOn => 'Speaker';
+  String get callSpeakerOn => 'স্পিকার';
 
   @override
-  String get callSpeakerOff => 'Earpiece';
+  String get callSpeakerOff => 'কানের স্পিকার';
 
   @override
-  String get callLayoutGrid => 'Grid';
+  String get callLayoutGrid => 'গ্রিড';
 
   @override
-  String get callLayoutSpeaker => 'Speaker view';
+  String get callLayoutSpeaker => 'বক্তার দৃশ্য';
 
   @override
   String callPinParticipant(String name) {
-    return 'Pin $name';
+    return '$name-কে পিন করুন';
   }
 
   @override
   String callUnpinParticipant(String name) {
-    return 'Unpin $name';
+    return '$name-এর পিন সরান';
   }
 
   @override
-  String get callMuteForEveryone => 'Mute for everyone';
+  String get callMuteForEveryone => 'সবার জন্য নীরব করুন';
 
   @override
-  String get callUnmuteForEveryone => 'Let them speak';
+  String get callUnmuteForEveryone => 'কথা বলতে দিন';
 
   @override
-  String get callQualityExcellent => 'Excellent connection';
+  String get callQualityExcellent => 'চমৎকার সংযোগ';
 
   @override
-  String get callQualityGood => 'Good connection';
+  String get callQualityGood => 'ভালো সংযোগ';
 
   @override
-  String get callQualityPoor => 'Weak connection';
+  String get callQualityPoor => 'দুর্বল সংযোগ';
 
   @override
-  String get callQualityLost => 'Connection lost';
+  String get callQualityLost => 'সংযোগ বিচ্ছিন্ন';
 
   @override
-  String get callMicrophonePermissionTitle => 'Let ChatiX use the microphone';
+  String get callMicrophonePermissionTitle =>
+      'ChatiX-কে মাইক ব্যবহারের অনুমতি দিন';
 
   @override
   String get callMicrophonePermissionBody =>
-      'The others can only hear you if ChatiX may use the microphone. You can mute yourself again at any time.';
+      'ChatiX মাইক ব্যবহার করতে পারলেই অন্যরা আপনাকে শুনতে পাবেন। যেকোনো সময় আবার নীরব করা যাবে।';
 
   @override
-  String get callCameraPermissionTitle => 'Let ChatiX use the camera';
+  String get callCameraPermissionTitle =>
+      'ChatiX-কে ক্যামেরা ব্যবহারের অনুমতি দিন';
 
   @override
   String get callCameraPermissionBody =>
-      'Your video is only sent while the camera is on, and you can turn it off at any time.';
+      'ক্যামেরা চালু থাকা অবস্থাতেই কেবল আপনার ভিডিও যায়, আর যেকোনো সময় তা বন্ধ করা যায়।';
 
   @override
-  String get callPermissionContinue => 'Continue';
+  String get callPermissionContinue => 'চালিয়ে যান';
 
   @override
-  String get callPermissionNotNow => 'Not now';
+  String get callPermissionNotNow => 'এখন নয়';
 
   @override
-  String get callPermissionOpenSettings => 'Open settings';
+  String get callPermissionOpenSettings => 'সেটিংস খুলুন';
 
   @override
-  String get callMicrophoneBlocked =>
-      'Microphone is off: ChatiX has no permission for it.';
+  String get callMicrophoneBlocked => 'মাইক বন্ধ: ChatiX-এর অনুমতি নেই।';
 
   @override
-  String get callCameraBlocked =>
-      'Camera is off: ChatiX has no permission for it.';
+  String get callCameraBlocked => 'ক্যামেরা বন্ধ: ChatiX-এর অনুমতি নেই।';
 
   @override
-  String get callSelfPreview => 'Your camera';
+  String get callSelfPreview => 'আপনার ক্যামেরা';
 
   @override
-  String get callSelfPreviewHint => 'Drag to move';
+  String get callSelfPreviewHint => 'সরাতে টানুন';
 
   @override
-  String get callShowControls => 'Show call controls';
+  String get callShowControls => 'কলের নিয়ন্ত্রণ দেখান';
 
   @override
-  String get callOngoingInChat => 'You are in a call in this chat';
+  String get callOngoingInChat => 'আপনি এই চ্যাটের একটি কলে আছেন';
 
   @override
-  String get callReturn => 'Return';
+  String get callReturn => 'ফিরে যান';
 
   @override
   String callMiniPlayerLabel(String name) {
-    return 'Call with $name';
+    return '$name-এর সাথে কল';
   }
 
   @override
-  String get callMinimize => 'Minimize call';
+  String get callMinimize => 'কল ছোট করুন';
 
   @override
-  String get callDismiss => 'Dismiss';
+  String get callDismiss => 'বন্ধ করুন';
 
   @override
   String get notificationNewMessage => 'নতুন বার্তা';
@@ -2932,4 +2929,257 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get appearanceHapticsHint =>
       'বার্তা পাঠানো, রিঅ্যাকশন বসানো বা কোনও জেসচার সম্পূর্ণ হলে ছোট কম্পন। আপনার ডিভাইসের নিজস্ব কম্পন সেটিং আগের মতোই কার্যকর।';
+
+  @override
+  String get failureGeneric => 'কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get failureRateLimited =>
+      'অনেক বেশি চেষ্টা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get failureNoConnection =>
+      'ইন্টারনেট সংযোগ নেই। নেটওয়ার্ক দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get failureTimeout =>
+      'সার্ভার সাড়া দিতে অনেক সময় নিচ্ছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get apiErrorSessionEnded =>
+      'আপনার সেশন শেষ হয়েছে। আবার সাইন ইন করুন।';
+
+  @override
+  String get apiErrorSessionExpired =>
+      'আপনার সেশনের মেয়াদ শেষ। আবার সাইন ইন করুন।';
+
+  @override
+  String get apiErrorSessionInvalid =>
+      'আপনার সেশন আর বৈধ নয়। আবার সাইন ইন করুন।';
+
+  @override
+  String get apiErrorSessionSignedOut =>
+      'এই সেশন থেকে সাইন আউট করা হয়েছে। আবার সাইন ইন করুন।';
+
+  @override
+  String get apiErrorAccessDenied => 'এটি করার অনুমতি আপনার নেই।';
+
+  @override
+  String get apiErrorValidation =>
+      'কিছু তথ্য সঠিক নয়। যাচাই করে আবার চেষ্টা করুন।';
+
+  @override
+  String get apiErrorNotFoundGeneric =>
+      'এটি পাওয়া যায়নি — হয়তো মুছে ফেলা হয়েছে।';
+
+  @override
+  String get apiErrorTooLongGeneric => 'মানটি অনেক লম্বা। ছোট করুন।';
+
+  @override
+  String get apiErrorLimitExceededGeneric =>
+      'সীমা পূর্ণ হয়েছে, তাই এই কাজটি এখন করা যাবে না।';
+
+  @override
+  String get apiErrorWrongLoginData => 'ব্যবহারকারীর নাম বা পাসওয়ার্ড ভুল।';
+
+  @override
+  String get apiErrorPasswordMismatch => 'পাসওয়ার্ড দুটি মিলছে না।';
+
+  @override
+  String get apiErrorDuplicateUser =>
+      'এই ব্যবহারকারীর নাম বা ইমেল ইতিমধ্যে ব্যবহৃত।';
+
+  @override
+  String get apiErrorEmailNotConfirmed =>
+      'সাইন ইনের আগে আপনার ইমেল নিশ্চিত করুন।';
+
+  @override
+  String get apiErrorOauthProviderUnsupported =>
+      'এই সাইন-ইন সরবরাহকারী সমর্থিত নয়।';
+
+  @override
+  String get apiErrorOauthStateNotFound =>
+      'সাইন-ইন চেষ্টার মেয়াদ শেষ। আবার চেষ্টা করুন।';
+
+  @override
+  String get apiErrorOauthLinkedAnotherUser =>
+      'এই অ্যাকাউন্ট আগেই অন্য ব্যবহারকারীর সাথে যুক্ত।';
+
+  @override
+  String get apiErrorProfileExists => 'আপনার ইতিমধ্যে একটি প্রোফাইল আছে।';
+
+  @override
+  String get apiErrorNotChatMember => 'আপনি এই চ্যাটের সদস্য নন।';
+
+  @override
+  String get apiErrorAlreadyChatMember =>
+      'এই ব্যক্তি আগে থেকেই এই চ্যাটে আছেন।';
+
+  @override
+  String get apiErrorInvalidChatRole => 'এটি বৈধ চ্যাট ভূমিকা নয়।';
+
+  @override
+  String get apiErrorDirectChatExists =>
+      'এই ব্যক্তির সাথে আপনার আগেই সরাসরি চ্যাট আছে।';
+
+  @override
+  String get apiErrorMessageTooLong => 'বার্তাটি অনেক লম্বা। ছোট করুন।';
+
+  @override
+  String get apiErrorInvalidMessage => 'এই বার্তাটি এভাবে পাঠানো যাবে না।';
+
+  @override
+  String get apiErrorSlowModeLimit =>
+      'ধীর মোড চালু — পরের বার্তা পাঠানোর আগে অপেক্ষা করুন।';
+
+  @override
+  String get apiErrorSlowModeOutOfRange =>
+      'ধীর মোড ০ সেকেন্ড থেকে ২৪ ঘণ্টার মধ্যে হতে হবে।';
+
+  @override
+  String get apiErrorAttachmentLimitExceeded =>
+      'একটি বার্তায় অনেক বেশি সংযুক্তি।';
+
+  @override
+  String get apiErrorAttachmentNotFound => 'এই সংযুক্তিটি আর পাওয়া যাচ্ছে না।';
+
+  @override
+  String get apiErrorAttachmentValidation =>
+      'এই ফাইলটি সংযুক্ত করা যাবে না — ধরন ও আকার দেখুন।';
+
+  @override
+  String get apiErrorEmptyAttachmentUpload =>
+      'সংযুক্ত করার জন্য একটি ফাইল বেছে নিন।';
+
+  @override
+  String get apiErrorInvalidUploadToken =>
+      'আপলোডের মেয়াদ শেষ। ফাইলটি আবার সংযুক্ত করুন।';
+
+  @override
+  String get apiErrorAvatarNotImage => 'অবতার একটি ছবির ফাইল হতে হবে।';
+
+  @override
+  String get apiErrorActiveCallExists => 'এই চ্যাটে আগে থেকেই একটি কল চলছে।';
+
+  @override
+  String get apiErrorNoActiveCall => 'এই চ্যাটে কোনো কল চলছে না।';
+
+  @override
+  String get apiErrorLivekitUnauthorized => 'আপনি এই কলে যোগ দিতে পারবেন না।';
+
+  @override
+  String get apiErrorLivekitError => 'কল পরিষেবা এখন উপলব্ধ নয়।';
+
+  @override
+  String get apiErrorInvalidReaction =>
+      'এই ইমোজি প্রতিক্রিয়া হিসেবে ব্যবহার করা যাবে না।';
+
+  @override
+  String get apiErrorReactionNotAllowed =>
+      'এই চ্যাটে এই প্রতিক্রিয়া অনুমোদিত নয়।';
+
+  @override
+  String get apiErrorReactionsDisabled => 'এই চ্যাটে প্রতিক্রিয়া বন্ধ আছে।';
+
+  @override
+  String get apiErrorTooManyReactions =>
+      'এখানে আর প্রতিক্রিয়া যোগ করা যাবে না।';
+
+  @override
+  String get apiErrorMaxLimitCursor =>
+      'একসাথে অনেক বেশি চ্যাট পুনরায় শুরু হয়েছে।';
+
+  @override
+  String a11yMessageFrom(String author, String time) {
+    return '$author-এর বার্তা, $time';
+  }
+
+  @override
+  String a11yMessageMine(String time) {
+    return 'আপনার বার্তা, $time';
+  }
+
+  @override
+  String get a11ySystemMessage => 'সিস্টেম বার্তা';
+
+  @override
+  String a11yReactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি প্রতিক্রিয়া',
+      one: '১টি প্রতিক্রিয়া',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get a11yReactionYours => 'আপনারটিসহ';
+
+  @override
+  String get a11yMessageActionsHint => 'বার্তার কাজগুলি দেখান';
+
+  @override
+  String a11yMessageAttachmentsHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি সংযুক্তি',
+      one: '১টি সংযুক্তি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPromptTitle => 'অ্যাপটি কেমন লাগছে?';
+
+  @override
+  String get reviewPromptBody => 'আপনার মতামত আমাদের জানাবেন?';
+
+  @override
+  String get reviewPromptDecline => 'না, ধন্যবাদ';
+
+  @override
+  String get reviewPromptAccept => 'অবশ্যই';
+
+  @override
+  String get feedbackTitle => 'আপনার মতামত গুরুত্বপূর্ণ';
+
+  @override
+  String get feedbackBody =>
+      'অ্যাপটি সম্পর্কে আপনার মতামত জানান। ভালো লাগলে স্টোরে একটি রিভিউ আমাদের অনেক সাহায্য করবে।';
+
+  @override
+  String get feedbackHint => 'এখানে আপনার মতামত লিখুন';
+
+  @override
+  String get feedbackSubmit => 'পাঠান';
+
+  @override
+  String get updateRequiredTitle => 'আপডেট প্রয়োজন';
+
+  @override
+  String get updateAvailableTitle => 'আপডেট পাওয়া যাচ্ছে';
+
+  @override
+  String updateRequiredBody(String version) {
+    return 'ChatiX ব্যবহার চালিয়ে যেতে $version সংস্করণ প্রয়োজন।';
+  }
+
+  @override
+  String updateAvailableBody(String version) {
+    return '$version সংস্করণ পাওয়া যাচ্ছে।';
+  }
+
+  @override
+  String get updateWhatsNew => 'নতুন যা আছে';
+
+  @override
+  String get updateLater => 'পরে';
+
+  @override
+  String get updateNow => 'এখনই আপডেট করুন';
+
+  @override
+  String get updateAction => 'আপডেট';
 }

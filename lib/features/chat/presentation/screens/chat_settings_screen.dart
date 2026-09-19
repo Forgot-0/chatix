@@ -318,7 +318,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
     result.match(
       (failure) => _toast(
         chatFailureMessage(failure) ??
-            friendlyFailureMessage(failure, fallback: l10n.saveChangesFailed),
+            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.saveChangesFailed),
       ),
       (_) {
         _seededFrom = null;

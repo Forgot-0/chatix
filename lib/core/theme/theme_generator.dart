@@ -204,6 +204,10 @@ abstract final class ThemeGenerator {
     final primary = isDark ? _liftForDark(seed) : seed;
     final black = amoled && isDark;
 
+    // Coral reads on a dark ground and washes out on a light one, so the
+    // light theme takes it down rather than every screen working around it.
+    final errorColor = isDark ? AppPalette.coral : AppPalette.coralDeep;
+
     return ColorScheme.fromSeed(
       seedColor: seed,
       brightness: brightness,
@@ -214,8 +218,8 @@ abstract final class ThemeGenerator {
       onSecondary: _foregroundOn(AppPalette.mint),
       tertiary: AppPalette.amber,
       onTertiary: _foregroundOn(AppPalette.amber),
-      error: AppPalette.coral,
-      onError: _foregroundOn(AppPalette.coral),
+      error: errorColor,
+      onError: _foregroundOn(errorColor),
       surface: black ? AppAmoled.canvas : AppNeutrals.canvas(brightness),
       onSurface: highContrast
           ? (isDark ? Colors.white : Colors.black)

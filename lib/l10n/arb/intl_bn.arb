@@ -9,6 +9,32 @@
   "lightMode": "লাইট মোড",
   "systemMode": "সিস্টেম মোড",
   "language": "ভাষা",
+  "change_language": "ভাষা পরিবর্তন",
+  "theme": "থিম",
+  "change_theme": "থিম পরিবর্তন",
+  "notifications": "বিজ্ঞপ্তি",
+  "notification_settings": "বিজ্ঞপ্তির পছন্দ ঠিক করুন",
+  "localization_demo": "লোকালাইজেশন ডেমো",
+  "localization_demo_description": "লোকালাইজেশন কীভাবে কাজ করে দেখুন",
+  "language_settings": "ভাষার সেটিংস",
+  "select_your_language": "আপনার ভাষা বেছে নিন",
+  "language_explanation": "বেছে নেওয়া ভাষা পুরো অ্যাপে প্রযোজ্য হবে",
+  "localization_assets_demo": "লোকালাইজেশন ও অ্যাসেট",
+  "current_language": "বর্তমান ভাষা",
+  "language_code": "ভাষার কোড",
+  "language_name": "ভাষার নাম",
+  "formatting_examples": "ফরম্যাটের উদাহরণ",
+  "date_full": "তারিখ (পূর্ণ)",
+  "date_short": "তারিখ (সংক্ষিপ্ত)",
+  "time": "সময়",
+  "currency": "মুদ্রা",
+  "percent": "শতাংশ",
+  "localized_assets": "লোকালাইজ করা অ্যাসেট",
+  "localized_assets_explanation": "এই অংশে দেখানো হয়েছে কীভাবে ভাষা অনুযায়ী আলাদা অ্যাসেট লোড করা যায়। ছবি, অডিও ও অন্যান্য ফাইল ভাষাভেদে আলাদা হতে পারে।",
+  "image_example": "লোকালাইজ করা ছবির উদাহরণ",
+  "welcome_image_caption": "এই ছবিটি আপনার ভাষা অনুযায়ী লোড হয়",
+  "common_image_example": "সাধারণ ছবির উদাহরণ",
+  "common_image_caption": "এই ছবিটি সব ভাষাতেই এক",
   "logout": "লগআউট",
   "login": "লগইন",
   "email": "ইমেইল",
@@ -66,6 +92,21 @@
   "messageEdit": "সম্পাদনা",
   "messageDelete": "মুছুন",
   "messageSelect": "নির্বাচন",
+  "messageReact": "প্রতিক্রিয়া",
+  "messageCopy": "লেখা কপি করুন",
+  "messageCopied": "কপি হয়েছে",
+  "linkOpenFailed": "এই লিংক খোলার মতো কিছু নেই",
+  "messageDetails": "বিস্তারিত",
+  "replyingTo": "{author}-কে উত্তর",
+  "forwardedFrom": "{author} থেকে ফরওয়ার্ড",
+  "forwardedMessage": "ফরওয়ার্ড করা বার্তা",
+  "detailsSentAt": "পাঠানো হয়েছে",
+  "detailsAuthor": "থেকে",
+  "detailsSequence": "চ্যাটে ক্রমিক",
+  "detailsEdited": "সম্পাদিত",
+  "detailsEditedYes": "হ্যাঁ",
+  "detailsDelivery": "ডেলিভারি",
+  "detailsAttachments": "সংযুক্তি",
   "backToLatest": "সাম্প্রতিক বার্তায় ফিরুন",
   "messageRead": "পঠিত",
   "messageSent": "পাঠানো",
@@ -75,6 +116,19 @@
   "noMessagesYet": "এখনো কোনো বার্তা নেই",
   "editingMessage": "বার্তা সম্পাদনা",
   "scrollToBottom": "সাম্প্রতিক বার্তায় যান",
+  "newMessagesBelow": "{count, plural, =0{নতুন বার্তা নেই} =1{নিচে ১টি নতুন বার্তা} other{নিচে {count}টি নতুন বার্তা}}",
+  "connectionReconnecting": "আবার যুক্ত হচ্ছে…",
+  "connectionOffline": "অফলাইন — রিফ্রেশ করতে টানুন",
+  "attachmentFallbackLabel": "সংযুক্তি",
+  "composerJoinToSend": "বার্তা পাঠাতে এই চ্যাটে যোগ দিন",
+  "composerBanned": "এই চ্যাটে আপনি নিষিদ্ধ",
+  "composerMuted": "এই চ্যাটে আপনি লিখতে পারবেন না",
+  "composerAdminsOnly": "এই চ্যাটে শুধু অ্যাডমিনরা লিখতে পারেন",
+  "composerNoPermission": "এখানে বার্তা পাঠানোর অনুমতি আপনার নেই",
+  "attachmentSelection": "{count, plural, =1{১টি ফাইল} other{{count}টি ফাইল}}, {size}",
+  "attachmentReady": "পাঠানোর জন্য প্রস্তুত",
+  "attachMediaLimits": "সর্বোচ্চ {count}টি, প্রতিটি {size} পর্যন্ত",
+  "attachDocumentLimits": "একটি ফাইল, {size} পর্যন্ত",
   "messageDensity": "বার্তার ঘনত্ব",
   "densityCompact": "সংক্ষিপ্ত",
   "densityCozy": "স্বাভাবিক",
@@ -228,10 +282,6 @@
   "myProfileLoadFailed": "আপনার প্রোফাইল লোড করা যায়নি",
   "saveChangesFailed": "পরিবর্তন সংরক্ষণ করা যায়নি",
   "avatarUpdateFailed": "অবতার হালনাগাদ করা যায়নি",
-  "change_language": "ভাষা পরিবর্তন",
-  "theme": "থিম",
-  "change_theme": "থিম পরিবর্তন",
-  "notifications": "বিজ্ঞপ্তি",
   "oauthCancelled": "সাইন ইন বাতিল হয়েছে",
   "oauthCancelledHint": "কিছু বদলায়নি। আবার চেষ্টা করুন বা ইউজারনেম ও পাসওয়ার্ড ব্যবহার করুন।",
   "oauthFailed": "সাইন ইন সম্পূর্ণ করা যায়নি",
@@ -403,369 +453,236 @@
   "searchChatDescriptionMatch": "বিবরণে মিলেছে",
   "searchOpenChat": "চ্যাট খুলুন",
   "reactionSectionRecent": "সম্প্রতি ব্যবহৃত",
-  "@reactionSectionRecent": {
-    "description": "Catalog sheet: this device's own history"
-  },
   "reactionSectionFaces": "স্মাইলি",
-  "@reactionSectionFaces": {
-    "description": "Catalog sheet section: faces"
-  },
   "reactionSectionPeople": "মানুষ",
-  "@reactionSectionPeople": {
-    "description": "Catalog sheet section: hands and people"
-  },
   "reactionSectionHearts": "হৃদয়",
-  "@reactionSectionHearts": {
-    "description": "Catalog sheet section: hearts"
-  },
   "reactionSectionCelebration": "উদযাপন",
-  "@reactionSectionCelebration": {
-    "description": "Catalog sheet section: celebration"
-  },
   "reactionSectionFood": "খাবার",
-  "@reactionSectionFood": {
-    "description": "Catalog sheet section: food"
-  },
   "reactionSectionNature": "প্রকৃতি",
-  "@reactionSectionNature": {
-    "description": "Catalog sheet section: nature and animals"
-  },
   "reactionSectionSymbols": "প্রতীক",
-  "@reactionSectionSymbols": {
-    "description": "Catalog sheet section: symbols"
-  },
   "reactionsNoneAllowed": "এই চ্যাটে কোনো রিঅ্যাকশন নেই",
-  "@reactionsNoneAllowed": {
-    "description": "reactions_mode = some with a white list the catalog does not cover"
-  },
   "reactionsUsed": "{limit}-এর মধ্যে {used}",
-  "@reactionsUsed": {
-    "description": "Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE",
-    "placeholders": {
-      "used": {
-        "type": "int"
-      },
-      "limit": {
-        "type": "int"
-      }
-    }
-  },
   "reactionMessageLimitReached": "এই বার্তায় ইতিমধ্যে {limit}টি ভিন্ন রিঅ্যাকশন আছে",
-  "@reactionMessageLimitReached": {
-    "description": "MAX_DISTINCT_REACTIONS_PER_MESSAGE reached"
-  },
   "moreReactions": "আরও রিঅ্যাকশন",
-  "@moreReactions": {
-    "description": "Quick bar button that opens the full catalog sheet"
-  },
   "reactionFailed": "রিঅ্যাকশন সংরক্ষিত হয়নি",
-  "@reactionFailed": {
-    "description": "Quiet toast after an optimistic reaction was rolled back"
-  },
   "reactionTooFast": "একসাথে অনেক বেশি রিঅ্যাকশন",
-  "@reactionTooFast": {
-    "description": "Quiet toast for 429 on the reactions endpoint"
-  },
   "reactionNotAllowed": "এই রিঅ্যাকশন এখানে অনুমোদিত নয়",
-  "@reactionNotAllowed": {
-    "description": "Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION"
-  },
   "reactionsNobody": "এখনো কেউ নয়",
-  "@reactionsNobody": {
-    "description": "Who-reacted sheet: a tab whose page came back empty"
-  },
   "reactionUserFallback": "ব্যবহারকারী {id}",
-  "@reactionUserFallback": {
-    "description": "Who-reacted row for a user id the roster does not cover"
-  },
   "composerCharactersLeft": "{count}টি বাকি",
-  "@composerCharactersLeft": {
-    "description": "Counter shown near the 4096-character cap (api-docs 5.4)",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "composerSendLabel": "পাঠান",
-  "@composerSendLabel": {
-    "description": "Accessible label of the send button"
-  },
   "composerSaveEditLabel": "পরিবর্তন সংরক্ষণ করুন",
-  "@composerSaveEditLabel": {
-    "description": "Accessible label of the send button while editing"
-  },
   "composerRecordLabel": "ভয়েস বার্তা রেকর্ড করতে ধরে রাখুন",
-  "@composerRecordLabel": {
-    "description": "Accessible label of the microphone button"
-  },
   "composerReplyingTo": "{name}-কে উত্তর",
-  "@composerReplyingTo": {
-    "description": "Context banner title while replying"
-  },
   "composerSlowModeWait": "ধীর মোড: {seconds} সেকেন্ড বাকি",
-  "@composerSlowModeWait": {
-    "description": "Countdown on the send button while slow mode holds it",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "composerSlowModeHint": "এই চ্যাটে প্রতি {seconds} সেকেন্ডে একটি বার্তা পাঠানো যায়",
-  "@composerSlowModeHint": {
-    "description": "Explains why the send button counts down",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "attachSheetTitle": "সংযুক্ত করুন",
-  "@attachSheetTitle": {
-    "description": "Title of the composer attachment sheet"
-  },
   "attachRecent": "সাম্প্রতিক",
-  "@attachRecent": {
-    "description": "Header of the recent-gallery strip"
-  },
   "attachCamera": "ক্যামেরা",
-  "@attachCamera": {
-    "description": "Attachment sheet row that opens the camera"
-  },
   "attachVoice": "ভয়েস বার্তা",
-  "@attachVoice": {
-    "description": "Attachment sheet row that records a voice message"
-  },
   "attachVideoNote": "ভিডিও নোট",
-  "@attachVideoNote": {
-    "description": "Attachment sheet row that records a video note"
-  },
   "attachVoiceHint": "আলাদাভাবে পাঠানো হয়, সর্বোচ্চ {seconds} সেকেন্ড",
-  "@attachVoiceHint": {
-    "description": "Subtitle of the voice row: it is exclusive (api-docs 5.5)",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "attachVideoNoteHint": "আলাদাভাবে পাঠানো হয়, সর্বোচ্চ {seconds} সেকেন্ড ও {pixels} পিক্সেল",
-  "@attachVideoNoteHint": {
-    "description": "Subtitle of the video note row",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      },
-      "pixels": {
-        "type": "int"
-      }
-    }
-  },
   "attachGalleryDenied": "এখান থেকে বেছে নিতে ছবির অ্যাক্সেস দিন",
-  "@attachGalleryDenied": {
-    "description": "Shown in place of the strip when photo access was refused"
-  },
   "attachGalleryAllow": "অনুমতি দিন",
-  "@attachGalleryAllow": {
-    "description": "Button that asks for the photo grant again"
-  },
   "attachMediaFull": "প্রতি বার্তায় সর্বোচ্চ {count}টি ছবি বা ভিডিও",
-  "@attachMediaFull": {
-    "description": "Tapping one more photo past MAX_MEDIA_PER_MESSAGE",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "attachSendCount": "{count}টি সংযুক্ত করুন",
-  "@attachSendCount": {
-    "description": "Confirm button of the attachment sheet",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "attachUnavailable": "ফাইলটি পড়া যায়নি",
-  "@attachUnavailable": {
-    "description": "A picked gallery item could not be read back"
-  },
   "videoNoteTooLarge": "এই ক্যামেরা {pixels} পিক্সেলের বেশি রেকর্ড করে, যা ভিডিও নোটের জন্য সার্ভার গ্রহণ করে না",
-  "@videoNoteTooLarge": {
-    "description": "Captured video note exceeds the 640 px cap the server enforces",
-    "placeholders": {
-      "pixels": {
-        "type": "int"
-      }
-    }
-  },
   "composerTooLongBy": "সীমার চেয়ে {count} বেশি",
-  "@composerTooLongBy": {
-    "description": "Counter once the message is past the 4096-character cap",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "videoNoteTapToRecord": "রেকর্ড করতে ট্যাপ করুন",
-  "@videoNoteTapToRecord": {
-    "description": "Video note recorder: what the shutter does"
-  },
   "videoNoteNoCamera": "এই ডিভাইসে রেকর্ড করার ক্যামেরা নেই",
-  "@videoNoteNoCamera": {
-    "description": "Video note recorder: the device has no camera"
-  },
   "videoNoteCameraDenied": "ভিডিও নোট রেকর্ড করতে ক্যামেরা ও মাইক্রোফোনের অনুমতি দিন",
-  "@videoNoteCameraDenied": {
-    "description": "Video note recorder: camera or mic grant refused"
-  },
   "videoNoteCameraFailed": "ক্যামেরা চালু করা যায়নি",
-  "@videoNoteCameraFailed": {
-    "description": "Video note recorder: the camera would not open"
-  },
   "videoNoteDiscarded": "কিছু রেকর্ড হয়নি",
-  "@videoNoteDiscarded": {
-    "description": "Quiet toast when a take was too short or unusable"
-  },
   "attachmentOpen": "খুলুন",
-  "@attachmentOpen": {
-    "description": "Action on a document attachment: hand it to the platform"
-  },
   "attachmentSavedTo": "{path}-এ সংরক্ষণ করা হয়েছে",
-  "@attachmentSavedTo": {
-    "description": "Confirmation after an attachment was copied to the device, with the full path",
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "attachmentSaveFailed": "এই ফাইলটি সংরক্ষণ করা যায়নি",
-  "@attachmentSaveFailed": {
-    "description": "The attachment could not be downloaded or copied to the device"
-  },
   "attachmentUploading": "আপলোড হচ্ছে",
-  "@attachmentUploading": {
-    "description": "Label on the progress ring of a file whose bytes are going out"
-  },
   "mediaViewerCounter": "{count}টির মধ্যে {index}",
-  "@mediaViewerCounter": {
-    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
-    "placeholders": {
-      "index": {
-        "type": "int"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "mediaViewerUnavailable": "এই মিডিয়াটি আর উপলব্ধ নেই",
-  "@mediaViewerUnavailable": {
-    "description": "The viewer was opened on media that is no longer in the loaded history"
-  },
   "mediaPreviewHint": "যা পাঠাতে চান না তা সরিয়ে ফেলুন",
-  "@mediaPreviewHint": {
-    "description": "Explains that tiles can be dropped on the pre-send preview screen"
-  },
   "mediaPreviewCaptionHint": "ক্যাপশন যোগ করুন",
-  "@mediaPreviewCaptionHint": {
-    "description": "Placeholder of the album caption field; the caption becomes the message content"
-  },
   "mediaPreviewRemove": "সরান",
-  "@mediaPreviewRemove": {
-    "description": "Tooltip on the button that drops one file from a staged album"
-  },
   "composerRecordVideoNoteLabel": "ভিডিও বার্তা রেকর্ড করতে চেপে ধরুন",
-  "@composerRecordVideoNoteLabel": {
-    "description": "Accessible label of the composer button while it is in video-note mode"
-  },
   "composerSwitchToVideoNote": "ভিডিও বার্তায় যান",
-  "@composerSwitchToVideoNote": {
-    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
-  },
   "composerSwitchToVoice": "ভয়েস বার্তায় যান",
-  "@composerSwitchToVoice": {
-    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
-  },
   "videoNoteSwitchCamera": "ক্যামেরা বদলান",
-  "@videoNoteSwitchCamera": {
-    "description": "Turns the camera around while framing a video note"
-  },
   "videoNoteDoubleTapToSwitch": "ক্যামেরা বদলাতে দুবার আলতো চাপুন",
-  "@videoNoteDoubleTapToSwitch": {
-    "description": "Says that a double tap on the circle turns the camera around"
-  },
   "videoNoteOpeningCamera": "ক্যামেরা চালু হচ্ছে…",
-  "@videoNoteOpeningCamera": {
-    "description": "Shown for the moment between the thumb going down and the camera waking"
-  },
   "videoNoteHoldToRecord": "রেকর্ড করতে চেপে ধরুন",
-  "@videoNoteHoldToRecord": {
-    "description": "Hint under the composer circle before a take starts"
-  },
   "videoNoteSend": "ভিডিও বার্তা পাঠান",
-  "@videoNoteSend": {
-    "description": "Button that sends a finished video note"
-  },
   "videoNoteRecordingLabel": "ভিডিও বার্তা রেকর্ড হচ্ছে",
-  "@videoNoteRecordingLabel": {
-    "description": "Accessible label of the live circle while a video note is being recorded"
-  },
   "videoNoteTapForSound": "শব্দ চালু করতে আলতো চাপুন",
-  "@videoNoteTapForSound": {
-    "description": "Hint on a video note playing silently in the feed"
-  },
   "videoNoteTapToMute": "নিঃশব্দ করতে আলতো চাপুন",
-  "@videoNoteTapToMute": {
-    "description": "Hint on a video note that currently has sound"
-  },
   "videoNoteHoldForFullScreen": "পূর্ণ পর্দায় দেখতে চেপে ধরুন",
-  "@videoNoteHoldForFullScreen": {
-    "description": "Hint that a long press opens the video note full screen"
-  },
   "videoNotePlayerLabel": "ভিডিও বার্তা, {duration}",
-  "@videoNotePlayerLabel": {
-    "description": "Accessible label of a video note in the feed",
-    "placeholders": {
-      "duration": {
-        "type": "String"
-      }
-    }
-  },
   "videoNoteAutoplayOff": "চালাতে আলতো চাপুন",
-  "@videoNoteAutoplayOff": {
-    "description": "Shown on a video note that will not start on its own"
-  },
   "mediaAutoplay": "ভিডিও বার্তা নিজে থেকে চালু",
-  "@mediaAutoplay": {
-    "description": "Settings section: when video notes may start playing by themselves"
-  },
   "mediaAutoplayHint": "পর্দায় এলে ভিডিও বার্তা নিঃশব্দে চলতে শুরু করে। আলতো চাপলে শব্দ চালু হয়।",
-  "@mediaAutoplayHint": {
-    "description": "Explains what autoplay does and how sound is turned on"
-  },
   "mediaAutoplayAlways": "সবসময়",
-  "@mediaAutoplayAlways": {
-    "description": "Autoplay on any connection"
-  },
   "mediaAutoplayWifi": "শুধু Wi-Fi-তে",
-  "@mediaAutoplayWifi": {
-    "description": "Autoplay only on an unmetered connection"
-  },
   "mediaAutoplayNever": "কখনও নয়",
-  "@mediaAutoplayNever": {
-    "description": "Never autoplay"
-  },
   "videoNotePreview": "ক্যামেরার প্রিভিউ",
-  "@videoNotePreview": {
-    "description": "Accessible label of the live camera circle before a take starts"
-  },
   "searchTypeMore": "অন্তত {count}টি অক্ষর লিখুন",
   "noMessagesFoundHint": "অনুসন্ধান শুধু বার্তার লেখায় চলে, ফাইলের নাম বা চ্যাটের নামে নয়।",
+  "chatSettings": "চ্যাটের সেটিংস",
+  "chatSettingsNoPermission": "শুধু মালিক বা অ্যাডমিন এই চ্যাট বদলাতে পারেন",
+  "chatNameCannotBeCleared": "চ্যাটের একবার নাম হয়ে গেলে তা মোছা যায় না",
+  "chatSlowModeRange": "০ থেকে {max} সেকেন্ড",
+  "chatReactionsPickHint": "যেসব ইমোজি দিয়ে প্রতিক্রিয়া দেওয়া যাবে বেছে নিন",
+  "chatNotMutedLabel": "বিজ্ঞপ্তি চালু",
+  "chatMutedToast": "এই চ্যাটের বিজ্ঞপ্তি বন্ধ",
+  "chatUnmutedToast": "এই চ্যাটের বিজ্ঞপ্তি আবার চালু",
+  "muteForHour": "১ ঘণ্টা নীরব",
+  "muteForEightHours": "৮ ঘণ্টা নীরব",
+  "muteForever": "আমি নিজে চালু করা পর্যন্ত নীরব",
+  "leaveChatOwnerStuck": "চ্যাটের নির্মাতা বেরোতে পারেন না, আর এই চ্যাট মোছার অনুমতিও আপনার আর নেই।",
+  "chatInviteLink": "আমন্ত্রণ লিংক",
+  "chatInviteLinkHint": "ChatiX-এ সাইন ইন করা যে কেউ এই লিংক খুলে যোগ দিতে পারেন। এটি কেবল অ্যাপেই খোলে।",
+  "chatInviteLinkCopied": "আমন্ত্রণ লিংক কপি হয়েছে",
+  "sharedMedia": "মিডিয়া",
+  "sharedFiles": "ফাইল",
+  "sharedLinks": "লিংক",
+  "sharedVoice": "ভয়েস",
+  "sharedMediaEmpty": "এখানে এখনো কোনো ছবি বা ভিডিও নেই",
+  "sharedFilesEmpty": "এখানে এখনো কোনো ফাইল নেই",
+  "sharedLinksEmpty": "এখানে এখনো কোনো লিংক নেই",
+  "sharedVoiceEmpty": "এখানে এখনো কোনো ভয়েস বার্তা নেই",
+  "sharedContentLocalOnly": "এই ডিভাইস চ্যাট থেকে যা নামিয়েছে তা-ই দেখায় — সার্ভারে শেয়ার করা মিডিয়ার কোনো সূচি নেই।",
+  "chatSettingsUnchanged": "এখনো কিছু বদলায়নি",
+  "membersSearchHint": "সদস্য খুঁজুন",
+  "membersSearchLoadedOnly": "শুধু এ পর্যন্ত লোড হওয়া সদস্যদের মধ্যেই খোঁজা হয়।",
+  "membersSearchEmpty": "এখানে «{query}»-এর সাথে কারও মিল নেই",
+  "membersLoadMore": "আরও লোড করুন",
+  "membersSectionAdmins": "পরিচালনা",
+  "membersSectionMembers": "সদস্য",
+  "membersSectionBanned": "নিষিদ্ধ সদস্য",
+  "membersBannedHint": "নিষেধাজ্ঞা না ওঠা পর্যন্ত নিষিদ্ধ ব্যক্তিরা এখানে পড়তে বা লিখতে পারবেন না।",
+  "membersEmptyTitle": "দেখানোর মতো সদস্য নেই",
+  "membersEmptyInvite": "চ্যাট শুরু করতে কাউকে যোগ করুন।",
+  "membersEmptyNoInvite": "শুধু আমন্ত্রণের অনুমতি আছে এমন সদস্যরাই এখানে লোক যোগ করতে পারেন।",
+  "chatRoleOwner": "মালিক",
+  "chatRoleAdmin": "অ্যাডমিন",
+  "chatRoleEditor": "সম্পাদক",
+  "chatRoleDirect": "সরাসরি",
+  "chatRoleMember": "সদস্য",
+  "chatRoleViewer": "পাঠক",
+  "chatRoleUnknown": "অজানা ভূমিকা",
+  "memberMutedBadge": "নীরব",
+  "memberBannedBadge": "নিষিদ্ধ",
+  "memberOpenProfile": "প্রোফাইল খুলুন",
+  "memberMessagePrivately": "ব্যক্তিগতভাবে লিখুন",
+  "memberKickConfirmTitle": "{name}-কে সরাবেন?",
+  "memberKickConfirmBody": "এই চ্যাটে তাঁর প্রবেশ বন্ধ হবে, তবে পরে আবার যোগ করা যাবে।",
+  "memberRoleChanged": "{name} এখন {role}",
+  "memberKicked": "{name}-কে সরানো হয়েছে",
+  "memberBannedToast": "{name}-কে নিষিদ্ধ করা হয়েছে",
+  "memberUnbanned": "{name}-এর নিষেধাজ্ঞা উঠেছে",
+  "memberActionFailed": "কাজটি হয়নি। আবার চেষ্টা করুন।",
+  "roleAssignHint": "আপনি কেবল নিজের নিচের ভূমিকাগুলো দিতে পারেন।",
+  "roleOwnerTransferHint": "তালিকায় মালিক নেই: API-তে চ্যাট হস্তান্তরের উপায় নেই।",
+  "banForHour": "এক ঘণ্টার জন্য",
+  "banForDay": "এক দিনের জন্য",
+  "banForWeek": "এক সপ্তাহের জন্য",
+  "inviteMembersTitle": "লোক যোগ করুন",
+  "inviteRoleLabel": "যোগ দেবেন",
+  "inviteRoomLeft": "{count, plural, =0{এই চ্যাট পূর্ণ} =1{আর ১ জনের জায়গা আছে} other{আর {count} জনের জায়গা আছে}}",
+  "inviteChatFull": "এই চ্যাটে {limit} জন সদস্য ধরে, আর তা পূর্ণ।",
+  "inviteAddSelected": "{count, plural, =1{১ জনকে যোগ করুন} other{{count} জনকে যোগ করুন}}",
+  "inviteAddedCount": "{count, plural, =1{১ জন যোগ হয়েছেন} other{{count} জন যোগ হয়েছেন}}",
+  "inviteFailedCount": "{count, plural, =1{১ জনকে যোগ করা যায়নি} other{{count} জনকে যোগ করা যায়নি}}",
+  "inviteSearchStart": "নাম বা @username দিয়ে লোক খুঁজে একসাথে সবাইকে যোগ করুন।",
+  "inviteSelectionFull": "এই চ্যাটে এর বেশি জায়গা নেই।",
+  "peopleSearchNoneFound": "«{query}»-এর জন্য কাউকে পাওয়া যায়নি",
+  "peopleSearchHint": "নাম বা @username-এর যেকোনো অংশ দিয়েই খোঁজা যায়।",
+  "profileShareAction": "শেয়ার",
+  "profileShareCopied": "প্রোফাইলের লিংক কপি হয়েছে",
+  "profileBirthday": "জন্মদিন",
+  "profileEmptyTitle": "এখানে এখনো কিছু নেই",
+  "profileEmptyHintSelf": "নিজের সম্পর্কে কয়েকটি কথা লিখুন, যাতে কার সাথে কথা হচ্ছে তা বোঝা যায়।",
+  "profileEmptyHintOther": "এই ব্যক্তি তাঁর প্রোফাইল পূরণ করেননি।",
+  "profileAccount": "অ্যাকাউন্ট",
+  "profileAccountNoEmail": "সাইন ইন করা",
+  "profilePhoto": "ছবি",
+  "profileNoPhoto": "এখনো ছবি নেই",
+  "profileOpenLinkFailed": "এই লিংকটি খোলা যায়নি",
+  "profileContactCopied": "ক্লিপবোর্ডে কপি হয়েছে",
+  "profileCopyAction": "কপি",
+  "devicesCount": "{count, plural, =0{কোনো ডিভাইস নেই} =1{১টি ডিভাইস} other{{count}টি ডিভাইস}}",
+  "changePhoto": "ছবি বদলান",
+  "choosePhoto": "একটি ছবি বেছে নিন",
+  "avatarCropTitle": "সরান ও বড় করুন",
+  "avatarCropHint": "সরাতে টানুন, বড়-ছোট করতে দুই আঙুল ব্যবহার করুন।",
+  "avatarCropConfirm": "এই ছবিটি নিন",
+  "avatarStagePreparing": "প্রস্তুত হচ্ছে…",
+  "avatarStageUploading": "আপলোড হচ্ছে…",
+  "avatarStageConfirming": "প্রায় শেষ…",
+  "avatarStageProcessing": "ছবিটি প্রক্রিয়া করা হচ্ছে…",
+  "avatarStageDone": "ছবি হালনাগাদ হয়েছে",
+  "avatarProcessingFailed": "ছবিটি হালনাগাদ করা যায়নি",
+  "avatarProcessingFailedHint": "সার্ভার এই ছবিটি নেয়নি। অন্য একটি দিন।",
+  "avatarNotAnImage": "এই ফাইলটি ছবি নয়",
+  "avatarTooLarge": "এই ছবিটি অনেক বড়। ছোট একটি বেছে নিন।",
+  "avatarUnreadable": "এই ছবিটি খোলা যায়নি",
+  "profileEditDetails": "বিবরণ",
+  "profileEditLinks": "লিংক",
+  "profileEditLinksHint": "লিংক যোগ বা মোছার সাথে সাথেই সংরক্ষিত হয়, নিচের ফর্ম থেকে আলাদাভাবে।",
+  "profileNoLinks": "এখনো কোনো লিংক নেই",
+  "removeLink": "লিংক সরান",
+  "clearDateOfBirth": "জন্মতারিখ মুছুন",
+  "specializationHint": "আপনি কী করেন, কয়েকটি শব্দে",
+  "bioCounter": "{count}/{max}",
+  "profileSkillsHint": "প্রতিটি সর্বোচ্চ ৩০ অক্ষর",
+  "profileSaved": "প্রোফাইল সংরক্ষিত হয়েছে",
+  "discardChangesTitle": "পরিবর্তন বাতিল করবেন?",
+  "discardChangesMessage": "এই প্রোফাইলে করা সম্পাদনা হারিয়ে যাবে।",
+  "discardAction": "বাতিল",
+  "keepEditingAction": "সম্পাদনা চালিয়ে যান",
+  "camera": "ক্যামেরা",
+  "loading": "লোড হচ্ছে…",
+  "fieldTooLong": "সর্বোচ্চ {max} অক্ষর",
+  "skillTooLong": "«{skill}» {max} অক্ষরের চেয়ে বড়",
+  "callRoomName": "রুম {slug}",
+  "callJoinExplanation": "এখানে কল মানে একটি রুম: যোগ দিন, আর এই চ্যাটের যে কেউ আপনার সাথে যোগ দিতে পারবেন।",
+  "callNoIncomingNotice": "ইনকামিং কলের রিং এখনো নেই — সার্ভার সেগুলোর কথা জানায় না।",
+  "callWaitingForOthers": "আর কেউ যোগ দেওয়ার অপেক্ষায়…",
+  "callReconnecting": "আবার যুক্ত হচ্ছে…",
+  "callYou": "আপনি",
+  "callParticipantsCount": "{count, plural, =0{এখনো কেউ নেই} =1{১ জন অংশগ্রহণকারী} other{{count} জন অংশগ্রহণকারী}}",
+  "callMicrophoneMute": "মাইক বন্ধ",
+  "callMicrophoneUnmute": "মাইক চালু",
+  "callCameraStart": "ভিডিও চালু",
+  "callCameraStop": "ভিডিও বন্ধ",
+  "callSpeakerOn": "স্পিকার",
+  "callSpeakerOff": "কানের স্পিকার",
+  "callLayoutGrid": "গ্রিড",
+  "callLayoutSpeaker": "বক্তার দৃশ্য",
+  "callPinParticipant": "{name}-কে পিন করুন",
+  "callUnpinParticipant": "{name}-এর পিন সরান",
+  "callMuteForEveryone": "সবার জন্য নীরব করুন",
+  "callUnmuteForEveryone": "কথা বলতে দিন",
+  "callQualityExcellent": "চমৎকার সংযোগ",
+  "callQualityGood": "ভালো সংযোগ",
+  "callQualityPoor": "দুর্বল সংযোগ",
+  "callQualityLost": "সংযোগ বিচ্ছিন্ন",
+  "callMicrophonePermissionTitle": "ChatiX-কে মাইক ব্যবহারের অনুমতি দিন",
+  "callMicrophonePermissionBody": "ChatiX মাইক ব্যবহার করতে পারলেই অন্যরা আপনাকে শুনতে পাবেন। যেকোনো সময় আবার নীরব করা যাবে।",
+  "callCameraPermissionTitle": "ChatiX-কে ক্যামেরা ব্যবহারের অনুমতি দিন",
+  "callCameraPermissionBody": "ক্যামেরা চালু থাকা অবস্থাতেই কেবল আপনার ভিডিও যায়, আর যেকোনো সময় তা বন্ধ করা যায়।",
+  "callPermissionContinue": "চালিয়ে যান",
+  "callPermissionNotNow": "এখন নয়",
+  "callPermissionOpenSettings": "সেটিংস খুলুন",
+  "callMicrophoneBlocked": "মাইক বন্ধ: ChatiX-এর অনুমতি নেই।",
+  "callCameraBlocked": "ক্যামেরা বন্ধ: ChatiX-এর অনুমতি নেই।",
+  "callSelfPreview": "আপনার ক্যামেরা",
+  "callSelfPreviewHint": "সরাতে টানুন",
+  "callShowControls": "কলের নিয়ন্ত্রণ দেখান",
+  "callOngoingInChat": "আপনি এই চ্যাটের একটি কলে আছেন",
+  "callReturn": "ফিরে যান",
+  "callMiniPlayerLabel": "{name}-এর সাথে কল",
+  "callMinimize": "কল ছোট করুন",
+  "callDismiss": "বন্ধ করুন",
   "notificationNewMessage": "নতুন বার্তা",
   "notificationReplyHint": "বার্তা",
   "notificationReplyFailed": "আপনার উত্তর পাঠানো যায়নি",
@@ -918,7 +835,364 @@
   "logoutAction": "লগ আউট",
   "logoutFailed": "লগ আউট করা যায়নি। আবার চেষ্টা করুন।",
   "logoutInProgress": "লগ আউট করা হচ্ছে…",
-  "appearanceFeel": "\u0985\u09a8\u09c1\u09ad\u09ac",
-  "appearanceHaptics": "\u09b9\u09cd\u09af\u09be\u09aa\u099f\u09bf\u0995 \u09ab\u09bf\u09a1\u09ac\u09cd\u09af\u09be\u0995",
-  "appearanceHapticsHint": "\u09ac\u09be\u09b0\u09cd\u09a4\u09be \u09aa\u09be\u09a0\u09be\u09a8\u09cb, \u09b0\u09bf\u0985\u09cd\u09af\u09be\u0995\u09b6\u09a8 \u09ac\u09b8\u09be\u09a8\u09cb \u09ac\u09be \u0995\u09cb\u09a8\u0993 \u099c\u09c7\u09b8\u099a\u09be\u09b0 \u09b8\u09ae\u09cd\u09aa\u09c2\u09b0\u09cd\u09a3 \u09b9\u09b2\u09c7 \u099b\u09cb\u099f \u0995\u09ae\u09cd\u09aa\u09a8\u0964 \u0986\u09aa\u09a8\u09be\u09b0 \u09a1\u09bf\u09ad\u09be\u0987\u09b8\u09c7\u09b0 \u09a8\u09bf\u099c\u09b8\u09cd\u09ac \u0995\u09ae\u09cd\u09aa\u09a8 \u09b8\u09c7\u099f\u09bf\u0982 \u0986\u0997\u09c7\u09b0 \u09ae\u09a4\u09cb\u0987 \u0995\u09be\u09b0\u09cd\u09af\u0995\u09b0\u0964"
+  "appearanceFeel": "অনুভব",
+  "appearanceHaptics": "হ্যাপটিক ফিডব্যাক",
+  "appearanceHapticsHint": "বার্তা পাঠানো, রিঅ্যাকশন বসানো বা কোনও জেসচার সম্পূর্ণ হলে ছোট কম্পন। আপনার ডিভাইসের নিজস্ব কম্পন সেটিং আগের মতোই কার্যকর।",
+  "failureGeneric": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+  "failureRateLimited": "অনেক বেশি চেষ্টা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।",
+  "failureNoConnection": "ইন্টারনেট সংযোগ নেই। নেটওয়ার্ক দেখে আবার চেষ্টা করুন।",
+  "failureTimeout": "সার্ভার সাড়া দিতে অনেক সময় নিচ্ছে। আবার চেষ্টা করুন।",
+  "apiErrorSessionEnded": "আপনার সেশন শেষ হয়েছে। আবার সাইন ইন করুন।",
+  "apiErrorSessionExpired": "আপনার সেশনের মেয়াদ শেষ। আবার সাইন ইন করুন।",
+  "apiErrorSessionInvalid": "আপনার সেশন আর বৈধ নয়। আবার সাইন ইন করুন।",
+  "apiErrorSessionSignedOut": "এই সেশন থেকে সাইন আউট করা হয়েছে। আবার সাইন ইন করুন।",
+  "apiErrorAccessDenied": "এটি করার অনুমতি আপনার নেই।",
+  "apiErrorValidation": "কিছু তথ্য সঠিক নয়। যাচাই করে আবার চেষ্টা করুন।",
+  "apiErrorNotFoundGeneric": "এটি পাওয়া যায়নি — হয়তো মুছে ফেলা হয়েছে।",
+  "apiErrorTooLongGeneric": "মানটি অনেক লম্বা। ছোট করুন।",
+  "apiErrorLimitExceededGeneric": "সীমা পূর্ণ হয়েছে, তাই এই কাজটি এখন করা যাবে না।",
+  "apiErrorWrongLoginData": "ব্যবহারকারীর নাম বা পাসওয়ার্ড ভুল।",
+  "apiErrorPasswordMismatch": "পাসওয়ার্ড দুটি মিলছে না।",
+  "apiErrorDuplicateUser": "এই ব্যবহারকারীর নাম বা ইমেল ইতিমধ্যে ব্যবহৃত।",
+  "apiErrorEmailNotConfirmed": "সাইন ইনের আগে আপনার ইমেল নিশ্চিত করুন।",
+  "apiErrorOauthProviderUnsupported": "এই সাইন-ইন সরবরাহকারী সমর্থিত নয়।",
+  "apiErrorOauthStateNotFound": "সাইন-ইন চেষ্টার মেয়াদ শেষ। আবার চেষ্টা করুন।",
+  "apiErrorOauthLinkedAnotherUser": "এই অ্যাকাউন্ট আগেই অন্য ব্যবহারকারীর সাথে যুক্ত।",
+  "apiErrorProfileExists": "আপনার ইতিমধ্যে একটি প্রোফাইল আছে।",
+  "apiErrorNotChatMember": "আপনি এই চ্যাটের সদস্য নন।",
+  "apiErrorAlreadyChatMember": "এই ব্যক্তি আগে থেকেই এই চ্যাটে আছেন।",
+  "apiErrorInvalidChatRole": "এটি বৈধ চ্যাট ভূমিকা নয়।",
+  "apiErrorDirectChatExists": "এই ব্যক্তির সাথে আপনার আগেই সরাসরি চ্যাট আছে।",
+  "apiErrorMessageTooLong": "বার্তাটি অনেক লম্বা। ছোট করুন।",
+  "apiErrorInvalidMessage": "এই বার্তাটি এভাবে পাঠানো যাবে না।",
+  "apiErrorSlowModeLimit": "ধীর মোড চালু — পরের বার্তা পাঠানোর আগে অপেক্ষা করুন।",
+  "apiErrorSlowModeOutOfRange": "ধীর মোড ০ সেকেন্ড থেকে ২৪ ঘণ্টার মধ্যে হতে হবে।",
+  "apiErrorAttachmentLimitExceeded": "একটি বার্তায় অনেক বেশি সংযুক্তি।",
+  "apiErrorAttachmentNotFound": "এই সংযুক্তিটি আর পাওয়া যাচ্ছে না।",
+  "apiErrorAttachmentValidation": "এই ফাইলটি সংযুক্ত করা যাবে না — ধরন ও আকার দেখুন।",
+  "apiErrorEmptyAttachmentUpload": "সংযুক্ত করার জন্য একটি ফাইল বেছে নিন।",
+  "apiErrorInvalidUploadToken": "আপলোডের মেয়াদ শেষ। ফাইলটি আবার সংযুক্ত করুন।",
+  "apiErrorAvatarNotImage": "অবতার একটি ছবির ফাইল হতে হবে।",
+  "apiErrorActiveCallExists": "এই চ্যাটে আগে থেকেই একটি কল চলছে।",
+  "apiErrorNoActiveCall": "এই চ্যাটে কোনো কল চলছে না।",
+  "apiErrorLivekitUnauthorized": "আপনি এই কলে যোগ দিতে পারবেন না।",
+  "apiErrorLivekitError": "কল পরিষেবা এখন উপলব্ধ নয়।",
+  "apiErrorInvalidReaction": "এই ইমোজি প্রতিক্রিয়া হিসেবে ব্যবহার করা যাবে না।",
+  "apiErrorReactionNotAllowed": "এই চ্যাটে এই প্রতিক্রিয়া অনুমোদিত নয়।",
+  "apiErrorReactionsDisabled": "এই চ্যাটে প্রতিক্রিয়া বন্ধ আছে।",
+  "apiErrorTooManyReactions": "এখানে আর প্রতিক্রিয়া যোগ করা যাবে না।",
+  "apiErrorMaxLimitCursor": "একসাথে অনেক বেশি চ্যাট পুনরায় শুরু হয়েছে।",
+  "a11yMessageFrom": "{author}-এর বার্তা, {time}",
+  "a11yMessageMine": "আপনার বার্তা, {time}",
+  "a11ySystemMessage": "সিস্টেম বার্তা",
+  "a11yReactions": "{count, plural, =1{১টি প্রতিক্রিয়া} other{{count}টি প্রতিক্রিয়া}}",
+  "a11yReactionYours": "আপনারটিসহ",
+  "a11yMessageActionsHint": "বার্তার কাজগুলি দেখান",
+  "a11yMessageAttachmentsHint": "{count, plural, =1{১টি সংযুক্তি} other{{count}টি সংযুক্তি}}",
+  "reviewPromptTitle": "অ্যাপটি কেমন লাগছে?",
+  "reviewPromptBody": "আপনার মতামত আমাদের জানাবেন?",
+  "reviewPromptDecline": "না, ধন্যবাদ",
+  "reviewPromptAccept": "অবশ্যই",
+  "feedbackTitle": "আপনার মতামত গুরুত্বপূর্ণ",
+  "feedbackBody": "অ্যাপটি সম্পর্কে আপনার মতামত জানান। ভালো লাগলে স্টোরে একটি রিভিউ আমাদের অনেক সাহায্য করবে।",
+  "feedbackHint": "এখানে আপনার মতামত লিখুন",
+  "feedbackSubmit": "পাঠান",
+  "updateRequiredTitle": "আপডেট প্রয়োজন",
+  "updateAvailableTitle": "আপডেট পাওয়া যাচ্ছে",
+  "updateRequiredBody": "ChatiX ব্যবহার চালিয়ে যেতে {version} সংস্করণ প্রয়োজন।",
+  "updateAvailableBody": "{version} সংস্করণ পাওয়া যাচ্ছে।",
+  "updateWhatsNew": "নতুন যা আছে",
+  "updateLater": "পরে",
+  "updateNow": "এখনই আপডেট করুন",
+  "updateAction": "আপডেট",
+  "@reactionSectionRecent": {
+    "description": "Catalog sheet: this device's own history"
+  },
+  "@reactionSectionFaces": {
+    "description": "Catalog sheet section: faces"
+  },
+  "@reactionSectionPeople": {
+    "description": "Catalog sheet section: hands and people"
+  },
+  "@reactionSectionHearts": {
+    "description": "Catalog sheet section: hearts"
+  },
+  "@reactionSectionCelebration": {
+    "description": "Catalog sheet section: celebration"
+  },
+  "@reactionSectionFood": {
+    "description": "Catalog sheet section: food"
+  },
+  "@reactionSectionNature": {
+    "description": "Catalog sheet section: nature and animals"
+  },
+  "@reactionSectionSymbols": {
+    "description": "Catalog sheet section: symbols"
+  },
+  "@reactionsNoneAllowed": {
+    "description": "reactions_mode = some with a white list the catalog does not cover"
+  },
+  "@reactionsUsed": {
+    "description": "Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE",
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "@reactionMessageLimitReached": {
+    "description": "MAX_DISTINCT_REACTIONS_PER_MESSAGE reached"
+  },
+  "@moreReactions": {
+    "description": "Quick bar button that opens the full catalog sheet"
+  },
+  "@reactionFailed": {
+    "description": "Quiet toast after an optimistic reaction was rolled back"
+  },
+  "@reactionTooFast": {
+    "description": "Quiet toast for 429 on the reactions endpoint"
+  },
+  "@reactionNotAllowed": {
+    "description": "Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION"
+  },
+  "@reactionsNobody": {
+    "description": "Who-reacted sheet: a tab whose page came back empty"
+  },
+  "@reactionUserFallback": {
+    "description": "Who-reacted row for a user id the roster does not cover"
+  },
+  "@composerCharactersLeft": {
+    "description": "Counter shown near the 4096-character cap (api-docs 5.4)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@composerSendLabel": {
+    "description": "Accessible label of the send button"
+  },
+  "@composerSaveEditLabel": {
+    "description": "Accessible label of the send button while editing"
+  },
+  "@composerRecordLabel": {
+    "description": "Accessible label of the microphone button"
+  },
+  "@composerReplyingTo": {
+    "description": "Context banner title while replying"
+  },
+  "@composerSlowModeWait": {
+    "description": "Countdown on the send button while slow mode holds it",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "@composerSlowModeHint": {
+    "description": "Explains why the send button counts down",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachSheetTitle": {
+    "description": "Title of the composer attachment sheet"
+  },
+  "@attachRecent": {
+    "description": "Header of the recent-gallery strip"
+  },
+  "@attachCamera": {
+    "description": "Attachment sheet row that opens the camera"
+  },
+  "@attachVoice": {
+    "description": "Attachment sheet row that records a voice message"
+  },
+  "@attachVideoNote": {
+    "description": "Attachment sheet row that records a video note"
+  },
+  "@attachVoiceHint": {
+    "description": "Subtitle of the voice row: it is exclusive (api-docs 5.5)",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachVideoNoteHint": {
+    "description": "Subtitle of the video note row",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      },
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachGalleryDenied": {
+    "description": "Shown in place of the strip when photo access was refused"
+  },
+  "@attachGalleryAllow": {
+    "description": "Button that asks for the photo grant again"
+  },
+  "@attachMediaFull": {
+    "description": "Tapping one more photo past MAX_MEDIA_PER_MESSAGE",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachSendCount": {
+    "description": "Confirm button of the attachment sheet",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachUnavailable": {
+    "description": "A picked gallery item could not be read back"
+  },
+  "@videoNoteTooLarge": {
+    "description": "Captured video note exceeds the 640 px cap the server enforces",
+    "placeholders": {
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "@composerTooLongBy": {
+    "description": "Counter once the message is past the 4096-character cap",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@videoNoteTapToRecord": {
+    "description": "Video note recorder: what the shutter does"
+  },
+  "@videoNoteNoCamera": {
+    "description": "Video note recorder: the device has no camera"
+  },
+  "@videoNoteCameraDenied": {
+    "description": "Video note recorder: camera or mic grant refused"
+  },
+  "@videoNoteCameraFailed": {
+    "description": "Video note recorder: the camera would not open"
+  },
+  "@videoNoteDiscarded": {
+    "description": "Quiet toast when a take was too short or unusable"
+  },
+  "@attachmentOpen": {
+    "description": "Action on a document attachment: hand it to the platform"
+  },
+  "@attachmentSavedTo": {
+    "description": "Confirmation after an attachment was copied to the device, with the full path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "@attachmentSaveFailed": {
+    "description": "The attachment could not be downloaded or copied to the device"
+  },
+  "@attachmentUploading": {
+    "description": "Label on the progress ring of a file whose bytes are going out"
+  },
+  "@mediaViewerCounter": {
+    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@mediaViewerUnavailable": {
+    "description": "The viewer was opened on media that is no longer in the loaded history"
+  },
+  "@mediaPreviewHint": {
+    "description": "Explains that tiles can be dropped on the pre-send preview screen"
+  },
+  "@mediaPreviewCaptionHint": {
+    "description": "Placeholder of the album caption field; the caption becomes the message content"
+  },
+  "@mediaPreviewRemove": {
+    "description": "Tooltip on the button that drops one file from a staged album"
+  },
+  "@composerRecordVideoNoteLabel": {
+    "description": "Accessible label of the composer button while it is in video-note mode"
+  },
+  "@composerSwitchToVideoNote": {
+    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
+  },
+  "@composerSwitchToVoice": {
+    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
+  },
+  "@videoNoteSwitchCamera": {
+    "description": "Turns the camera around while framing a video note"
+  },
+  "@videoNoteDoubleTapToSwitch": {
+    "description": "Says that a double tap on the circle turns the camera around"
+  },
+  "@videoNoteOpeningCamera": {
+    "description": "Shown for the moment between the thumb going down and the camera waking"
+  },
+  "@videoNoteHoldToRecord": {
+    "description": "Hint under the composer circle before a take starts"
+  },
+  "@videoNoteSend": {
+    "description": "Button that sends a finished video note"
+  },
+  "@videoNoteRecordingLabel": {
+    "description": "Accessible label of the live circle while a video note is being recorded"
+  },
+  "@videoNoteTapForSound": {
+    "description": "Hint on a video note playing silently in the feed"
+  },
+  "@videoNoteTapToMute": {
+    "description": "Hint on a video note that currently has sound"
+  },
+  "@videoNoteHoldForFullScreen": {
+    "description": "Hint that a long press opens the video note full screen"
+  },
+  "@videoNotePlayerLabel": {
+    "description": "Accessible label of a video note in the feed",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "@videoNoteAutoplayOff": {
+    "description": "Shown on a video note that will not start on its own"
+  },
+  "@mediaAutoplay": {
+    "description": "Settings section: when video notes may start playing by themselves"
+  },
+  "@mediaAutoplayHint": {
+    "description": "Explains what autoplay does and how sound is turned on"
+  },
+  "@mediaAutoplayAlways": {
+    "description": "Autoplay on any connection"
+  },
+  "@mediaAutoplayWifi": {
+    "description": "Autoplay only on an unmetered connection"
+  },
+  "@mediaAutoplayNever": {
+    "description": "Never autoplay"
+  },
+  "@videoNotePreview": {
+    "description": "Accessible label of the live camera circle before a take starts"
+  }
 }

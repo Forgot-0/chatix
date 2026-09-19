@@ -67,7 +67,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (next.hasError && !next.isLoading) {
         AppSnackbar.failure(
           context,
-          friendlyFailureMessage(next.error, fallback: l10n.saveChangesFailed),
+          friendlyFailureMessage(next.error, l10n: l10n, fallback: l10n.saveChangesFailed),
         );
       }
     });

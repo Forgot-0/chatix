@@ -15,8 +15,10 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     required this.brightness,
     required this.bubbleOutgoingGradient,
     required this.bubbleOutgoingForeground,
+    required this.bubbleOutgoingMuted,
     required this.bubbleIncoming,
     required this.bubbleIncomingForeground,
+    required this.bubbleIncomingMuted,
     required this.bubbleIncomingBorder,
     required this.chatBackground,
     required this.dateChip,
@@ -48,11 +50,21 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
   /// Text and icons on [bubbleOutgoingGradient].
   final Color bubbleOutgoingForeground;
 
+  /// The clock, the "edited" mark and the delivery ticks on your own bubble.
+  ///
+  /// A token rather than `bubbleOutgoingForeground.withValues(alpha: …)` at
+  /// the call site, because the alpha that reads on one accent does not read
+  /// on the next — see [AppContrast.mutedOn].
+  final Color bubbleOutgoingMuted;
+
   /// Fill of a message someone else sent.
   final Color bubbleIncoming;
 
   /// Text and icons on [bubbleIncoming].
   final Color bubbleIncomingForeground;
+
+  /// The same quiet row, on a message somebody else sent.
+  final Color bubbleIncomingMuted;
 
   /// Hairline around an incoming bubble. Transparent in dark, where the
   /// bubble separates from the ground by elevation instead.
@@ -180,9 +192,29 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
               : seed.saturation,
         )
         .toColor();
+    // Which of white and the darkest neutral reads on the head decides
+    // everything else about the bubble, including which way the gradient is
+    // allowed to run.
+    final outgoingForeground = AppContrast.foregroundOn(head);
+
+    // The tail moves *away* from the text, not always downwards.
+    //
+    // A fixed darkening reads well under white text, and quietly ruins the
+    // accents that take dark text: mint and moss end up with near-black
+    // words on a deep green tail — 2.8:1, unreadable — while the head they
+    // were chosen against was fine. Running the gradient away from the
+    // foreground keeps the depth and makes the head the worst case, which
+    // is the case `foregroundOn` actually measured.
+    final towardsDark =
+        AppContrast.ratio(head, outgoingForeground) ==
+        AppContrast.ratio(head, Colors.white);
+    final headLightness = HSLColor.fromColor(head).lightness;
     final tail = HSLColor.fromColor(head)
         .withLightness(
-          (HSLColor.fromColor(head).lightness - 0.16).clamp(0.0, 1.0),
+          (towardsDark ? headLightness - 0.16 : headLightness + 0.16).clamp(
+            0.0,
+            1.0,
+          ),
         )
         .toColor();
 
@@ -213,9 +245,13 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
         end: Alignment.bottomCenter,
         colors: <Color>[head, tail],
       ),
-      bubbleOutgoingForeground: AppContrast.foregroundOn(head),
+      bubbleOutgoingForeground: outgoingForeground,
+      // Measured at the head, which the rule above makes the worst of the
+      // two stops for whichever foreground was chosen.
+      bubbleOutgoingMuted: AppContrast.mutedOn(head, outgoingForeground),
       bubbleIncoming: incoming,
       bubbleIncomingForeground: scheme.onSurface,
+      bubbleIncomingMuted: AppContrast.mutedOn(incoming, scheme.onSurface),
       bubbleIncomingBorder: incomingBorder,
       chatBackground: isDark && amoled
           ? AppAmoled.canvas
@@ -278,8 +314,10 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     Brightness? brightness,
     LinearGradient? bubbleOutgoingGradient,
     Color? bubbleOutgoingForeground,
+    Color? bubbleOutgoingMuted,
     Color? bubbleIncoming,
     Color? bubbleIncomingForeground,
+    Color? bubbleIncomingMuted,
     Color? bubbleIncomingBorder,
     Color? chatBackground,
     Color? dateChip,
@@ -306,9 +344,11 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
           bubbleOutgoingGradient ?? this.bubbleOutgoingGradient,
       bubbleOutgoingForeground:
           bubbleOutgoingForeground ?? this.bubbleOutgoingForeground,
+      bubbleOutgoingMuted: bubbleOutgoingMuted ?? this.bubbleOutgoingMuted,
       bubbleIncoming: bubbleIncoming ?? this.bubbleIncoming,
       bubbleIncomingForeground:
           bubbleIncomingForeground ?? this.bubbleIncomingForeground,
+      bubbleIncomingMuted: bubbleIncomingMuted ?? this.bubbleIncomingMuted,
       bubbleIncomingBorder: bubbleIncomingBorder ?? this.bubbleIncomingBorder,
       chatBackground: chatBackground ?? this.chatBackground,
       dateChip: dateChip ?? this.dateChip,
@@ -348,10 +388,20 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
         other.bubbleOutgoingForeground,
         t,
       )!,
+      bubbleOutgoingMuted: Color.lerp(
+        bubbleOutgoingMuted,
+        other.bubbleOutgoingMuted,
+        t,
+      )!,
       bubbleIncoming: Color.lerp(bubbleIncoming, other.bubbleIncoming, t)!,
       bubbleIncomingForeground: Color.lerp(
         bubbleIncomingForeground,
         other.bubbleIncomingForeground,
+        t,
+      )!,
+      bubbleIncomingMuted: Color.lerp(
+        bubbleIncomingMuted,
+        other.bubbleIncomingMuted,
         t,
       )!,
       bubbleIncomingBorder: Color.lerp(

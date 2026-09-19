@@ -115,6 +115,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
           if (failure is CancelledFailure) return;
           _error = friendlyFailureMessage(
             failure,
+            l10n: AppLocalizations.of(context),
             fallback: AppLocalizations.of(context).peopleSearchFailed,
           );
           _results = const [];

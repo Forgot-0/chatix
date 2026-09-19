@@ -346,7 +346,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       (failure) => messenger.showSnackBar(
         SnackBar(
           content: Text(
-            friendlyFailureMessage(failure, fallback: l10n.startChatFailed),
+            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.startChatFailed),
           ),
         ),
       ),
@@ -452,7 +452,7 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            friendlyFailureMessage(failure, fallback: l10n.memberActionFailed),
+            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.memberActionFailed),
           ),
         ),
       );

@@ -2935,4 +2935,262 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get appearanceHapticsHint =>
       'Short vibrations when a message goes out, a reaction lands or a gesture takes. Your device\'s own vibration setting still applies.';
+
+  @override
+  String get failureGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get failureRateLimited =>
+      'Too many attempts. Please wait a minute and try again.';
+
+  @override
+  String get failureNoConnection =>
+      'No internet connection. Check your network and try again.';
+
+  @override
+  String get failureTimeout =>
+      'The server took too long to respond. Please try again.';
+
+  @override
+  String get apiErrorSessionEnded =>
+      'Your session has ended. Please sign in again.';
+
+  @override
+  String get apiErrorSessionExpired =>
+      'Your session has expired. Please sign in again.';
+
+  @override
+  String get apiErrorSessionInvalid =>
+      'Your session is no longer valid. Please sign in again.';
+
+  @override
+  String get apiErrorSessionSignedOut =>
+      'This session was signed out. Please sign in again.';
+
+  @override
+  String get apiErrorAccessDenied => 'You don\'t have permission to do that.';
+
+  @override
+  String get apiErrorValidation =>
+      'Some of the details are invalid. Please check and try again.';
+
+  @override
+  String get apiErrorNotFoundGeneric =>
+      'We couldn\'t find that — it may have been deleted.';
+
+  @override
+  String get apiErrorTooLongGeneric =>
+      'That value is too long. Please shorten it.';
+
+  @override
+  String get apiErrorLimitExceededGeneric =>
+      'A limit has been reached, so this action is not available.';
+
+  @override
+  String get apiErrorWrongLoginData => 'Incorrect username or password.';
+
+  @override
+  String get apiErrorPasswordMismatch => 'The passwords don\'t match.';
+
+  @override
+  String get apiErrorDuplicateUser =>
+      'That username or email is already taken.';
+
+  @override
+  String get apiErrorEmailNotConfirmed =>
+      'Please confirm your email address before signing in.';
+
+  @override
+  String get apiErrorOauthProviderUnsupported =>
+      'That sign-in provider is not supported.';
+
+  @override
+  String get apiErrorOauthStateNotFound =>
+      'The sign-in attempt expired. Please try again.';
+
+  @override
+  String get apiErrorOauthLinkedAnotherUser =>
+      'That account is already linked to another user.';
+
+  @override
+  String get apiErrorProfileExists => 'You already have a profile.';
+
+  @override
+  String get apiErrorNotChatMember => 'You\'re not a member of this chat.';
+
+  @override
+  String get apiErrorAlreadyChatMember =>
+      'That person is already in this chat.';
+
+  @override
+  String get apiErrorInvalidChatRole => 'That is not a valid chat role.';
+
+  @override
+  String get apiErrorDirectChatExists =>
+      'You already have a direct chat with this person.';
+
+  @override
+  String get apiErrorMessageTooLong =>
+      'That message is too long. Please shorten it.';
+
+  @override
+  String get apiErrorInvalidMessage =>
+      'That message can\'t be sent as written.';
+
+  @override
+  String get apiErrorSlowModeLimit =>
+      'Slow mode is on — please wait before sending another message.';
+
+  @override
+  String get apiErrorSlowModeOutOfRange =>
+      'Slow mode must be between 0 seconds and 24 hours.';
+
+  @override
+  String get apiErrorAttachmentLimitExceeded =>
+      'Too many attachments for one message.';
+
+  @override
+  String get apiErrorAttachmentNotFound =>
+      'That attachment isn\'t available any more.';
+
+  @override
+  String get apiErrorAttachmentValidation =>
+      'That file can\'t be attached — check its type and size.';
+
+  @override
+  String get apiErrorEmptyAttachmentUpload => 'Please choose a file to attach.';
+
+  @override
+  String get apiErrorInvalidUploadToken =>
+      'The upload expired. Please attach the file again.';
+
+  @override
+  String get apiErrorAvatarNotImage => 'An avatar must be an image file.';
+
+  @override
+  String get apiErrorActiveCallExists =>
+      'There is already an active call in this chat.';
+
+  @override
+  String get apiErrorNoActiveCall => 'There is no active call in this chat.';
+
+  @override
+  String get apiErrorLivekitUnauthorized => 'You can\'t join this call.';
+
+  @override
+  String get apiErrorLivekitError =>
+      'The call service is unavailable right now.';
+
+  @override
+  String get apiErrorInvalidReaction =>
+      'That emoji can\'t be used as a reaction.';
+
+  @override
+  String get apiErrorReactionNotAllowed =>
+      'That reaction isn\'t allowed in this chat.';
+
+  @override
+  String get apiErrorReactionsDisabled =>
+      'Reactions are turned off in this chat.';
+
+  @override
+  String get apiErrorTooManyReactions => 'No more reactions can be added here.';
+
+  @override
+  String get apiErrorMaxLimitCursor => 'Too many chats were resumed at once.';
+
+  @override
+  String a11yMessageFrom(String author, String time) {
+    return 'Message from $author, $time';
+  }
+
+  @override
+  String a11yMessageMine(String time) {
+    return 'Your message, $time';
+  }
+
+  @override
+  String get a11ySystemMessage => 'System message';
+
+  @override
+  String a11yReactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reactions',
+      one: '1 reaction',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get a11yReactionYours => 'including yours';
+
+  @override
+  String get a11yMessageActionsHint => 'show message actions';
+
+  @override
+  String a11yMessageAttachmentsHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count attachments',
+      one: '1 attachment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPromptTitle => 'Enjoying the app?';
+
+  @override
+  String get reviewPromptBody =>
+      'Would you like to share your feedback with us?';
+
+  @override
+  String get reviewPromptDecline => 'No thanks';
+
+  @override
+  String get reviewPromptAccept => 'Sure!';
+
+  @override
+  String get feedbackTitle => 'Your feedback matters';
+
+  @override
+  String get feedbackBody =>
+      'Tell us what you think of the app. If you are enjoying it, a review on the app store would mean a lot.';
+
+  @override
+  String get feedbackHint => 'Enter your feedback here';
+
+  @override
+  String get feedbackSubmit => 'Send';
+
+  @override
+  String get updateRequiredTitle => 'Update required';
+
+  @override
+  String get updateAvailableTitle => 'Update available';
+
+  @override
+  String updateRequiredBody(String version) {
+    return 'Version $version is required to keep using ChatiX.';
+  }
+
+  @override
+  String updateAvailableBody(String version) {
+    return 'Version $version is available.';
+  }
+
+  @override
+  String get updateWhatsNew => 'What\'s new';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get updateAction => 'Update';
 }

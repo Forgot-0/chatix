@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -40,3 +41,16 @@ DateTime _startOfDay(DateTime value) =>
 /// no row.
 String _safeLocale(String locale) =>
     DateFormat.localeExists(locale) ? locale : 'en';
+
+/// The clock on a bubble: the time of day, in the reader's convention.
+///
+/// A hardcoded `HH:mm` is wrong in every locale that writes a 12-hour clock,
+/// and wrong again for the reader who has asked their phone for 24-hour time
+/// in a locale that does not use it. `MaterialLocalizations` is the only
+/// thing that knows both, so the pattern comes from there rather than from
+/// string padding — the same call the details sheet already makes.
+String formatMessageClock(BuildContext context, DateTime value) =>
+    MaterialLocalizations.of(context).formatTimeOfDay(
+      TimeOfDay.fromDateTime(value.toLocal()),
+      alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+    );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:chatix/core/constants/app_constants.dart';
@@ -61,32 +63,34 @@ class SmartReviewPrompt extends ConsumerWidget {
     final shouldContinue =
         await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Enjoying the app?'),
-            content: const Text(
-              'Would you like to share your feedback with us?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('No thanks'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('Sure!'),
-              ),
-            ],
-          ),
+          builder: (context) {
+            final l10n = AppLocalizations.of(context);
+
+            return AlertDialog(
+              title: Text(l10n.reviewPromptTitle),
+              content: Text(l10n.reviewPromptBody),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l10n.reviewPromptDecline),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(l10n.reviewPromptAccept),
+                ),
+              ],
+            );
+          },
         ) ??
         false;
 
     if (!shouldContinue || !context.mounted) return;
 
+    final l10n = AppLocalizations.of(context);
     final hasFeedback = await reviewService.showFeedbackForm(
       context: context,
-      title: 'Your Feedback Matters',
-      message:
-          'Please share your thoughts about the app. If you\'re enjoying it, a review on the app store would be greatly appreciated!',
+      title: l10n.feedbackTitle,
+      message: l10n.feedbackBody,
     );
 
     if (!hasFeedback) {

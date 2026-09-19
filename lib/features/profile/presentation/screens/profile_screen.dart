@@ -296,6 +296,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         chatFailureMessage(failure) ??
             friendlyFailureMessage(
               failure,
+              l10n: AppLocalizations.of(context),
               fallback: AppLocalizations.of(context).startChatFailed,
             ),
       ),

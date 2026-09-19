@@ -125,7 +125,10 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                     ),
                     if (call.failure != null)
                       _CallBanner(
-                        message: friendlyFailureMessage(call.failure),
+                        message: friendlyFailureMessage(
+                          call.failure,
+                          l10n: l10n,
+                        ),
                         onDismiss: () =>
                             ref.read(callProvider.notifier).clearFailure(),
                       ),
@@ -308,9 +311,13 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         .read(callProvider.notifier)
         .muteParticipant(userId, muted: muted);
     if (!mounted || failure == null) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(friendlyFailureMessage(failure))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          friendlyFailureMessage(failure, l10n: AppLocalizations.of(context)),
+        ),
+      ),
+    );
   }
 }
 

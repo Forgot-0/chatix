@@ -6,6 +6,7 @@ import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
@@ -193,12 +194,20 @@ class _MessageBubbleState extends State<MessageBubble> {
       onToggleReaction: forOverlay ? null : widget.onToggleReaction,
       onShowReactionUsers: forOverlay ? null : widget.onShowReactionUsers,
       onShowDetails: forOverlay ? null : widget.onShowDetails,
+      onOpenMenu: forOverlay || widget.selectionMode || widget.actions.isEmpty
+          ? null
+          : _openMenu,
     );
 
     // The overlay positions its copy at the measured rect, so the copy is
     // the bubble alone — any alignment or margin around it would be counted
     // twice and squeeze it.
     if (forOverlay) return content;
+
+    // Nothing on screen says the menu is behind a long press, so the hint
+    // below is the only way a screen-reader user finds reply, forward and
+    // the rest.
+    final canOpenMenu = !widget.selectionMode && widget.actions.isNotEmpty;
 
     final aligned = Align(
       alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -223,13 +232,15 @@ class _MessageBubbleState extends State<MessageBubble> {
       child: SwipeToReply(
         enabled: !widget.selectionMode && !_menuOpen,
         onReply: widget.onReply,
+        // The bubble declares the long press itself, as a semantics action
+        // sitting on its own label node; this detector is only the pointer
+        // half of the same gesture.
         child: GestureDetector(
           behavior: HitTestBehavior.deferToChild,
+          excludeFromSemantics: true,
           onTap: widget.selectionMode ? widget.onSelectionToggled : null,
           onDoubleTap: widget.selectionMode ? null : _quickReact,
-          onLongPress: widget.selectionMode || widget.actions.isEmpty
-              ? null
-              : _openMenu,
+          onLongPress: canOpenMenu ? _openMenu : null,
           child: aligned,
         ),
       ),
@@ -335,6 +346,7 @@ class _BubbleBody extends StatelessWidget {
     required this.onToggleReaction,
     required this.onShowReactionUsers,
     required this.onShowDetails,
+    required this.onOpenMenu,
   });
 
   final MessageEntity message;
@@ -354,6 +366,11 @@ class _BubbleBody extends StatelessWidget {
   final void Function(String emoji)? onShowReactionUsers;
   final VoidCallback? onShowDetails;
 
+  /// The same menu the long press opens, declared as a semantics action so
+  /// that it lands on the node carrying the bubble's label rather than on
+  /// the full-width row above it.
+  final VoidCallback? onOpenMenu;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -363,13 +380,19 @@ class _BubbleBody extends StatelessWidget {
     final foreground = isMine
         ? chatix.bubbleOutgoingForeground
         : chatix.bubbleIncomingForeground;
-    final muted = foreground.withValues(alpha: 0.66);
+
+    // Not `foreground.withValues(alpha: 0.66)`: at that alpha the clock and
+    // the ticks fall to 3.4:1 on most accents, and they are small text. The
+    // token is worked out per theme against the ground it lands on.
+    final muted = isMine
+        ? chatix.bubbleOutgoingMuted
+        : chatix.bubbleIncomingMuted;
     final authorColor = chatix.authorColor(message.authorId);
 
     final content = message.content;
     final hasText = content != null && content.isNotEmpty;
 
-    return Container(
+    final bubble = Container(
       padding: EdgeInsets.symmetric(
         horizontal: density.bubblePaddingX,
         vertical: density.bubblePaddingY,
@@ -459,7 +482,42 @@ class _BubbleBody extends StatelessWidget {
         ],
       ),
     );
+
+    // One node for who and when, then the bubble's own children — the text,
+    // the meta row, the chips — each still reachable and still actionable.
+    // Merging them instead would read well and leave a reader unable to tap
+    // a single reaction or follow a link.
+    return Semantics(
+      container: true,
+      label: semanticHeaderOf(message, isMine: isMine, context: context),
+      // Nothing on screen says the menu is behind a long press, so the hint
+      // is the only way a screen-reader user finds reply, forward and the
+      // rest. It has to be declared on the same node as the action.
+      onLongPress: onOpenMenu,
+      onLongPressHint: onOpenMenu == null
+          ? null
+          : AppLocalizations.of(context).a11yMessageActionsHint,
+      child: bubble,
+    );
   }
+}
+
+/// Who a bubble is from and when it landed, in the reader's language and
+/// their clock convention.
+///
+/// Public so the feed's semantics test can assert on exactly the string a
+/// screen reader will speak, rather than on a paraphrase of it.
+String semanticHeaderOf(
+  MessageEntity message, {
+  required bool isMine,
+  required BuildContext context,
+}) {
+  final l10n = AppLocalizations.of(context);
+  final time = formatMessageClock(context, message.createdAt);
+
+  return isMine
+      ? l10n.a11yMessageMine(time)
+      : l10n.a11yMessageFrom(message.authorLabel, time);
 }
 
 /// The time, the edited mark and the ticks — and the way into the details.
@@ -481,9 +539,23 @@ class _MessageMeta extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
+    // The ticks and the italic "edited" are shapes; this is the sentence
+    // they stand for. Joined rather than nested so a bubble with neither
+    // still reads as a plain details button.
+    final spoken = <String>[
+      if (message.isEdited) l10n.messageEdited,
+      if (deliveryStatus != null)
+        switch (deliveryStatus!) {
+          MessageDeliveryStatus.sending => l10n.messageSending,
+          MessageDeliveryStatus.sent => l10n.messageSent,
+          MessageDeliveryStatus.read => l10n.messageRead,
+        },
+      if (onTap != null) l10n.messageDetails,
+    ];
+
     return Semantics(
       button: onTap != null,
-      label: onTap == null ? null : l10n.messageDetails,
+      label: spoken.isEmpty ? null : spoken.join(', '),
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
@@ -494,9 +566,13 @@ class _MessageMeta extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                formatTime(message.createdAt),
-                style: theme.textTheme.labelSmall?.copyWith(color: muted),
+              // Already announced in the bubble's own header, so reading it
+              // again here would make every message say its time twice.
+              ExcludeSemantics(
+                child: Text(
+                  formatMessageClock(context, message.createdAt),
+                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
+                ),
               ),
               if (message.isEdited) ...[
                 const SizedBox(width: 4),
@@ -518,12 +594,6 @@ class _MessageMeta extends StatelessWidget {
       ),
     );
   }
-
-  static String formatTime(DateTime value) {
-    final local = value.toLocal();
-    return '${local.hour.toString().padLeft(2, '0')}:'
-        '${local.minute.toString().padLeft(2, '0')}';
-  }
 }
 
 /// What the server says about the conversation, not what anyone said in it.
@@ -538,28 +608,32 @@ class _SystemMessage extends StatelessWidget {
     final theme = Theme.of(context);
     final chatix = ChatixTheme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.x2,
-        horizontal: AppSpacing.x6,
-      ),
-      child: Center(
-        child: GestureDetector(
-          onLongPress: onLongPress,
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.x3,
-              vertical: AppSpacing.x1 + 1,
-            ),
-            decoration: BoxDecoration(
-              color: chatix.dateChip,
-              borderRadius: BorderRadius.circular(AppRadii.full),
-            ),
-            child: Text(
-              message.content ?? '',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+    return Semantics(
+      container: true,
+      label: AppLocalizations.of(context).a11ySystemMessage,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.x2,
+          horizontal: AppSpacing.x6,
+        ),
+        child: Center(
+          child: GestureDetector(
+            onLongPress: onLongPress,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x3,
+                vertical: AppSpacing.x1 + 1,
+              ),
+              decoration: BoxDecoration(
+                color: chatix.dateChip,
+                borderRadius: BorderRadius.circular(AppRadii.full),
+              ),
+              child: Text(
+                message.content ?? '',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ),

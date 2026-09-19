@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
 import 'package:chatix/core/theme/app_theme.dart';
+import 'package:chatix/core/theme/theme_config.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 const Map<String, bool> chatGoldenThemes = <String, bool>{
@@ -12,8 +13,22 @@ const Map<String, bool> chatGoldenThemes = <String, bool>{
   'dark': true,
 };
 
-ThemeData chatGoldenTheme({required bool dark}) =>
-    dark ? AppTheme.darkTheme : AppTheme.lightTheme;
+ThemeData chatGoldenTheme({required bool dark, AppDensity? density}) {
+  if (density == null) return dark ? AppTheme.darkTheme : AppTheme.lightTheme;
+
+  final settings = const AppearanceSettings().copyWith(density: density);
+  return dark ? AppTheme.dark(settings) : AppTheme.light(settings);
+}
+
+/// The two densities a bubble has to hold its shape at.
+///
+/// `cozy` is the default and `compact` is the one that actually stresses the
+/// layout — the padding it takes away is what makes a timestamp collide with
+/// a tick, or a reaction row touch the text above it.
+const Map<String, AppDensity> chatGoldenDensities = <String, AppDensity>{
+  'cozy': AppDensity.cozy,
+  'compact': AppDensity.compact,
+};
 
 Future<void> pumpChatGolden(
   WidgetTester tester, {

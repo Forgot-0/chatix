@@ -227,7 +227,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     _toast(
       failure is PinnedChatsLimitFailure
           ? l10n.pinLimitReached(failure.limit)
-          : friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+          : friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
     );
   }
 
@@ -240,6 +240,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     _toast(
       friendlyFailureMessage(
         failure,
+        l10n: AppLocalizations.of(context),
         fallback: AppLocalizations.of(context).errorOccurred,
       ),
     );
@@ -261,7 +262,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
 
     if (failure != null) {
       _toast(
-        friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+        friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
       );
       return;
     }
@@ -425,7 +426,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     result.match(
       (failure) => _toast(
         chatFailureMessage(failure) ??
-            friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
       ),
       (_) {
         ref.read(chatListProvider.notifier).removeLocally(widget.chat.id);

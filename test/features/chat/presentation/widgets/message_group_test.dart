@@ -72,7 +72,7 @@ void main() {
       ),
     );
 
-    expect(find.text('14:30'), findsOneWidget);
+    expect(find.text('2:30 PM'), findsOneWidget);
   });
 
   testWidgets('only the first message of a run names its author', (
@@ -106,7 +106,7 @@ void main() {
       ),
     );
 
-    expect(find.text('14:30'), findsOneWidget);
+    expect(find.text('2:30 PM'), findsOneWidget);
     expect(find.text('edited'), findsOneWidget);
   });
 

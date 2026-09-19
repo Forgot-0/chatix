@@ -3704,5 +3704,306 @@
   "appearanceHapticsHint": "Short vibrations when a message goes out, a reaction lands or a gesture takes. Your device's own vibration setting still applies.",
   "@appearanceHapticsHint": {
     "description": "Subtitle of the haptics switch."
+  },
+  "failureGeneric": "Something went wrong. Please try again.",
+  "@failureGeneric": {
+    "description": "Fallback shown when a failure carries nothing worth showing"
+  },
+  "failureRateLimited": "Too many attempts. Please wait a minute and try again.",
+  "@failureRateLimited": {
+    "description": "Shown for HTTP 429 (api-docs 0: body.detail)"
+  },
+  "failureNoConnection": "No internet connection. Check your network and try again.",
+  "@failureNoConnection": {
+    "description": "Shown when the device has no network"
+  },
+  "failureTimeout": "The server took too long to respond. Please try again.",
+  "@failureTimeout": {
+    "description": "Shown when the server did not answer in time"
+  },
+  "apiErrorSessionEnded": "Your session has ended. Please sign in again.",
+  "@apiErrorSessionEnded": {
+    "description": "NOT_AUTHENTICATED / NOT_FOUND_OR_INACTIVE_SESSION"
+  },
+  "apiErrorSessionExpired": "Your session has expired. Please sign in again.",
+  "@apiErrorSessionExpired": {
+    "description": "EXPIRED_TOKEN"
+  },
+  "apiErrorSessionInvalid": "Your session is no longer valid. Please sign in again.",
+  "@apiErrorSessionInvalid": {
+    "description": "INVALID_TOKEN"
+  },
+  "apiErrorSessionSignedOut": "This session was signed out. Please sign in again.",
+  "@apiErrorSessionSignedOut": {
+    "description": "TOKEN_IN_BLACKLIST"
+  },
+  "apiErrorAccessDenied": "You don't have permission to do that.",
+  "@apiErrorAccessDenied": {
+    "description": "ACCESS_DENIED and any code ending in ACCESS_DENIED"
+  },
+  "apiErrorValidation": "Some of the details are invalid. Please check and try again.",
+  "@apiErrorValidation": {
+    "description": "VALIDATION"
+  },
+  "apiErrorNotFoundGeneric": "We couldn't find that — it may have been deleted.",
+  "@apiErrorNotFoundGeneric": {
+    "description": "Any code starting with NOT_FOUND_"
+  },
+  "apiErrorTooLongGeneric": "That value is too long. Please shorten it.",
+  "@apiErrorTooLongGeneric": {
+    "description": "Any code starting with TOO_LONG_"
+  },
+  "apiErrorLimitExceededGeneric": "A limit has been reached, so this action is not available.",
+  "@apiErrorLimitExceededGeneric": {
+    "description": "Any code ending in LIMIT_EXCEEDED"
+  },
+  "apiErrorWrongLoginData": "Incorrect username or password.",
+  "@apiErrorWrongLoginData": {
+    "description": "WRONG_LOGIN_DATA"
+  },
+  "apiErrorPasswordMismatch": "The passwords don't match.",
+  "@apiErrorPasswordMismatch": {
+    "description": "PASSWORD_MISMATCH"
+  },
+  "apiErrorDuplicateUser": "That username or email is already taken.",
+  "@apiErrorDuplicateUser": {
+    "description": "DUPLICATE_USER"
+  },
+  "apiErrorEmailNotConfirmed": "Please confirm your email address before signing in.",
+  "@apiErrorEmailNotConfirmed": {
+    "description": "EMAIL_NOT_CONFIRMED"
+  },
+  "apiErrorOauthProviderUnsupported": "That sign-in provider is not supported.",
+  "@apiErrorOauthProviderUnsupported": {
+    "description": "NOT_EXIST_PROVIDER_OAUTH"
+  },
+  "apiErrorOauthStateNotFound": "The sign-in attempt expired. Please try again.",
+  "@apiErrorOauthStateNotFound": {
+    "description": "OAUTH_STATE_NOT_FOUND"
+  },
+  "apiErrorOauthLinkedAnotherUser": "That account is already linked to another user.",
+  "@apiErrorOauthLinkedAnotherUser": {
+    "description": "LINKED_ANOTHER_USER_OAUTH"
+  },
+  "apiErrorProfileExists": "You already have a profile.",
+  "@apiErrorProfileExists": {
+    "description": "ALREADE_EXIST_PROFILE (server spelling)"
+  },
+  "apiErrorNotChatMember": "You're not a member of this chat.",
+  "@apiErrorNotChatMember": {
+    "description": "NOT_CHAT_MEMBER"
+  },
+  "apiErrorAlreadyChatMember": "That person is already in this chat.",
+  "@apiErrorAlreadyChatMember": {
+    "description": "ALREADY_CHAT_MEMBER"
+  },
+  "apiErrorInvalidChatRole": "That is not a valid chat role.",
+  "@apiErrorInvalidChatRole": {
+    "description": "INVALID_CHAT_ROLE"
+  },
+  "apiErrorDirectChatExists": "You already have a direct chat with this person.",
+  "@apiErrorDirectChatExists": {
+    "description": "DIRECT_CHAT_EXISTS"
+  },
+  "apiErrorMessageTooLong": "That message is too long. Please shorten it.",
+  "@apiErrorMessageTooLong": {
+    "description": "MESSAGE_TOO_LONG"
+  },
+  "apiErrorInvalidMessage": "That message can't be sent as written.",
+  "@apiErrorInvalidMessage": {
+    "description": "INVALID_MESSAGE"
+  },
+  "apiErrorSlowModeLimit": "Slow mode is on — please wait before sending another message.",
+  "@apiErrorSlowModeLimit": {
+    "description": "SLOW_MODE_LIMIT"
+  },
+  "apiErrorSlowModeOutOfRange": "Slow mode must be between 0 seconds and 24 hours.",
+  "@apiErrorSlowModeOutOfRange": {
+    "description": "SLOW_MODE_OUT_OF_RANGE"
+  },
+  "apiErrorAttachmentLimitExceeded": "Too many attachments for one message.",
+  "@apiErrorAttachmentLimitExceeded": {
+    "description": "ATTACHMENT_LIMIT_EXCEEDED"
+  },
+  "apiErrorAttachmentNotFound": "That attachment isn't available any more.",
+  "@apiErrorAttachmentNotFound": {
+    "description": "ATTACHMENT_NOT_FOUND"
+  },
+  "apiErrorAttachmentValidation": "That file can't be attached — check its type and size.",
+  "@apiErrorAttachmentValidation": {
+    "description": "ATTACHMENT_VALIDATION"
+  },
+  "apiErrorEmptyAttachmentUpload": "Please choose a file to attach.",
+  "@apiErrorEmptyAttachmentUpload": {
+    "description": "EMPTY_ATTACHMENT_UPLOAD_REQUEST"
+  },
+  "apiErrorInvalidUploadToken": "The upload expired. Please attach the file again.",
+  "@apiErrorInvalidUploadToken": {
+    "description": "INVALID_UPLOAD_TOKEN"
+  },
+  "apiErrorAvatarNotImage": "An avatar must be an image file.",
+  "@apiErrorAvatarNotImage": {
+    "description": "AVATAR_NOT_TYPE_IMAGE"
+  },
+  "apiErrorActiveCallExists": "There is already an active call in this chat.",
+  "@apiErrorActiveCallExists": {
+    "description": "ACTIVE_CALL_EXISTS"
+  },
+  "apiErrorNoActiveCall": "There is no active call in this chat.",
+  "@apiErrorNoActiveCall": {
+    "description": "NO_ACTIVE_CALL"
+  },
+  "apiErrorLivekitUnauthorized": "You can't join this call.",
+  "@apiErrorLivekitUnauthorized": {
+    "description": "LIVEKIT_UNAUTHORIZED"
+  },
+  "apiErrorLivekitError": "The call service is unavailable right now.",
+  "@apiErrorLivekitError": {
+    "description": "LIVEKIT_ERROR"
+  },
+  "apiErrorInvalidReaction": "That emoji can't be used as a reaction.",
+  "@apiErrorInvalidReaction": {
+    "description": "INVALID_REACTION"
+  },
+  "apiErrorReactionNotAllowed": "That reaction isn't allowed in this chat.",
+  "@apiErrorReactionNotAllowed": {
+    "description": "REACTION_NOT_ALLOWED"
+  },
+  "apiErrorReactionsDisabled": "Reactions are turned off in this chat.",
+  "@apiErrorReactionsDisabled": {
+    "description": "REACTIONS_DISABLED"
+  },
+  "apiErrorTooManyReactions": "No more reactions can be added here.",
+  "@apiErrorTooManyReactions": {
+    "description": "TOO_MANY_REACTIONS"
+  },
+  "apiErrorMaxLimitCursor": "Too many chats were resumed at once.",
+  "@apiErrorMaxLimitCursor": {
+    "description": "MAX_LIMIT_CURSOR"
+  },
+  "a11yMessageFrom": "Message from {author}, {time}",
+  "@a11yMessageFrom": {
+    "description": "Screen-reader header of an incoming message bubble",
+    "placeholders": {
+      "author": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "a11yMessageMine": "Your message, {time}",
+  "@a11yMessageMine": {
+    "description": "Screen-reader header of your own message bubble",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "a11ySystemMessage": "System message",
+  "@a11ySystemMessage": {
+    "description": "Screen-reader header of a system message in the feed"
+  },
+  "a11yReactions": "{count, plural, =1{1 reaction} other{{count} reactions}}",
+  "@a11yReactions": {
+    "description": "How many people picked one emoji, for a screen reader",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "a11yReactionYours": "including yours",
+  "@a11yReactionYours": {
+    "description": "Appended to a reaction chip that includes your own"
+  },
+  "a11yMessageActionsHint": "show message actions",
+  "@a11yMessageActionsHint": {
+    "description": "Long-press hint on a message bubble"
+  },
+  "a11yMessageAttachmentsHint": "{count, plural, =1{1 attachment} other{{count} attachments}}",
+  "@a11yMessageAttachmentsHint": {
+    "description": "Announced on a bubble whose content is files, not text",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewPromptTitle": "Enjoying the app?",
+  "@reviewPromptTitle": {
+    "description": "Title of the \"would you rate us\" dialog"
+  },
+  "reviewPromptBody": "Would you like to share your feedback with us?",
+  "@reviewPromptBody": {
+    "description": "Body of the review prompt"
+  },
+  "reviewPromptDecline": "No thanks",
+  "@reviewPromptDecline": {
+    "description": "Declines the review prompt"
+  },
+  "reviewPromptAccept": "Sure!",
+  "@reviewPromptAccept": {
+    "description": "Accepts the review prompt"
+  },
+  "feedbackTitle": "Your feedback matters",
+  "@feedbackTitle": {
+    "description": "Title of the feedback form"
+  },
+  "feedbackBody": "Tell us what you think of the app. If you are enjoying it, a review on the app store would mean a lot.",
+  "@feedbackBody": {
+    "description": "Body of the feedback form"
+  },
+  "feedbackHint": "Enter your feedback here",
+  "@feedbackHint": {
+    "description": "Placeholder in the feedback text field"
+  },
+  "feedbackSubmit": "Send",
+  "@feedbackSubmit": {
+    "description": "Sends the written feedback"
+  },
+  "updateRequiredTitle": "Update required",
+  "@updateRequiredTitle": {
+    "description": "Title when the update cannot be skipped"
+  },
+  "updateAvailableTitle": "Update available",
+  "@updateAvailableTitle": {
+    "description": "Title when the update is optional"
+  },
+  "updateRequiredBody": "Version {version} is required to keep using ChatiX.",
+  "@updateRequiredBody": {
+    "description": "Body when the update cannot be skipped",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateAvailableBody": "Version {version} is available.",
+  "@updateAvailableBody": {
+    "description": "Body when the update is optional",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateWhatsNew": "What's new",
+  "@updateWhatsNew": {
+    "description": "Heading above the release notes"
+  },
+  "updateLater": "Later",
+  "@updateLater": {
+    "description": "Postpones an optional update"
+  },
+  "updateNow": "Update now",
+  "@updateNow": {
+    "description": "Starts a required update"
+  },
+  "updateAction": "Update",
+  "@updateAction": {
+    "description": "Starts an optional update"
   }
 }

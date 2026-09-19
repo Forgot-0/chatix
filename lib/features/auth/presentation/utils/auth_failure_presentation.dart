@@ -71,7 +71,11 @@ AuthErrorInfo describeAuthFailure(Object? error, AppLocalizations l10n) {
 
     default:
       return AuthErrorInfo(
-        message: friendlyFailureMessage(error, fallback: l10n.authErrorGeneric),
+        message: friendlyFailureMessage(
+          error,
+          l10n: l10n,
+          fallback: l10n.authErrorGeneric,
+        ),
       );
   }
 }
@@ -130,6 +134,7 @@ AuthErrorInfo _describeApiFailure(ApiFailure failure, AppLocalizations l10n) {
       return AuthErrorInfo(
         message: friendlyFailureMessage(
           failure,
+          l10n: l10n,
           fallback: l10n.authErrorGeneric,
         ),
       );

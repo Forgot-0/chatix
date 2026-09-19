@@ -68,7 +68,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (failure != null) {
       AppSnackbar.failure(
         context,
-        friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+        friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
       );
     }
 
@@ -88,7 +88,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     result.match(
       (failure) => AppSnackbar.failure(
         context,
-        friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+        friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
       ),
       // `PATCH /notifications/read_all/` answers with a bare number, not an
       // object (api-docs §7.4) — it is how many rows it touched, and saying

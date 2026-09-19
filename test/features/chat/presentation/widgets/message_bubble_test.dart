@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
+import 'package:chatix/core/theme/theme_config.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
@@ -65,11 +67,12 @@ void main() {
     WidgetTester tester,
     Widget bubble, {
     bool dark = false,
+    AppDensity? density,
     Size surfaceSize = const Size(400, 700),
   }) => tester.pumpWidgetBuilder(
     Align(alignment: Alignment.topCenter, child: bubble),
     wrapper: materialAppWrapper(
-      theme: chatGoldenTheme(dark: dark),
+      theme: chatGoldenTheme(dark: dark, density: density),
       localizations: AppLocalizations.localizationsDelegates,
     ),
     surfaceSize: surfaceSize,
@@ -91,7 +94,7 @@ void main() {
 
       expect(find.text('Ada joined the chat'), findsOneWidget);
       // No timestamp, no ticks, nothing to reply to.
-      expect(find.text('14:30'), findsNothing);
+      expect(find.text('2:30 PM'), findsNothing);
       expect(find.byType(StatusTicks), findsNothing);
     });
   });
@@ -280,7 +283,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.text('14:30'));
+      await tester.tap(find.text('2:30 PM'));
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(opened, isTrue);
@@ -540,6 +543,307 @@ void main() {
 
       expect(toggled, 1);
     });
+  });
+
+  group('what a screen reader hears', () {
+    /// Everything spoken under [finder], in the order the reader meets it.
+    ///
+    /// A node that merges its descendants joins their labels with newlines,
+    /// so those are split back out: what matters is the order the words are
+    /// spoken in, not how many nodes they were spread across.
+    List<String> spoken(WidgetTester tester, Finder finder) {
+      final labels = <String>[];
+
+      void walk(SemanticsNode node) {
+        for (final line in node.label.split('\n')) {
+          final trimmed = line.trim();
+          if (trimmed.isNotEmpty) labels.add(trimmed);
+        }
+        node.visitChildren((child) {
+          walk(child);
+          return true;
+        });
+      }
+
+      walk(tester.getSemantics(finder));
+      return labels;
+    }
+
+    testWidgets('an incoming bubble names its author and its time', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(message: message(content: 'hello'), isMine: false),
+      );
+
+      expect(
+        spoken(tester, find.byType(MessageBubble)),
+        containsAllInOrder(<String>['Message from Ada, 2:30 PM', 'hello']),
+      );
+
+      handle.dispose();
+    });
+
+    testWidgets('your own bubble does not read your name back to you', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(message: message(content: 'hello'), isMine: true),
+      );
+
+      final labels = spoken(tester, find.byType(MessageBubble));
+      expect(labels.first, 'Your message, 2:30 PM');
+      expect(labels.join(' '), isNot(contains('Ada')));
+
+      handle.dispose();
+    });
+
+    // The reading the brief asks for: who, when, what, and how many reacted.
+    testWidgets('reactions are counted in words, after the text', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(content: 'hello'),
+          isMine: false,
+          reactions: MessageReactionsEntity(
+            messageId: 'm1',
+            groups: [
+              const ReactionGroupEntity(
+                emoji: '👍',
+                count: 2,
+                reactedByMe: false,
+                recentUserIds: [1, 2],
+              ),
+            ],
+          ),
+          onToggleReaction: (_) {},
+        ),
+      );
+
+      // The chips bloom in; until that settles they are transparent, and a
+      // transparent subtree carries no semantics.
+      await tester.pumpAndSettle();
+
+      expect(
+        spoken(tester, find.byType(MessageBubble)),
+        containsAllInOrder(<String>[
+          'Message from Ada, 2:30 PM',
+          'hello',
+          '👍, 2 reactions',
+        ]),
+      );
+
+      handle.dispose();
+    });
+
+    testWidgets('the meta row says what the ticks mean', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(content: 'hello', isEdited: true),
+          isMine: true,
+          deliveryStatus: MessageDeliveryStatus.read,
+          onShowDetails: () {},
+        ),
+      );
+
+      expect(
+        spoken(tester, find.byType(MessageBubble)),
+        contains('edited, Read, Details'),
+      );
+
+      handle.dispose();
+    });
+
+    testWidgets('the clock is not read twice', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(message: message(content: 'hello'), isMine: false),
+      );
+
+      final clocks = spoken(
+        tester,
+        find.byType(MessageBubble),
+      ).where((label) => label.contains('2:30 PM')).length;
+      expect(clocks, 1);
+
+      handle.dispose();
+    });
+
+    testWidgets('a system message says that is what it is', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(
+            type: MessageType.system,
+            authorId: null,
+            content: 'Ada joined',
+          ),
+          isMine: false,
+        ),
+      );
+
+      expect(
+        spoken(tester, find.byType(MessageBubble)),
+        containsAllInOrder(<String>['System message', 'Ada joined']),
+      );
+
+      handle.dispose();
+    });
+
+    testWidgets('the long-press menu is discoverable without sight', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pump(
+        tester,
+        MessageBubble(
+          message: message(content: 'hello'),
+          isMine: false,
+          actions: const [MessageAction.reply],
+          onReply: () {},
+        ),
+      );
+
+      // The action and its hint have to sit on the node that carries the
+      // label, not on the row above it: a reader who focuses the bubble is
+      // the one who needs to be told the menu is there.
+      expect(
+        tester.getSemantics(find.text('hello')),
+        matchesSemantics(
+          label: 'Message from Ada, 2:30 PM\nhello',
+          hasLongPressAction: true,
+          onLongPressHint: 'show message actions',
+          textDirection: TextDirection.ltr,
+        ),
+      );
+
+      handle.dispose();
+    });
+  });
+
+  // Every shape a bubble takes, on both themes and at both densities —
+  // sixteen frames that between them cover the padding, the corner, the
+  // author line, the quote, the meta row and the chips.
+  group('the whole bubble matrix', () {
+    Widget everyKind() {
+      final original = message(
+        id: 'm0',
+        seq: 0,
+        authorId: 43,
+        content: 'Where did we land on the cursor?',
+      );
+
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MessageBubble(
+            message: message(
+              type: MessageType.system,
+              authorId: null,
+              content: 'Ada joined the chat',
+            ),
+            isMine: false,
+          ),
+          MessageBubble(
+            message: message(content: 'Heading a run', seq: 2),
+            isMine: false,
+            showAuthor: true,
+            isFirstInGroup: true,
+            isLastInGroup: false,
+            showMeta: false,
+          ),
+          MessageBubble(
+            message: message(id: 'm3', seq: 3, content: 'Stacked under it'),
+            isMine: false,
+            isFirstInGroup: false,
+            isLastInGroup: false,
+            showMeta: false,
+          ),
+          MessageBubble(
+            message: message(
+              id: 'm4',
+              seq: 4,
+              content: 'Closing it, with a reply above',
+              replyTo: original,
+            ),
+            isMine: false,
+            isFirstInGroup: false,
+            reactions: MessageReactionsEntity(
+              messageId: 'm4',
+              groups: const [
+                ReactionGroupEntity(
+                  emoji: '👍',
+                  count: 2,
+                  reactedByMe: true,
+                  recentUserIds: [1, 2],
+                ),
+                ReactionGroupEntity(
+                  emoji: '🎉',
+                  count: 1,
+                  reactedByMe: false,
+                  recentUserIds: [3],
+                ),
+              ],
+            ),
+            onToggleReaction: (_) {},
+          ),
+          MessageBubble(
+            message: message(
+              id: 'm5',
+              seq: 5,
+              authorId: 7,
+              content: 'Passing this on',
+              isEdited: true,
+              forwardedFrom: message(id: 'm9', seq: 9, authorId: 43),
+            ),
+            isMine: true,
+            deliveryStatus: MessageDeliveryStatus.read,
+          ),
+          MessageBubble(
+            message: message(
+              id: 'm6',
+              seq: 6,
+              authorId: 7,
+              content: 'Still going out',
+            ),
+            isMine: true,
+            deliveryStatus: MessageDeliveryStatus.sending,
+          ),
+        ],
+      );
+    }
+
+    for (final theme in chatGoldenThemes.entries) {
+      for (final density in chatGoldenDensities.entries) {
+        testGoldens('${theme.key} / ${density.key}', (tester) async {
+          await pump(
+            tester,
+            everyKind(),
+            dark: theme.value,
+            density: density.value,
+            surfaceSize: const Size(400, 620),
+          );
+          await tester.pumpAndSettle();
+
+          await screenMatchesGolden(
+            tester,
+            'bubble_matrix_${theme.key}_${density.key}',
+          );
+        });
+      }
+    }
   });
 
   group('goldens', () {

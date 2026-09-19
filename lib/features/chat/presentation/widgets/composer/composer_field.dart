@@ -78,8 +78,11 @@ class ComposerField extends StatelessWidget {
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               disabledBorder: InputBorder.none,
+              // Tall enough that the field itself is a 48dp target, not
+              // just the pill drawn around it: the thing a screen reader
+              // and a thumb both land on is this node.
               contentPadding: const EdgeInsets.symmetric(
-                vertical: AppSpacing.x2,
+                vertical: AppSpacing.x3 + 2,
               ),
             ),
           ),

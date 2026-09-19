@@ -80,18 +80,37 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
         );
   }
 
+  /// Decoded no larger than the box it is drawn into.
+  ///
+  /// A photo off a modern phone is 4000 px wide; a bubble tile is 250. Left
+  /// alone, Flutter decodes and caches the full frame — about 64 MB of RSS
+  /// per picture — and a feed of a dozen photos is enough to be killed for
+  /// it. The cap is on the decode, not on the file, so the viewer still gets
+  /// full detail when the same attachment is opened full-screen.
   Widget _image(File file) {
-    return Image.file(
-      file,
-      fit: widget.fit,
-      width: double.infinity,
-      height: double.infinity,
-      // The bytes behind an `s3_key` never change, so a frame already
-      // decoded is always the right one to keep showing.
-      gaplessPlayback: true,
-      errorBuilder: (_, _, _) => AttachmentImageFailure(
-        onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final ratio = MediaQuery.devicePixelRatioOf(context);
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+
+        return Image.file(
+          file,
+          fit: widget.fit,
+          width: double.infinity,
+          height: double.infinity,
+          // Unbounded in one direction happens inside a shrink-wrapping
+          // parent; capping on the other alone still bounds the decode.
+          cacheWidth: width.isFinite ? (width * ratio).round() : null,
+          cacheHeight: height.isFinite ? (height * ratio).round() : null,
+          // The bytes behind an `s3_key` never change, so a frame already
+          // decoded is always the right one to keep showing.
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => AttachmentImageFailure(
+            onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+          ),
+        );
+      },
     );
   }
 }

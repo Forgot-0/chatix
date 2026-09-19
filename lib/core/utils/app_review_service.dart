@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -153,9 +155,9 @@ class AppReviewServiceImpl implements AppReviewService {
             TextField(
               controller: controller,
               maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Enter your feedback here',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(context).feedbackHint,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -165,7 +167,7 @@ class AppReviewServiceImpl implements AppReviewService {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -173,7 +175,7 @@ class AppReviewServiceImpl implements AppReviewService {
               debugPrint('⭐️ User feedback: ${controller.text}');
               Navigator.of(context).pop();
             },
-            child: const Text('Submit'),
+            child: Text(AppLocalizations.of(context).feedbackSubmit),
           ),
         ],
       ),

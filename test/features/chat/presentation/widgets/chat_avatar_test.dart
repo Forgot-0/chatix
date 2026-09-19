@@ -23,9 +23,26 @@ void main() {
   Future<void> pumpAvatar(WidgetTester tester, Widget avatar) =>
       tester.pumpWidget(MaterialApp(home: Scaffold(body: avatar)));
 
+  /// The provider the avatar is drawn from, with the decode cap unwrapped.
+  ///
+  /// Every face is wrapped in a [ResizeImage] so a 256-px variant is not
+  /// decoded at 256 px for a 24-px circle; what the tests below care about
+  /// is the provider underneath, and its cache key.
   ImageProvider? providerOf(WidgetTester tester) {
     final images = tester.widgetList<Image>(find.byType(Image));
-    return images.isEmpty ? null : images.first.image;
+    if (images.isEmpty) return null;
+
+    final image = images.first.image;
+    return image is ResizeImage ? image.imageProvider : image;
+  }
+
+  /// The width the same face is capped to.
+  int? decodeWidthOf(WidgetTester tester) {
+    final images = tester.widgetList<Image>(find.byType(Image));
+    if (images.isEmpty) return null;
+
+    final image = images.first.image;
+    return image is ResizeImage ? image.width : null;
   }
 
   group('image source', () {
@@ -192,6 +209,62 @@ void main() {
 
       expect(find.byIcon(Icons.groups_outlined), findsOneWidget);
       expect(tiles(), findsNothing);
+    });
+  });
+
+  group('decode size', () {
+    // Two hundred rows of a chat list each hold a face. Decoded at the
+    // variant's own size they are a hundred megabytes of bitmap; decoded at
+    // the circle they are drawn in, they are a rounding error.
+    testWidgets('a face is decoded for the circle, not for the file', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+
+      await pumpAvatar(
+        tester,
+        ChatAvatar.profile(
+          profile(url: 'https://s3.example.com/a.jpg?X-Amz-Signature=abc'),
+          size: ChatAvatarSize.xs,
+        ),
+      );
+
+      expect(decodeWidthOf(tester), (ChatAvatarSize.xs.diameter * 2).round());
+    });
+
+    testWidgets('a larger circle asks for a larger decode', (tester) async {
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+
+      await pumpAvatar(
+        tester,
+        ChatAvatar.profile(
+          profile(url: 'https://s3.example.com/a.jpg?X-Amz-Signature=abc'),
+          size: ChatAvatarSize.lg,
+        ),
+      );
+
+      expect(decodeWidthOf(tester), (ChatAvatarSize.lg.diameter * 2).round());
+    });
+
+    // A repaint boundary per face is what keeps one arriving picture from
+    // redrawing every other row in the list.
+    testWidgets('each face is its own layer', (tester) async {
+      await pumpAvatar(
+        tester,
+        ChatAvatar.profile(
+          profile(url: 'https://s3.example.com/a.jpg?X-Amz-Signature=abc'),
+        ),
+      );
+
+      expect(
+        find.descendant(
+          of: find.byType(ChatAvatar),
+          matching: find.byType(RepaintBoundary),
+        ),
+        findsWidgets,
+      );
     });
   });
 

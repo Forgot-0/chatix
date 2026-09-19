@@ -171,6 +171,7 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
               chatFailureMessage(failure) ??
                   friendlyFailureMessage(
                     failure,
+                    l10n: AppLocalizations.of(context),
                     fallback: AppLocalizations.of(context).startChatFailed,
                   ),
             ),

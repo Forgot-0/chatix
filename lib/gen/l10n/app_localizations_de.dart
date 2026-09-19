@@ -49,75 +49,73 @@ class AppLocalizationsDe extends AppLocalizations {
   String get notifications => 'Benachrichtigungen';
 
   @override
-  String get notification_settings => 'Configure notification preferences';
+  String get notification_settings => 'Benachrichtigungen einstellen';
 
   @override
-  String get localization_demo => 'Localization Demo';
+  String get localization_demo => 'Lokalisierungs-Demo';
 
   @override
-  String get localization_demo_description =>
-      'View localization features in action';
+  String get localization_demo_description => 'Lokalisierung in Aktion sehen';
 
   @override
-  String get language_settings => 'Language Settings';
+  String get language_settings => 'Spracheinstellungen';
 
   @override
-  String get select_your_language => 'Select your preferred language';
+  String get select_your_language => 'Wähle deine Sprache';
 
   @override
   String get language_explanation =>
-      'The selected language will be applied across the entire application';
+      'Die gewählte Sprache gilt für die gesamte App';
 
   @override
-  String get localization_assets_demo => 'Localization & Assets Demo';
+  String get localization_assets_demo => 'Lokalisierung & Assets';
 
   @override
-  String get current_language => 'Current Language';
+  String get current_language => 'Aktuelle Sprache';
 
   @override
-  String get language_code => 'Language code';
+  String get language_code => 'Sprachcode';
 
   @override
-  String get language_name => 'Language name';
+  String get language_name => 'Sprachname';
 
   @override
-  String get formatting_examples => 'Formatting Examples';
+  String get formatting_examples => 'Formatierungsbeispiele';
 
   @override
-  String get date_full => 'Date (full)';
+  String get date_full => 'Datum (vollständig)';
 
   @override
-  String get date_short => 'Date (short)';
+  String get date_short => 'Datum (kurz)';
 
   @override
-  String get time => 'Time';
+  String get time => 'Uhrzeit';
 
   @override
-  String get currency => 'Currency';
+  String get currency => 'Währung';
 
   @override
-  String get percent => 'Percent';
+  String get percent => 'Prozent';
 
   @override
-  String get localized_assets => 'Localized Assets';
+  String get localized_assets => 'Lokalisierte Assets';
 
   @override
   String get localized_assets_explanation =>
-      'This section demonstrates how to load different assets based on the selected language. Images, audio, and other resources can be language-specific.';
+      'Dieser Abschnitt zeigt, wie sich je nach Sprache andere Assets laden lassen. Bilder, Audio und andere Ressourcen können sprachabhängig sein.';
 
   @override
-  String get image_example => 'Localized Image Example';
+  String get image_example => 'Beispiel für ein lokalisiertes Bild';
 
   @override
   String get welcome_image_caption =>
-      'This image is loaded based on your selected language';
+      'Dieses Bild richtet sich nach deiner Sprache';
 
   @override
-  String get common_image_example => 'Common Image Example';
+  String get common_image_example => 'Beispiel für ein gemeinsames Bild';
 
   @override
-  String get common_image_caption =>
-      'This image is the same across all languages';
+  String get common_image_caption => 'Dieses Bild ist in allen Sprachen gleich';
 
   @override
   String get logout => 'Abmelden';
@@ -328,53 +326,53 @@ class AppLocalizationsDe extends AppLocalizations {
   String get messageSelect => 'Auswählen';
 
   @override
-  String get messageReact => 'React';
+  String get messageReact => 'Reagieren';
 
   @override
-  String get messageCopy => 'Copy text';
+  String get messageCopy => 'Text kopieren';
 
   @override
-  String get messageCopied => 'Copied';
+  String get messageCopied => 'Kopiert';
 
   @override
-  String get linkOpenFailed => 'Nothing here can open that link';
+  String get linkOpenFailed => 'Diesen Link kann hier nichts öffnen';
 
   @override
   String get messageDetails => 'Details';
 
   @override
   String replyingTo(String author) {
-    return 'Replying to $author';
+    return 'Antwort an $author';
   }
 
   @override
   String forwardedFrom(String author) {
-    return 'Forwarded from $author';
+    return 'Weitergeleitet von $author';
   }
 
   @override
-  String get forwardedMessage => 'Forwarded message';
+  String get forwardedMessage => 'Weitergeleitete Nachricht';
 
   @override
-  String get detailsSentAt => 'Sent';
+  String get detailsSentAt => 'Gesendet';
 
   @override
-  String get detailsAuthor => 'From';
+  String get detailsAuthor => 'Von';
 
   @override
-  String get detailsSequence => 'Number in chat';
+  String get detailsSequence => 'Nummer im Chat';
 
   @override
-  String get detailsEdited => 'Edited';
+  String get detailsEdited => 'Bearbeitet';
 
   @override
-  String get detailsEditedYes => 'Yes';
+  String get detailsEditedYes => 'Ja';
 
   @override
-  String get detailsDelivery => 'Delivery';
+  String get detailsDelivery => 'Zustellung';
 
   @override
-  String get detailsAttachments => 'Attachments';
+  String get detailsAttachments => 'Anhänge';
 
   @override
   String get backToLatest => 'Zurück zu den neuesten Nachrichten';
@@ -408,60 +406,59 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count new messages below',
-      one: '1 new message below',
-      zero: 'No new messages',
+      other: '$count neue Nachrichten weiter unten',
+      one: '1 neue Nachricht weiter unten',
+      zero: 'Keine neuen Nachrichten',
     );
     return '$_temp0';
   }
 
   @override
-  String get connectionReconnecting => 'Reconnecting…';
+  String get connectionReconnecting => 'Neu verbinden…';
 
   @override
-  String get connectionOffline => 'Offline — pull to refresh';
+  String get connectionOffline => 'Offline — zum Aktualisieren ziehen';
 
   @override
-  String get attachmentFallbackLabel => 'Attachment';
+  String get attachmentFallbackLabel => 'Anhang';
 
   @override
-  String get composerJoinToSend => 'Join this chat to send messages';
+  String get composerJoinToSend => 'Tritt diesem Chat bei, um zu schreiben';
 
   @override
-  String get composerBanned => 'You are banned from this chat';
+  String get composerBanned => 'Du bist in diesem Chat gesperrt';
 
   @override
-  String get composerMuted => 'You are muted in this chat';
+  String get composerMuted => 'Du darfst in diesem Chat nicht schreiben';
 
   @override
-  String get composerAdminsOnly => 'Only admins can post in this chat';
+  String get composerAdminsOnly => 'In diesem Chat dürfen nur Admins schreiben';
 
   @override
-  String get composerNoPermission =>
-      'You do not have permission to send messages here';
+  String get composerNoPermission => 'Du darfst hier keine Nachrichten senden';
 
   @override
   String attachmentSelection(int count, String size) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count files',
-      one: '1 file',
+      other: '$count Dateien',
+      one: '1 Datei',
     );
     return '$_temp0, $size';
   }
 
   @override
-  String get attachmentReady => 'Ready to send';
+  String get attachmentReady => 'Bereit zum Senden';
 
   @override
   String attachMediaLimits(int count, String size) {
-    return 'Up to $count, $size each';
+    return 'Bis zu $count, je $size';
   }
 
   @override
   String attachDocumentLimits(String size) {
-    return 'One file, up to $size';
+    return 'Eine Datei, bis $size';
   }
 
   @override
@@ -1832,227 +1829,231 @@ class AppLocalizationsDe extends AppLocalizations {
       'Gesucht wird im Gesagten, nicht in Dateinamen oder Chat-Titeln.';
 
   @override
-  String get chatSettings => 'Chat settings';
+  String get chatSettings => 'Chat-Einstellungen';
 
   @override
   String get chatSettingsNoPermission =>
-      'Only an owner or admin can change this chat';
+      'Nur Eigentümer oder Admin können diesen Chat ändern';
 
   @override
   String get chatNameCannotBeCleared =>
-      'A name cannot be removed once the chat has one';
+      'Ein Name lässt sich nicht mehr entfernen, wenn der Chat einen hat';
 
   @override
   String chatSlowModeRange(int max) {
-    return '0 to $max seconds';
+    return '0 bis $max Sekunden';
   }
 
   @override
-  String get chatReactionsPickHint => 'Pick the emoji people may react with';
+  String get chatReactionsPickHint =>
+      'Wähle die Emoji, mit denen reagiert werden darf';
 
   @override
-  String get chatNotMutedLabel => 'Notifications on';
+  String get chatNotMutedLabel => 'Benachrichtigungen an';
 
   @override
-  String get chatMutedToast => 'Notifications off for this chat';
+  String get chatMutedToast => 'Benachrichtigungen für diesen Chat aus';
 
   @override
-  String get chatUnmutedToast => 'Notifications back on for this chat';
+  String get chatUnmutedToast => 'Benachrichtigungen für diesen Chat wieder an';
 
   @override
-  String get muteForHour => 'Mute for 1 hour';
+  String get muteForHour => '1 Stunde stummschalten';
 
   @override
-  String get muteForEightHours => 'Mute for 8 hours';
+  String get muteForEightHours => '8 Stunden stummschalten';
 
   @override
-  String get muteForever => 'Mute until I turn it back on';
+  String get muteForever => 'Stumm, bis ich es wieder einschalte';
 
   @override
   String get leaveChatOwnerStuck =>
-      'The chat creator cannot leave, and you no longer have permission to delete this chat.';
+      'Der Ersteller kann den Chat nicht verlassen, und du darfst ihn nicht mehr löschen.';
 
   @override
-  String get chatInviteLink => 'Invite link';
+  String get chatInviteLink => 'Einladungslink';
 
   @override
   String get chatInviteLinkHint =>
-      'Anyone signed in to ChatiX can open this link and join. It only opens in the app.';
+      'Jeder, der bei ChatiX angemeldet ist, kann diesen Link öffnen und beitreten. Er öffnet sich nur in der App.';
 
   @override
-  String get chatInviteLinkCopied => 'Invite link copied';
+  String get chatInviteLinkCopied => 'Einladungslink kopiert';
 
   @override
-  String get sharedMedia => 'Media';
+  String get sharedMedia => 'Medien';
 
   @override
-  String get sharedFiles => 'Files';
+  String get sharedFiles => 'Dateien';
 
   @override
   String get sharedLinks => 'Links';
 
   @override
-  String get sharedVoice => 'Voice';
+  String get sharedVoice => 'Sprache';
 
   @override
-  String get sharedMediaEmpty => 'No photos or videos here yet';
+  String get sharedMediaEmpty => 'Noch keine Fotos oder Videos hier';
 
   @override
-  String get sharedFilesEmpty => 'No files here yet';
+  String get sharedFilesEmpty => 'Noch keine Dateien hier';
 
   @override
-  String get sharedLinksEmpty => 'No links here yet';
+  String get sharedLinksEmpty => 'Noch keine Links hier';
 
   @override
-  String get sharedVoiceEmpty => 'No voice messages here yet';
+  String get sharedVoiceEmpty => 'Noch keine Sprachnachrichten hier';
 
   @override
   String get sharedContentLocalOnly =>
-      'Shows what this device has loaded from the chat — the server has no shared-media index.';
+      'Zeigt, was dieses Gerät aus dem Chat geladen hat — der Server führt kein Verzeichnis geteilter Medien.';
 
   @override
-  String get chatSettingsUnchanged => 'Nothing has changed yet';
+  String get chatSettingsUnchanged => 'Noch nichts geändert';
 
   @override
-  String get membersSearchHint => 'Search members';
+  String get membersSearchHint => 'Mitglieder suchen';
 
   @override
   String get membersSearchLoadedOnly =>
-      'Only the members loaded so far are searched.';
+      'Es wird nur unter den bereits geladenen Mitgliedern gesucht.';
 
   @override
   String membersSearchEmpty(String query) {
-    return 'No one here matches “$query”';
+    return 'Hier passt niemand zu „$query“';
   }
 
   @override
-  String get membersLoadMore => 'Load more people';
+  String get membersLoadMore => 'Mehr Leute laden';
 
   @override
-  String get membersSectionAdmins => 'Administration';
+  String get membersSectionAdmins => 'Verwaltung';
 
   @override
-  String get membersSectionMembers => 'Members';
+  String get membersSectionMembers => 'Mitglieder';
 
   @override
-  String get membersSectionBanned => 'Banned members';
+  String get membersSectionBanned => 'Gesperrte Mitglieder';
 
   @override
   String get membersBannedHint =>
-      'Banned people cannot read or write here until the ban is lifted.';
+      'Gesperrte können hier weder lesen noch schreiben, bis die Sperre aufgehoben wird.';
 
   @override
-  String get membersEmptyTitle => 'No members to show';
+  String get membersEmptyTitle => 'Keine Mitglieder zu zeigen';
 
   @override
-  String get membersEmptyInvite => 'Add someone to get this chat started.';
+  String get membersEmptyInvite =>
+      'Füge jemanden hinzu, damit der Chat losgeht.';
 
   @override
   String get membersEmptyNoInvite =>
-      'Only members with the invite permission can add people here.';
+      'Nur Mitglieder mit Einladungsrecht können hier Leute hinzufügen.';
 
   @override
-  String get chatRoleOwner => 'Owner';
+  String get chatRoleOwner => 'Eigentümer';
 
   @override
   String get chatRoleAdmin => 'Admin';
 
   @override
-  String get chatRoleEditor => 'Editor';
+  String get chatRoleEditor => 'Redakteur';
 
   @override
-  String get chatRoleDirect => 'Direct';
+  String get chatRoleDirect => 'Direkt';
 
   @override
-  String get chatRoleMember => 'Member';
+  String get chatRoleMember => 'Mitglied';
 
   @override
-  String get chatRoleViewer => 'Viewer';
+  String get chatRoleViewer => 'Leser';
 
   @override
-  String get chatRoleUnknown => 'Unknown role';
+  String get chatRoleUnknown => 'Unbekannte Rolle';
 
   @override
-  String get memberMutedBadge => 'Muted';
+  String get memberMutedBadge => 'Stumm';
 
   @override
-  String get memberBannedBadge => 'Banned';
+  String get memberBannedBadge => 'Gesperrt';
 
   @override
-  String get memberOpenProfile => 'Open profile';
+  String get memberOpenProfile => 'Profil öffnen';
 
   @override
-  String get memberMessagePrivately => 'Message privately';
+  String get memberMessagePrivately => 'Privat schreiben';
 
   @override
   String memberKickConfirmTitle(String name) {
-    return 'Remove $name?';
+    return '$name entfernen?';
   }
 
   @override
   String get memberKickConfirmBody =>
-      'They lose access to this chat, but can be added again later.';
+      'Der Zugang zu diesem Chat geht verloren, ein späteres Hinzufügen bleibt möglich.';
 
   @override
   String memberRoleChanged(String name, String role) {
-    return '$name is now $role';
+    return '$name ist jetzt $role';
   }
 
   @override
   String memberKicked(String name) {
-    return '$name was removed';
+    return '$name wurde entfernt';
   }
 
   @override
   String memberBannedToast(String name) {
-    return '$name was banned';
+    return '$name wurde gesperrt';
   }
 
   @override
   String memberUnbanned(String name) {
-    return 'The ban on $name was lifted';
+    return 'Die Sperre für $name wurde aufgehoben';
   }
 
   @override
-  String get memberActionFailed => 'That did not go through. Please try again.';
+  String get memberActionFailed =>
+      'Das hat nicht geklappt. Bitte versuche es erneut.';
 
   @override
-  String get roleAssignHint => 'You can only assign roles below your own.';
+  String get roleAssignHint =>
+      'Du kannst nur Rollen unterhalb deiner eigenen vergeben.';
 
   @override
   String get roleOwnerTransferHint =>
-      'Owner is not in the list: the API has no way to hand a chat over.';
+      'Eigentümer steht nicht zur Wahl: Die API kann einen Chat nicht übergeben.';
 
   @override
-  String get banForHour => 'For an hour';
+  String get banForHour => 'Für eine Stunde';
 
   @override
-  String get banForDay => 'For a day';
+  String get banForDay => 'Für einen Tag';
 
   @override
-  String get banForWeek => 'For a week';
+  String get banForWeek => 'Für eine Woche';
 
   @override
-  String get inviteMembersTitle => 'Add people';
+  String get inviteMembersTitle => 'Leute hinzufügen';
 
   @override
-  String get inviteRoleLabel => 'They join as';
+  String get inviteRoleLabel => 'Treten bei als';
 
   @override
   String inviteRoomLeft(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Room for $count more people',
-      one: 'Room for 1 more person',
-      zero: 'This chat is full',
+      other: 'Platz für $count weitere Personen',
+      one: 'Platz für 1 weitere Person',
+      zero: 'Dieser Chat ist voll',
     );
     return '$_temp0';
   }
 
   @override
   String inviteChatFull(int limit) {
-    return 'This chat holds $limit members, and it is full.';
+    return 'Dieser Chat fasst $limit Mitglieder und ist voll.';
   }
 
   @override
@@ -2060,8 +2061,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Add $count people',
-      one: 'Add 1 person',
+      other: '$count Personen hinzufügen',
+      one: '1 Person hinzufügen',
     );
     return '$_temp0';
   }
@@ -2071,8 +2072,8 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count people added',
-      one: '1 person added',
+      other: '$count Personen hinzugefügt',
+      one: '1 Person hinzugefügt',
     );
     return '$_temp0';
   }
@@ -2082,148 +2083,149 @@ class AppLocalizationsDe extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count people could not be added',
-      one: '1 person could not be added',
+      other: '$count Personen konnten nicht hinzugefügt werden',
+      one: '1 Person konnte nicht hinzugefügt werden',
     );
     return '$_temp0';
   }
 
   @override
   String get inviteSearchStart =>
-      'Find people by name or @username, then add them all at once.';
+      'Finde Leute über Name oder @username und füge sie alle auf einmal hinzu.';
 
   @override
-  String get inviteSelectionFull => 'That is everyone this chat has room for.';
+  String get inviteSelectionFull => 'Mehr passt in diesen Chat nicht hinein.';
 
   @override
   String peopleSearchNoneFound(String query) {
-    return 'No one found for “$query”';
+    return 'Niemand gefunden für „$query“';
   }
 
   @override
   String get peopleSearchHint =>
-      'Search matches any part of a name or @username.';
+      'Die Suche greift auf jeden Teil eines Namens oder @username.';
 
   @override
-  String get profileShareAction => 'Share';
+  String get profileShareAction => 'Teilen';
 
   @override
-  String get profileShareCopied => 'Profile link copied';
+  String get profileShareCopied => 'Profillink kopiert';
 
   @override
-  String get profileBirthday => 'Birthday';
+  String get profileBirthday => 'Geburtstag';
 
   @override
-  String get profileEmptyTitle => 'Nothing here yet';
+  String get profileEmptyTitle => 'Hier ist noch nichts';
 
   @override
   String get profileEmptyHintSelf =>
-      'Add a few words about yourself so people know who they are talking to.';
+      'Schreib ein paar Worte über dich, damit andere wissen, mit wem sie reden.';
 
   @override
   String get profileEmptyHintOther =>
-      'This person has not filled in their profile.';
+      'Diese Person hat ihr Profil nicht ausgefüllt.';
 
   @override
-  String get profileAccount => 'Account';
+  String get profileAccount => 'Konto';
 
   @override
-  String get profileAccountNoEmail => 'Signed in';
+  String get profileAccountNoEmail => 'Angemeldet';
 
   @override
-  String get profilePhoto => 'Photo';
+  String get profilePhoto => 'Foto';
 
   @override
-  String get profileNoPhoto => 'No photo yet';
+  String get profileNoPhoto => 'Noch kein Foto';
 
   @override
-  String get profileOpenLinkFailed => 'Could not open this link';
+  String get profileOpenLinkFailed => 'Dieser Link ließ sich nicht öffnen';
 
   @override
-  String get profileContactCopied => 'Copied to clipboard';
+  String get profileContactCopied => 'In die Zwischenablage kopiert';
 
   @override
-  String get profileCopyAction => 'Copy';
+  String get profileCopyAction => 'Kopieren';
 
   @override
   String devicesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count devices',
-      one: '1 device',
-      zero: 'No devices',
+      other: '$count Geräte',
+      one: '1 Gerät',
+      zero: 'Keine Geräte',
     );
     return '$_temp0';
   }
 
   @override
-  String get changePhoto => 'Change photo';
+  String get changePhoto => 'Foto ändern';
 
   @override
-  String get choosePhoto => 'Choose a photo';
+  String get choosePhoto => 'Foto auswählen';
 
   @override
-  String get avatarCropTitle => 'Move and scale';
+  String get avatarCropTitle => 'Verschieben und zoomen';
 
   @override
-  String get avatarCropHint => 'Drag to move, pinch to zoom.';
+  String get avatarCropHint =>
+      'Ziehen zum Verschieben, zwei Finger zum Zoomen.';
 
   @override
-  String get avatarCropConfirm => 'Use photo';
+  String get avatarCropConfirm => 'Foto verwenden';
 
   @override
-  String get avatarStagePreparing => 'Preparing…';
+  String get avatarStagePreparing => 'Wird vorbereitet…';
 
   @override
-  String get avatarStageUploading => 'Uploading…';
+  String get avatarStageUploading => 'Wird hochgeladen…';
 
   @override
-  String get avatarStageConfirming => 'Almost done…';
+  String get avatarStageConfirming => 'Fast fertig…';
 
   @override
-  String get avatarStageProcessing => 'Processing the photo…';
+  String get avatarStageProcessing => 'Foto wird verarbeitet…';
 
   @override
-  String get avatarStageDone => 'Photo updated';
+  String get avatarStageDone => 'Foto aktualisiert';
 
   @override
-  String get avatarProcessingFailed => 'Could not update the photo';
+  String get avatarProcessingFailed => 'Foto konnte nicht aktualisiert werden';
 
   @override
   String get avatarProcessingFailedHint =>
-      'The server did not accept that picture. Try another one.';
+      'Der Server hat dieses Bild nicht angenommen. Versuch ein anderes.';
 
   @override
-  String get avatarNotAnImage => 'That file is not an image';
+  String get avatarNotAnImage => 'Diese Datei ist kein Bild';
 
   @override
-  String get avatarTooLarge => 'That picture is too large. Pick a smaller one.';
+  String get avatarTooLarge => 'Dieses Bild ist zu groß. Nimm ein kleineres.';
 
   @override
-  String get avatarUnreadable => 'That picture could not be opened';
+  String get avatarUnreadable => 'Dieses Bild ließ sich nicht öffnen';
 
   @override
-  String get profileEditDetails => 'Details';
+  String get profileEditDetails => 'Angaben';
 
   @override
   String get profileEditLinks => 'Links';
 
   @override
   String get profileEditLinksHint =>
-      'Links are saved the moment you add or remove one, separately from the form below.';
+      'Links werden sofort beim Hinzufügen oder Entfernen gespeichert, getrennt vom Formular darunter.';
 
   @override
-  String get profileNoLinks => 'No links yet';
+  String get profileNoLinks => 'Noch keine Links';
 
   @override
-  String get removeLink => 'Remove link';
+  String get removeLink => 'Link entfernen';
 
   @override
-  String get clearDateOfBirth => 'Clear date of birth';
+  String get clearDateOfBirth => 'Geburtsdatum löschen';
 
   @override
-  String get specializationHint => 'What you do, in a few words';
+  String get specializationHint => 'Was du machst, in wenigen Worten';
 
   @override
   String bioCounter(int count, int max) {
@@ -2231,182 +2233,182 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get profileSkillsHint => 'Up to 30 characters each';
+  String get profileSkillsHint => 'Je bis zu 30 Zeichen';
 
   @override
-  String get profileSaved => 'Profile saved';
+  String get profileSaved => 'Profil gespeichert';
 
   @override
-  String get discardChangesTitle => 'Discard changes?';
+  String get discardChangesTitle => 'Änderungen verwerfen?';
 
   @override
   String get discardChangesMessage =>
-      'Your edits to this profile will be lost.';
+      'Deine Änderungen an diesem Profil gehen verloren.';
 
   @override
-  String get discardAction => 'Discard';
+  String get discardAction => 'Verwerfen';
 
   @override
-  String get keepEditingAction => 'Keep editing';
+  String get keepEditingAction => 'Weiter bearbeiten';
 
   @override
-  String get camera => 'Camera';
+  String get camera => 'Kamera';
 
   @override
-  String get loading => 'Loading…';
+  String get loading => 'Wird geladen…';
 
   @override
   String fieldTooLong(int max) {
-    return 'At most $max characters';
+    return 'Höchstens $max Zeichen';
   }
 
   @override
   String skillTooLong(String skill, int max) {
-    return '“$skill” is longer than $max characters';
+    return '„$skill“ ist länger als $max Zeichen';
   }
 
   @override
   String callRoomName(String slug) {
-    return 'Room $slug';
+    return 'Raum $slug';
   }
 
   @override
   String get callJoinExplanation =>
-      'A call here is a room: join it, and anyone else in this chat can join you.';
+      'Ein Anruf ist hier ein Raum: Tritt bei, und alle anderen in diesem Chat können dazukommen.';
 
   @override
   String get callNoIncomingNotice =>
-      'Ringing for incoming calls is not available yet — the server does not announce them.';
+      'Ein Klingeln bei eingehenden Anrufen gibt es noch nicht — der Server kündigt sie nicht an.';
 
   @override
-  String get callWaitingForOthers => 'Waiting for someone else to join…';
+  String get callWaitingForOthers => 'Warten, bis jemand dazukommt…';
 
   @override
-  String get callReconnecting => 'Reconnecting…';
+  String get callReconnecting => 'Neu verbinden…';
 
   @override
-  String get callYou => 'You';
+  String get callYou => 'Du';
 
   @override
   String callParticipantsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count participants',
-      one: '1 participant',
-      zero: 'No one here yet',
+      other: '$count Teilnehmer',
+      one: '1 Teilnehmer',
+      zero: 'Noch niemand hier',
     );
     return '$_temp0';
   }
 
   @override
-  String get callMicrophoneMute => 'Mute';
+  String get callMicrophoneMute => 'Stumm';
 
   @override
-  String get callMicrophoneUnmute => 'Unmute';
+  String get callMicrophoneUnmute => 'Stummschaltung aus';
 
   @override
-  String get callCameraStart => 'Start video';
+  String get callCameraStart => 'Video starten';
 
   @override
-  String get callCameraStop => 'Stop video';
+  String get callCameraStop => 'Video stoppen';
 
   @override
-  String get callSpeakerOn => 'Speaker';
+  String get callSpeakerOn => 'Lautsprecher';
 
   @override
-  String get callSpeakerOff => 'Earpiece';
+  String get callSpeakerOff => 'Hörmuschel';
 
   @override
-  String get callLayoutGrid => 'Grid';
+  String get callLayoutGrid => 'Raster';
 
   @override
-  String get callLayoutSpeaker => 'Speaker view';
+  String get callLayoutSpeaker => 'Sprecheransicht';
 
   @override
   String callPinParticipant(String name) {
-    return 'Pin $name';
+    return '$name anheften';
   }
 
   @override
   String callUnpinParticipant(String name) {
-    return 'Unpin $name';
+    return '$name lösen';
   }
 
   @override
-  String get callMuteForEveryone => 'Mute for everyone';
+  String get callMuteForEveryone => 'Für alle stummschalten';
 
   @override
-  String get callUnmuteForEveryone => 'Let them speak';
+  String get callUnmuteForEveryone => 'Sprechen erlauben';
 
   @override
-  String get callQualityExcellent => 'Excellent connection';
+  String get callQualityExcellent => 'Ausgezeichnete Verbindung';
 
   @override
-  String get callQualityGood => 'Good connection';
+  String get callQualityGood => 'Gute Verbindung';
 
   @override
-  String get callQualityPoor => 'Weak connection';
+  String get callQualityPoor => 'Schwache Verbindung';
 
   @override
-  String get callQualityLost => 'Connection lost';
+  String get callQualityLost => 'Verbindung verloren';
 
   @override
-  String get callMicrophonePermissionTitle => 'Let ChatiX use the microphone';
+  String get callMicrophonePermissionTitle => 'Lass ChatiX das Mikrofon nutzen';
 
   @override
   String get callMicrophonePermissionBody =>
-      'The others can only hear you if ChatiX may use the microphone. You can mute yourself again at any time.';
+      'Die anderen hören dich nur, wenn ChatiX das Mikrofon nutzen darf. Du kannst dich jederzeit wieder stummschalten.';
 
   @override
-  String get callCameraPermissionTitle => 'Let ChatiX use the camera';
+  String get callCameraPermissionTitle => 'Lass ChatiX die Kamera nutzen';
 
   @override
   String get callCameraPermissionBody =>
-      'Your video is only sent while the camera is on, and you can turn it off at any time.';
+      'Dein Video wird nur gesendet, solange die Kamera an ist, und du kannst sie jederzeit ausschalten.';
 
   @override
-  String get callPermissionContinue => 'Continue';
+  String get callPermissionContinue => 'Weiter';
 
   @override
-  String get callPermissionNotNow => 'Not now';
+  String get callPermissionNotNow => 'Jetzt nicht';
 
   @override
-  String get callPermissionOpenSettings => 'Open settings';
+  String get callPermissionOpenSettings => 'Einstellungen öffnen';
 
   @override
   String get callMicrophoneBlocked =>
-      'Microphone is off: ChatiX has no permission for it.';
+      'Mikrofon aus: ChatiX hat keine Berechtigung dafür.';
 
   @override
   String get callCameraBlocked =>
-      'Camera is off: ChatiX has no permission for it.';
+      'Kamera aus: ChatiX hat keine Berechtigung dafür.';
 
   @override
-  String get callSelfPreview => 'Your camera';
+  String get callSelfPreview => 'Deine Kamera';
 
   @override
-  String get callSelfPreviewHint => 'Drag to move';
+  String get callSelfPreviewHint => 'Zum Verschieben ziehen';
 
   @override
-  String get callShowControls => 'Show call controls';
+  String get callShowControls => 'Anrufsteuerung zeigen';
 
   @override
-  String get callOngoingInChat => 'You are in a call in this chat';
+  String get callOngoingInChat => 'Du bist in einem Anruf in diesem Chat';
 
   @override
-  String get callReturn => 'Return';
+  String get callReturn => 'Zurück';
 
   @override
   String callMiniPlayerLabel(String name) {
-    return 'Call with $name';
+    return 'Anruf mit $name';
   }
 
   @override
-  String get callMinimize => 'Minimize call';
+  String get callMinimize => 'Anruf verkleinern';
 
   @override
-  String get callDismiss => 'Dismiss';
+  String get callDismiss => 'Schließen';
 
   @override
   String get notificationNewMessage => 'Neue Nachricht';
@@ -2969,4 +2971,267 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get appearanceHapticsHint =>
       'Kurze Vibrationen, wenn eine Nachricht rausgeht, eine Reaktion ankommt oder eine Geste greift. Die Vibrationseinstellung deines Geräts gilt weiterhin.';
+
+  @override
+  String get failureGeneric =>
+      'Etwas ist schiefgelaufen. Bitte versuche es erneut.';
+
+  @override
+  String get failureRateLimited =>
+      'Zu viele Versuche. Warte eine Minute und versuche es erneut.';
+
+  @override
+  String get failureNoConnection =>
+      'Keine Internetverbindung. Prüfe dein Netzwerk und versuche es erneut.';
+
+  @override
+  String get failureTimeout =>
+      'Der Server hat zu lange gebraucht. Bitte versuche es erneut.';
+
+  @override
+  String get apiErrorSessionEnded =>
+      'Deine Sitzung ist beendet. Bitte melde dich erneut an.';
+
+  @override
+  String get apiErrorSessionExpired =>
+      'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.';
+
+  @override
+  String get apiErrorSessionInvalid =>
+      'Deine Sitzung ist nicht mehr gültig. Bitte melde dich erneut an.';
+
+  @override
+  String get apiErrorSessionSignedOut =>
+      'Diese Sitzung wurde abgemeldet. Bitte melde dich erneut an.';
+
+  @override
+  String get apiErrorAccessDenied => 'Dafür fehlt dir die Berechtigung.';
+
+  @override
+  String get apiErrorValidation =>
+      'Einige Angaben sind ungültig. Bitte prüfe sie und versuche es erneut.';
+
+  @override
+  String get apiErrorNotFoundGeneric =>
+      'Das konnten wir nicht finden — vielleicht wurde es gelöscht.';
+
+  @override
+  String get apiErrorTooLongGeneric =>
+      'Dieser Wert ist zu lang. Bitte kürze ihn.';
+
+  @override
+  String get apiErrorLimitExceededGeneric =>
+      'Ein Limit ist erreicht, diese Aktion ist daher nicht verfügbar.';
+
+  @override
+  String get apiErrorWrongLoginData => 'Benutzername oder Passwort ist falsch.';
+
+  @override
+  String get apiErrorPasswordMismatch =>
+      'Die Passwörter stimmen nicht überein.';
+
+  @override
+  String get apiErrorDuplicateUser =>
+      'Dieser Benutzername oder diese E-Mail ist bereits vergeben.';
+
+  @override
+  String get apiErrorEmailNotConfirmed =>
+      'Bitte bestätige deine E-Mail-Adresse vor der Anmeldung.';
+
+  @override
+  String get apiErrorOauthProviderUnsupported =>
+      'Dieser Anmeldedienst wird nicht unterstützt.';
+
+  @override
+  String get apiErrorOauthStateNotFound =>
+      'Der Anmeldeversuch ist abgelaufen. Bitte versuche es erneut.';
+
+  @override
+  String get apiErrorOauthLinkedAnotherUser =>
+      'Dieses Konto ist bereits mit einem anderen Nutzer verknüpft.';
+
+  @override
+  String get apiErrorProfileExists => 'Du hast bereits ein Profil.';
+
+  @override
+  String get apiErrorNotChatMember => 'Du bist kein Mitglied dieses Chats.';
+
+  @override
+  String get apiErrorAlreadyChatMember =>
+      'Diese Person ist bereits in diesem Chat.';
+
+  @override
+  String get apiErrorInvalidChatRole => 'Das ist keine gültige Chat-Rolle.';
+
+  @override
+  String get apiErrorDirectChatExists =>
+      'Du hast bereits einen Direktchat mit dieser Person.';
+
+  @override
+  String get apiErrorMessageTooLong =>
+      'Diese Nachricht ist zu lang. Bitte kürze sie.';
+
+  @override
+  String get apiErrorInvalidMessage =>
+      'Diese Nachricht kann so nicht gesendet werden.';
+
+  @override
+  String get apiErrorSlowModeLimit =>
+      'Der Langsam-Modus ist aktiv — warte kurz vor der nächsten Nachricht.';
+
+  @override
+  String get apiErrorSlowModeOutOfRange =>
+      'Der Langsam-Modus muss zwischen 0 Sekunden und 24 Stunden liegen.';
+
+  @override
+  String get apiErrorAttachmentLimitExceeded =>
+      'Zu viele Anhänge für eine Nachricht.';
+
+  @override
+  String get apiErrorAttachmentNotFound =>
+      'Dieser Anhang ist nicht mehr verfügbar.';
+
+  @override
+  String get apiErrorAttachmentValidation =>
+      'Diese Datei kann nicht angehängt werden — prüfe Typ und Größe.';
+
+  @override
+  String get apiErrorEmptyAttachmentUpload =>
+      'Bitte wähle eine Datei zum Anhängen.';
+
+  @override
+  String get apiErrorInvalidUploadToken =>
+      'Der Upload ist abgelaufen. Hänge die Datei erneut an.';
+
+  @override
+  String get apiErrorAvatarNotImage => 'Ein Avatar muss eine Bilddatei sein.';
+
+  @override
+  String get apiErrorActiveCallExists =>
+      'In diesem Chat läuft bereits ein Anruf.';
+
+  @override
+  String get apiErrorNoActiveCall => 'In diesem Chat läuft kein Anruf.';
+
+  @override
+  String get apiErrorLivekitUnauthorized =>
+      'Du kannst diesem Anruf nicht beitreten.';
+
+  @override
+  String get apiErrorLivekitError =>
+      'Der Anrufdienst ist derzeit nicht verfügbar.';
+
+  @override
+  String get apiErrorInvalidReaction =>
+      'Dieses Emoji kann nicht als Reaktion verwendet werden.';
+
+  @override
+  String get apiErrorReactionNotAllowed =>
+      'Diese Reaktion ist in diesem Chat nicht erlaubt.';
+
+  @override
+  String get apiErrorReactionsDisabled =>
+      'Reaktionen sind in diesem Chat ausgeschaltet.';
+
+  @override
+  String get apiErrorTooManyReactions =>
+      'Hier können keine weiteren Reaktionen hinzugefügt werden.';
+
+  @override
+  String get apiErrorMaxLimitCursor =>
+      'Zu viele Chats wurden auf einmal fortgesetzt.';
+
+  @override
+  String a11yMessageFrom(String author, String time) {
+    return 'Nachricht von $author, $time';
+  }
+
+  @override
+  String a11yMessageMine(String time) {
+    return 'Deine Nachricht, $time';
+  }
+
+  @override
+  String get a11ySystemMessage => 'Systemnachricht';
+
+  @override
+  String a11yReactions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Reaktionen',
+      one: '1 Reaktion',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get a11yReactionYours => 'einschließlich deiner';
+
+  @override
+  String get a11yMessageActionsHint => 'Nachrichtenaktionen anzeigen';
+
+  @override
+  String a11yMessageAttachmentsHint(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Anhänge',
+      one: '1 Anhang',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewPromptTitle => 'Gefällt dir die App?';
+
+  @override
+  String get reviewPromptBody => 'Möchtest du uns deine Meinung sagen?';
+
+  @override
+  String get reviewPromptDecline => 'Nein danke';
+
+  @override
+  String get reviewPromptAccept => 'Klar';
+
+  @override
+  String get feedbackTitle => 'Deine Meinung zählt';
+
+  @override
+  String get feedbackBody =>
+      'Sag uns, was du von der App hältst. Wenn sie dir gefällt, hilft uns eine Bewertung im Store sehr.';
+
+  @override
+  String get feedbackHint => 'Schreib dein Feedback hier';
+
+  @override
+  String get feedbackSubmit => 'Senden';
+
+  @override
+  String get updateRequiredTitle => 'Update erforderlich';
+
+  @override
+  String get updateAvailableTitle => 'Update verfügbar';
+
+  @override
+  String updateRequiredBody(String version) {
+    return 'Für ChatiX wird Version $version benötigt.';
+  }
+
+  @override
+  String updateAvailableBody(String version) {
+    return 'Version $version ist verfügbar.';
+  }
+
+  @override
+  String get updateWhatsNew => 'Neu in dieser Version';
+
+  @override
+  String get updateLater => 'Später';
+
+  @override
+  String get updateNow => 'Jetzt aktualisieren';
+
+  @override
+  String get updateAction => 'Aktualisieren';
 }

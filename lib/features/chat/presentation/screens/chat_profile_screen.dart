@@ -370,7 +370,7 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
 
     if (!mounted) return;
     if (failure != null) {
-      _toast(friendlyFailureMessage(failure, fallback: l10n.errorOccurred));
+      _toast(friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred));
       return;
     }
     _toast(unmute ? l10n.chatUnmutedToast : l10n.chatMutedToast);
@@ -422,7 +422,7 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
     result.match(
       (failure) => _toast(
         chatFailureMessage(failure) ??
-            friendlyFailureMessage(failure, fallback: l10n.errorOccurred),
+            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
       ),
       (_) {
         ref.read(chatListProvider.notifier).refresh();

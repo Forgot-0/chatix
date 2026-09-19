@@ -217,7 +217,7 @@ class _ChatInviteMembersScreenState
     if (failure != null) {
       final reason =
           addMemberFailureMessage(failure) ??
-          friendlyFailureMessage(failure, fallback: l10n.memberActionFailed);
+          friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.memberActionFailed);
 
       messenger.showSnackBar(
         SnackBar(

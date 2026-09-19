@@ -172,10 +172,12 @@ class ChatComposer extends StatelessWidget {
                   ),
                   Expanded(
                     child: Container(
-                      constraints: const BoxConstraints(minHeight: 44),
+                      // 48, not 44: Android's guideline is the stricter of
+                      // the two, and the field inside now fills it rather
+                      // than sitting in the middle of it.
+                      constraints: const BoxConstraints(minHeight: 48),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.x3,
-                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerHighest,

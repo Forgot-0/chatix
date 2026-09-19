@@ -27,6 +27,13 @@ abstract final class AppPalette {
   /// Destructive and error states.
   static const Color coral = Color(0xFFF2624F);
 
+  /// [coral] taken down far enough to read as error text on a light ground.
+  ///
+  /// Coral itself is 2.9:1 on the light canvas — fine as a fill, well under
+  /// AA as the word "failed". Dark themes keep the brighter one, where it
+  /// already clears.
+  static const Color coralDeep = Color(0xFFD1260F);
+
   /// Warnings and "needs attention" affordances.
   static const Color amber = Color(0xFFF5A524);
 
@@ -330,6 +337,37 @@ abstract final class AppContrast {
           ratio(background, AppNeutrals.light[11])
       ? Colors.white
       : AppNeutrals.light[11];
+
+  /// A quieter [foreground] that still clears [minimum] against [background].
+  ///
+  /// The clock, the "edited" mark and the delivery ticks are meant to sit
+  /// back from the message, and the obvious way to do that — a fixed alpha
+  /// on the body colour — silently drops them below AA on most accents: at
+  /// `alpha: 0.66`, white on the violet gradient is 3.4:1, and small text
+  /// needs 4.5:1. So the alpha is a starting point rather than a promise,
+  /// and it is walked back towards opaque until the ratio holds.
+  ///
+  /// Returns an opaque colour: the caller is spared compositing it, and the
+  /// ratio measured here is the one the eye actually gets.
+  static Color mutedOn(
+    Color background,
+    Color foreground, {
+    double alpha = 0.66,
+    double minimum = 4.5,
+  }) {
+    // Worst case is fully opaque, which is what `foregroundOn` already
+    // guarantees — so this terminates with a readable colour or with the
+    // body colour itself.
+    for (var step = alpha; step < 1; step += 0.02) {
+      final blended = Color.alphaBlend(
+        foreground.withValues(alpha: step),
+        background,
+      );
+      if (ratio(background, blended) >= minimum) return blended;
+    }
+
+    return Color.alphaBlend(foreground, background);
+  }
 }
 
 /// Type tokens. The family is bundled in `assets/fonts` — see `pubspec.yaml`.

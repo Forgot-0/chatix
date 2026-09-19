@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
 import 'package:chatix/features/chat/presentation/widgets/reaction_chip.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 
 import '../../../../helpers/chat_golden.dart';
 
@@ -23,7 +24,10 @@ void main() {
       onTap: onTap,
       onLongPress: onLongPress,
     ),
-    wrapper: materialAppWrapper(theme: chatGoldenTheme(dark: false)),
+    wrapper: materialAppWrapper(
+      theme: chatGoldenTheme(dark: false),
+      localizations: AppLocalizations.localizationsDelegates,
+    ),
   );
 
   testWidgets('shows the emoji and the count', (tester) async {
@@ -92,6 +96,20 @@ void main() {
     expect(find.text('4'), findsOneWidget);
   });
 
+  testWidgets('an unselected chip does not claim one of them is yours', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pumpChip(tester, count: 1, onTap: () {});
+
+    expect(
+      tester.getSemantics(find.byType(ReactionChip)),
+      isSemantics(label: '+, 1 reaction', isButton: true, isSelected: false),
+    );
+
+    handle.dispose();
+  });
+
   testWidgets('announces itself as a selected button', (tester) async {
     final handle = tester.ensureSemantics();
     await pumpChip(tester, selected: true, count: 2, onTap: () {});
@@ -99,7 +117,9 @@ void main() {
     expect(
       tester.getSemantics(find.byType(ReactionChip)),
       isSemantics(
-        label: '+ 2',
+        // Not "+ 2": the noun, the reader's plural rule, and the fact that
+        // one of the two is theirs.
+        label: '+, 2 reactions, including yours',
         isButton: true,
         isSelected: true,
         // The label replaces the raw glyphs, but the ink well's tap action

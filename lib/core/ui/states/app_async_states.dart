@@ -247,22 +247,30 @@ class AppErrorState extends StatelessWidget {
     super.key,
     required this.error,
     this.onRetry,
-    this.fallbackMessage = 'Something went wrong. Please try again.',
-    this.retryLabel = 'Retry',
+    this.fallbackMessage,
+    this.retryLabel,
   });
 
   final Object? error;
 
   final VoidCallback? onRetry;
 
-  final String fallbackMessage;
+  /// This screen's own wording for "it did not load", used when the failure
+  /// carries no code anybody has a sentence for. Null falls back to the
+  /// generic one, in the reader's language.
+  final String? fallbackMessage;
 
-  final String retryLabel;
+  final String? retryLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final message = friendlyFailureMessage(error, fallback: fallbackMessage);
+    final l10n = AppLocalizations.of(context);
+    final message = friendlyFailureMessage(
+      error,
+      l10n: l10n,
+      fallback: fallbackMessage,
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
@@ -291,7 +299,7 @@ class AppErrorState extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: onRetry,
                       icon: const Icon(Icons.refresh),
-                      label: Text(retryLabel),
+                      label: Text(retryLabel ?? l10n.retry),
                     ),
                   ],
                 ],
@@ -309,17 +317,23 @@ class AppInlineError extends StatelessWidget {
     super.key,
     required this.error,
     this.onRetry,
-    this.fallbackMessage = 'Something went wrong. Please try again.',
+    this.fallbackMessage,
   });
 
   final Object? error;
   final VoidCallback? onRetry;
-  final String fallbackMessage;
+
+  /// See [AppErrorState.fallbackMessage].
+  final String? fallbackMessage;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final message = friendlyFailureMessage(error, fallback: fallbackMessage);
+    final message = friendlyFailureMessage(
+      error,
+      l10n: AppLocalizations.of(context),
+      fallback: fallbackMessage,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),

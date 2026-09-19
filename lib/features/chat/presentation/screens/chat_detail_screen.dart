@@ -215,9 +215,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (mounted) _composer.syncSlowMode(interval);
     });
 
-    final composer = ref.watch(composerProvider(widget.chatId));
-    final attachments = ref.watch(chatAttachmentProvider(widget.chatId)).value;
-
     return Column(
       children: [
         const ChatConnectionStrip(),
@@ -247,25 +244,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ComposerLockedNotice(reason: lockedBecause)
         else ...[
           ComposerAttachmentTray(chatId: widget.chatId),
-          ChatComposer(
+          // Its own consumer, and deliberately so: the composer's length,
+          // its send state and the two recorders change on every keystroke,
+          // and watching them up here would put the whole feed — every
+          // visible bubble — in the rebuild scope of typing a character.
+          _ComposerSection(
+            chatId: widget.chatId,
             controller: _textController,
             focusNode: _composerFocus,
-            length: composer.length,
-            hasAttachments: attachments?.isReady ?? false,
-            isRecording:
-                ref.watch(voiceRecordProvider).isActive ||
-                ref.watch(videoNoteRecordProvider).isActive,
-            slowMode: composer.slowMode,
-            isSending: composer.isSending,
             replyTo: state.replyTo,
-            editing: composer.editing,
             onCancelContext: _cancelComposerContext,
-            // An edit gains no attachments: `PATCH .../messages/{id}/` only
-            // carries `content` (api-docs §5.4).
-            onAttach: composer.isEditing ? null : _openAttachmentSheet,
+            onAttach: _openAttachmentSheet,
             onSend: _send,
-            onVoiceRecorded: composer.isEditing ? null : _sendVoice,
-            onVideoNoteRecorded: composer.isEditing ? null : _sendVideoNote,
+            onVoiceRecorded: _sendVoice,
+            onVideoNoteRecorded: _sendVideoNote,
           ),
         ],
       ],
@@ -924,4 +916,69 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// button's hold.
   Future<void> _sendVideoNote(VideoNoteTake take) =>
       _sendExclusive(take.upload, MessageType.videoNote);
+}
+
+/// The composer and everything that changes while somebody is typing.
+///
+/// Split out of [ChatDetailScreen] for one reason: to keep the rebuilds that
+/// a keystroke causes inside the bar it happens in.
+class _ComposerSection extends ConsumerWidget {
+  const _ComposerSection({
+    required this.chatId,
+    required this.controller,
+    required this.focusNode,
+    required this.replyTo,
+    required this.onCancelContext,
+    required this.onAttach,
+    required this.onSend,
+    required this.onVoiceRecorded,
+    required this.onVideoNoteRecorded,
+  });
+
+  final String chatId;
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final MessageEntity? replyTo;
+
+  final VoidCallback onCancelContext;
+  final Future<void> Function() onAttach;
+  final Future<void> Function() onSend;
+  final Future<void> Function(VoiceRecording recording) onVoiceRecorded;
+  final Future<void> Function(VideoNoteTake take) onVideoNoteRecorded;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final composer = ref.watch(composerProvider(chatId));
+    final hasAttachments =
+        ref.watch(
+          chatAttachmentProvider(chatId).select((it) => it.value?.isReady),
+        ) ??
+        false;
+
+    // Only whether something is being recorded, not how far along it is: the
+    // waveform ticks many times a second and the bar looks the same for all
+    // of them.
+    final isRecording =
+        ref.watch(voiceRecordProvider.select((it) => it.isActive)) ||
+        ref.watch(videoNoteRecordProvider.select((it) => it.isActive));
+
+    return ChatComposer(
+      controller: controller,
+      focusNode: focusNode,
+      length: composer.length,
+      hasAttachments: hasAttachments,
+      isRecording: isRecording,
+      slowMode: composer.slowMode,
+      isSending: composer.isSending,
+      replyTo: replyTo,
+      editing: composer.editing,
+      onCancelContext: onCancelContext,
+      // An edit gains no attachments: `PATCH .../messages/{id}/` only
+      // carries `content` (api-docs §5.4).
+      onAttach: composer.isEditing ? null : onAttach,
+      onSend: onSend,
+      onVoiceRecorded: composer.isEditing ? null : onVoiceRecorded,
+      onVideoNoteRecorded: composer.isEditing ? null : onVideoNoteRecorded,
+    );
+  }
 }

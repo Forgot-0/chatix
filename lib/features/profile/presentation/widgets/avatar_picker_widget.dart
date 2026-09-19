@@ -176,6 +176,7 @@ class AvatarUploadStatus extends ConsumerWidget {
                 ? l10n.avatarProcessingFailed
                 : friendlyFailureMessage(
                     error,
+                    l10n: l10n,
                     fallback: l10n.avatarUpdateFailed,
                   ),
             textAlign: TextAlign.center,

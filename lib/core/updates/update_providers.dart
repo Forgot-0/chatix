@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/updates/update_service.dart';
@@ -131,11 +133,14 @@ class UpdateDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return PopScope(
       canPop: !isCritical,
       child: AlertDialog(
-        title: Text(isCritical ? 'Required Update' : 'Update Available'),
+        title: Text(
+          isCritical ? l10n.updateRequiredTitle : l10n.updateAvailableTitle,
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -143,13 +148,13 @@ class UpdateDialog extends ConsumerWidget {
             children: [
               Text(
                 isCritical
-                    ? 'A critical update (version ${updateInfo.latestVersion}) is required to continue using this app.'
-                    : 'A new version (${updateInfo.latestVersion}) is available.',
+                    ? l10n.updateRequiredBody(updateInfo.latestVersion)
+                    : l10n.updateAvailableBody(updateInfo.latestVersion),
                 style: theme.textTheme.bodyLarge,
               ),
               if (updateInfo.releaseNotes != null) ...[
                 const SizedBox(height: 16),
-                Text('What\'s new:', style: theme.textTheme.titleSmall),
+                Text(l10n.updateWhatsNew, style: theme.textTheme.titleSmall),
                 const SizedBox(height: 4),
                 Text(updateInfo.releaseNotes!),
               ],
@@ -160,14 +165,14 @@ class UpdateDialog extends ConsumerWidget {
           if (!isCritical)
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Later'),
+              child: Text(l10n.updateLater),
             ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
               ref.read(updateControllerProvider.notifier).openUpdateUrl();
             },
-            child: Text(isCritical ? 'Update Now' : 'Update'),
+            child: Text(isCritical ? l10n.updateNow : l10n.updateAction),
           ),
         ],
       ),

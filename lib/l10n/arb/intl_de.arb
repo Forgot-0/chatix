@@ -9,6 +9,32 @@
   "lightMode": "Hellmodus",
   "systemMode": "Systemmodus",
   "language": "Sprache",
+  "change_language": "Sprache ändern",
+  "theme": "Design",
+  "change_theme": "Design ändern",
+  "notifications": "Benachrichtigungen",
+  "notification_settings": "Benachrichtigungen einstellen",
+  "localization_demo": "Lokalisierungs-Demo",
+  "localization_demo_description": "Lokalisierung in Aktion sehen",
+  "language_settings": "Spracheinstellungen",
+  "select_your_language": "Wähle deine Sprache",
+  "language_explanation": "Die gewählte Sprache gilt für die gesamte App",
+  "localization_assets_demo": "Lokalisierung & Assets",
+  "current_language": "Aktuelle Sprache",
+  "language_code": "Sprachcode",
+  "language_name": "Sprachname",
+  "formatting_examples": "Formatierungsbeispiele",
+  "date_full": "Datum (vollständig)",
+  "date_short": "Datum (kurz)",
+  "time": "Uhrzeit",
+  "currency": "Währung",
+  "percent": "Prozent",
+  "localized_assets": "Lokalisierte Assets",
+  "localized_assets_explanation": "Dieser Abschnitt zeigt, wie sich je nach Sprache andere Assets laden lassen. Bilder, Audio und andere Ressourcen können sprachabhängig sein.",
+  "image_example": "Beispiel für ein lokalisiertes Bild",
+  "welcome_image_caption": "Dieses Bild richtet sich nach deiner Sprache",
+  "common_image_example": "Beispiel für ein gemeinsames Bild",
+  "common_image_caption": "Dieses Bild ist in allen Sprachen gleich",
   "logout": "Abmelden",
   "login": "Anmelden",
   "email": "E-Mail",
@@ -66,6 +92,21 @@
   "messageEdit": "Bearbeiten",
   "messageDelete": "Löschen",
   "messageSelect": "Auswählen",
+  "messageReact": "Reagieren",
+  "messageCopy": "Text kopieren",
+  "messageCopied": "Kopiert",
+  "linkOpenFailed": "Diesen Link kann hier nichts öffnen",
+  "messageDetails": "Details",
+  "replyingTo": "Antwort an {author}",
+  "forwardedFrom": "Weitergeleitet von {author}",
+  "forwardedMessage": "Weitergeleitete Nachricht",
+  "detailsSentAt": "Gesendet",
+  "detailsAuthor": "Von",
+  "detailsSequence": "Nummer im Chat",
+  "detailsEdited": "Bearbeitet",
+  "detailsEditedYes": "Ja",
+  "detailsDelivery": "Zustellung",
+  "detailsAttachments": "Anhänge",
   "backToLatest": "Zurück zu den neuesten Nachrichten",
   "messageRead": "Gelesen",
   "messageSent": "Gesendet",
@@ -75,6 +116,19 @@
   "noMessagesYet": "Noch keine Nachrichten",
   "editingMessage": "Nachricht wird bearbeitet",
   "scrollToBottom": "Zu den neuesten Nachrichten springen",
+  "newMessagesBelow": "{count, plural, =0{Keine neuen Nachrichten} =1{1 neue Nachricht weiter unten} other{{count} neue Nachrichten weiter unten}}",
+  "connectionReconnecting": "Neu verbinden…",
+  "connectionOffline": "Offline — zum Aktualisieren ziehen",
+  "attachmentFallbackLabel": "Anhang",
+  "composerJoinToSend": "Tritt diesem Chat bei, um zu schreiben",
+  "composerBanned": "Du bist in diesem Chat gesperrt",
+  "composerMuted": "Du darfst in diesem Chat nicht schreiben",
+  "composerAdminsOnly": "In diesem Chat dürfen nur Admins schreiben",
+  "composerNoPermission": "Du darfst hier keine Nachrichten senden",
+  "attachmentSelection": "{count, plural, =1{1 Datei} other{{count} Dateien}}, {size}",
+  "attachmentReady": "Bereit zum Senden",
+  "attachMediaLimits": "Bis zu {count}, je {size}",
+  "attachDocumentLimits": "Eine Datei, bis {size}",
   "messageDensity": "Nachrichtendichte",
   "densityCompact": "Kompakt",
   "densityCozy": "Normal",
@@ -228,10 +282,6 @@
   "myProfileLoadFailed": "Dein Profil konnte nicht geladen werden",
   "saveChangesFailed": "Änderungen konnten nicht gespeichert werden",
   "avatarUpdateFailed": "Avatar konnte nicht aktualisiert werden",
-  "change_language": "Sprache ändern",
-  "theme": "Design",
-  "change_theme": "Design ändern",
-  "notifications": "Benachrichtigungen",
   "oauthCancelled": "Anmeldung abgebrochen",
   "oauthCancelledHint": "Es wurde nichts geändert. Versuche es erneut oder nutze Benutzername und Passwort.",
   "oauthFailed": "Anmeldung konnte nicht abgeschlossen werden",
@@ -403,369 +453,236 @@
   "searchChatDescriptionMatch": "Treffer in der Beschreibung",
   "searchOpenChat": "Chat öffnen",
   "reactionSectionRecent": "Zuletzt benutzt",
-  "@reactionSectionRecent": {
-    "description": "Catalog sheet: this device's own history"
-  },
   "reactionSectionFaces": "Smileys",
-  "@reactionSectionFaces": {
-    "description": "Catalog sheet section: faces"
-  },
   "reactionSectionPeople": "Menschen",
-  "@reactionSectionPeople": {
-    "description": "Catalog sheet section: hands and people"
-  },
   "reactionSectionHearts": "Herzen",
-  "@reactionSectionHearts": {
-    "description": "Catalog sheet section: hearts"
-  },
   "reactionSectionCelebration": "Feiern",
-  "@reactionSectionCelebration": {
-    "description": "Catalog sheet section: celebration"
-  },
   "reactionSectionFood": "Essen",
-  "@reactionSectionFood": {
-    "description": "Catalog sheet section: food"
-  },
   "reactionSectionNature": "Natur",
-  "@reactionSectionNature": {
-    "description": "Catalog sheet section: nature and animals"
-  },
   "reactionSectionSymbols": "Symbole",
-  "@reactionSectionSymbols": {
-    "description": "Catalog sheet section: symbols"
-  },
   "reactionsNoneAllowed": "In diesem Chat sind keine Reaktionen verfügbar",
-  "@reactionsNoneAllowed": {
-    "description": "reactions_mode = some with a white list the catalog does not cover"
-  },
   "reactionsUsed": "{used} von {limit}",
-  "@reactionsUsed": {
-    "description": "Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE",
-    "placeholders": {
-      "used": {
-        "type": "int"
-      },
-      "limit": {
-        "type": "int"
-      }
-    }
-  },
   "reactionMessageLimitReached": "Diese Nachricht hat bereits {limit} verschiedene Reaktionen",
-  "@reactionMessageLimitReached": {
-    "description": "MAX_DISTINCT_REACTIONS_PER_MESSAGE reached"
-  },
   "moreReactions": "Weitere Reaktionen",
-  "@moreReactions": {
-    "description": "Quick bar button that opens the full catalog sheet"
-  },
   "reactionFailed": "Reaktion nicht gespeichert",
-  "@reactionFailed": {
-    "description": "Quiet toast after an optimistic reaction was rolled back"
-  },
   "reactionTooFast": "Zu viele Reaktionen auf einmal",
-  "@reactionTooFast": {
-    "description": "Quiet toast for 429 on the reactions endpoint"
-  },
   "reactionNotAllowed": "Diese Reaktion ist hier nicht erlaubt",
-  "@reactionNotAllowed": {
-    "description": "Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION"
-  },
   "reactionsNobody": "Noch niemand",
-  "@reactionsNobody": {
-    "description": "Who-reacted sheet: a tab whose page came back empty"
-  },
   "reactionUserFallback": "Benutzer {id}",
-  "@reactionUserFallback": {
-    "description": "Who-reacted row for a user id the roster does not cover"
-  },
   "composerCharactersLeft": "noch {count}",
-  "@composerCharactersLeft": {
-    "description": "Counter shown near the 4096-character cap (api-docs 5.4)",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "composerSendLabel": "Senden",
-  "@composerSendLabel": {
-    "description": "Accessible label of the send button"
-  },
   "composerSaveEditLabel": "Änderungen speichern",
-  "@composerSaveEditLabel": {
-    "description": "Accessible label of the send button while editing"
-  },
   "composerRecordLabel": "Gedrückt halten, um eine Sprachnachricht aufzunehmen",
-  "@composerRecordLabel": {
-    "description": "Accessible label of the microphone button"
-  },
   "composerReplyingTo": "Antwort an {name}",
-  "@composerReplyingTo": {
-    "description": "Context banner title while replying"
-  },
   "composerSlowModeWait": "Langsamer Modus: noch {seconds} s",
-  "@composerSlowModeWait": {
-    "description": "Countdown on the send button while slow mode holds it",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "composerSlowModeHint": "In diesem Chat ist alle {seconds} s eine Nachricht erlaubt",
-  "@composerSlowModeHint": {
-    "description": "Explains why the send button counts down",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "attachSheetTitle": "Anhängen",
-  "@attachSheetTitle": {
-    "description": "Title of the composer attachment sheet"
-  },
   "attachRecent": "Zuletzt",
-  "@attachRecent": {
-    "description": "Header of the recent-gallery strip"
-  },
   "attachCamera": "Kamera",
-  "@attachCamera": {
-    "description": "Attachment sheet row that opens the camera"
-  },
   "attachVoice": "Sprachnachricht",
-  "@attachVoice": {
-    "description": "Attachment sheet row that records a voice message"
-  },
   "attachVideoNote": "Videonachricht",
-  "@attachVideoNote": {
-    "description": "Attachment sheet row that records a video note"
-  },
   "attachVoiceHint": "Wird allein gesendet, bis zu {seconds} s",
-  "@attachVoiceHint": {
-    "description": "Subtitle of the voice row: it is exclusive (api-docs 5.5)",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
   "attachVideoNoteHint": "Wird allein gesendet, bis zu {seconds} s und {pixels} px",
-  "@attachVideoNoteHint": {
-    "description": "Subtitle of the video note row",
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      },
-      "pixels": {
-        "type": "int"
-      }
-    }
-  },
   "attachGalleryDenied": "Erlaube den Fotozugriff, um hier auszuwählen",
-  "@attachGalleryDenied": {
-    "description": "Shown in place of the strip when photo access was refused"
-  },
   "attachGalleryAllow": "Erlauben",
-  "@attachGalleryAllow": {
-    "description": "Button that asks for the photo grant again"
-  },
   "attachMediaFull": "Bis zu {count} Fotos oder Videos pro Nachricht",
-  "@attachMediaFull": {
-    "description": "Tapping one more photo past MAX_MEDIA_PER_MESSAGE",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "attachSendCount": "{count} anhängen",
-  "@attachSendCount": {
-    "description": "Confirm button of the attachment sheet",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "attachUnavailable": "Diese Datei konnte nicht gelesen werden",
-  "@attachUnavailable": {
-    "description": "A picked gallery item could not be read back"
-  },
   "videoNoteTooLarge": "Diese Kamera nimmt über {pixels} px auf — das lehnt der Server für Videonachrichten ab",
-  "@videoNoteTooLarge": {
-    "description": "Captured video note exceeds the 640 px cap the server enforces",
-    "placeholders": {
-      "pixels": {
-        "type": "int"
-      }
-    }
-  },
   "composerTooLongBy": "{count} über dem Limit",
-  "@composerTooLongBy": {
-    "description": "Counter once the message is past the 4096-character cap",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "videoNoteTapToRecord": "Zum Aufnehmen tippen",
-  "@videoNoteTapToRecord": {
-    "description": "Video note recorder: what the shutter does"
-  },
   "videoNoteNoCamera": "Dieses Gerät hat keine Kamera zum Aufnehmen",
-  "@videoNoteNoCamera": {
-    "description": "Video note recorder: the device has no camera"
-  },
   "videoNoteCameraDenied": "Erlaube Kamera- und Mikrofonzugriff, um eine Videonachricht aufzunehmen",
-  "@videoNoteCameraDenied": {
-    "description": "Video note recorder: camera or mic grant refused"
-  },
   "videoNoteCameraFailed": "Die Kamera konnte nicht gestartet werden",
-  "@videoNoteCameraFailed": {
-    "description": "Video note recorder: the camera would not open"
-  },
   "videoNoteDiscarded": "Es wurde nichts aufgenommen",
-  "@videoNoteDiscarded": {
-    "description": "Quiet toast when a take was too short or unusable"
-  },
   "attachmentOpen": "Öffnen",
-  "@attachmentOpen": {
-    "description": "Action on a document attachment: hand it to the platform"
-  },
   "attachmentSavedTo": "Gespeichert unter {path}",
-  "@attachmentSavedTo": {
-    "description": "Confirmation after an attachment was copied to the device, with the full path",
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
   "attachmentSaveFailed": "Diese Datei konnte nicht gespeichert werden",
-  "@attachmentSaveFailed": {
-    "description": "The attachment could not be downloaded or copied to the device"
-  },
   "attachmentUploading": "Wird hochgeladen",
-  "@attachmentUploading": {
-    "description": "Label on the progress ring of a file whose bytes are going out"
-  },
   "mediaViewerCounter": "{index} von {count}",
-  "@mediaViewerCounter": {
-    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
-    "placeholders": {
-      "index": {
-        "type": "int"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "mediaViewerUnavailable": "Dieses Medium ist nicht mehr verfügbar",
-  "@mediaViewerUnavailable": {
-    "description": "The viewer was opened on media that is no longer in the loaded history"
-  },
   "mediaPreviewHint": "Entfernen Sie, was nicht mitgehen soll",
-  "@mediaPreviewHint": {
-    "description": "Explains that tiles can be dropped on the pre-send preview screen"
-  },
   "mediaPreviewCaptionHint": "Bildunterschrift hinzufügen",
-  "@mediaPreviewCaptionHint": {
-    "description": "Placeholder of the album caption field; the caption becomes the message content"
-  },
   "mediaPreviewRemove": "Entfernen",
-  "@mediaPreviewRemove": {
-    "description": "Tooltip on the button that drops one file from a staged album"
-  },
   "composerRecordVideoNoteLabel": "Halten, um eine Videonachricht aufzunehmen",
-  "@composerRecordVideoNoteLabel": {
-    "description": "Accessible label of the composer button while it is in video-note mode"
-  },
   "composerSwitchToVideoNote": "Zu Videonachricht wechseln",
-  "@composerSwitchToVideoNote": {
-    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
-  },
   "composerSwitchToVoice": "Zu Sprachnachricht wechseln",
-  "@composerSwitchToVoice": {
-    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
-  },
   "videoNoteSwitchCamera": "Kamera wechseln",
-  "@videoNoteSwitchCamera": {
-    "description": "Turns the camera around while framing a video note"
-  },
   "videoNoteDoubleTapToSwitch": "Zum Kamerawechsel doppeltippen",
-  "@videoNoteDoubleTapToSwitch": {
-    "description": "Says that a double tap on the circle turns the camera around"
-  },
   "videoNoteOpeningCamera": "Kamera wird geöffnet …",
-  "@videoNoteOpeningCamera": {
-    "description": "Shown for the moment between the thumb going down and the camera waking"
-  },
   "videoNoteHoldToRecord": "Zum Aufnehmen halten",
-  "@videoNoteHoldToRecord": {
-    "description": "Hint under the composer circle before a take starts"
-  },
   "videoNoteSend": "Videonachricht senden",
-  "@videoNoteSend": {
-    "description": "Button that sends a finished video note"
-  },
   "videoNoteRecordingLabel": "Videonachricht wird aufgenommen",
-  "@videoNoteRecordingLabel": {
-    "description": "Accessible label of the live circle while a video note is being recorded"
-  },
   "videoNoteTapForSound": "Für Ton tippen",
-  "@videoNoteTapForSound": {
-    "description": "Hint on a video note playing silently in the feed"
-  },
   "videoNoteTapToMute": "Zum Stummschalten tippen",
-  "@videoNoteTapToMute": {
-    "description": "Hint on a video note that currently has sound"
-  },
   "videoNoteHoldForFullScreen": "Für Vollbild halten",
-  "@videoNoteHoldForFullScreen": {
-    "description": "Hint that a long press opens the video note full screen"
-  },
   "videoNotePlayerLabel": "Videonachricht, {duration}",
-  "@videoNotePlayerLabel": {
-    "description": "Accessible label of a video note in the feed",
-    "placeholders": {
-      "duration": {
-        "type": "String"
-      }
-    }
-  },
   "videoNoteAutoplayOff": "Zum Abspielen tippen",
-  "@videoNoteAutoplayOff": {
-    "description": "Shown on a video note that will not start on its own"
-  },
   "mediaAutoplay": "Videonachrichten automatisch abspielen",
-  "@mediaAutoplay": {
-    "description": "Settings section: when video notes may start playing by themselves"
-  },
   "mediaAutoplayHint": "Videonachrichten starten stumm, sobald sie sichtbar werden. Ton gibt es per Tippen.",
-  "@mediaAutoplayHint": {
-    "description": "Explains what autoplay does and how sound is turned on"
-  },
   "mediaAutoplayAlways": "Immer",
-  "@mediaAutoplayAlways": {
-    "description": "Autoplay on any connection"
-  },
   "mediaAutoplayWifi": "Nur über WLAN",
-  "@mediaAutoplayWifi": {
-    "description": "Autoplay only on an unmetered connection"
-  },
   "mediaAutoplayNever": "Nie",
-  "@mediaAutoplayNever": {
-    "description": "Never autoplay"
-  },
   "videoNotePreview": "Kameravorschau",
-  "@videoNotePreview": {
-    "description": "Accessible label of the live camera circle before a take starts"
-  },
   "searchTypeMore": "Gib mindestens {count} Zeichen ein",
   "noMessagesFoundHint": "Gesucht wird im Gesagten, nicht in Dateinamen oder Chat-Titeln.",
+  "chatSettings": "Chat-Einstellungen",
+  "chatSettingsNoPermission": "Nur Eigentümer oder Admin können diesen Chat ändern",
+  "chatNameCannotBeCleared": "Ein Name lässt sich nicht mehr entfernen, wenn der Chat einen hat",
+  "chatSlowModeRange": "0 bis {max} Sekunden",
+  "chatReactionsPickHint": "Wähle die Emoji, mit denen reagiert werden darf",
+  "chatNotMutedLabel": "Benachrichtigungen an",
+  "chatMutedToast": "Benachrichtigungen für diesen Chat aus",
+  "chatUnmutedToast": "Benachrichtigungen für diesen Chat wieder an",
+  "muteForHour": "1 Stunde stummschalten",
+  "muteForEightHours": "8 Stunden stummschalten",
+  "muteForever": "Stumm, bis ich es wieder einschalte",
+  "leaveChatOwnerStuck": "Der Ersteller kann den Chat nicht verlassen, und du darfst ihn nicht mehr löschen.",
+  "chatInviteLink": "Einladungslink",
+  "chatInviteLinkHint": "Jeder, der bei ChatiX angemeldet ist, kann diesen Link öffnen und beitreten. Er öffnet sich nur in der App.",
+  "chatInviteLinkCopied": "Einladungslink kopiert",
+  "sharedMedia": "Medien",
+  "sharedFiles": "Dateien",
+  "sharedLinks": "Links",
+  "sharedVoice": "Sprache",
+  "sharedMediaEmpty": "Noch keine Fotos oder Videos hier",
+  "sharedFilesEmpty": "Noch keine Dateien hier",
+  "sharedLinksEmpty": "Noch keine Links hier",
+  "sharedVoiceEmpty": "Noch keine Sprachnachrichten hier",
+  "sharedContentLocalOnly": "Zeigt, was dieses Gerät aus dem Chat geladen hat — der Server führt kein Verzeichnis geteilter Medien.",
+  "chatSettingsUnchanged": "Noch nichts geändert",
+  "membersSearchHint": "Mitglieder suchen",
+  "membersSearchLoadedOnly": "Es wird nur unter den bereits geladenen Mitgliedern gesucht.",
+  "membersSearchEmpty": "Hier passt niemand zu „{query}“",
+  "membersLoadMore": "Mehr Leute laden",
+  "membersSectionAdmins": "Verwaltung",
+  "membersSectionMembers": "Mitglieder",
+  "membersSectionBanned": "Gesperrte Mitglieder",
+  "membersBannedHint": "Gesperrte können hier weder lesen noch schreiben, bis die Sperre aufgehoben wird.",
+  "membersEmptyTitle": "Keine Mitglieder zu zeigen",
+  "membersEmptyInvite": "Füge jemanden hinzu, damit der Chat losgeht.",
+  "membersEmptyNoInvite": "Nur Mitglieder mit Einladungsrecht können hier Leute hinzufügen.",
+  "chatRoleOwner": "Eigentümer",
+  "chatRoleAdmin": "Admin",
+  "chatRoleEditor": "Redakteur",
+  "chatRoleDirect": "Direkt",
+  "chatRoleMember": "Mitglied",
+  "chatRoleViewer": "Leser",
+  "chatRoleUnknown": "Unbekannte Rolle",
+  "memberMutedBadge": "Stumm",
+  "memberBannedBadge": "Gesperrt",
+  "memberOpenProfile": "Profil öffnen",
+  "memberMessagePrivately": "Privat schreiben",
+  "memberKickConfirmTitle": "{name} entfernen?",
+  "memberKickConfirmBody": "Der Zugang zu diesem Chat geht verloren, ein späteres Hinzufügen bleibt möglich.",
+  "memberRoleChanged": "{name} ist jetzt {role}",
+  "memberKicked": "{name} wurde entfernt",
+  "memberBannedToast": "{name} wurde gesperrt",
+  "memberUnbanned": "Die Sperre für {name} wurde aufgehoben",
+  "memberActionFailed": "Das hat nicht geklappt. Bitte versuche es erneut.",
+  "roleAssignHint": "Du kannst nur Rollen unterhalb deiner eigenen vergeben.",
+  "roleOwnerTransferHint": "Eigentümer steht nicht zur Wahl: Die API kann einen Chat nicht übergeben.",
+  "banForHour": "Für eine Stunde",
+  "banForDay": "Für einen Tag",
+  "banForWeek": "Für eine Woche",
+  "inviteMembersTitle": "Leute hinzufügen",
+  "inviteRoleLabel": "Treten bei als",
+  "inviteRoomLeft": "{count, plural, =0{Dieser Chat ist voll} =1{Platz für 1 weitere Person} other{Platz für {count} weitere Personen}}",
+  "inviteChatFull": "Dieser Chat fasst {limit} Mitglieder und ist voll.",
+  "inviteAddSelected": "{count, plural, =1{1 Person hinzufügen} other{{count} Personen hinzufügen}}",
+  "inviteAddedCount": "{count, plural, =1{1 Person hinzugefügt} other{{count} Personen hinzugefügt}}",
+  "inviteFailedCount": "{count, plural, =1{1 Person konnte nicht hinzugefügt werden} other{{count} Personen konnten nicht hinzugefügt werden}}",
+  "inviteSearchStart": "Finde Leute über Name oder @username und füge sie alle auf einmal hinzu.",
+  "inviteSelectionFull": "Mehr passt in diesen Chat nicht hinein.",
+  "peopleSearchNoneFound": "Niemand gefunden für „{query}“",
+  "peopleSearchHint": "Die Suche greift auf jeden Teil eines Namens oder @username.",
+  "profileShareAction": "Teilen",
+  "profileShareCopied": "Profillink kopiert",
+  "profileBirthday": "Geburtstag",
+  "profileEmptyTitle": "Hier ist noch nichts",
+  "profileEmptyHintSelf": "Schreib ein paar Worte über dich, damit andere wissen, mit wem sie reden.",
+  "profileEmptyHintOther": "Diese Person hat ihr Profil nicht ausgefüllt.",
+  "profileAccount": "Konto",
+  "profileAccountNoEmail": "Angemeldet",
+  "profilePhoto": "Foto",
+  "profileNoPhoto": "Noch kein Foto",
+  "profileOpenLinkFailed": "Dieser Link ließ sich nicht öffnen",
+  "profileContactCopied": "In die Zwischenablage kopiert",
+  "profileCopyAction": "Kopieren",
+  "devicesCount": "{count, plural, =0{Keine Geräte} =1{1 Gerät} other{{count} Geräte}}",
+  "changePhoto": "Foto ändern",
+  "choosePhoto": "Foto auswählen",
+  "avatarCropTitle": "Verschieben und zoomen",
+  "avatarCropHint": "Ziehen zum Verschieben, zwei Finger zum Zoomen.",
+  "avatarCropConfirm": "Foto verwenden",
+  "avatarStagePreparing": "Wird vorbereitet…",
+  "avatarStageUploading": "Wird hochgeladen…",
+  "avatarStageConfirming": "Fast fertig…",
+  "avatarStageProcessing": "Foto wird verarbeitet…",
+  "avatarStageDone": "Foto aktualisiert",
+  "avatarProcessingFailed": "Foto konnte nicht aktualisiert werden",
+  "avatarProcessingFailedHint": "Der Server hat dieses Bild nicht angenommen. Versuch ein anderes.",
+  "avatarNotAnImage": "Diese Datei ist kein Bild",
+  "avatarTooLarge": "Dieses Bild ist zu groß. Nimm ein kleineres.",
+  "avatarUnreadable": "Dieses Bild ließ sich nicht öffnen",
+  "profileEditDetails": "Angaben",
+  "profileEditLinks": "Links",
+  "profileEditLinksHint": "Links werden sofort beim Hinzufügen oder Entfernen gespeichert, getrennt vom Formular darunter.",
+  "profileNoLinks": "Noch keine Links",
+  "removeLink": "Link entfernen",
+  "clearDateOfBirth": "Geburtsdatum löschen",
+  "specializationHint": "Was du machst, in wenigen Worten",
+  "bioCounter": "{count}/{max}",
+  "profileSkillsHint": "Je bis zu 30 Zeichen",
+  "profileSaved": "Profil gespeichert",
+  "discardChangesTitle": "Änderungen verwerfen?",
+  "discardChangesMessage": "Deine Änderungen an diesem Profil gehen verloren.",
+  "discardAction": "Verwerfen",
+  "keepEditingAction": "Weiter bearbeiten",
+  "camera": "Kamera",
+  "loading": "Wird geladen…",
+  "fieldTooLong": "Höchstens {max} Zeichen",
+  "skillTooLong": "„{skill}“ ist länger als {max} Zeichen",
+  "callRoomName": "Raum {slug}",
+  "callJoinExplanation": "Ein Anruf ist hier ein Raum: Tritt bei, und alle anderen in diesem Chat können dazukommen.",
+  "callNoIncomingNotice": "Ein Klingeln bei eingehenden Anrufen gibt es noch nicht — der Server kündigt sie nicht an.",
+  "callWaitingForOthers": "Warten, bis jemand dazukommt…",
+  "callReconnecting": "Neu verbinden…",
+  "callYou": "Du",
+  "callParticipantsCount": "{count, plural, =0{Noch niemand hier} =1{1 Teilnehmer} other{{count} Teilnehmer}}",
+  "callMicrophoneMute": "Stumm",
+  "callMicrophoneUnmute": "Stummschaltung aus",
+  "callCameraStart": "Video starten",
+  "callCameraStop": "Video stoppen",
+  "callSpeakerOn": "Lautsprecher",
+  "callSpeakerOff": "Hörmuschel",
+  "callLayoutGrid": "Raster",
+  "callLayoutSpeaker": "Sprecheransicht",
+  "callPinParticipant": "{name} anheften",
+  "callUnpinParticipant": "{name} lösen",
+  "callMuteForEveryone": "Für alle stummschalten",
+  "callUnmuteForEveryone": "Sprechen erlauben",
+  "callQualityExcellent": "Ausgezeichnete Verbindung",
+  "callQualityGood": "Gute Verbindung",
+  "callQualityPoor": "Schwache Verbindung",
+  "callQualityLost": "Verbindung verloren",
+  "callMicrophonePermissionTitle": "Lass ChatiX das Mikrofon nutzen",
+  "callMicrophonePermissionBody": "Die anderen hören dich nur, wenn ChatiX das Mikrofon nutzen darf. Du kannst dich jederzeit wieder stummschalten.",
+  "callCameraPermissionTitle": "Lass ChatiX die Kamera nutzen",
+  "callCameraPermissionBody": "Dein Video wird nur gesendet, solange die Kamera an ist, und du kannst sie jederzeit ausschalten.",
+  "callPermissionContinue": "Weiter",
+  "callPermissionNotNow": "Jetzt nicht",
+  "callPermissionOpenSettings": "Einstellungen öffnen",
+  "callMicrophoneBlocked": "Mikrofon aus: ChatiX hat keine Berechtigung dafür.",
+  "callCameraBlocked": "Kamera aus: ChatiX hat keine Berechtigung dafür.",
+  "callSelfPreview": "Deine Kamera",
+  "callSelfPreviewHint": "Zum Verschieben ziehen",
+  "callShowControls": "Anrufsteuerung zeigen",
+  "callOngoingInChat": "Du bist in einem Anruf in diesem Chat",
+  "callReturn": "Zurück",
+  "callMiniPlayerLabel": "Anruf mit {name}",
+  "callMinimize": "Anruf verkleinern",
+  "callDismiss": "Schließen",
   "notificationNewMessage": "Neue Nachricht",
   "notificationReplyHint": "Nachricht",
   "notificationReplyFailed": "Deine Antwort wurde nicht gesendet",
@@ -920,5 +837,362 @@
   "logoutInProgress": "Wird abgemeldet …",
   "appearanceFeel": "Haptik",
   "appearanceHaptics": "Vibration",
-  "appearanceHapticsHint": "Kurze Vibrationen, wenn eine Nachricht rausgeht, eine Reaktion ankommt oder eine Geste greift. Die Vibrationseinstellung deines Ger\u00e4ts gilt weiterhin."
+  "appearanceHapticsHint": "Kurze Vibrationen, wenn eine Nachricht rausgeht, eine Reaktion ankommt oder eine Geste greift. Die Vibrationseinstellung deines Geräts gilt weiterhin.",
+  "failureGeneric": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "failureRateLimited": "Zu viele Versuche. Warte eine Minute und versuche es erneut.",
+  "failureNoConnection": "Keine Internetverbindung. Prüfe dein Netzwerk und versuche es erneut.",
+  "failureTimeout": "Der Server hat zu lange gebraucht. Bitte versuche es erneut.",
+  "apiErrorSessionEnded": "Deine Sitzung ist beendet. Bitte melde dich erneut an.",
+  "apiErrorSessionExpired": "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.",
+  "apiErrorSessionInvalid": "Deine Sitzung ist nicht mehr gültig. Bitte melde dich erneut an.",
+  "apiErrorSessionSignedOut": "Diese Sitzung wurde abgemeldet. Bitte melde dich erneut an.",
+  "apiErrorAccessDenied": "Dafür fehlt dir die Berechtigung.",
+  "apiErrorValidation": "Einige Angaben sind ungültig. Bitte prüfe sie und versuche es erneut.",
+  "apiErrorNotFoundGeneric": "Das konnten wir nicht finden — vielleicht wurde es gelöscht.",
+  "apiErrorTooLongGeneric": "Dieser Wert ist zu lang. Bitte kürze ihn.",
+  "apiErrorLimitExceededGeneric": "Ein Limit ist erreicht, diese Aktion ist daher nicht verfügbar.",
+  "apiErrorWrongLoginData": "Benutzername oder Passwort ist falsch.",
+  "apiErrorPasswordMismatch": "Die Passwörter stimmen nicht überein.",
+  "apiErrorDuplicateUser": "Dieser Benutzername oder diese E-Mail ist bereits vergeben.",
+  "apiErrorEmailNotConfirmed": "Bitte bestätige deine E-Mail-Adresse vor der Anmeldung.",
+  "apiErrorOauthProviderUnsupported": "Dieser Anmeldedienst wird nicht unterstützt.",
+  "apiErrorOauthStateNotFound": "Der Anmeldeversuch ist abgelaufen. Bitte versuche es erneut.",
+  "apiErrorOauthLinkedAnotherUser": "Dieses Konto ist bereits mit einem anderen Nutzer verknüpft.",
+  "apiErrorProfileExists": "Du hast bereits ein Profil.",
+  "apiErrorNotChatMember": "Du bist kein Mitglied dieses Chats.",
+  "apiErrorAlreadyChatMember": "Diese Person ist bereits in diesem Chat.",
+  "apiErrorInvalidChatRole": "Das ist keine gültige Chat-Rolle.",
+  "apiErrorDirectChatExists": "Du hast bereits einen Direktchat mit dieser Person.",
+  "apiErrorMessageTooLong": "Diese Nachricht ist zu lang. Bitte kürze sie.",
+  "apiErrorInvalidMessage": "Diese Nachricht kann so nicht gesendet werden.",
+  "apiErrorSlowModeLimit": "Der Langsam-Modus ist aktiv — warte kurz vor der nächsten Nachricht.",
+  "apiErrorSlowModeOutOfRange": "Der Langsam-Modus muss zwischen 0 Sekunden und 24 Stunden liegen.",
+  "apiErrorAttachmentLimitExceeded": "Zu viele Anhänge für eine Nachricht.",
+  "apiErrorAttachmentNotFound": "Dieser Anhang ist nicht mehr verfügbar.",
+  "apiErrorAttachmentValidation": "Diese Datei kann nicht angehängt werden — prüfe Typ und Größe.",
+  "apiErrorEmptyAttachmentUpload": "Bitte wähle eine Datei zum Anhängen.",
+  "apiErrorInvalidUploadToken": "Der Upload ist abgelaufen. Hänge die Datei erneut an.",
+  "apiErrorAvatarNotImage": "Ein Avatar muss eine Bilddatei sein.",
+  "apiErrorActiveCallExists": "In diesem Chat läuft bereits ein Anruf.",
+  "apiErrorNoActiveCall": "In diesem Chat läuft kein Anruf.",
+  "apiErrorLivekitUnauthorized": "Du kannst diesem Anruf nicht beitreten.",
+  "apiErrorLivekitError": "Der Anrufdienst ist derzeit nicht verfügbar.",
+  "apiErrorInvalidReaction": "Dieses Emoji kann nicht als Reaktion verwendet werden.",
+  "apiErrorReactionNotAllowed": "Diese Reaktion ist in diesem Chat nicht erlaubt.",
+  "apiErrorReactionsDisabled": "Reaktionen sind in diesem Chat ausgeschaltet.",
+  "apiErrorTooManyReactions": "Hier können keine weiteren Reaktionen hinzugefügt werden.",
+  "apiErrorMaxLimitCursor": "Zu viele Chats wurden auf einmal fortgesetzt.",
+  "a11yMessageFrom": "Nachricht von {author}, {time}",
+  "a11yMessageMine": "Deine Nachricht, {time}",
+  "a11ySystemMessage": "Systemnachricht",
+  "a11yReactions": "{count, plural, =1{1 Reaktion} other{{count} Reaktionen}}",
+  "a11yReactionYours": "einschließlich deiner",
+  "a11yMessageActionsHint": "Nachrichtenaktionen anzeigen",
+  "a11yMessageAttachmentsHint": "{count, plural, =1{1 Anhang} other{{count} Anhänge}}",
+  "reviewPromptTitle": "Gefällt dir die App?",
+  "reviewPromptBody": "Möchtest du uns deine Meinung sagen?",
+  "reviewPromptDecline": "Nein danke",
+  "reviewPromptAccept": "Klar",
+  "feedbackTitle": "Deine Meinung zählt",
+  "feedbackBody": "Sag uns, was du von der App hältst. Wenn sie dir gefällt, hilft uns eine Bewertung im Store sehr.",
+  "feedbackHint": "Schreib dein Feedback hier",
+  "feedbackSubmit": "Senden",
+  "updateRequiredTitle": "Update erforderlich",
+  "updateAvailableTitle": "Update verfügbar",
+  "updateRequiredBody": "Für ChatiX wird Version {version} benötigt.",
+  "updateAvailableBody": "Version {version} ist verfügbar.",
+  "updateWhatsNew": "Neu in dieser Version",
+  "updateLater": "Später",
+  "updateNow": "Jetzt aktualisieren",
+  "updateAction": "Aktualisieren",
+  "@reactionSectionRecent": {
+    "description": "Catalog sheet: this device's own history"
+  },
+  "@reactionSectionFaces": {
+    "description": "Catalog sheet section: faces"
+  },
+  "@reactionSectionPeople": {
+    "description": "Catalog sheet section: hands and people"
+  },
+  "@reactionSectionHearts": {
+    "description": "Catalog sheet section: hearts"
+  },
+  "@reactionSectionCelebration": {
+    "description": "Catalog sheet section: celebration"
+  },
+  "@reactionSectionFood": {
+    "description": "Catalog sheet section: food"
+  },
+  "@reactionSectionNature": {
+    "description": "Catalog sheet section: nature and animals"
+  },
+  "@reactionSectionSymbols": {
+    "description": "Catalog sheet section: symbols"
+  },
+  "@reactionsNoneAllowed": {
+    "description": "reactions_mode = some with a white list the catalog does not cover"
+  },
+  "@reactionsUsed": {
+    "description": "Catalog sheet counter: reactions of mine out of MAX_REACTIONS_PER_USER_PER_MESSAGE",
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "@reactionMessageLimitReached": {
+    "description": "MAX_DISTINCT_REACTIONS_PER_MESSAGE reached"
+  },
+  "@moreReactions": {
+    "description": "Quick bar button that opens the full catalog sheet"
+  },
+  "@reactionFailed": {
+    "description": "Quiet toast after an optimistic reaction was rolled back"
+  },
+  "@reactionTooFast": {
+    "description": "Quiet toast for 429 on the reactions endpoint"
+  },
+  "@reactionNotAllowed": {
+    "description": "Quiet toast for REACTION_NOT_ALLOWED / INVALID_REACTION"
+  },
+  "@reactionsNobody": {
+    "description": "Who-reacted sheet: a tab whose page came back empty"
+  },
+  "@reactionUserFallback": {
+    "description": "Who-reacted row for a user id the roster does not cover"
+  },
+  "@composerCharactersLeft": {
+    "description": "Counter shown near the 4096-character cap (api-docs 5.4)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@composerSendLabel": {
+    "description": "Accessible label of the send button"
+  },
+  "@composerSaveEditLabel": {
+    "description": "Accessible label of the send button while editing"
+  },
+  "@composerRecordLabel": {
+    "description": "Accessible label of the microphone button"
+  },
+  "@composerReplyingTo": {
+    "description": "Context banner title while replying"
+  },
+  "@composerSlowModeWait": {
+    "description": "Countdown on the send button while slow mode holds it",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "@composerSlowModeHint": {
+    "description": "Explains why the send button counts down",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachSheetTitle": {
+    "description": "Title of the composer attachment sheet"
+  },
+  "@attachRecent": {
+    "description": "Header of the recent-gallery strip"
+  },
+  "@attachCamera": {
+    "description": "Attachment sheet row that opens the camera"
+  },
+  "@attachVoice": {
+    "description": "Attachment sheet row that records a voice message"
+  },
+  "@attachVideoNote": {
+    "description": "Attachment sheet row that records a video note"
+  },
+  "@attachVoiceHint": {
+    "description": "Subtitle of the voice row: it is exclusive (api-docs 5.5)",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachVideoNoteHint": {
+    "description": "Subtitle of the video note row",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      },
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachGalleryDenied": {
+    "description": "Shown in place of the strip when photo access was refused"
+  },
+  "@attachGalleryAllow": {
+    "description": "Button that asks for the photo grant again"
+  },
+  "@attachMediaFull": {
+    "description": "Tapping one more photo past MAX_MEDIA_PER_MESSAGE",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachSendCount": {
+    "description": "Confirm button of the attachment sheet",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@attachUnavailable": {
+    "description": "A picked gallery item could not be read back"
+  },
+  "@videoNoteTooLarge": {
+    "description": "Captured video note exceeds the 640 px cap the server enforces",
+    "placeholders": {
+      "pixels": {
+        "type": "int"
+      }
+    }
+  },
+  "@composerTooLongBy": {
+    "description": "Counter once the message is past the 4096-character cap",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@videoNoteTapToRecord": {
+    "description": "Video note recorder: what the shutter does"
+  },
+  "@videoNoteNoCamera": {
+    "description": "Video note recorder: the device has no camera"
+  },
+  "@videoNoteCameraDenied": {
+    "description": "Video note recorder: camera or mic grant refused"
+  },
+  "@videoNoteCameraFailed": {
+    "description": "Video note recorder: the camera would not open"
+  },
+  "@videoNoteDiscarded": {
+    "description": "Quiet toast when a take was too short or unusable"
+  },
+  "@attachmentOpen": {
+    "description": "Action on a document attachment: hand it to the platform"
+  },
+  "@attachmentSavedTo": {
+    "description": "Confirmation after an attachment was copied to the device, with the full path",
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "@attachmentSaveFailed": {
+    "description": "The attachment could not be downloaded or copied to the device"
+  },
+  "@attachmentUploading": {
+    "description": "Label on the progress ring of a file whose bytes are going out"
+  },
+  "@mediaViewerCounter": {
+    "description": "Where the open photo sits in the chat’s media, shown in the viewer",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@mediaViewerUnavailable": {
+    "description": "The viewer was opened on media that is no longer in the loaded history"
+  },
+  "@mediaPreviewHint": {
+    "description": "Explains that tiles can be dropped on the pre-send preview screen"
+  },
+  "@mediaPreviewCaptionHint": {
+    "description": "Placeholder of the album caption field; the caption becomes the message content"
+  },
+  "@mediaPreviewRemove": {
+    "description": "Tooltip on the button that drops one file from a staged album"
+  },
+  "@composerRecordVideoNoteLabel": {
+    "description": "Accessible label of the composer button while it is in video-note mode"
+  },
+  "@composerSwitchToVideoNote": {
+    "description": "Tooltip on the microphone button: tapping it swaps the recorder for the camera"
+  },
+  "@composerSwitchToVoice": {
+    "description": "Tooltip on the camera button: tapping it swaps the camera back for the microphone"
+  },
+  "@videoNoteSwitchCamera": {
+    "description": "Turns the camera around while framing a video note"
+  },
+  "@videoNoteDoubleTapToSwitch": {
+    "description": "Says that a double tap on the circle turns the camera around"
+  },
+  "@videoNoteOpeningCamera": {
+    "description": "Shown for the moment between the thumb going down and the camera waking"
+  },
+  "@videoNoteHoldToRecord": {
+    "description": "Hint under the composer circle before a take starts"
+  },
+  "@videoNoteSend": {
+    "description": "Button that sends a finished video note"
+  },
+  "@videoNoteRecordingLabel": {
+    "description": "Accessible label of the live circle while a video note is being recorded"
+  },
+  "@videoNoteTapForSound": {
+    "description": "Hint on a video note playing silently in the feed"
+  },
+  "@videoNoteTapToMute": {
+    "description": "Hint on a video note that currently has sound"
+  },
+  "@videoNoteHoldForFullScreen": {
+    "description": "Hint that a long press opens the video note full screen"
+  },
+  "@videoNotePlayerLabel": {
+    "description": "Accessible label of a video note in the feed",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "@videoNoteAutoplayOff": {
+    "description": "Shown on a video note that will not start on its own"
+  },
+  "@mediaAutoplay": {
+    "description": "Settings section: when video notes may start playing by themselves"
+  },
+  "@mediaAutoplayHint": {
+    "description": "Explains what autoplay does and how sound is turned on"
+  },
+  "@mediaAutoplayAlways": {
+    "description": "Autoplay on any connection"
+  },
+  "@mediaAutoplayWifi": {
+    "description": "Autoplay only on an unmetered connection"
+  },
+  "@mediaAutoplayNever": {
+    "description": "Never autoplay"
+  },
+  "@videoNotePreview": {
+    "description": "Accessible label of the live camera circle before a take starts"
+  }
 }

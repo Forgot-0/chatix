@@ -1,6 +1,9 @@
+import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/api_client.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -145,6 +148,92 @@ void main() {
         expect(api.status, 429);
         expect((api.detail as Map)['retry_after'], 12);
       }, (_) => fail('Should have returned Left'));
+    });
+
+    // `VALIDATION` is the one code whose `detail` is a list rather than an
+    // object (api-docs §2.2). Anything that reaches for `detail['field']`
+    // without checking throws on it, so the parse has to hand the array
+    // through untouched.
+    test('422 VALIDATION carries an array detail, not an object', () async {
+      when(
+        () => mockDio.post<dynamic>(
+          any(),
+          data: any(named: 'data'),
+          queryParameters: any(named: 'queryParameters'),
+          options: any(named: 'options'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: tPath),
+          type: DioExceptionType.badResponse,
+          response: Response(
+            requestOptions: RequestOptions(path: tPath),
+            statusCode: 422,
+            data: {
+              'error': {
+                'code': 'VALIDATION',
+                'message': 'Validation exception',
+                'detail': [
+                  {
+                    'loc': ['body', 'password'],
+                    'msg': 'String should have at least 8 characters',
+                    'type': 'string_too_short',
+                  },
+                  {
+                    'loc': ['body', 'username'],
+                    'msg': 'Field required',
+                    'type': 'missing',
+                  },
+                ],
+              },
+              'status': 422,
+            },
+          ),
+        ),
+      );
+
+      final result = await apiClient.post('/test');
+
+      result.fold((failure) {
+        expect(failure, isA<ApiFailure>());
+        final api = failure as ApiFailure;
+        expect(api.code, 'VALIDATION');
+        expect(api.status, 422);
+
+        final detail = api.detail;
+        expect(detail, isA<List<dynamic>>());
+        expect((detail as List).length, 2);
+        expect((detail.first as Map)['type'], 'string_too_short');
+        expect((detail.first as Map)['loc'], ['body', 'password']);
+      }, (_) => fail('Should have returned Left'));
+    });
+
+    test('a VALIDATION array does not break the UI sentence for it', () async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+      // The presentation layer reads `detail` as a map for most codes; the
+      // array must not make it throw on the way to a message.
+      const failure = ApiFailure(
+        code: 'VALIDATION',
+        message: 'Validation exception',
+        detail: [
+          {
+            'loc': ['body', 'password'],
+            'msg': 'too short',
+            'type': 'string_too_short',
+          },
+        ],
+        status: 422,
+      );
+
+      expect(
+        () => friendlyFailureMessage(failure, l10n: l10n),
+        returnsNormally,
+      );
+      expect(
+        friendlyFailureMessage(failure, l10n: l10n),
+        'Some of the details are invalid. Please check and try again.',
+      );
     });
   });
 }

@@ -339,9 +339,12 @@ class _AvatarFace extends StatelessWidget {
     final background = chatix.authorColor(userId);
     final foreground = _foregroundOn(background);
 
+    final ratio = MediaQuery.devicePixelRatioOf(context);
+    final logicalSize = isTile ? size.diameter / 2 : size.diameter;
+
     final provider = source.resolve(
-      logicalSize: isTile ? size.diameter / 2 : size.diameter,
-      devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      logicalSize: logicalSize,
+      devicePixelRatio: ratio,
     );
 
     final initial = Container(
@@ -360,19 +363,30 @@ class _AvatarFace extends StatelessWidget {
 
     if (provider == null) return initial;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        initial,
-        Image(
-          image: provider,
-          fit: BoxFit.cover,
-          gaplessPlayback: true,
-          // A dead link (an expired presigned URL, most often) leaves the
-          // initial showing instead of a broken-image glyph.
-          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
-        ),
-      ],
+    // `avatars` offers four sizes (api-docs §4.4) and `resolve` already picks
+    // the smallest one that covers this circle — but the smallest is still
+    // 256 px for a 24 px face in a chat row, and nothing else stops the full
+    // frame being decoded and cached at that size. A feed of two hundred
+    // rows is two hundred of those, so the decode is capped here as well.
+    final edge = (logicalSize * ratio).round();
+
+    return RepaintBoundary(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          initial,
+          Image(
+            // Width only: the height follows the source's aspect ratio, so
+            // a picture that is not square is scaled rather than squashed.
+            image: ResizeImage(provider, width: edge),
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+            // A dead link (an expired presigned URL, most often) leaves the
+            // initial showing instead of a broken-image glyph.
+            errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
     );
   }
 

@@ -11,6 +11,7 @@ import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
 import 'app_localizations_fr.dart';
 import 'app_localizations_ja.dart';
+import 'app_localizations_ru.dart';
 
 // ignore_for_file: type=lint
 
@@ -99,6 +100,7 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('ru'),
     Locale('es'),
     Locale('fr'),
     Locale('de'),
@@ -5133,6 +5135,408 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Short vibrations when a message goes out, a reaction lands or a gesture takes. Your device\'s own vibration setting still applies.'**
   String get appearanceHapticsHint;
+
+  /// Fallback shown when a failure carries nothing worth showing
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get failureGeneric;
+
+  /// Shown for HTTP 429 (api-docs 0: body.detail)
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait a minute and try again.'**
+  String get failureRateLimited;
+
+  /// Shown when the device has no network
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Check your network and try again.'**
+  String get failureNoConnection;
+
+  /// Shown when the server did not answer in time
+  ///
+  /// In en, this message translates to:
+  /// **'The server took too long to respond. Please try again.'**
+  String get failureTimeout;
+
+  /// NOT_AUTHENTICATED / NOT_FOUND_OR_INACTIVE_SESSION
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has ended. Please sign in again.'**
+  String get apiErrorSessionEnded;
+
+  /// EXPIRED_TOKEN
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please sign in again.'**
+  String get apiErrorSessionExpired;
+
+  /// INVALID_TOKEN
+  ///
+  /// In en, this message translates to:
+  /// **'Your session is no longer valid. Please sign in again.'**
+  String get apiErrorSessionInvalid;
+
+  /// TOKEN_IN_BLACKLIST
+  ///
+  /// In en, this message translates to:
+  /// **'This session was signed out. Please sign in again.'**
+  String get apiErrorSessionSignedOut;
+
+  /// ACCESS_DENIED and any code ending in ACCESS_DENIED
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have permission to do that.'**
+  String get apiErrorAccessDenied;
+
+  /// VALIDATION
+  ///
+  /// In en, this message translates to:
+  /// **'Some of the details are invalid. Please check and try again.'**
+  String get apiErrorValidation;
+
+  /// Any code starting with NOT_FOUND_
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find that — it may have been deleted.'**
+  String get apiErrorNotFoundGeneric;
+
+  /// Any code starting with TOO_LONG_
+  ///
+  /// In en, this message translates to:
+  /// **'That value is too long. Please shorten it.'**
+  String get apiErrorTooLongGeneric;
+
+  /// Any code ending in LIMIT_EXCEEDED
+  ///
+  /// In en, this message translates to:
+  /// **'A limit has been reached, so this action is not available.'**
+  String get apiErrorLimitExceededGeneric;
+
+  /// WRONG_LOGIN_DATA
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect username or password.'**
+  String get apiErrorWrongLoginData;
+
+  /// PASSWORD_MISMATCH
+  ///
+  /// In en, this message translates to:
+  /// **'The passwords don\'t match.'**
+  String get apiErrorPasswordMismatch;
+
+  /// DUPLICATE_USER
+  ///
+  /// In en, this message translates to:
+  /// **'That username or email is already taken.'**
+  String get apiErrorDuplicateUser;
+
+  /// EMAIL_NOT_CONFIRMED
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your email address before signing in.'**
+  String get apiErrorEmailNotConfirmed;
+
+  /// NOT_EXIST_PROVIDER_OAUTH
+  ///
+  /// In en, this message translates to:
+  /// **'That sign-in provider is not supported.'**
+  String get apiErrorOauthProviderUnsupported;
+
+  /// OAUTH_STATE_NOT_FOUND
+  ///
+  /// In en, this message translates to:
+  /// **'The sign-in attempt expired. Please try again.'**
+  String get apiErrorOauthStateNotFound;
+
+  /// LINKED_ANOTHER_USER_OAUTH
+  ///
+  /// In en, this message translates to:
+  /// **'That account is already linked to another user.'**
+  String get apiErrorOauthLinkedAnotherUser;
+
+  /// ALREADE_EXIST_PROFILE (server spelling)
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a profile.'**
+  String get apiErrorProfileExists;
+
+  /// NOT_CHAT_MEMBER
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not a member of this chat.'**
+  String get apiErrorNotChatMember;
+
+  /// ALREADY_CHAT_MEMBER
+  ///
+  /// In en, this message translates to:
+  /// **'That person is already in this chat.'**
+  String get apiErrorAlreadyChatMember;
+
+  /// INVALID_CHAT_ROLE
+  ///
+  /// In en, this message translates to:
+  /// **'That is not a valid chat role.'**
+  String get apiErrorInvalidChatRole;
+
+  /// DIRECT_CHAT_EXISTS
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a direct chat with this person.'**
+  String get apiErrorDirectChatExists;
+
+  /// MESSAGE_TOO_LONG
+  ///
+  /// In en, this message translates to:
+  /// **'That message is too long. Please shorten it.'**
+  String get apiErrorMessageTooLong;
+
+  /// INVALID_MESSAGE
+  ///
+  /// In en, this message translates to:
+  /// **'That message can\'t be sent as written.'**
+  String get apiErrorInvalidMessage;
+
+  /// SLOW_MODE_LIMIT
+  ///
+  /// In en, this message translates to:
+  /// **'Slow mode is on — please wait before sending another message.'**
+  String get apiErrorSlowModeLimit;
+
+  /// SLOW_MODE_OUT_OF_RANGE
+  ///
+  /// In en, this message translates to:
+  /// **'Slow mode must be between 0 seconds and 24 hours.'**
+  String get apiErrorSlowModeOutOfRange;
+
+  /// ATTACHMENT_LIMIT_EXCEEDED
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attachments for one message.'**
+  String get apiErrorAttachmentLimitExceeded;
+
+  /// ATTACHMENT_NOT_FOUND
+  ///
+  /// In en, this message translates to:
+  /// **'That attachment isn\'t available any more.'**
+  String get apiErrorAttachmentNotFound;
+
+  /// ATTACHMENT_VALIDATION
+  ///
+  /// In en, this message translates to:
+  /// **'That file can\'t be attached — check its type and size.'**
+  String get apiErrorAttachmentValidation;
+
+  /// EMPTY_ATTACHMENT_UPLOAD_REQUEST
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a file to attach.'**
+  String get apiErrorEmptyAttachmentUpload;
+
+  /// INVALID_UPLOAD_TOKEN
+  ///
+  /// In en, this message translates to:
+  /// **'The upload expired. Please attach the file again.'**
+  String get apiErrorInvalidUploadToken;
+
+  /// AVATAR_NOT_TYPE_IMAGE
+  ///
+  /// In en, this message translates to:
+  /// **'An avatar must be an image file.'**
+  String get apiErrorAvatarNotImage;
+
+  /// ACTIVE_CALL_EXISTS
+  ///
+  /// In en, this message translates to:
+  /// **'There is already an active call in this chat.'**
+  String get apiErrorActiveCallExists;
+
+  /// NO_ACTIVE_CALL
+  ///
+  /// In en, this message translates to:
+  /// **'There is no active call in this chat.'**
+  String get apiErrorNoActiveCall;
+
+  /// LIVEKIT_UNAUTHORIZED
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t join this call.'**
+  String get apiErrorLivekitUnauthorized;
+
+  /// LIVEKIT_ERROR
+  ///
+  /// In en, this message translates to:
+  /// **'The call service is unavailable right now.'**
+  String get apiErrorLivekitError;
+
+  /// INVALID_REACTION
+  ///
+  /// In en, this message translates to:
+  /// **'That emoji can\'t be used as a reaction.'**
+  String get apiErrorInvalidReaction;
+
+  /// REACTION_NOT_ALLOWED
+  ///
+  /// In en, this message translates to:
+  /// **'That reaction isn\'t allowed in this chat.'**
+  String get apiErrorReactionNotAllowed;
+
+  /// REACTIONS_DISABLED
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions are turned off in this chat.'**
+  String get apiErrorReactionsDisabled;
+
+  /// TOO_MANY_REACTIONS
+  ///
+  /// In en, this message translates to:
+  /// **'No more reactions can be added here.'**
+  String get apiErrorTooManyReactions;
+
+  /// MAX_LIMIT_CURSOR
+  ///
+  /// In en, this message translates to:
+  /// **'Too many chats were resumed at once.'**
+  String get apiErrorMaxLimitCursor;
+
+  /// Screen-reader header of an incoming message bubble
+  ///
+  /// In en, this message translates to:
+  /// **'Message from {author}, {time}'**
+  String a11yMessageFrom(String author, String time);
+
+  /// Screen-reader header of your own message bubble
+  ///
+  /// In en, this message translates to:
+  /// **'Your message, {time}'**
+  String a11yMessageMine(String time);
+
+  /// Screen-reader header of a system message in the feed
+  ///
+  /// In en, this message translates to:
+  /// **'System message'**
+  String get a11ySystemMessage;
+
+  /// How many people picked one emoji, for a screen reader
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 reaction} other{{count} reactions}}'**
+  String a11yReactions(int count);
+
+  /// Appended to a reaction chip that includes your own
+  ///
+  /// In en, this message translates to:
+  /// **'including yours'**
+  String get a11yReactionYours;
+
+  /// Long-press hint on a message bubble
+  ///
+  /// In en, this message translates to:
+  /// **'show message actions'**
+  String get a11yMessageActionsHint;
+
+  /// Announced on a bubble whose content is files, not text
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 attachment} other{{count} attachments}}'**
+  String a11yMessageAttachmentsHint(int count);
+
+  /// Title of the "would you rate us" dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoying the app?'**
+  String get reviewPromptTitle;
+
+  /// Body of the review prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to share your feedback with us?'**
+  String get reviewPromptBody;
+
+  /// Declines the review prompt
+  ///
+  /// In en, this message translates to:
+  /// **'No thanks'**
+  String get reviewPromptDecline;
+
+  /// Accepts the review prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Sure!'**
+  String get reviewPromptAccept;
+
+  /// Title of the feedback form
+  ///
+  /// In en, this message translates to:
+  /// **'Your feedback matters'**
+  String get feedbackTitle;
+
+  /// Body of the feedback form
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you think of the app. If you are enjoying it, a review on the app store would mean a lot.'**
+  String get feedbackBody;
+
+  /// Placeholder in the feedback text field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your feedback here'**
+  String get feedbackHint;
+
+  /// Sends the written feedback
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get feedbackSubmit;
+
+  /// Title when the update cannot be skipped
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get updateRequiredTitle;
+
+  /// Title when the update is optional
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateAvailableTitle;
+
+  /// Body when the update cannot be skipped
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is required to keep using ChatiX.'**
+  String updateRequiredBody(String version);
+
+  /// Body when the update is optional
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available.'**
+  String updateAvailableBody(String version);
+
+  /// Heading above the release notes
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get updateWhatsNew;
+
+  /// Postpones an optional update
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLater;
+
+  /// Starts a required update
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get updateNow;
+
+  /// Starts an optional update
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateAction;
 }
 
 class _AppLocalizationsDelegate
@@ -5152,6 +5556,7 @@ class _AppLocalizationsDelegate
     'es',
     'fr',
     'ja',
+    'ru',
   ].contains(locale.languageCode);
 
   @override
@@ -5173,6 +5578,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsFr();
     case 'ja':
       return AppLocalizationsJa();
+    case 'ru':
+      return AppLocalizationsRu();
   }
 
   throw FlutterError(
