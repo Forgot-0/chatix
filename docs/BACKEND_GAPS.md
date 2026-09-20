@@ -292,23 +292,6 @@ already written.
 
 ---
 
-## 10. ~~A profile cannot say who it belongs to~~ ✅ closed
-
-`ProfileDTO` carries `username`, non-nullable, on both `GET /profiles/{id}/`
-and `GET /profiles/` (api-docs §4.3). This entry used to ask for exactly
-that field, and described a workaround that no longer exists: the handle
-used to ride along as `?username=` on `ProfileDetailRoute`, filled in by the
-member list and by `@mention`s, and was simply missing whenever a profile
-was opened from a deep link or a push.
-
-On the client: `ProfileEntity.username` is a required `String`,
-`ProfileScreen` reads it straight off the profile, and the route is back to
-carrying nothing but the id. The people list and the user search field name
-somebody by their handle when they have no display name, instead of
-`User #42`.
-
----
-
 ## 11. Sharing a profile is passing a string around 🔴
 
 Same shape as the chat invite link in §8, and the same cause. There is no
