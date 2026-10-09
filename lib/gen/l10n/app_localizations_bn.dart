@@ -2136,6 +2136,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get changePhoto => 'ছবি বদলান';
 
   @override
+  String get setPhoto => 'ছবি সেট করুন';
+
+  @override
   String get choosePhoto => 'একটি ছবি বেছে নিন';
 
   @override
@@ -2944,6 +2947,10 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get failureTimeout =>
       'সার্ভার সাড়া দিতে অনেক সময় নিচ্ছে। আবার চেষ্টা করুন।';
+
+  @override
+  String get failureInsecureSessionCookie =>
+      'সার্ভার একটি অনিরাপদ সাইন-ইন কুকি পাঠিয়েছে, তাই সেশন সংরক্ষণ করা হয়নি। এটি সার্ভারের সেটিং — সহায়তার সাথে যোগাযোগ করুন।';
 
   @override
   String get apiErrorSessionEnded =>

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/api_path.dart';
+import 'package:chatix/core/network/refresh_cookie_policy.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -111,6 +112,12 @@ class ApiClient {
   }
 
   Failure _handleError(DioException e) {
+    // Refused on our side, not the network's: without this it would fall to
+    // `unknown` below and read as "no internet connection".
+    if (e.error is InsecureRefreshCookieException) {
+      return const InsecureSessionCookieFailure();
+    }
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:

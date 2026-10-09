@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:chatix/core/auth/access_token_refresher.dart';
 import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/network/interceptors/refresh_cookie_policy_interceptor.dart';
 
 import '../../helpers/fakes/fake_secure_storage_service.dart';
 
@@ -178,6 +179,34 @@ void main() {
 
       expect(expiries, [SessionExpiredReason.refreshFailed]);
       expect(await storage.read(key: AppConstants.accessTokenKey), isNull);
+    });
+
+    test('a refresh cookie without its attributes ends it at once', () async {
+      // The old cookie is spent and the new one is refused: asking again
+      // would only be refused again, so this is the end, not a retry.
+      final refresher = wire(
+        onRefresh: (_) => ResponseBody.fromString(
+          json.encode({'access_token': token('fresh', inSeconds: 300)}),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+            'set-cookie': ['refresh_token=next; Path=/; SameSite=none'],
+          },
+        ),
+        stored: token('stale', inSeconds: -10),
+      );
+      side.interceptors.add(const RefreshCookiePolicyInterceptor());
+
+      expect(await refresher.token(), isNull);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(expiries, [SessionExpiredReason.refreshFailed]);
+      expect(adapter.requests, hasLength(1));
+      expect(
+        await storage.read(key: AppConstants.accessTokenKey),
+        isNull,
+        reason: 'the token that came with the refused cookie is not kept',
+      );
     });
 
     test('a 200 with no token in it ends it too', () async {

@@ -36,6 +36,9 @@ String friendlyFailureMessage(
     case TimeoutFailure():
       return l10n.failureTimeout;
 
+    case InsecureSessionCookieFailure():
+      return l10n.failureInsecureSessionCookie;
+
     // Every other Failure carries a diagnostic, not copy. `Chat id is
     // required` and `Unknown error occurred` are written for a log, in
     // English, and showing one is how English reaches a reader who asked

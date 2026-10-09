@@ -17,6 +17,18 @@ class NetworkFailure extends Failure {
   });
 }
 
+/// The server answered a login or a refresh with a refresh cookie that lacks
+/// `HttpOnly`, `Secure` or `SameSite`, and the client refused to keep it
+/// (`RefreshCookiePolicy`). Not something the reader can fix by retrying:
+/// the server is misconfigured.
+class InsecureSessionCookieFailure extends Failure {
+  const InsecureSessionCookieFailure({
+    super.message =
+        'The session cookie arrived without HttpOnly, Secure or '
+        'SameSite',
+  });
+}
+
 class TimeoutFailure extends Failure {
   const TimeoutFailure({
     super.message = 'Connection timeout',

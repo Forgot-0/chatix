@@ -13,8 +13,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/network/interceptors/auth_interceptor.dart';
-import 'package:chatix/core/network/interceptors/set_cookie_compat_interceptor.dart';
+import 'package:chatix/core/network/interceptors/refresh_cookie_policy_interceptor.dart';
 import 'package:chatix/core/network/interceptors/trailing_slash_interceptor.dart';
+import 'package:chatix/core/network/secure_cookie_jar.dart';
 import 'package:chatix/core/notifications/local_notification_presenter.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
@@ -180,8 +181,8 @@ Future<void> _reportActionFailure(
 /// token — so a background call behaves exactly like a foreground one.
 Future<ApiClient> buildBackgroundApiClient() async {
   final appDir = await getApplicationDocumentsDirectory();
-  final cookieJar = PersistCookieJar(
-    storage: FileStorage('${appDir.path}/.cookies/'),
+  final cookieJar = SecureCookieJar(
+    PersistCookieJar(storage: FileStorage('${appDir.path}/.cookies/')),
   );
   final secureStorage = SecureStorageServiceImpl.create();
 
@@ -197,14 +198,14 @@ Future<ApiClient> buildBackgroundApiClient() async {
 
   final sideChannel = Dio(options())
     ..interceptors.addAll([
-      const SetCookieCompatInterceptor(),
+      const RefreshCookiePolicyInterceptor(),
       CookieManager(cookieJar),
       TrailingSlashInterceptor(),
     ]);
 
   final dio = Dio(options())
     ..interceptors.addAll([
-      const SetCookieCompatInterceptor(),
+      const RefreshCookiePolicyInterceptor(),
       CookieManager(cookieJar),
       TrailingSlashInterceptor(),
       AuthInterceptor(sideChannel: sideChannel, secureStorage: secureStorage),

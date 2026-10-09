@@ -193,6 +193,16 @@ void main() {
       expect(message, isNot(contains('429')));
     });
 
+    test('an insecure session cookie is not passed off as being offline', () {
+      final message = friendlyFailureMessage(
+        const InsecureSessionCookieFailure(),
+        l10n: en,
+      );
+
+      expect(message, en.failureInsecureSessionCookie);
+      expect(message, isNot(en.failureNoConnection));
+    });
+
     test('offline and timeout are distinguishable', () {
       expect(
         friendlyFailureMessage(const NetworkFailure(), l10n: en),
@@ -242,6 +252,7 @@ void main() {
         expect(l10n.failureRateLimited.trim(), isNotEmpty);
         expect(l10n.failureNoConnection.trim(), isNotEmpty);
         expect(l10n.failureTimeout.trim(), isNotEmpty);
+        expect(l10n.failureInsecureSessionCookie.trim(), isNotEmpty);
       });
     }
 
@@ -255,6 +266,11 @@ void main() {
         expect(
           l10n.apiErrorSessionEnded,
           isNot(english.apiErrorSessionEnded),
+          reason: '$locale still shows the English sentence',
+        );
+        expect(
+          l10n.failureInsecureSessionCookie,
+          isNot(english.failureInsecureSessionCookie),
           reason: '$locale still shows the English sentence',
         );
       }

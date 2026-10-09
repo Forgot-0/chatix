@@ -5,6 +5,7 @@ import 'package:chatix/core/auth/jwt.dart';
 import 'package:chatix/core/auth/session_events.dart';
 import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/network/error_envelope.dart';
+import 'package:chatix/core/network/refresh_cookie_policy.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/socket_token_source.dart';
@@ -122,6 +123,10 @@ class AccessTokenRefresher implements SocketTokenSource {
   /// Whether the server refused in a way that means "sign in again" rather
   /// than "try later" (api-docs §2.3, §2.4).
   bool _isTerminal(DioException error) {
+    // A refresh cookie this client refuses to keep: the old one is spent and
+    // there is no new one, so there is nothing left to renew with.
+    if (error.error is InsecureRefreshCookieException) return true;
+
     final status = error.response?.statusCode;
     final code = readErrorCode(error.response?.data);
 

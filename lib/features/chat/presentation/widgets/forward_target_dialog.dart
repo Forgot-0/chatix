@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -71,6 +72,13 @@ class ForwardTargetDialogState extends ConsumerState<ForwardTargetDialog> {
     final myUserId = ref.watch(authProvider).value?.id;
 
     return AlertDialog(
+      // The list fills whatever width the dialog has, so the dialog has to
+      // stop somewhere: a phone's width less the insets, or the picker width
+      // on anything larger.
+      constraints: const BoxConstraints(
+        minWidth: AppDialogSizes.minWidth,
+        maxWidth: AppDialogSizes.pickerMaxWidth,
+      ),
       title: Text(l10n.forwardTo),
       content: SizedBox(
         width: double.maxFinite,

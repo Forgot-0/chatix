@@ -2758,6 +2758,7 @@
     }
   },
   "changePhoto": "Change photo",
+  "setPhoto": "Set photo",
   "choosePhoto": "Choose a photo",
   "avatarCropTitle": "Move and scale",
   "avatarCropHint": "Drag to move, pinch to zoom.",
@@ -3718,6 +3719,7 @@
     "description": "Shown when the device has no network"
   },
   "failureTimeout": "The server took too long to respond. Please try again.",
+  "failureInsecureSessionCookie": "The server sent an insecure sign-in cookie, so the session was not saved. This is a server setting — please contact support.",
   "@failureTimeout": {
     "description": "Shown when the server did not answer in time"
   },

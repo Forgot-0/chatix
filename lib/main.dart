@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:chatix/core/accessibility/accessibility_providers.dart';
 import 'package:chatix/core/auth/app_lock_gate.dart';
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/network/secure_cookie_jar.dart';
 import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
@@ -38,8 +39,10 @@ void main() async {
   CookieJar cookieJar;
 
   final appDir = await getApplicationDocumentsDirectory();
-  cookieJar = PersistCookieJar(
-    storage: FileStorage('${appDir.path}/.cookies/'),
+  // Wrapped: the stock jar sends Secure cookies over plain http, and the
+  // refresh cookie must not travel or be kept without its attributes.
+  cookieJar = SecureCookieJar(
+    PersistCookieJar(storage: FileStorage('${appDir.path}/.cookies/')),
   );
 
   // Both the chat store and the offline sync queue are Hive boxes, and Hive

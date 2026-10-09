@@ -3774,6 +3774,12 @@ abstract class AppLocalizations {
   /// **'Change photo'**
   String get changePhoto;
 
+  /// No description provided for @setPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Set photo'**
+  String get setPhoto;
+
   /// No description provided for @choosePhoto.
   ///
   /// In en, this message translates to:
@@ -5159,6 +5165,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The server took too long to respond. Please try again.'**
   String get failureTimeout;
+
+  /// No description provided for @failureInsecureSessionCookie.
+  ///
+  /// In en, this message translates to:
+  /// **'The server sent an insecure sign-in cookie, so the session was not saved. This is a server setting — please contact support.'**
+  String get failureInsecureSessionCookie;
 
   /// NOT_AUTHENTICATED / NOT_FOUND_OR_INACTIVE_SESSION
   ///

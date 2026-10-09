@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -15,6 +17,7 @@ import 'package:chatix/features/profile/presentation/providers/profile_detail_pr
 import 'package:chatix/features/profile/presentation/providers/profile_edit_provider.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_contact_link.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_field_validators.dart';
+import 'package:chatix/features/profile/presentation/widgets/profile_photo_editor.dart';
 import 'package:chatix/features/profile/presentation/widgets/skills_chips_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -67,7 +70,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (next.hasError && !next.isLoading) {
         AppSnackbar.failure(
           context,
-          friendlyFailureMessage(next.error, l10n: l10n, fallback: l10n.saveChangesFailed),
+          friendlyFailureMessage(
+            next.error,
+            l10n: l10n,
+            fallback: l10n.saveChangesFailed,
+          ),
         );
       }
     });
@@ -120,145 +127,154 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      child: FormBuilder(
-        key: _formKey,
-        onChanged: () => setState(() {}),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(l10n.profileEditDetails, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 12),
+      // A column, not the pane: beside the list on a desktop the fields
+      // would otherwise run the width of the monitor.
+      child: AppContentWidth(
+        child: FormBuilder(
+          key: _formKey,
+          onChanged: () => setState(() {}),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ProfilePhotoEditor(profile: profile),
+              const SizedBox(height: AppSpacing.x6),
 
-            FormBuilderTextField(
-              name: _displayNameField,
-              initialValue: opened.displayName,
-              textInputAction: TextInputAction.next,
-              maxLength: UpdateProfileUseCase.maxDisplayNameLength,
-              decoration: InputDecoration(
-                labelText: l10n.displayName,
-                border: const OutlineInputBorder(),
+              Text(l10n.profileEditDetails, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 12),
+
+              FormBuilderTextField(
+                name: _displayNameField,
+                initialValue: opened.displayName,
+                textInputAction: TextInputAction.next,
+                maxLength: UpdateProfileUseCase.maxDisplayNameLength,
+                decoration: InputDecoration(
+                  labelText: l10n.displayName,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: ProfileFieldValidators.displayName(l10n),
               ),
-              validator: ProfileFieldValidators.displayName(l10n),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            FormBuilderTextField(
-              name: _specializationField,
-              initialValue: opened.specialization,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: l10n.specialization,
-                helperText: l10n.specializationHint,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            FormBuilderTextField(
-              name: _bioField,
-              initialValue: opened.bio,
-              maxLines: 5,
-              maxLength: UpdateProfileUseCase.maxBioLength,
-              decoration: InputDecoration(
-                labelText: l10n.bio,
-                alignLabelWithHint: true,
-                border: const OutlineInputBorder(),
-              ),
-              validator: ProfileFieldValidators.bio(l10n),
-            ),
-            const SizedBox(height: 12),
-
-            FormBuilderDateTimePicker(
-              name: _birthdayField,
-              inputType: InputType.date,
-              initialValue: opened.dateBirthday,
-              firstDate: DateTime(1900),
-              lastDate: DateTime.now(),
-              decoration: InputDecoration(
-                labelText: l10n.dateOfBirth,
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  tooltip: l10n.clearDateOfBirth,
-                  icon: const Icon(Icons.clear),
-                  // Clearing has to reach the server as an explicit null,
-                  // which is exactly what a full-set PUT sends (§4.4).
-                  onPressed: () => _formKey.currentState?.fields[_birthdayField]
-                      ?.didChange(null),
+              FormBuilderTextField(
+                name: _specializationField,
+                initialValue: opened.specialization,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: l10n.specialization,
+                  helperText: l10n.specializationHint,
+                  border: const OutlineInputBorder(),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            SkillsChipsField(
-              name: _skillsField,
-              initialValue: opened.skills,
-              validator: ProfileFieldValidators.skills(l10n),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 6, left: 12),
-              child: Text(
-                l10n.profileSkillsHint,
+              FormBuilderTextField(
+                name: _bioField,
+                initialValue: opened.bio,
+                maxLines: 5,
+                maxLength: UpdateProfileUseCase.maxBioLength,
+                decoration: InputDecoration(
+                  labelText: l10n.bio,
+                  alignLabelWithHint: true,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: ProfileFieldValidators.bio(l10n),
+              ),
+              const SizedBox(height: 12),
+
+              FormBuilderDateTimePicker(
+                name: _birthdayField,
+                inputType: InputType.date,
+                initialValue: opened.dateBirthday,
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+                decoration: InputDecoration(
+                  labelText: l10n.dateOfBirth,
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    tooltip: l10n.clearDateOfBirth,
+                    icon: const Icon(Icons.clear),
+                    // Clearing has to reach the server as an explicit null,
+                    // which is exactly what a full-set PUT sends (§4.4).
+                    onPressed: () => _formKey
+                        .currentState
+                        ?.fields[_birthdayField]
+                        ?.didChange(null),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              SkillsChipsField(
+                name: _skillsField,
+                initialValue: opened.skills,
+                validator: ProfileFieldValidators.skills(l10n),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 12),
+                child: Text(
+                  l10n.profileSkillsHint,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: isSubmitting ? null : () => _submit(profile.id),
+                child: isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.save),
+              ),
+
+              const SizedBox(height: 32),
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+
+              Text(l10n.profileEditLinks, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 4),
+              Text(
+                // Links are their own endpoints — `POST`/`DELETE
+                // /profiles/{id}/links/` (api-docs §4.6) — so they take effect
+                // at once and are not part of the save above.
+                l10n.profileEditLinksHint,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
 
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: isSubmitting ? null : () => _submit(profile.id),
-              child: isSubmitting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l10n.save),
-            ),
-
-            const SizedBox(height: 32),
-            const Divider(height: 1),
-            const SizedBox(height: 16),
-
-            Text(l10n.profileEditLinks, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 4),
-            Text(
-              // Links are their own endpoints — `POST`/`DELETE
-              // /profiles/{id}/links/` (api-docs §4.6) — so they take effect
-              // at once and are not part of the save above.
-              l10n.profileEditLinksHint,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            if (profile.contacts.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  l10n.profileNoLinks,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+              if (profile.contacts.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    l10n.profileNoLinks,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              )
-            else
-              for (final contact in profile.contacts)
-                _LinkTile(
-                  contact: contact,
-                  onRemove: () => _removeLink(profile.id, contact),
-                ),
+                )
+              else
+                for (final contact in profile.contacts)
+                  _LinkTile(
+                    contact: contact,
+                    onRemove: () => _removeLink(profile.id, contact),
+                  ),
 
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: () => _addLink(profile.id),
-                icon: const Icon(Icons.add),
-                label: Text(l10n.addContact),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => _addLink(profile.id),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.addContact),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

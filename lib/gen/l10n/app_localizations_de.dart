@@ -2162,6 +2162,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get changePhoto => 'Foto ändern';
 
   @override
+  String get setPhoto => 'Foto festlegen';
+
+  @override
   String get choosePhoto => 'Foto auswählen';
 
   @override
@@ -2987,6 +2990,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get failureTimeout =>
       'Der Server hat zu lange gebraucht. Bitte versuche es erneut.';
+
+  @override
+  String get failureInsecureSessionCookie =>
+      'Der Server hat ein unsicheres Anmelde-Cookie gesendet, daher wurde die Sitzung nicht gespeichert. Das ist eine Servereinstellung – bitte wende dich an den Support.';
 
   @override
   String get apiErrorSessionEnded =>

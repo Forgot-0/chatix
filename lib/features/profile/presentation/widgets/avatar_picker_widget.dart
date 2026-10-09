@@ -14,8 +14,37 @@ import 'package:chatix/features/profile/presentation/utils/avatar_image.dart';
 import 'package:chatix/features/profile/presentation/widgets/avatar_cropper.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// The "change photo" button, and everything that happens after it is
-/// tapped.
+/// The camera button on the corner of one's own avatar.
+class AvatarPickerButton extends StatelessWidget {
+  const AvatarPickerButton({super.key, required this.profileId});
+
+  final int profileId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return AvatarPicker(
+      profileId: profileId,
+      builder: (context, pick, busy) => IconButton.filled(
+        tooltip: l10n.changePhoto,
+        iconSize: 18,
+        onPressed: pick,
+        icon: busy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.camera_alt),
+      ),
+    );
+  }
+}
+
+/// Changing one's photo — picking it, cropping it, uploading it — behind
+/// whatever control starts it: a camera button on the profile, the face
+/// itself on the edit screen.
 ///
 /// Most of the work is deliberately on this side of the wire. The server
 /// accepts any bytes, checks them in a background task, and tells nobody
@@ -23,38 +52,44 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// (api-docs §4.5). So the picture is decoded, cropped to a square and
 /// re-encoded here, which both keeps it inside the 5 MB cap and guarantees
 /// it really is an image before a byte is uploaded.
-class AvatarPickerButton extends ConsumerStatefulWidget {
-  const AvatarPickerButton({super.key, required this.profileId});
+class AvatarPicker extends ConsumerStatefulWidget {
+  const AvatarPicker({
+    super.key,
+    required this.profileId,
+    required this.builder,
+  });
 
   final int profileId;
 
+  /// Draws the control. `pick` starts the flow and is null while a picture
+  /// is on its way — being prepared here, or uploaded and processed — which
+  /// is also what `busy` says.
+  final Widget Function(BuildContext context, VoidCallback? pick, bool busy)
+  builder;
+
   @override
-  ConsumerState<AvatarPickerButton> createState() => _AvatarPickerButtonState();
+  ConsumerState<AvatarPicker> createState() => _AvatarPickerState();
 }
 
-class _AvatarPickerButtonState extends ConsumerState<AvatarPickerButton> {
+class _AvatarPickerState extends ConsumerState<AvatarPicker> {
   /// True while the picture is being picked, decoded and cropped — before
   /// the upload provider knows anything about it.
   bool _isPreparing = false;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final upload = ref.watch(avatarUploadProvider);
-    final busy = _isPreparing || upload.isLoading;
 
-    return IconButton.filled(
-      tooltip: l10n.changePhoto,
-      iconSize: 18,
-      onPressed: busy ? null : _pick,
-      icon: busy
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.camera_alt),
-    );
+    // The provider reports each stage as data, so "loading" alone is only
+    // the moment before the first one; a stage short of done is still a
+    // picture on its way.
+    final stage = upload.hasError ? null : upload.value;
+    final busy =
+        _isPreparing ||
+        upload.isLoading ||
+        (stage != null && stage != AvatarUploadStage.done);
+
+    return widget.builder(context, busy ? null : _pick, busy);
   }
 
   Future<void> _pick() async {

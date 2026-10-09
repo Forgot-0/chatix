@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
 import 'package:chatix/core/theme/app_theme.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
@@ -145,6 +146,29 @@ void main() {
           .first;
       expect(tester.getSize(circle), Size.square(ChatAvatarSize.md.diameter));
     }
+  });
+
+  /// The dialog's card: the first surface inside it.
+  Size cardSize(WidgetTester tester) => tester.getSize(
+    find
+        .descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Material),
+        )
+        .first,
+  );
+
+  testWidgets('on a desktop it stops at the picker width', (tester) async {
+    await open(tester, window: PaneWindow.desktop);
+
+    expect(cardSize(tester).width, AppDialogSizes.pickerMaxWidth);
+  });
+
+  testWidgets('on a phone it takes the screen less its insets', (tester) async {
+    await open(tester);
+
+    // The stock dialog keeps 40 px clear on either side.
+    expect(cardSize(tester).width, PaneWindow.phone.size.width - 2 * 40);
   });
 
   group('goldens', () {

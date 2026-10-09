@@ -2183,6 +2183,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get changePhoto => 'Сменить фото';
 
   @override
+  String get setPhoto => 'Выбрать фото';
+
+  @override
   String get choosePhoto => 'Выберите фото';
 
   @override
@@ -2996,6 +2999,10 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get failureTimeout =>
       'Сервер слишком долго не отвечает. Попробуйте ещё раз.';
+
+  @override
+  String get failureInsecureSessionCookie =>
+      'Сервер прислал небезопасную cookie входа, поэтому сессия не сохранена. Это настройка сервера — обратитесь в поддержку.';
 
   @override
   String get apiErrorSessionEnded => 'Сессия завершена. Войдите снова.';

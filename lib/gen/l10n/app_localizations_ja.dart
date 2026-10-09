@@ -2089,6 +2089,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get changePhoto => '写真を変更';
 
   @override
+  String get setPhoto => '写真を設定';
+
+  @override
   String get choosePhoto => '写真を選ぶ';
 
   @override
@@ -2860,6 +2863,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get failureTimeout => 'サーバーの応答に時間がかかりすぎました。もう一度お試しください。';
+
+  @override
+  String get failureInsecureSessionCookie =>
+      'サーバーが安全でないログイン用 Cookie を送信したため、セッションを保存しませんでした。サーバー側の設定の問題です。サポートにお問い合わせください。';
 
   @override
   String get apiErrorSessionEnded => 'セッションが終了しました。もう一度サインインしてください。';

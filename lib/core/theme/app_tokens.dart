@@ -314,6 +314,27 @@ abstract final class ChatLayout {
   static double _min(double a, double b) => a < b ? a : b;
 }
 
+/// How wide a page's content grows on a wide pane.
+abstract final class AppContentWidths {
+  /// Forms and the pages built like them — editing a profile, settings.
+  /// Past this a text field is a line drawn across a monitor, and a label
+  /// sits a long way from the value it names.
+  static const double form = 680;
+}
+
+/// How wide dialogs grow.
+abstract final class AppDialogSizes {
+  /// The narrowest a dialog may be — Material's own default, restated for
+  /// the dialogs that set their own constraints and so replace it.
+  static const double minWidth = 280;
+
+  /// The widest a dialog holding a list to pick from may be — a forward
+  /// target, a person. On a phone it takes the screen less the dialog's own
+  /// insets; on a desktop it stops here, because a row of avatar and title
+  /// stretched across a monitor puts the two a hand's width apart.
+  static const double pickerMaxWidth = 440;
+}
+
 /// Four levels of lift.
 ///
 /// Light themes cast a warm shadow. Dark themes do not: a black shadow on a

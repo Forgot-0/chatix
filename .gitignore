@@ -14,3 +14,8 @@ build/
 docs/_site/
 # Generated files
 # Flutter/Dart/Pub related
+
+# Diff images flutter_test writes next to a failing golden.
+**/failures/*Diff.png
+**/failures/*_masterImage.png
+**/failures/*_testImage.png
