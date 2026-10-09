@@ -8,6 +8,7 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/domain/entities/slow_mode.dart';
 import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_context_banner.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_field.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_recording_bar.dart';
@@ -134,80 +135,84 @@ class ChatComposer extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ComposerContextBanner(
-              replyTo: replyTo,
-              editing: editing,
-              onCancel: onCancelContext ?? () {},
-            ),
-            // The circle a video note is being recorded in, above the row
-            // rather than inside it: it is what is being sent, and it has to
-            // be big enough to frame a face by.
-            const ComposerVideoNoteStage(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x2,
-                AppSpacing.x1,
-                AppSpacing.x2,
-                AppSpacing.x2,
+        // The bar spans the pane; what is in it lines up with the column
+        // the messages sit in.
+        child: ChatColumn(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ComposerContextBanner(
+                replyTo: replyTo,
+                editing: editing,
+                onCancel: onCancelContext ?? () {},
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // The paperclip leaves during a recording: there is nothing
-                  // to attach to a message that is still being spoken.
-                  AnimatedSize(
-                    duration: AppMotion.base,
-                    curve: AppMotion.curve,
-                    child: onAttach == null || isRecording
-                        ? const SizedBox(height: 44, width: 0)
-                        : IconButton(
-                            tooltip: l10n.attach,
-                            icon: const Icon(Icons.attach_file_rounded),
-                            color: theme.colorScheme.onSurfaceVariant,
-                            onPressed: onAttach,
-                          ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      // 48, not 44: Android's guideline is the stricter of
-                      // the two, and the field inside now fills it rather
-                      // than sitting in the middle of it.
-                      constraints: const BoxConstraints(minHeight: 48),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.x3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(AppRadii.xl),
-                      ),
-                      child: Center(
-                        child: isRecording
-                            ? const ComposerRecordingBar()
-                            : ComposerField(
-                                controller: controller,
-                                focusNode: focusNode,
-                                enabled: !isSending,
-                                length: length,
-                              ),
+              // The circle a video note is being recorded in, above the row
+              // rather than inside it: it is what is being sent, and it has to
+              // be big enough to frame a face by.
+              const ComposerVideoNoteStage(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.x2,
+                  AppSpacing.x1,
+                  AppSpacing.x2,
+                  AppSpacing.x2,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // The paperclip leaves during a recording: there is nothing
+                    // to attach to a message that is still being spoken.
+                    AnimatedSize(
+                      duration: AppMotion.base,
+                      curve: AppMotion.curve,
+                      child: onAttach == null || isRecording
+                          ? const SizedBox(height: 44, width: 0)
+                          : IconButton(
+                              tooltip: l10n.attach,
+                              icon: const Icon(Icons.attach_file_rounded),
+                              color: theme.colorScheme.onSurfaceVariant,
+                              onPressed: onAttach,
+                            ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        // 48, not 44: Android's guideline is the stricter of
+                        // the two, and the field inside now fills it rather
+                        // than sitting in the middle of it.
+                        constraints: const BoxConstraints(minHeight: 48),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.x3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(AppRadii.xl),
+                        ),
+                        child: Center(
+                          child: isRecording
+                              ? const ComposerRecordingBar()
+                              : ComposerField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  enabled: !isSending,
+                                  length: length,
+                                ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.x1),
-                  ComposerSendButton(
-                    action: _action,
-                    enabled: _canSend,
-                    slowMode: slowMode,
-                    onSend: onSend,
-                    onVoiceRecorded: onVoiceRecorded,
-                    onVideoNoteRecorded: onVideoNoteRecorded,
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.x1),
+                    ComposerSendButton(
+                      action: _action,
+                      enabled: _canSend,
+                      slowMode: slowMode,
+                      onSend: onSend,
+                      onVoiceRecorded: onVoiceRecorded,
+                      onVideoNoteRecorded: onVideoNoteRecorded,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

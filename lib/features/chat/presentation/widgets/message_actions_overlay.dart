@@ -32,10 +32,16 @@ class MessageActionsResult {
 abstract final class MessageActionsOverlay {
   /// Opens over the whole app. [anchor] is the bubble's place on screen, in
   /// global coordinates, and [bubble] is what to redraw there.
+  ///
+  /// [feedWidth] is the width of the feed the bubble came from. The menu
+  /// covers the whole window, but the panels belong to the conversation and
+  /// are held to its width — in a two-pane layout the window is the chat
+  /// list as well.
   static Future<MessageActionsResult?> show(
     BuildContext context, {
     required Rect anchor,
     required Widget bubble,
+    required double feedWidth,
     required List<MessageAction> actions,
     required List<String> reactions,
     required Set<String> myReactions,
@@ -57,6 +63,7 @@ abstract final class MessageActionsOverlay {
           animation: animation,
           anchor: anchor,
           bubble: bubble,
+          feedWidth: feedWidth,
           actions: actions,
           reactions: reactions,
           myReactions: myReactions,
@@ -74,6 +81,7 @@ class _MessageActionsLayer extends StatelessWidget {
     required this.animation,
     required this.anchor,
     required this.bubble,
+    required this.feedWidth,
     required this.actions,
     required this.reactions,
     required this.myReactions,
@@ -85,6 +93,7 @@ class _MessageActionsLayer extends StatelessWidget {
   final Animation<double> animation;
   final Rect anchor;
   final Widget bubble;
+  final double feedWidth;
   final List<MessageAction> actions;
   final List<String> reactions;
   final Set<String> myReactions;
@@ -103,9 +112,24 @@ class _MessageActionsLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final safe = media.padding;
-    final size = media.size;
+    // The route covers the window, so its own constraints are the space the
+    // panels have to stay inside.
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          _buildLayer(context, constraints.biggest),
+    );
+  }
+
+  Widget _buildLayer(BuildContext context, Size size) {
+    final safe = MediaQuery.paddingOf(context);
+
+    // The panels hang off the bubble's own side rather than the window's:
+    // in a two-pane layout the window's left edge is the chat list.
+    final panelLeft = isMine ? AppSpacing.x3 : anchor.left;
+    final panelRight = isMine ? size.width - anchor.right : AppSpacing.x3;
+    final panelAlignment = isMine
+        ? Alignment.centerRight
+        : Alignment.centerLeft;
 
     final showsReactions = reactions.isNotEmpty;
     final reactionsHeight = showsReactions ? _reactionBar + _gap : 0.0;
@@ -154,17 +178,16 @@ class _MessageActionsLayer extends StatelessWidget {
                 children: [
                   if (showsReactions)
                     Positioned(
-                      left: AppSpacing.x3,
-                      right: AppSpacing.x3,
+                      left: panelLeft,
+                      right: panelRight,
                       top: top - reactionsHeight,
                       child: Align(
-                        alignment: isMine
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
+                        alignment: panelAlignment,
                         child: _PanelIn(
                           t: t,
                           fromBelow: true,
                           child: _QuickReactionBar(
+                            maxWidth: feedWidth - AppSpacing.x3 * 2,
                             reactions: reactions,
                             mine: myReactions,
                             blocked: blockedReactions,
@@ -194,13 +217,11 @@ class _MessageActionsLayer extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    left: AppSpacing.x3,
-                    right: AppSpacing.x3,
+                    left: panelLeft,
+                    right: panelRight,
                     top: top + bubbleHeight + _gap,
                     child: Align(
-                      alignment: isMine
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
+                      alignment: panelAlignment,
                       child: _PanelIn(
                         t: t,
                         fromBelow: false,
@@ -302,6 +323,7 @@ class _PanelIn extends StatelessWidget {
 /// handler serves both.
 class _QuickReactionBar extends StatelessWidget {
   const _QuickReactionBar({
+    required this.maxWidth,
     required this.reactions,
     required this.mine,
     required this.blocked,
@@ -309,6 +331,10 @@ class _QuickReactionBar extends StatelessWidget {
     required this.onSelected,
     required this.onMore,
   });
+
+  /// The conversation's width less its margins: past that the bar scrolls
+  /// rather than reaching across into the chat list.
+  final double maxWidth;
 
   final List<String> reactions;
   final Set<String> mine;
@@ -328,9 +354,7 @@ class _QuickReactionBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadii.full),
       clipBehavior: Clip.antiAlias,
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width - AppSpacing.x6,
-        ),
+        constraints: BoxConstraints(maxWidth: maxWidth),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x1),

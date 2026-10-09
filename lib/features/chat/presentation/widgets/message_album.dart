@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -40,6 +41,8 @@ class MessageAlbum extends ConsumerWidget {
     super.key,
     required this.messageId,
     required this.attachments,
+    required this.size,
+    this.borderRadius,
     this.onOpen,
     this.onRetry,
   });
@@ -49,11 +52,26 @@ class MessageAlbum extends ConsumerWidget {
   /// Images and videos, in message order.
   final List<AttachmentEntity> attachments;
 
+  /// The box the album is drawn in — see `ChatFeedMetrics.mediaSizeFor`,
+  /// which works it out from [ratiosOf].
+  final Size size;
+
+  /// The album's outer corners. Inside a bubble these are the bubble's own
+  /// wherever the album meets its edge, and square where a quote or a
+  /// caption carries on from it.
+  final BorderRadius? borderRadius;
+
   final void Function(AttachmentEntity attachment)? onOpen;
 
   /// Re-reads the message, which is the only "try again" an errored
   /// attachment has (api-docs §5.5 reports no reason and offers no re-run).
   final VoidCallback? onRetry;
+
+  /// Width ÷ height per attachment, as the server measured them
+  /// (`AttachmentDTO.width/height`, api-docs §5.5) — null until it has.
+  static List<double?> ratiosOf(List<AttachmentEntity> attachments) => [
+    for (final attachment in attachments) _ratioOf(attachment),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,26 +79,25 @@ class MessageAlbum extends ConsumerWidget {
 
     final confirmed = ref.watch(confirmedAttachmentTokensProvider);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: AlbumMosaic(
-        ratios: [for (final a in attachments) _ratioOf(a)],
-        itemBuilder: (context, index) {
-          final attachment = attachments[index];
+    return AlbumMosaic(
+      ratios: ratiosOf(attachments),
+      size: size,
+      borderRadius: borderRadius,
+      itemBuilder: (context, index) {
+        final attachment = attachments[index];
 
-          return _AlbumTile(
-            attachment: attachment,
-            messageId: messageId,
-            // A slot the socket has just confirmed is ready even though the
-            // copy of the message in hand still says `pending`.
-            isReady:
-                attachment.attachmentStatus == AttachmentStatus.success ||
-                confirmed.contains(attachment.id),
-            onOpen: onOpen,
-            onRetry: onRetry,
-          );
-        },
-      ),
+        return _AlbumTile(
+          attachment: attachment,
+          messageId: messageId,
+          // A slot the socket has just confirmed is ready even though the
+          // copy of the message in hand still says `pending`.
+          isReady:
+              attachment.attachmentStatus == AttachmentStatus.success ||
+              confirmed.contains(attachment.id),
+          onOpen: onOpen,
+          onRetry: onRetry,
+        );
+      },
     );
   }
 
@@ -175,15 +192,21 @@ class _VideoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final seconds = attachment.durationSeconds;
 
-    return ColoredBox(
-      color: const Color(0xFF1B1815),
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppPalette.videoGroundTop, AppPalette.videoGroundBottom],
+        ),
+      ),
       child: Stack(
         fit: StackFit.expand,
         children: [
           const Center(
             child: Icon(
               Icons.play_circle_outline_rounded,
-              color: Colors.white,
+              color: AppPalette.onMediaScrim,
               size: 40,
             ),
           ),
@@ -194,12 +217,15 @@ class _VideoTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppPalette.mediaScrim,
+                  borderRadius: BorderRadius.circular(AppRadii.sm),
                 ),
                 child: Text(
                   formatMediaDuration(Duration(seconds: seconds)),
-                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                  style: const TextStyle(
+                    color: AppPalette.onMediaScrim,
+                    fontSize: 11,
+                  ),
                 ),
               ),
             ),

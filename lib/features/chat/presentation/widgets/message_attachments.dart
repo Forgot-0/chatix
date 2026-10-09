@@ -4,6 +4,7 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/document_attachment_row.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
 import 'package:chatix/features/chat/presentation/widgets/video_note_player.dart';
@@ -28,6 +29,7 @@ class MessageAttachments extends StatelessWidget {
     this.author,
     this.authorId,
     this.isMine = false,
+    this.showAlbum = true,
     this.onOpen,
     this.onRetry,
   });
@@ -35,6 +37,23 @@ class MessageAttachments extends StatelessWidget {
   final String messageId;
   final List<AttachmentEntity> attachments;
   final Color foreground;
+
+  /// Whether the photos and videos are drawn here too.
+  ///
+  /// Off inside a bubble: there the album runs to the bubble's edges and
+  /// sets its width, so the bubble lays it out itself and leaves this to
+  /// the rows that sit inside its padding.
+  final bool showAlbum;
+
+  /// The photos and videos of [attachments] — what becomes the album.
+  static List<AttachmentEntity> albumOf(List<AttachmentEntity> attachments) => [
+    for (final a in attachments)
+      if (isAlbumItem(a)) a,
+  ];
+
+  static bool isAlbumItem(AttachmentEntity attachment) =>
+      attachment.attachmentType == AttachmentType.image ||
+      attachment.attachmentType == AttachmentType.video;
 
   /// Who sent it. Only a voice message draws them — it puts the speaker's
   /// face beside the waveform, the way a voice note is attributed.
@@ -50,12 +69,7 @@ class MessageAttachments extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final album = [
-      for (final a in attachments)
-        if (a.attachmentType == AttachmentType.image ||
-            a.attachmentType == AttachmentType.video)
-          a,
-    ];
+    final album = showAlbum ? albumOf(attachments) : const <AttachmentEntity>[];
 
     final voice = [
       for (final a in attachments)
@@ -89,11 +103,20 @@ class MessageAttachments extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (album.isNotEmpty)
-          MessageAlbum(
-            messageId: messageId,
-            attachments: album,
-            onOpen: onOpen,
-            onRetry: onRetry,
+          LayoutBuilder(
+            builder: (context, constraints) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: MessageAlbum(
+                messageId: messageId,
+                attachments: album,
+                size: ChatFeedMetrics.of(context).mediaSizeFor(
+                  MessageAlbum.ratiosOf(album),
+                  available: constraints.maxWidth,
+                ),
+                onOpen: onOpen,
+                onRetry: onRetry,
+              ),
+            ),
           ),
         for (final attachment in voice)
           VoicePlayer(

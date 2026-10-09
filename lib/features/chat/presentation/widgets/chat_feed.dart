@@ -16,6 +16,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_detail_provider
 import 'package:chatix/features/chat/presentation/utils/chat_feed_items.dart';
 import 'package:chatix/features/chat/presentation/utils/feed_viewport_probe.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_date_separator.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_jump_button.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_message_row.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_pending_bubble.dart';
@@ -187,6 +188,31 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
 
     _rebuildItems();
 
+    // Measured here, where the feed is drawn, and nowhere else: the window
+    // is not the feed once a chat list sits beside it.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final column = ChatLayout.columnWidthFor(constraints.maxWidth);
+
+        return ChatFeedMetrics(
+          width: column,
+          height: constraints.maxHeight,
+          child: _buildLayers(
+            context,
+            gutter: (constraints.maxWidth - column) / 2,
+          ),
+        );
+      },
+    );
+  }
+
+  /// The wallpaper across the whole pane, the conversation over it.
+  ///
+  /// [gutter] is what is left on either side of the conversation's column on
+  /// a pane too wide to fill. It is padding inside the list rather than
+  /// around it, so the wheel and the scrollbar still work from anywhere on
+  /// the pane.
+  Widget _buildLayers(BuildContext context, {required double gutter}) {
     return Stack(
       children: [
         Positioned.fill(
@@ -199,7 +225,9 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
         Positioned.fill(
           child: RefreshIndicator(
             onRefresh: widget.onRefresh,
-            child: _items.isEmpty ? _buildEmpty(context) : _buildList(),
+            child: _items.isEmpty
+                ? _buildEmpty(context)
+                : _buildList(context, gutter: gutter),
           ),
         ),
         Positioned(
@@ -281,11 +309,12 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList(BuildContext context, {required double gutter}) {
     return ListView.builder(
       key: _listKey,
       controller: _scrollController,
       reverse: true,
+      padding: _listPadding(context, gutter: gutter),
       itemCount: _items.length,
       // Nothing in a message bubble holds state worth keeping alive off
       // screen, and a thousand kept-alive rows is a thousand rows laid out
@@ -299,6 +328,24 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
       findChildIndexCallback: (key) =>
           key is ValueKey<String> ? _indexByKey[key.value] : null,
       itemBuilder: _buildRow,
+    );
+  }
+
+  /// The list's padding, in visual terms — a reversed list still puts
+  /// `bottom` at the bottom.
+  ///
+  /// Explicit padding replaces the safe-area insets a list would otherwise
+  /// take on its own, so they are restated here. Below the newest message a
+  /// little air, so it does not sit on the composer's edge; at the sides the
+  /// [gutter] that centres the column on a very wide pane.
+  EdgeInsets _listPadding(BuildContext context, {required double gutter}) {
+    final safe = MediaQuery.paddingOf(context);
+
+    return EdgeInsets.fromLTRB(
+      gutter,
+      safe.top,
+      gutter,
+      safe.bottom + AppSpacing.x2,
     );
   }
 

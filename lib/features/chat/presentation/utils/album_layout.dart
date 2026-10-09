@@ -53,8 +53,12 @@ class AlbumLayout {
   static const double minRatio = 0.5;
   static const double maxRatio = 2.4;
 
-  /// How square-ish a lone photo is allowed to be shown, so one portrait
-  /// cannot take over the screen.
+  /// How square-ish a lone photo is allowed to be shown where nothing else
+  /// bounds it — the preview, which takes the screen's width.
+  ///
+  /// The feed does not rely on this: a ratio alone cannot stop a portrait
+  /// from taking over a tall screen, so a lone photo there is sized by
+  /// `MediaBoxSize` against the feed's own width *and* height.
   static const double minSingleRatio = 0.62;
   static const double maxSingleRatio = 1.8;
 

@@ -11,6 +11,7 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/document_attachment_row.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -86,10 +87,7 @@ class _Tray extends ConsumerWidget {
               ),
             ),
             if (state.hasSelection)
-              TextButton(
-                onPressed: notifier.retry,
-                child: Text(l10n.retry),
-              ),
+              TextButton(onPressed: notifier.retry, child: Text(l10n.retry)),
             IconButton(
               tooltip: l10n.clear,
               icon: const Icon(Icons.close_rounded, size: 18),
@@ -123,67 +121,73 @@ class _Tray extends ConsumerWidget {
       status = null;
     }
 
-    return Container(
+    return ColoredBox(
       color: chatix.composerSurface,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.x3,
-        AppSpacing.x2,
-        AppSpacing.x1,
-        0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      // In line with the composer under it, and so with the messages.
+      child: ChatColumn(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.x3,
+            AppSpacing.x2,
+            AppSpacing.x1,
+            0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.attach_file_rounded,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: AppSpacing.x2),
-              Expanded(
-                child: Text(
-                  [
-                    l10n.attachmentSelection(
-                      state.selected.length,
-                      ChatAttachmentLimits.formatBytes(totalBytes),
+              Row(
+                children: [
+                  Icon(
+                    Icons.attach_file_rounded,
+                    size: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Expanded(
+                    child: Text(
+                      [
+                        l10n.attachmentSelection(
+                          state.selected.length,
+                          ChatAttachmentLimits.formatBytes(totalBytes),
+                        ),
+                        ?status,
+                      ].join(' — '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
                     ),
-                    ?status,
-                  ].join(' — '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
-                ),
+                  ),
+                  IconButton(
+                    tooltip: state.isUploading ? l10n.cancel : l10n.clear,
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: notifier.cancel,
+                  ),
+                ],
               ),
-              IconButton(
-                tooltip: state.isUploading ? l10n.cancel : l10n.clear,
-                icon: const Icon(Icons.close_rounded, size: 18),
-                onPressed: notifier.cancel,
+              SizedBox(
+                height: _thumbSize + AppSpacing.x2,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.only(bottom: AppSpacing.x2),
+                  itemCount: state.selected.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(width: AppSpacing.x2),
+                  itemBuilder: (context, index) => _StagedThumb(
+                    upload: state.selected[index],
+                    // Only the file actually moving has a figure to show; the
+                    // ones behind it are waiting, the ones before it are done.
+                    progress: _progressOf(index),
+                    isUploading: state.isUploading,
+                    isProcessing: processing,
+                    onRemove: state.isUploading || state.isReady
+                        ? null
+                        : () => notifier.removeAt(index),
+                  ),
+                ),
               ),
             ],
           ),
-          SizedBox(
-            height: _thumbSize + AppSpacing.x2,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(bottom: AppSpacing.x2),
-              itemCount: state.selected.length,
-              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.x2),
-              itemBuilder: (context, index) => _StagedThumb(
-                upload: state.selected[index],
-                // Only the file actually moving has a figure to show; the
-                // ones behind it are waiting, the ones before it are done.
-                progress: _progressOf(index),
-                isUploading: state.isUploading,
-                isProcessing: processing,
-                onRemove: state.isUploading || state.isReady
-                    ? null
-                    : () => notifier.removeAt(index),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

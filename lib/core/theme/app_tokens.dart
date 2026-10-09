@@ -49,6 +49,26 @@ abstract final class AppPalette {
   /// Magenta-violet, the far end of the cool half.
   static const Color orchid = Color(0xFFB13FA8);
 
+  /// The plate small text sits on when it is drawn over a photo — the time
+  /// on a picture with no caption, a video's running time.
+  ///
+  /// The same in both themes: what it has to read against is the picture,
+  /// and a picture does not change with the theme.
+  static const Color mediaScrim = Color(0x73000000);
+
+  /// Text and icons on [mediaScrim].
+  static const Color onMediaScrim = Color(0xFFFFFFFF);
+
+  /// The ground a video is drawn on while there is no frame to show (the
+  /// API stores no poster), top to bottom.
+  ///
+  /// Dark in both themes, because that is what reads as "video" — but kept
+  /// clear of the dark theme's chat canvas: a photo with no caption has no
+  /// bubble around it, and a video tile the colour of the canvas would let
+  /// the album fall apart into the wallpaper.
+  static const Color videoGroundTop = Color(0xFF524B42);
+  static const Color videoGroundBottom = Color(0xFF302B24);
+
   /// The eight curated accents offered in appearance settings.
   ///
   /// Eight rather than a free colour wheel, and spaced roughly evenly around
@@ -197,6 +217,85 @@ abstract final class AppSpacing {
   static const double x8 = 32;
 
   static const List<double> scale = <double>[x1, x2, x3, x4, x5, x6, x7, x8];
+}
+
+/// How big a message may be, measured against the feed it is drawn in.
+///
+/// Every width here is a share of the *feed's* viewport, never of the
+/// window: in a two-pane layout the feed is a fraction of the window, and a
+/// bubble sized off the window spills across the whole conversation. The
+/// fixed caps are what keep a desktop-width feed from producing a desktop-
+/// width photo.
+abstract final class ChatLayout {
+  /// A text bubble takes at most this share of the feed…
+  static const double bubbleWidthFactor = 0.80;
+
+  /// …and never more than this, however wide the feed is: past it a line of
+  /// text gets too long to read comfortably.
+  static const double bubbleMaxWidth = 560;
+
+  /// A photo, a video or an album takes at most this share of the feed…
+  static const double mediaWidthFactor = 0.72;
+
+  /// …capped at this on a phone-width feed…
+  static const double mediaMaxWidthCompact = 380;
+
+  /// …and at this once the feed is at least [mediaWideFrom] across.
+  static const double mediaMaxWidthWide = 420;
+
+  /// The feed width from which [mediaMaxWidthWide] applies.
+  static const double mediaWideFrom = 600;
+
+  /// A picture is never taller than this share of the feed's height…
+  static const double mediaHeightFactor = 0.5;
+
+  /// …nor than this, so a tall feed on a monitor is not one portrait.
+  static const double mediaMaxHeight = 440;
+
+  /// Below these a picture is cropped rather than shrunk further: a sliver
+  /// of a panorama is still recognisably a picture, a 40 px strip is not.
+  static const double mediaMinWidth = 140;
+  static const double mediaMinHeight = 100;
+
+  /// The gap between tiles of an album, and the corners on either side of
+  /// it. The album's outer corners are the bubble's own.
+  static const double albumSeam = 2;
+  static const double albumSeamRadius = 3;
+
+  /// Inset of the time-and-ticks plate drawn over a picture, and the air
+  /// inside it.
+  static const double mediaMetaInset = 6;
+  static const EdgeInsets mediaMetaPadding = EdgeInsets.symmetric(
+    horizontal: 6,
+    vertical: 2,
+  );
+
+  /// Past this feed width the conversation stops following the window and
+  /// sits in a centred column of [columnMaxWidth]: messages strung across
+  /// a 1600 px pane read as two conversations, one at each edge.
+  static const double columnFrom = 1000;
+  static const double columnMaxWidth = 860;
+
+  /// The width of the column messages and the composer sit in, for a pane
+  /// [paneWidth] across. The wallpaper behind them still fills the pane.
+  static double columnWidthFor(double paneWidth) =>
+      paneWidth > columnFrom ? columnMaxWidth : paneWidth;
+
+  /// The widest a text bubble may be in a feed [feedWidth] across.
+  static double bubbleMaxWidthFor(double feedWidth) =>
+      _min(feedWidth * bubbleWidthFactor, bubbleMaxWidth);
+
+  /// The widest a picture or an album may be in a feed [feedWidth] across.
+  static double mediaMaxWidthFor(double feedWidth) => _min(
+    feedWidth * mediaWidthFactor,
+    feedWidth >= mediaWideFrom ? mediaMaxWidthWide : mediaMaxWidthCompact,
+  );
+
+  /// The tallest a picture or an album may be in a feed [feedHeight] tall.
+  static double mediaMaxHeightFor(double feedHeight) =>
+      _min(feedHeight * mediaHeightFactor, mediaMaxHeight);
+
+  static double _min(double a, double b) => a < b ? a : b;
 }
 
 /// Four levels of lift.

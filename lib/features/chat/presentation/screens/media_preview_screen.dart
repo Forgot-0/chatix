@@ -9,6 +9,7 @@ import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/local_media_provider.dart';
+import 'package:chatix/features/chat/presentation/utils/album_layout.dart';
 import 'package:chatix/features/chat/presentation/widgets/album_mosaic.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -207,12 +208,22 @@ class _PreviewAlbum extends ConsumerWidget {
         ref.watch(localMediaRatioProvider(localMediaKey(upload))).value,
     ];
 
-    return AlbumMosaic(
-      ratios: ratios,
-      itemBuilder: (context, index) => _PreviewTile(
-        upload: uploads[index],
-        onRemove: () => onRemove(index),
-      ),
+    // The preview is the one place an album is shown on its own, so it takes
+    // the screen's width at the layout's shape — which for a lone photo is
+    // the clamped single-photo ratio, there being no height to fit into.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        return AlbumMosaic(
+          ratios: ratios,
+          size: Size(width, width / AlbumLayout.of(ratios).aspectRatio),
+          itemBuilder: (context, index) => _PreviewTile(
+            upload: uploads[index],
+            onRemove: () => onRemove(index),
+          ),
+        );
+      },
     );
   }
 }
@@ -234,10 +245,21 @@ class _PreviewTile extends StatelessWidget {
       children: [
         // Under everything, so a tile is a tile from the first frame —
         // before the photo on the device has finished decoding.
-        ColoredBox(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+        ColoredBox(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
         if (isVideo)
-          const ColoredBox(
-            color: Color(0xFF1B1815),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppPalette.videoGroundTop,
+                  AppPalette.videoGroundBottom,
+                ],
+              ),
+            ),
             child: Center(
               child: Icon(
                 Icons.movie_creation_outlined,

@@ -10,7 +10,9 @@ import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_actions_overlay.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_attachments.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_forward_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_reply_quote.dart';
@@ -145,10 +147,17 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   bool _menuOpen = false;
 
+  /// The feed this bubble was last laid out in, kept for the context menu:
+  /// its copy of the bubble is drawn on a route where the feed is not an
+  /// ancestor, and has to be sized by the same numbers to come out the same.
+  late ChatFeedMetrics _metrics;
+
   MessageEntity get _message => widget.message;
 
   @override
   Widget build(BuildContext context) {
+    _metrics = ChatFeedMetrics.of(context);
+
     if (_message.type == MessageType.system) {
       return _SystemMessage(
         message: _message,
@@ -272,7 +281,8 @@ class _MessageBubbleState extends State<MessageBubble> {
     final result = await MessageActionsOverlay.show(
       context,
       anchor: anchor,
-      bubble: _buildBubble(context, forOverlay: true),
+      bubble: _metrics.wrap(_buildBubble(context, forOverlay: true)),
+      feedWidth: _metrics.width,
       actions: widget.actions,
       reactions: canReact ? widget.quickReactions : const [],
       myReactions: reactions?.myEmojis.toSet() ?? const {},
@@ -392,96 +402,149 @@ class _BubbleBody extends StatelessWidget {
     final content = message.content;
     final hasText = content != null && content.isNotEmpty;
 
-    final bubble = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: density.bubblePaddingX,
-        vertical: density.bubblePaddingY,
-      ),
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.78,
-      ),
-      decoration: ShapeDecoration(
-        gradient: isMine ? chatix.bubbleOutgoingGradient : null,
-        color: isMine ? null : chatix.bubbleIncoming,
-        shape: BubbleShape.of(
-          context,
-          isOutgoing: isMine,
-          isFirstInGroup: isFirstInGroup,
-          isLastInGroup: isLastInGroup,
-          side: isMine
-              ? BorderSide.none
-              : BorderSide(color: chatix.bubbleIncomingBorder),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        // Without this the bubble swells to whatever height it is offered,
-        // which is also the rect the context menu measures to lift it.
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showAuthor && !isMine)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(
-                message.authorLabel,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: authorColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          if (message.isForward)
-            MessageForwardHeader(message: message, foreground: muted),
-          if (message.isReply)
-            MessageReplyQuote(
-              original: message.replyTo,
-              // On the outgoing gradient the author palette has nothing to
-              // sit on, so the rule borrows the bubble's own foreground.
-              accent: isMine ? foreground : authorColor,
-              foreground: muted,
-              onTap: onJumpToOriginal,
-            ),
-          if (message.attachments.isNotEmpty)
-            MessageAttachments(
-              messageId: message.id,
-              attachments: message.attachments,
-              onOpen: onOpenAttachment,
-              onRetry: onRetryAttachment,
-              foreground: foreground,
-              author: message.profile,
-              authorId: message.authorId,
-              isMine: isMine,
-            ),
-          if (hasText)
-            MessageText(
-              content: content,
-              style:
-                  theme.textTheme.bodyMedium?.copyWith(color: foreground) ??
-                  TextStyle(color: foreground),
-              linkColor: isMine ? foreground : theme.colorScheme.primary,
-              isKnownMention: isKnownMention,
-              onOpenLink: onOpenLink,
-            ),
-          if (showMeta || message.isEdited)
-            _MessageMeta(
-              message: message,
-              muted: muted,
-              deliveryStatus: deliveryStatus,
-              onTap: onShowDetails,
-            ),
-          // Always in the tree, empty or not: the burst fires on the frame
-          // a message goes from no reactions to one, and a row that is
-          // created along with its first chip never sees that happen.
-          _ReactionChips(
-            key: const ValueKey('reaction-chips'),
-            groups: reactions?.groups ?? const [],
-            onTap: onToggleReaction,
-            onLongPress: onShowReactionUsers,
-            onSurface: isMine,
-          ),
-        ],
-      ),
+    final album = MessageAttachments.albumOf(message.attachments);
+    final hasOtherAttachments = message.attachments.length > album.length;
+
+    final shape = BubbleShape.of(
+      context,
+      isOutgoing: isMine,
+      isFirstInGroup: isFirstInGroup,
+      isLastInGroup: isLastInGroup,
+      side: isMine
+          ? BorderSide.none
+          : BorderSide(color: chatix.bubbleIncomingBorder),
     );
+    final ground = ShapeDecoration(
+      gradient: isMine ? chatix.bubbleOutgoingGradient : null,
+      color: isMine ? null : chatix.bubbleIncoming,
+      shape: shape,
+    );
+
+    // What comes before the body: who wrote it, where it was forwarded
+    // from, what it answers.
+    final header = <Widget>[
+      if (showAuthor && !isMine)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            message.authorLabel,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: authorColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      if (message.isForward)
+        MessageForwardHeader(message: message, foreground: muted),
+      if (message.isReply)
+        MessageReplyQuote(
+          original: message.replyTo,
+          // On the outgoing gradient the author palette has nothing to
+          // sit on, so the rule borrows the bubble's own foreground.
+          accent: isMine ? foreground : authorColor,
+          foreground: muted,
+          onTap: onJumpToOriginal,
+        ),
+    ];
+
+    // What reads as text: a voice note or a document row, and the words.
+    // Under a photo this is its caption.
+    final caption = <Widget>[
+      if (hasOtherAttachments)
+        MessageAttachments(
+          messageId: message.id,
+          attachments: message.attachments,
+          showAlbum: false,
+          onOpen: onOpenAttachment,
+          onRetry: onRetryAttachment,
+          foreground: foreground,
+          author: message.profile,
+          authorId: message.authorId,
+          isMine: isMine,
+        ),
+      if (hasText)
+        MessageText(
+          content: content,
+          style:
+              theme.textTheme.bodyMedium?.copyWith(color: foreground) ??
+              TextStyle(color: foreground),
+          linkColor: isMine ? foreground : theme.colorScheme.primary,
+          isKnownMention: isKnownMention,
+          onOpenLink: onOpenLink,
+        ),
+    ];
+
+    final showsMeta = showMeta || message.isEdited;
+
+    _MessageMeta meta({required Color color, EdgeInsets? padding}) =>
+        _MessageMeta(
+          message: message,
+          muted: color,
+          deliveryStatus: deliveryStatus,
+          onTap: onShowDetails,
+          padding: padding,
+        );
+
+    // Always in the tree, empty or not: the burst fires on the frame a
+    // message goes from no reactions to one, and a row that is created along
+    // with its first chip never sees that happen.
+    _ReactionChips chips({required bool onSurface}) => _ReactionChips(
+      key: const ValueKey('reaction-chips'),
+      groups: reactions?.groups ?? const [],
+      onTap: onToggleReaction,
+      onLongPress: onShowReactionUsers,
+      onSurface: onSurface,
+    );
+
+    final padding = EdgeInsets.symmetric(
+      horizontal: density.bubblePaddingX,
+      vertical: density.bubblePaddingY,
+    );
+
+    final Widget bubble;
+    if (album.isEmpty) {
+      bubble = Container(
+        padding: padding,
+        constraints: BoxConstraints(
+          maxWidth: ChatFeedMetrics.of(context).bubbleMaxWidth,
+        ),
+        decoration: ground,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          // Without this the bubble swells to whatever height it is offered,
+          // which is also the rect the context menu measures to lift it.
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...header,
+            ...caption,
+            if (showsMeta) meta(color: muted),
+            chips(onSurface: isMine),
+          ],
+        ),
+      );
+    } else {
+      // The room this row actually has, which is less than the feed's own
+      // width when an avatar gutter or a selection checkbox shares it.
+      bubble = LayoutBuilder(
+        builder: (context, constraints) => _MediaBubble(
+          message: message,
+          album: album,
+          available: constraints.maxWidth,
+          shape: shape,
+          ground: ground,
+          padding: padding,
+          header: header,
+          caption: caption,
+          meta: showsMeta ? meta : null,
+          chips: chips,
+          isMine: isMine,
+          muted: muted,
+          hasReactions: reactions?.groups.isNotEmpty ?? false,
+          onOpenAttachment: onOpenAttachment,
+          onRetryAttachment: onRetryAttachment,
+        ),
+      );
+    }
 
     // One node for who and when, then the bubble's own children — the text,
     // the meta row, the chips — each still reachable and still actionable.
@@ -499,6 +562,166 @@ class _BubbleBody extends StatelessWidget {
           : AppLocalizations.of(context).a11yMessageActionsHint,
       child: bubble,
     );
+  }
+}
+
+/// A message whose body is a photo, a video or an album.
+///
+/// The picture sets the bubble's width — a caption wraps to it instead of
+/// stretching it — and runs to the bubble's edges, its outer corners the
+/// bubble's own wherever it touches one. With nothing around it to say there
+/// is no ground at all: the picture is the bubble, cut to the bubble's shape,
+/// with the time on a plate over its corner.
+class _MediaBubble extends StatelessWidget {
+  const _MediaBubble({
+    required this.message,
+    required this.album,
+    required this.available,
+    required this.shape,
+    required this.ground,
+    required this.padding,
+    required this.header,
+    required this.caption,
+    required this.meta,
+    required this.chips,
+    required this.isMine,
+    required this.muted,
+    required this.hasReactions,
+    required this.onOpenAttachment,
+    required this.onRetryAttachment,
+  });
+
+  final MessageEntity message;
+
+  /// The photos and videos, in message order.
+  final List<AttachmentEntity> album;
+
+  /// The width the row leaves for the bubble.
+  final double available;
+
+  final BubbleShape shape;
+  final Decoration ground;
+
+  /// The bubble's inner padding, for everything that is not the picture.
+  final EdgeInsets padding;
+
+  final List<Widget> header;
+  final List<Widget> caption;
+
+  /// Builds the time-and-ticks row; null when this bubble does not carry
+  /// one.
+  final _MessageMeta Function({required Color color, EdgeInsets? padding})?
+  meta;
+
+  final _ReactionChips Function({required bool onSurface}) chips;
+
+  final bool isMine;
+  final Color muted;
+  final bool hasReactions;
+  final void Function(AttachmentEntity attachment)? onOpenAttachment;
+  final VoidCallback? onRetryAttachment;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = ChatFeedMetrics.of(
+      context,
+    ).mediaSizeFor(MessageAlbum.ratiosOf(album), available: available);
+    final corners = shape.borderRadius;
+
+    final bare = header.isEmpty && caption.isEmpty;
+
+    // Whether the bubble's ground carries on under the picture. Where it
+    // does, the picture's bottom edge is a straight seam, not a corner.
+    final continuesBelow = caption.isNotEmpty || (!bare && hasReactions);
+
+    // With no caption the time has no line of its own to sit on, so it
+    // goes over the picture.
+    final metaOnPicture = meta != null && caption.isEmpty;
+
+    final picture = Stack(
+      children: [
+        MessageAlbum(
+          messageId: message.id,
+          attachments: album,
+          size: size,
+          borderRadius: BorderRadius.only(
+            topLeft: header.isEmpty ? corners.topLeft : Radius.zero,
+            topRight: header.isEmpty ? corners.topRight : Radius.zero,
+            bottomLeft: continuesBelow ? Radius.zero : corners.bottomLeft,
+            bottomRight: continuesBelow ? Radius.zero : corners.bottomRight,
+          ),
+          onOpen: onOpenAttachment,
+          onRetry: onRetryAttachment,
+        ),
+        if (metaOnPicture)
+          Positioned(
+            right: ChatLayout.mediaMetaInset,
+            bottom: ChatLayout.mediaMetaInset,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppPalette.mediaScrim,
+                borderRadius: BorderRadius.circular(AppRadii.full),
+              ),
+              child: Padding(
+                padding: ChatLayout.mediaMetaPadding,
+                child: meta!(
+                  color: AppPalette.onMediaScrim,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+
+    // One shape whether or not there are reactions yet, so the chips keep
+    // their element — and their first-reaction burst — when one arrives.
+    final footer = Padding(
+      padding: switch ((bare, caption.isEmpty)) {
+        (true, _) => EdgeInsets.zero,
+        (false, false) => padding,
+        (false, true) => padding.copyWith(
+          top: 0,
+          bottom: hasReactions ? padding.bottom : 0,
+        ),
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ...caption,
+          if (meta != null && !metaOnPicture) meta!(color: muted),
+          // Under a bare picture the chips sit on the wallpaper, not on the
+          // outgoing gradient.
+          chips(onSurface: isMine && !bare),
+        ],
+      ),
+    );
+
+    final body = SizedBox(
+      width: size.width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (header.isNotEmpty)
+            Padding(
+              padding: padding.copyWith(bottom: AppSpacing.x1),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: header,
+              ),
+            ),
+          picture,
+          footer,
+        ],
+      ),
+    );
+
+    if (bare) return body;
+
+    return DecoratedBox(decoration: ground, child: body);
   }
 }
 
@@ -527,12 +750,17 @@ class _MessageMeta extends StatelessWidget {
     required this.muted,
     required this.deliveryStatus,
     required this.onTap,
+    this.padding,
   });
 
   final MessageEntity message;
   final Color muted;
   final MessageDeliveryStatus? deliveryStatus;
   final VoidCallback? onTap;
+
+  /// Defaults to a little air above the row, where it follows the text. On
+  /// a plate over a picture the plate has its own.
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +790,7 @@ class _MessageMeta extends StatelessWidget {
         child: Padding(
           // Only above: the bubble's own padding closes the bottom, and the
           // extra sides give the tap target somewhere to be.
-          padding: const EdgeInsets.only(top: 2),
+          padding: padding ?? const EdgeInsets.only(top: 2),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
