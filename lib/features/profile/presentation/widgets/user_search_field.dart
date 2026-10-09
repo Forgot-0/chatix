@@ -5,10 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
-import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class UserSearchField extends ConsumerStatefulWidget {
@@ -258,7 +259,7 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
           itemBuilder: (context, index) {
             final profile = _results[index];
             return ListTile(
-              leading: ProfileAvatar(profile: profile, radius: 20),
+              leading: ChatAvatar.person(profile),
               title: Text(profileLabel(profile)),
               subtitle: Text(_secondLine(profile)),
               onTap: () => _select(profile),
@@ -323,7 +324,19 @@ class MultiUserSearchField extends StatelessWidget {
             children: [
               for (final profile in selected)
                 InputChip(
-                  avatar: ProfileAvatar(profile: profile, radius: 12),
+                  avatar: ChatAvatar.person(profile, size: ChatAvatarSize.xxs),
+                  // An input chip with a face: 32 tall, the face 24 across
+                  // and 4 from the leading edge. The chip sizes its avatar
+                  // slot to its content height — its height less this
+                  // padding — so the padding is what makes room for the
+                  // face, rather than a box forced on it that the chip's
+                  // layout cannot hold.
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                    AppSpacing.x1,
+                    AppSpacing.x1,
+                    AppSpacing.x2,
+                    AppSpacing.x1,
+                  ),
                   label: Text(profileLabel(profile)),
                   onDeleted: () => onRemove(profile),
                 ),

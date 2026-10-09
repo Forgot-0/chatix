@@ -48,6 +48,7 @@ final class FeedMessageItem extends ChatFeedItem {
     required this.endsGroup,
     required this.showsDate,
     required this.showsUnread,
+    required this.showsAuthor,
     required this.showsAvatar,
     required this.hasAvatarGutter,
   });
@@ -59,8 +60,7 @@ final class FeedMessageItem extends ChatFeedItem {
 
   final bool isMine;
 
-  /// First message of a run by one author: the row that carries the avatar
-  /// and the name.
+  /// First message of a run by one author.
   final bool startsGroup;
 
   /// Last message of a run: the row that carries the time and the ticks.
@@ -72,10 +72,18 @@ final class FeedMessageItem extends ChatFeedItem {
   /// frozen at open, so it does not travel as new messages land.
   final bool showsUnread;
 
+  /// The author's name goes over this bubble: the head of an incoming run
+  /// in a group, so the name is read before what they said.
+  final bool showsAuthor;
+
+  /// The author's face goes beside this bubble: the tail of an incoming run
+  /// in a group, its bottom edge level with the bubble's. The run reads
+  /// downwards into the face, the way it does in every messenger, and the
+  /// face sits by the newest thing they said.
   final bool showsAvatar;
 
-  /// Incoming message in a group chat that is not the head of its run: no
-  /// avatar, but the gutter is still held open so the run stays aligned.
+  /// Any incoming message in a group chat. Only the tail of a run carries a
+  /// face, but every row holds the gutter open so the run stays one column.
   final bool hasAvatarGutter;
 
   /// The reader's calendar day, which is what the sticky header names.
@@ -96,6 +104,7 @@ final class FeedMessageItem extends ChatFeedItem {
     endsGroup,
     showsDate,
     showsUnread,
+    showsAuthor,
     showsAvatar,
     hasAvatarGutter,
   ];
@@ -143,6 +152,7 @@ abstract final class ChatFeedBuilder {
 
       final isMine = myUserId != null && message.authorId == myUserId;
       final startsGroup = MessageGrouping.startsGroup(older, message);
+      final endsGroup = MessageGrouping.startsGroup(message, newer);
       final isIncomingInGroup =
           isGroupChat && !isMine && message.type != MessageType.system;
 
@@ -158,7 +168,7 @@ abstract final class ChatFeedBuilder {
           message: message,
           isMine: isMine,
           startsGroup: startsGroup,
-          endsGroup: MessageGrouping.startsGroup(message, newer),
+          endsGroup: endsGroup,
           showsDate:
               !isOldestWithMore &&
               (older == null ||
@@ -171,7 +181,8 @@ abstract final class ChatFeedBuilder {
                 current: message,
                 myUserId: myUserId,
               ),
-          showsAvatar: isIncomingInGroup && startsGroup,
+          showsAuthor: isIncomingInGroup && startsGroup,
+          showsAvatar: isIncomingInGroup && endsGroup,
           hasAvatarGutter: isIncomingInGroup,
         ),
       );

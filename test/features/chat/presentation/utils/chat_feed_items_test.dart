@@ -88,7 +88,7 @@ void main() {
   });
 
   group('grouping', () {
-    test('a run by one author carries the avatar on its first row only', () {
+    test('a run by one author is named on its first row only', () {
       // Oldest last: seq 1 is the head of the run, seq 3 its tail.
       final items = messagesOf(
         build(
@@ -101,8 +101,50 @@ void main() {
       );
 
       expect(items.map((item) => item.startsGroup), [false, false, true]);
-      expect(items.map((item) => item.showsAvatar), [false, false, true]);
+      expect(items.map((item) => item.showsAuthor), [false, false, true]);
       expect(items.map((item) => item.hasAvatarGutter), [true, true, true]);
+    });
+
+    test('and carries the face on its last row, where the run ends', () {
+      final items = messagesOf(
+        build(
+          messages: [
+            message(seq: 3, at: DateTime(2026, 1, 1, 12, 2)),
+            message(seq: 2, at: DateTime(2026, 1, 1, 12, 1)),
+            message(seq: 1, at: DateTime(2026, 1, 1, 12)),
+          ],
+        ),
+      );
+
+      expect(items.map((item) => item.showsAvatar), [true, false, false]);
+      expect(
+        items.where((item) => item.showsAvatar),
+        everyElement(predicate<FeedMessageItem>((item) => item.endsGroup)),
+      );
+    });
+
+    test('a run of one is both named and faced', () {
+      final items = messagesOf(build(messages: [message(seq: 1)]));
+
+      expect(items.single.showsAuthor, isTrue);
+      expect(items.single.showsAvatar, isTrue);
+    });
+
+    test('each of two runs gets its own face, at its own foot', () {
+      // Newest first: seq 4–3 by Grace, seq 2–1 by the default author.
+      final items = messagesOf(
+        build(
+          messages: [
+            message(seq: 4, authorId: 43, at: DateTime(2026, 1, 1, 12, 4)),
+            message(seq: 3, authorId: 43, at: DateTime(2026, 1, 1, 12, 3)),
+            message(seq: 2, at: DateTime(2026, 1, 1, 12, 2)),
+            message(seq: 1, at: DateTime(2026, 1, 1, 12, 1)),
+          ],
+        ),
+      );
+
+      expect(items.map((item) => item.showsAvatar), [true, false, true, false]);
+      expect(items.map((item) => item.showsAuthor), [false, true, false, true]);
     });
 
     test('the last row of a run is the one that carries time and ticks', () {
@@ -141,6 +183,7 @@ void main() {
       expect(items.single.isMine, isTrue);
       expect(items.single.hasAvatarGutter, isFalse);
       expect(items.single.showsAvatar, isFalse);
+      expect(items.single.showsAuthor, isFalse);
     });
 
     test('a direct chat has no gutter at all — the header names the peer', () {

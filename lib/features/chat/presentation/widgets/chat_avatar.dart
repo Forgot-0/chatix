@@ -7,6 +7,7 @@ import 'package:chatix/core/media/avatar_variants.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
+import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 
 /// The tag that ties a conversation's face in the chat's app bar to the big
 /// one at the top of its profile.
@@ -23,17 +24,26 @@ final HeroFlightShuttleBuilder chatAvatarHeroFlight = AppHeroFlight.circle;
 /// only if there are a handful of them, and the ring, notch and initial all
 /// scale off the diameter.
 enum ChatAvatarSize {
-  /// Reaction faces, inline mentions.
+  /// A person picked into a chip.
+  xxs(24),
+
+  /// Reaction faces, voice-note authors, inline mentions.
   xs(28),
 
-  /// List rows, message gutters.
-  sm(40),
+  /// The gutter beside a run of incoming messages in a group.
+  sm(32),
 
-  /// App bars, member rows.
-  md(52),
+  /// App bars, member rows, search results.
+  md(40),
 
-  /// Profile headers.
-  lg(96);
+  /// Chat-list rows.
+  lg(52),
+
+  /// A chat's profile header.
+  xl(96),
+
+  /// A person's profile header.
+  xxl(112);
 
   const ChatAvatarSize(this.diameter);
 
@@ -125,7 +135,7 @@ class ChatAvatar extends StatelessWidget {
     this.source = AvatarSource.none,
     this.userId,
     this.name,
-    this.size = ChatAvatarSize.sm,
+    this.size = ChatAvatarSize.md,
     this.isOnline,
     this.onlineLabel,
   });
@@ -136,7 +146,7 @@ class ChatAvatar extends StatelessWidget {
     ChatProfileEntity? profile, {
     Key? key,
     int? userId,
-    ChatAvatarSize size = ChatAvatarSize.sm,
+    ChatAvatarSize size = ChatAvatarSize.md,
     bool? isOnline,
     String? onlineLabel,
   }) {
@@ -151,6 +161,31 @@ class ChatAvatar extends StatelessWidget {
       size: size,
       isOnline: isOnline,
       onlineLabel: onlineLabel,
+    );
+  }
+
+  /// Builds one from a full profile (`GET /profiles/…`), which carries the
+  /// `avatars` matrix rather than a single URL (api-docs §4.3).
+  ///
+  /// Coloured by the same id as [ChatAvatar.profile] — `ProfileDTO.id` is
+  /// the user id — and initialled by the same rule as `bestName`, so a
+  /// person looks the same in their profile, the contacts and a chat.
+  factory ChatAvatar.person(
+    ProfileEntity profile, {
+    Key? key,
+    ChatAvatarSize size = ChatAvatarSize.md,
+  }) {
+    final displayName = profile.displayName?.trim();
+    return ChatAvatar(
+      key: key,
+      source: profile.hasAvatar
+          ? AvatarSource.variants(profile.avatars)
+          : AvatarSource.none,
+      userId: profile.id,
+      name: displayName == null || displayName.isEmpty
+          ? profile.username
+          : displayName,
+      size: size,
     );
   }
 
@@ -175,34 +210,30 @@ class ChatAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final showsPresence = isOnline == true;
     final chatix = ChatixTheme.of(context);
-    final diameter = size.diameter;
 
-    final circle = SizedBox(
-      width: diameter,
-      height: diameter,
-      child: ClipPath(
-        clipper: showsPresence
-            ? _PresenceNotchClipper(
-                dotDiameter: size.dotDiameter,
-                gap: size.dotGap,
-              )
-            : const _CircleClipper(),
-        child: _AvatarFace(
-          source: source,
-          userId: userId,
-          name: name,
-          size: size,
-        ),
+    final circle = ClipPath(
+      clipper: showsPresence
+          ? _PresenceNotchClipper(
+              dotDiameter: size.dotDiameter,
+              gap: size.dotGap,
+            )
+          : const _CircleClipper(),
+      child: _AvatarFace(
+        source: source,
+        userId: userId,
+        name: name,
+        size: size,
       ),
     );
 
-    if (!showsPresence) return circle;
+    if (!showsPresence) {
+      return _RoundBox(diameter: size.diameter, child: circle);
+    }
 
     return Semantics(
       label: onlineLabel,
-      child: SizedBox(
-        width: diameter,
-        height: diameter,
+      child: _RoundBox(
+        diameter: size.diameter,
         child: Stack(
           children: [
             Positioned.fill(child: circle),
@@ -225,12 +256,39 @@ class ChatAvatar extends StatelessWidget {
   }
 }
 
+/// Keeps an avatar a circle whatever box it is put in.
+///
+/// A parent that forces a size — a 44 px gutter column, a chip's avatar slot,
+/// a list tile's leading box — would otherwise stretch a fixed-size square
+/// into a rectangle, and the clip inside it into an oval. Here the avatar
+/// takes its own diameter and sits in the middle of whatever it was given;
+/// in a box too small for that, it shrinks to the largest circle that fits
+/// rather than spilling out of it.
+class _RoundBox extends StatelessWidget {
+  const _RoundBox({required this.diameter, required this.child});
+
+  final double diameter;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      widthFactor: 1,
+      heightFactor: 1,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: diameter, maxHeight: diameter),
+        child: AspectRatio(aspectRatio: 1, child: child),
+      ),
+    );
+  }
+}
+
 /// Up to four faces in one circle, for a group that has no avatar of its own.
 class ChatAvatarMosaic extends StatelessWidget {
   const ChatAvatarMosaic({
     super.key,
     required this.faces,
-    this.size = ChatAvatarSize.sm,
+    this.size = ChatAvatarSize.md,
     this.fallbackIcon = Icons.groups_outlined,
   });
 
@@ -252,9 +310,8 @@ class ChatAvatarMosaic extends StatelessWidget {
     final shown = faces.take(maxTiles).toList();
 
     if (shown.isEmpty) {
-      return SizedBox(
-        width: diameter,
-        height: diameter,
+      return _RoundBox(
+        diameter: diameter,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: scheme.surfaceContainerHighest,
@@ -269,9 +326,8 @@ class ChatAvatarMosaic extends StatelessWidget {
       );
     }
 
-    return SizedBox(
-      width: diameter,
-      height: diameter,
+    return _RoundBox(
+      diameter: diameter,
       child: ClipOval(
         child: CustomMultiChildLayout(
           delegate: _MosaicLayout(shown.length),

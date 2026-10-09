@@ -3,8 +3,8 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/ui/motion/motion.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
-import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 
 /// The tag that ties the header's avatar to the full-screen one.
 String profileAvatarHeroTag(int profileId) => 'profile-avatar-$profileId';
@@ -44,8 +44,8 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
 
   static const double collapsedHeight = kToolbarHeight;
 
-  static const double _bigAvatar = 112;
-  static const double _smallAvatar = 36;
+  static final double _bigAvatar = ChatAvatarSize.xxl.diameter;
+  static final double _smallAvatar = ChatAvatarSize.md.diameter;
 
   /// Where the back button ends and the collapsed avatar may start.
   static const double _leadingInset = 52;
@@ -84,13 +84,22 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
+    // The width the header is actually given, not the window's: in a
+    // two-pane layout the profile is a pane beside the list, and centring on
+    // the window put the avatar a list's width to the right of the name.
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          _build(context, constraints.maxWidth, shrinkOffset),
+    );
+  }
+
+  Widget _build(BuildContext context, double width, double shrinkOffset) {
     final scheme = Theme.of(context).colorScheme;
 
     final travel = maxExtent - minExtent;
     final t = travel <= 0 ? 1.0 : (shrinkOffset / travel).clamp(0.0, 1.0);
 
     final avatar = lerpDouble(_bigAvatar, _smallAvatar, t)!;
-    final width = MediaQuery.sizeOf(context).width;
 
     final avatarLeft = lerpDouble((width - _bigAvatar) / 2, _leadingInset, t)!;
     final avatarTop = lerpDouble(
@@ -160,13 +169,10 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
                 // diameter would overflow it the whole way across.
                 child: FittedBox(
                   // Resolved once at the largest size it will be drawn at and
-                  // scaled down from there: shrinking costs no second decode
-                  // and never looks soft.
+                  // scaled down from there as the header collapses: shrinking
+                  // costs no second decode and never looks soft.
                   fit: BoxFit.contain,
-                  child: ProfileAvatar(
-                    profile: profile,
-                    radius: _bigAvatar / 2,
-                  ),
+                  child: ChatAvatar.person(profile, size: ChatAvatarSize.xxl),
                 ),
               ),
             ),

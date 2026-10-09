@@ -29,8 +29,8 @@ class ChatProfileHeader extends SliverPersistentHeaderDelegate {
   /// The collapsed bar is a toolbar, so it is a toolbar's height.
   static const double collapsedHeight = kToolbarHeight;
 
-  static const double _bigAvatar = 96;
-  static const double _smallAvatar = 36;
+  static final double _bigAvatar = ChatAvatarSize.xl.diameter;
+  static final double _smallAvatar = ChatAvatarSize.md.diameter;
 
   /// Where the back button ends and the collapsed avatar may start.
   static const double _leadingInset = 52;
@@ -62,14 +62,22 @@ class ChatProfileHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    // The width the header is actually given, not the window's: in a
+    // two-pane layout the profile is a pane beside the list, and centring on
+    // the window put the avatar a list's width to the right of the title.
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          _build(context, constraints.maxWidth, shrinkOffset),
+    );
+  }
+
+  Widget _build(BuildContext context, double width, double shrinkOffset) {
+    final scheme = Theme.of(context).colorScheme;
 
     final travel = maxExtent - minExtent;
     final t = travel <= 0 ? 1.0 : (shrinkOffset / travel).clamp(0.0, 1.0);
 
     final avatar = lerpDouble(_bigAvatar, _smallAvatar, t)!;
-    final width = MediaQuery.sizeOf(context).width;
 
     final avatarLeft = lerpDouble((width - _bigAvatar) / 2, _leadingInset, t)!;
     final avatarTop = lerpDouble(
@@ -135,7 +143,7 @@ class ChatProfileHeader extends SliverPersistentHeaderDelegate {
               tag: chatAvatarHeroTag(chat.id),
               flightShuttleBuilder: chatAvatarHeroFlight,
               // The fit is inside the Hero: the flight resizes the box it
-              // carries, and a fixed 96 px avatar would overflow it.
+              // carries, and a fixed-size avatar would overflow it.
               child: FittedBox(
                 // The picture is resolved at the largest size it will be
                 // drawn at and scaled down from there, so shrinking it costs
@@ -144,7 +152,7 @@ class ChatProfileHeader extends SliverPersistentHeaderDelegate {
                 child: ChatRowAvatar(
                   chat: chat,
                   myUserId: myUserId,
-                  size: ChatAvatarSize.lg,
+                  size: ChatAvatarSize.xl,
                 ),
               ),
             ),

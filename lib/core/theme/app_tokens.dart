@@ -270,6 +270,22 @@ abstract final class ChatLayout {
     vertical: 2,
   );
 
+  /// How far a bubble keeps from the side of the feed it hangs off.
+  static const double bubbleInsetX = AppSpacing.x3;
+
+  /// Beside a run of incoming messages in a group, how far the author's face
+  /// sits from the edge of the feed…
+  static const double avatarInset = AppSpacing.x2;
+
+  /// …and the air between that face and the bubbles it belongs to.
+  static const double avatarGap = AppSpacing.x2;
+
+  /// The width held open on the left of a group's incoming messages for a
+  /// face [diameter] across: inset, face, gap. Measured to the bubble's own
+  /// edge, so the bubble's [bubbleInsetX] is part of it, not added to it.
+  static double avatarGutterFor(double diameter) =>
+      avatarInset + diameter + avatarGap;
+
   /// Past this feed width the conversation stops following the window and
   /// sits in a centred column of [columnMaxWidth]: messages strung across
   /// a 1600 px pane read as two conversations, one at each edge.

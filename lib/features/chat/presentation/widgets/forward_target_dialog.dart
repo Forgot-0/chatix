@@ -6,6 +6,7 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What the forward picker hands back: where to send, and the optional comment
@@ -91,12 +92,13 @@ class ForwardTargetDialogState extends ConsumerState<ForwardTargetDialog> {
                     itemCount: targets.length,
                     itemBuilder: (context, index) {
                       final chat = targets[index];
-                      final peer = chat.peerProfile(myUserId);
                       return ListTile(
                         selected: chat.id == _selectedChatId,
-                        leading: peer == null
-                            ? null
-                            : ChatAvatar.profile(peer, size: ChatAvatarSize.xs),
+                        leading: ChatRowAvatar(
+                          chat: chat,
+                          myUserId: myUserId,
+                          size: ChatAvatarSize.md,
+                        ),
                         title: Text(
                           chatTitleOf(chat, l10n, myUserId: myUserId),
                         ),

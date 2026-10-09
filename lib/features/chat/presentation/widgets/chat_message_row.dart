@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
-import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -94,7 +93,7 @@ class ChatMessageRow extends ConsumerWidget {
       isMine: item.isMine,
       isFirstInGroup: item.startsGroup,
       isLastInGroup: item.endsGroup,
-      showAuthor: item.showsAvatar,
+      showAuthor: item.showsAuthor,
       showMeta: item.endsGroup,
       selectionMode: selectionMode,
       isSelected: isSelected,
@@ -313,42 +312,47 @@ typedef ChatMemberLike = ({int userId});
 
 /// Holds the left gutter open for incoming messages in a group chat.
 ///
-/// The face goes on the first message of a run only; the rest of the run
-/// keeps the space so the bubbles stay in one column under it.
+/// Every row of the run keeps the space, so its bubbles stay in one column;
+/// only the last one puts the author's face in it, level with the bottom of
+/// its bubble. The name stays on the first bubble — it is read first, the
+/// face is where the run ends.
 class _WithAvatarGutter extends StatelessWidget {
   const _WithAvatarGutter({required this.item, required this.child});
 
   final FeedMessageItem item;
   final Widget child;
 
-  static const double _gutter = 44;
+  static const ChatAvatarSize _size = ChatAvatarSize.sm;
 
   @override
   Widget build(BuildContext context) {
-    final density = ChatixTheme.of(context).density;
+    final gutter = ChatLayout.avatarGutterFor(_size.diameter);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final bubble = Padding(
+      // The bubble keeps its own side margin, so only the rest of the gutter
+      // is added here.
+      padding: EdgeInsets.only(left: gutter - ChatLayout.bubbleInsetX),
+      child: child,
+    );
+
+    if (!item.showsAvatar) return bubble;
+
+    // The bubble is laid out first and the face pinned to its foot, rather
+    // than the two sharing a row: a bottom-aligned row would size itself to
+    // the taller of them, and the face is never what should decide that.
+    return Stack(
+      fit: StackFit.passthrough,
       children: [
-        SizedBox(
-          width: _gutter,
-          child: item.showsAvatar
-              ? Padding(
-                  // Lines the face up with the top of the bubble, which
-                  // carries the run's own leading gap.
-                  padding: EdgeInsets.only(
-                    top: density.groupGap,
-                    left: AppSpacing.x3,
-                  ),
-                  child: ChatAvatar.profile(
-                    item.message.profile,
-                    userId: item.message.authorId,
-                    size: ChatAvatarSize.xs,
-                  ),
-                )
-              : null,
+        bubble,
+        Positioned(
+          left: ChatLayout.avatarInset,
+          bottom: 0,
+          child: ChatAvatar.profile(
+            item.message.profile,
+            userId: item.message.authorId,
+            size: _size,
+          ),
         ),
-        Expanded(child: child),
       ],
     );
   }

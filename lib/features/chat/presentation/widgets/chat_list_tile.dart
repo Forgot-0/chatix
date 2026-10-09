@@ -444,23 +444,28 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
   }
 }
 
-/// The face on a chat row: the other person in a direct chat, a mosaic of
-/// members in a group, its initial where the list gave us no roster.
+/// The face of a chat: the other person in a direct chat, a mosaic of
+/// members in a group, the chat's initial for a channel and for a group
+/// nobody has told us the members of.
 ///
-/// Public because the search results draw the same rows and should not
-/// invent a second way of picturing a chat.
+/// Public because the search results, the chat's app bar and its profile
+/// draw the same chat and should not invent a second way of picturing it.
+///
+/// A group's own picture is not drawn: `ChatDTO` and `ChatDetailDTO` carry
+/// only its `avatar_s3_key`, with no URL and no endpoint to sign one
+/// (api-docs §5.2), so there is nothing to load it from yet.
 class ChatRowAvatar extends ConsumerWidget {
   const ChatRowAvatar({
     super.key,
     required this.chat,
     required this.myUserId,
-    this.size = ChatAvatarSize.md,
+    this.size = ChatAvatarSize.lg,
   });
 
   final ChatEntity chat;
   final int? myUserId;
 
-  /// How big to draw it. Rows want [ChatAvatarSize.md]; the profile header
+  /// How big to draw it. Rows want [ChatAvatarSize.lg]; the profile header
   /// wants the largest there is.
   final ChatAvatarSize size;
 
@@ -470,7 +475,12 @@ class ChatRowAvatar extends ConsumerWidget {
     final title = chatTitleOf(chat, l10n, myUserId: myUserId);
 
     if (chat.type != ChatType.direct) {
-      final faces = _facesOf(chat, myUserId);
+      // A channel's members are its audience, not its face: the detail
+      // endpoint hands over the roster all the same, and a mosaic of four
+      // random subscribers would say nothing about the channel.
+      final faces = chat.type == ChatType.channel
+          ? const <AvatarFace>[]
+          : _facesOf(chat, myUserId);
 
       // A group the list gave us no roster for still deserves a face of its
       // own: its initial on its own colour, not the same grey glyph as every
@@ -500,11 +510,6 @@ class ChatRowAvatar extends ConsumerWidget {
     );
   }
 
-  /// Faces for a group's mosaic avatar.
-  ///
-  /// The list endpoint does not always carry a roster, and a group that has
-  /// its own `avatar_s3_key` does not need one; both cases fall through to
-  /// the type icon that [ChatAvatarMosaic] draws when handed nothing.
   /// The faces on a group row.
   ///
   /// `members_preview` is what the list response is for: up to three members

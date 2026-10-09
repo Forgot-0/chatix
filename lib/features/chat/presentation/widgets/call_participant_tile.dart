@@ -167,12 +167,12 @@ class _AvatarBackdrop extends StatelessWidget {
             ? ChatAvatar.profile(
                 profile,
                 userId: participant.userId,
-                size: compact ? ChatAvatarSize.sm : ChatAvatarSize.md,
+                size: compact ? ChatAvatarSize.md : ChatAvatarSize.lg,
               )
             : ChatAvatar(
                 userId: participant.userId,
                 name: name,
-                size: compact ? ChatAvatarSize.sm : ChatAvatarSize.md,
+                size: compact ? ChatAvatarSize.md : ChatAvatarSize.lg,
               ),
       ),
     );

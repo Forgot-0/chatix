@@ -227,9 +227,9 @@ class _MessageBubbleState extends State<MessageBubble> {
       duration: ChatixTheme.duration,
       curve: ChatixTheme.curve,
       margin: EdgeInsets.fromLTRB(
-        AppSpacing.x3,
+        ChatLayout.bubbleInsetX,
         widget.isFirstInGroup ? density.groupGap : density.stackGap,
-        AppSpacing.x3,
+        ChatLayout.bubbleInsetX,
         0,
       ),
       decoration: BoxDecoration(

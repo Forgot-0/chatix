@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
+import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 
 import '../../../../helpers/chat_golden.dart';
 
@@ -181,6 +183,252 @@ void main() {
     });
   });
 
+  group('sizes', () {
+    // The diameters every surface is held to, in one place, so a new size
+    // has to be added here on purpose.
+    test('match the places they are drawn in', () {
+      expect(ChatAvatarSize.sm.diameter, 32, reason: 'message gutter');
+      expect(ChatAvatarSize.md.diameter, 40, reason: 'app bar');
+      expect(ChatAvatarSize.lg.diameter, inInclusiveRange(52, 54));
+      expect(ChatAvatarSize.xl.diameter, inInclusiveRange(96, 112));
+      expect(ChatAvatarSize.xxl.diameter, inInclusiveRange(96, 112));
+    });
+
+    test('run smallest to largest', () {
+      final diameters = [
+        for (final size in ChatAvatarSize.values) size.diameter,
+      ];
+      expect(diameters, [...diameters]..sort());
+    });
+  });
+
+  /// The circle itself: the box the face is clipped to.
+  Finder face() => find
+      .descendant(of: find.byType(ChatAvatar), matching: find.byType(ClipPath))
+      .first;
+
+  Widget forced(Size size, Widget child) => Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints.tight(size),
+      child: child,
+    ),
+  );
+
+  group("under someone else's constraints", () {
+    // A 44 px column less 12 px of padding forced a 28 px avatar into 32×28,
+    // and its clip into an oval. The circle has to survive any box.
+    testWidgets('a tight box wider than it is tall leaves a circle', (
+      tester,
+    ) async {
+      await pumpAvatar(
+        tester,
+        forced(
+          const Size(32, 28),
+          const ChatAvatar(name: 'Ada', size: ChatAvatarSize.xs),
+        ),
+      );
+
+      expect(tester.getSize(face()), const Size(28, 28));
+      expect(tester.getSize(find.byType(ChatAvatar)), const Size(32, 28));
+    });
+
+    testWidgets('and sits in the middle of it', (tester) async {
+      await pumpAvatar(
+        tester,
+        forced(
+          const Size(60, 28),
+          const ChatAvatar(name: 'Ada', size: ChatAvatarSize.xs),
+        ),
+      );
+
+      expect(
+        tester.getCenter(face()),
+        tester.getCenter(find.byType(ChatAvatar)),
+      );
+    });
+
+    testWidgets('a box larger all round does not inflate it', (tester) async {
+      await pumpAvatar(
+        tester,
+        forced(
+          const Size(120, 90),
+          const ChatAvatar(name: 'Ada', size: ChatAvatarSize.sm),
+        ),
+      );
+
+      expect(tester.getSize(face()), const Size.square(32));
+    });
+
+    testWidgets('a box too small for it gets the largest circle that fits', (
+      tester,
+    ) async {
+      await pumpAvatar(
+        tester,
+        forced(
+          const Size(24, 20),
+          const ChatAvatar(name: 'Ada', size: ChatAvatarSize.xs),
+        ),
+      );
+
+      expect(tester.getSize(face()), const Size.square(20));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('loose and unbounded, it is exactly its diameter', (
+      tester,
+    ) async {
+      await pumpAvatar(
+        tester,
+        const Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [ChatAvatar(name: 'Ada', size: ChatAvatarSize.md)],
+        ),
+      );
+
+      expect(tester.getSize(face()), const Size.square(40));
+    });
+
+    testWidgets('the presence notch keeps the same circle', (tester) async {
+      await pumpAvatar(
+        tester,
+        forced(
+          const Size(48, 40),
+          const ChatAvatar(
+            name: 'Ada',
+            size: ChatAvatarSize.md,
+            isOnline: true,
+          ),
+        ),
+      );
+
+      expect(tester.getSize(face()), const Size.square(40));
+    });
+
+    testWidgets('so does a mosaic', (tester) async {
+      await pumpAvatar(
+        tester,
+        forced(
+          const Size(52, 40),
+          ChatAvatarMosaic(
+            size: ChatAvatarSize.md,
+            faces: [
+              for (var i = 0; i < 3; i++) AvatarFace(userId: i, name: 'U$i'),
+            ],
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSize(
+          find.descendant(
+            of: find.byType(ChatAvatarMosaic),
+            matching: find.byType(ClipOval),
+          ),
+        ),
+        const Size.square(40),
+      );
+    });
+  });
+
+  group('a full profile', () {
+    ProfileEntity person({
+      String username = 'ada',
+      String? displayName = 'Ada Lovelace',
+      Map<String, Map<String, String>> avatars = const {},
+    }) => ProfileEntity(
+      id: 42,
+      username: username,
+      avatars: avatars,
+      specialization: null,
+      displayName: displayName,
+      bio: null,
+      dateBirthday: null,
+      skills: const [],
+      contacts: const [],
+    );
+
+    /// The ground the initial is drawn on.
+    Color fillOf(WidgetTester tester, Finder avatar) => tester
+        .widgetList<Container>(
+          find.descendant(of: avatar, matching: find.byType(Container)),
+        )
+        .map((container) => container.color)
+        .whereType<Color>()
+        .first;
+
+    testWidgets('is the same colour as the same person in a chat', (
+      tester,
+    ) async {
+      // `ProfileDTO.id` is the user id (api-docs §4.3): the profile screen
+      // and a chat row have to agree on it, or one person is two colours.
+      await pumpAvatar(
+        tester,
+        Row(
+          children: [
+            ChatAvatar.person(person(), key: const Key('profile')),
+            ChatAvatar.profile(profile(url: null), key: const Key('chat')),
+          ],
+        ),
+      );
+
+      final fromProfile = fillOf(tester, find.byKey(const Key('profile')));
+      final fromChat = fillOf(tester, find.byKey(const Key('chat')));
+
+      expect(fromProfile, fromChat);
+      expect(
+        fromProfile,
+        ChatixTheme.of(tester.element(find.byType(Row))).authorColor(42),
+      );
+    });
+
+    testWidgets('and the same initial', (tester) async {
+      await pumpAvatar(tester, ChatAvatar.person(person()));
+      expect(find.text('A'), findsOneWidget);
+    });
+
+    testWidgets('falls back to the handle when there is no name', (
+      tester,
+    ) async {
+      await pumpAvatar(
+        tester,
+        ChatAvatar.person(person(username: 'grace', displayName: '  ')),
+      );
+      expect(find.text('G'), findsOneWidget);
+    });
+
+    testWidgets('draws from the avatars matrix', (tester) async {
+      await pumpAvatar(
+        tester,
+        ChatAvatar.person(
+          person(
+            avatars: const {
+              '64': {'jpg': 'https://cdn.example.com/64.jpg'},
+              '256': {
+                'webp': 'https://cdn.example.com/256.webp',
+                'jpg': 'https://cdn.example.com/256.jpg',
+              },
+            },
+          ),
+        ),
+      );
+
+      // 40 px at the test's 3× ratio is 120 physical: the 256 variant, and
+      // webp ahead of jpg.
+      expect(
+        (providerOf(tester)! as CachedNetworkImageProvider).url,
+        'https://cdn.example.com/256.webp',
+      );
+    });
+
+    testWidgets('an empty matrix is initials, not a broken image', (
+      tester,
+    ) async {
+      await pumpAvatar(tester, ChatAvatar.person(person()));
+      expect(find.byType(Image), findsNothing);
+    });
+  });
+
   // Scaffold lays its own slots out with LayoutId, so tiles are only the
   // ones inside the mosaic itself.
   Finder tiles() => find.descendant(
@@ -275,7 +523,7 @@ void main() {
           tester,
           name: 'chat_avatar_${entry.key}',
           dark: entry.value,
-          surfaceSize: const Size(420, 300),
+          surfaceSize: const Size(560, 380),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -324,6 +572,40 @@ void main() {
                     ),
                   const ChatAvatarMosaic(size: ChatAvatarSize.md, faces: []),
                 ],
+              ),
+              const SizedBox(height: 16),
+              // Forced into boxes that are not their shape — the gutter that
+              // used to squash them, a slot too small, a slot too wide. The
+              // outline is the box; what is inside it should be a circle.
+              Builder(
+                builder: (context) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 12,
+                  children: [
+                    for (final box in const [
+                      Size(32, 28),
+                      Size(24, 20),
+                      Size(64, 40),
+                    ])
+                      DecoratedBox(
+                        position: DecorationPosition.foreground,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: SizedBox.fromSize(
+                          size: box,
+                          child: const ChatAvatar(
+                            size: ChatAvatarSize.xs,
+                            userId: 5,
+                            name: 'Ada',
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/typing_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/chat/presentation/widgets/typing_dots.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -63,19 +65,20 @@ class ChatHeaderTitle extends ConsumerWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (peer != null)
-              // Flies up into the profile header when the title is tapped.
-              // Only direct chats have a face here; a group's header has
-              // none, so its profile avatar simply arrives.
-              Hero(
-                tag: chatAvatarHeroTag(chatId),
-                flightShuttleBuilder: chatAvatarHeroFlight,
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: ChatAvatar.profile(peer),
-                ),
+            // Every kind of chat has a face here — the person, the group's
+            // mosaic, the channel's initial — drawn exactly as its row in
+            // the list draws it, and flying up into the profile header
+            // when the title is tapped.
+            Hero(
+              tag: chatAvatarHeroTag(chatId),
+              flightShuttleBuilder: chatAvatarHeroFlight,
+              child: ChatRowAvatar(
+                chat: current,
+                myUserId: myUserId,
+                size: ChatAvatarSize.md,
               ),
-            if (peer != null) const SizedBox(width: 10),
+            ),
+            const SizedBox(width: AppSpacing.x3),
             Flexible(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

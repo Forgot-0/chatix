@@ -12,7 +12,6 @@ import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
-import 'package:chatix/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -121,7 +120,7 @@ class PersonSearchResultTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      leading: ProfileAvatar(profile: profile, radius: 20),
+      leading: ChatAvatar.person(profile),
       title: HighlightedText(
         text: profileLabel(profile),
         query: query,
@@ -243,7 +242,7 @@ class MessageSearchResultTile extends ConsumerWidget {
         source: AvatarSource.url(url, cacheKey: preview?.avatarS3Key),
         userId: preview?.id.hashCode,
         name: preview?.name,
-        size: ChatAvatarSize.sm,
+        size: ChatAvatarSize.md,
       );
     }
 
@@ -252,7 +251,7 @@ class MessageSearchResultTile extends ConsumerWidget {
       return ChatAvatar(
         userId: preview?.id.hashCode ?? hit.chatId.hashCode,
         name: name,
-        size: ChatAvatarSize.sm,
+        size: ChatAvatarSize.md,
       );
     }
 
