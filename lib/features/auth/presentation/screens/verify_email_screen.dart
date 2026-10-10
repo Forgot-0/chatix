@@ -207,7 +207,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen>
                         ? l10n.verifyEmailCodeFromClipboard
                         : null,
                   ),
-                  validator: AuthFieldValidators.required,
+                  validator: AuthFieldValidators.required(l10n),
                 ),
                 const SizedBox(height: AppSpacing.x4),
                 FilledButton(
@@ -264,7 +264,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen>
                       labelText: l10n.email,
                       prefixIcon: const Icon(Icons.email_outlined),
                     ),
-                    validator: AuthFieldValidators.email,
+                    validator: AuthFieldValidators.email(l10n),
                   ),
                   const SizedBox(height: AppSpacing.x3),
                   TextButton(

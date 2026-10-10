@@ -1,0 +1,23 @@
+# Native launch screens, shown while the engine starts and before the first
+# Flutter frame. The ground is each theme's canvas (AppNeutrals.canvas), so
+# the hand-over to the app does not flash; the mark is the welcome screen's
+# 112 dp logo. Images come from tool/brand/export_brand_assets_test.dart.
+#
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#F8F5F1"
+  image: assets/splash/splash_logo.png
+  color_dark: "#1B1815"
+  image_dark: assets/splash/splash_logo.png
+
+  # Android 12+ draws its own splash from an icon and a colour; the image is
+  # sized for its 1152 px canvas with the mark inside the 768 px circle.
+  android_12:
+    image: assets/splash/splash_logo_android12.png
+    color: "#F8F5F1"
+    image_dark: assets/splash/splash_logo_android12.png
+    color_dark: "#1B1815"
+
+  android: true
+  ios: true
+  web: true

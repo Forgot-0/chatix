@@ -281,6 +281,7 @@ void main() {
                   onStartSelection: (_) {},
                   onToggleSelected: (_) {},
                   onEdit: (_) {},
+                  onDelete: (_) {},
                   onRefresh: () async {},
                 ),
               ),

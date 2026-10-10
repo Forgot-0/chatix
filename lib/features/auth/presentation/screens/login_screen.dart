@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/brand/chatix_logo.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
@@ -123,133 +125,135 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(AppSpacing.x6),
           child: Center(
             child: SingleChildScrollView(
-              child: AutofillGroup(
-                child: FormBuilder(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        Icons.chat_bubble_outline,
-                        size: 72,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: AppSpacing.x6),
-                      Text(
-                        l10n.loginHeadline,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x2),
-                      Text(
-                        l10n.loginSubtitle,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x6),
-                      AuthErrorBanner(
-                        error: _error,
-                        actionLabel: l10n.authResendEmail,
-                        isActionBusy: _isResending,
-                        onAction: _resendVerification,
-                      ),
-                      FormBuilderTextField(
-                        name: 'username',
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [
-                          AutofillHints.username,
-                          AutofillHints.email,
-                        ],
-                        onSubmitted: (_) => _passwordFocus.requestFocus(),
-                        decoration: InputDecoration(
-                          labelText: l10n.emailOrUsername,
-                          hintText: l10n.emailOrUsernameHint,
-                          prefixIcon: const Icon(Icons.person_outline),
-                        ),
-                        validator: AuthFieldValidators.loginIdentifier,
-                      ),
-                      const SizedBox(height: AppSpacing.x4),
-                      AuthPasswordField(
-                        name: 'password',
-                        focusNode: _passwordFocus,
-                        labelText: l10n.password,
-                        hintText: l10n.passwordHint,
-                        onSubmitted: _login,
-                        validator: AuthFieldValidators.required,
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton(
-                          onPressed: () =>
-                              context.push(ResetPasswordRoute.location),
-                          child: Text(l10n.forgotPassword),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x6),
-                      FilledButton(
-                        onPressed: isLoading ? null : _login,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.x4,
+              child: AppContentWidth(
+                // A form column, not the window's width: outside the shell
+                // there is no pane to hold it in, and a 1400 px field reads
+                // as broken.
+                child: AutofillGroup(
+                  child: FormBuilder(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: ChatixLogo()),
+                        const SizedBox(height: AppSpacing.x6),
+                        Text(
+                          l10n.loginHeadline,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                        const SizedBox(height: AppSpacing.x2),
+                        Text(
+                          l10n.loginSubtitle,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.x6),
+                        AuthErrorBanner(
+                          error: _error,
+                          actionLabel: l10n.authResendEmail,
+                          isActionBusy: _isResending,
+                          onAction: _resendVerification,
+                        ),
+                        FormBuilderTextField(
+                          name: 'username',
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [
+                            AutofillHints.username,
+                            AutofillHints.email,
+                          ],
+                          onSubmitted: (_) => _passwordFocus.requestFocus(),
+                          decoration: InputDecoration(
+                            labelText: l10n.emailOrUsername,
+                            hintText: l10n.emailOrUsernameHint,
+                            prefixIcon: const Icon(Icons.person_outline),
+                          ),
+                          validator: AuthFieldValidators.loginIdentifier(l10n),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        AuthPasswordField(
+                          name: 'password',
+                          focusNode: _passwordFocus,
+                          labelText: l10n.password,
+                          hintText: l10n.passwordHint,
+                          onSubmitted: _login,
+                          validator: AuthFieldValidators.required(l10n),
+                        ),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: TextButton(
+                            onPressed: () =>
+                                context.push(ResetPasswordRoute.location),
+                            child: Text(l10n.forgotPassword),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.x6),
+                        FilledButton(
+                          onPressed: isLoading ? null : _login,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.x4,
+                            ),
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(l10n.logIn),
+                        ),
+                        const SizedBox(height: AppSpacing.x6),
+                        if (oauthSignInEnabled) ...[
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.x3,
                                 ),
-                              )
-                            : Text(l10n.logIn),
-                      ),
-                      const SizedBox(height: AppSpacing.x6),
-                      if (oauthSignInEnabled) ...[
-                        Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.x3,
+                                child: Text(
+                                  l10n.authOrContinueWith,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
                               ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.x4),
+                          const OAuthButtons(),
+                          const SizedBox(height: AppSpacing.x4),
+                        ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
                               child: Text(
-                                l10n.authOrContinueWith,
-                                style: theme.textTheme.bodySmall?.copyWith(
+                                l10n.authNoAccount,
+                                style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),
-                            const Expanded(child: Divider()),
+                            TextButton(
+                              onPressed: () =>
+                                  context.go(RegisterRoute.location),
+                              child: Text(l10n.register),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: AppSpacing.x4),
-                        const OAuthButtons(),
-                        const SizedBox(height: AppSpacing.x4),
                       ],
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              l10n.authNoAccount,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => context.go(RegisterRoute.location),
-                            child: Text(l10n.register),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

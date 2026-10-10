@@ -89,6 +89,47 @@ class AppDateFormat {
         : DateFormat(pattern, _tag).format(local);
   }
 
+  /// A birthday as a profile shows it: "April 12, 1990 (36 years old)",
+  /// "12 апреля 1990 (36 лет)".
+  ///
+  /// No weekday — the day it fell on decades ago tells nobody anything — and
+  /// the age it makes today, which is what a reader actually works out from
+  /// a birth year. Without [year] (not given, or kept private) it is the day
+  /// and month alone, "12 April", and no age.
+  ///
+  /// `date_birthday` is a plain `YYYY-MM-DD` (api-docs §4.3), a calendar day
+  /// rather than an instant, so nothing here converts between time zones.
+  String birthday({required int day, required int month, int? year}) {
+    if (year == null) {
+      return DateFormat.MMMMd(_tag).format(DateTime(2000, month, day));
+    }
+
+    final date = DateTime(year, month, day);
+    final pattern = _dateWithYearPatterns[_language];
+    final formatted = pattern == null
+        ? DateFormat.yMMMMd(_tag).format(date)
+        : DateFormat(pattern, _tag).format(date);
+
+    final age = ageOn(_today, day: day, month: month, year: year);
+    // A date in the future is a typo, not a negative age.
+    if (age < 0) return formatted;
+    return l10n.profileBirthdayWithAge(formatted, age);
+  }
+
+  /// Full years between a birthday and [today]. The birthday counts once its
+  /// month and day are reached, so 29 February comes of age on 1 March in a
+  /// year that has no 29th.
+  static int ageOn(
+    DateTime today, {
+    required int day,
+    required int month,
+    required int year,
+  }) {
+    final reached =
+        today.month > month || (today.month == month && today.day >= day);
+    return today.year - year - (reached ? 0 : 1);
+  }
+
   /// The stamp on a chat row: precise while it still matters, coarse once it
   /// does not.
   ///

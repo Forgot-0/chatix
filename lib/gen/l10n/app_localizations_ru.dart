@@ -9,13 +9,6 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get appTitle => 'Flutter Riverpod Clean Architecture';
-
-  @override
-  String get welcomeMessage =>
-      'Добро пожаловать во Flutter Riverpod Clean Architecture';
-
-  @override
   String get home => 'Главная';
 
   @override
@@ -69,27 +62,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Выбранный язык будет применён во всём приложении';
 
   @override
-  String get localization_assets_demo => 'Демо локализации и ресурсов';
-
-  @override
-  String get current_language => 'Текущий язык';
-
-  @override
-  String get language_code => 'Код языка';
-
-  @override
-  String get language_name => 'Название языка';
-
-  @override
-  String get formatting_examples => 'Примеры форматирования';
-
-  @override
-  String get date_full => 'Дата (полная)';
-
-  @override
-  String get date_short => 'Дата (короткая)';
-
-  @override
   String get time => 'Время';
 
   @override
@@ -97,26 +69,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get percent => 'Проценты';
-
-  @override
-  String get localized_assets => 'Локализованные ресурсы';
-
-  @override
-  String get localized_assets_explanation =>
-      'Этот раздел показывает, как загружать разные ресурсы в зависимости от выбранного языка. Изображения, звуки и другие файлы могут быть свои для каждого языка.';
-
-  @override
-  String get image_example => 'Пример локализованного изображения';
-
-  @override
-  String get welcome_image_caption => 'Это изображение выбрано по вашему языку';
-
-  @override
-  String get common_image_example => 'Пример общего изображения';
-
-  @override
-  String get common_image_caption =>
-      'Это изображение одинаково для всех языков';
 
   @override
   String get logout => 'Выйти';
@@ -146,11 +98,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tryAgain => 'Попробовать снова';
 
   @override
-  String greeting(String name) {
-    return 'Здравствуйте, $name!';
-  }
-
-  @override
   String itemCount(num count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
@@ -167,14 +114,6 @@ class AppLocalizationsRu extends AppLocalizations {
       zero: 'Ничего нет',
     );
     return '$_temp0';
-  }
-
-  @override
-  String lastUpdated(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return 'Обновлено: $dateString';
   }
 
   @override
@@ -749,7 +688,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String deleteMessagesTitle(int count) {
-    return 'Удалить сообщений: $count?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Удалить $count сообщения?',
+      many: 'Удалить $count сообщений?',
+      few: 'Удалить $count сообщения?',
+      one: 'Удалить $count сообщение?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3286,4 +3233,133 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get bubbleFillSolid => 'Сплошной цвет';
+
+  @override
+  String get deleteMessageTitle => 'Удалить сообщение?';
+
+  @override
+  String get deleteMessageForEveryone => 'Оно исчезнет у всех участников.';
+
+  @override
+  String get deleteMessagesForEveryone => 'Они исчезнут у всех участников.';
+
+  @override
+  String get messageDeleteFailed => 'Не удалось удалить сообщение.';
+
+  @override
+  String get validationLoginIdentifierRequired =>
+      'Введите email или имя пользователя';
+
+  @override
+  String get validationUsernameRequired => 'Введите имя пользователя';
+
+  @override
+  String validationMinLength(int min) {
+    String _temp0 = intl.Intl.pluralLogic(
+      min,
+      locale: localeName,
+      other: 'Минимум $min символа',
+      many: 'Минимум $min символов',
+      few: 'Минимум $min символа',
+      one: 'Минимум $min символ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get validationUsernameCharacters =>
+      'Допустимы только латинские буквы, цифры, пробелы и , . \' -';
+
+  @override
+  String get validationEmailRequired => 'Введите email';
+
+  @override
+  String get validationEmailInvalid => 'Введите корректный email';
+
+  @override
+  String get validationPasswordRequired => 'Введите пароль';
+
+  @override
+  String get validationPasswordUppercase =>
+      'Добавьте хотя бы одну заглавную букву';
+
+  @override
+  String get validationPasswordLowercase =>
+      'Добавьте хотя бы одну строчную букву';
+
+  @override
+  String get validationPasswordDigit => 'Добавьте хотя бы одну цифру';
+
+  @override
+  String validationPasswordSpecial(String characters) {
+    return 'Добавьте хотя бы один спецсимвол: $characters';
+  }
+
+  @override
+  String get validationPasswordRepeatRequired => 'Повторите пароль';
+
+  @override
+  String get validationPasswordsDoNotMatch => 'Пароли не совпадают';
+
+  @override
+  String get validationFieldRequired => 'Обязательное поле';
+
+  @override
+  String get resetPasswordRequestIntro =>
+      'Введите email вашего аккаунта — мы пришлём код для сброса пароля.';
+
+  @override
+  String get resetPasswordConfirmIntro =>
+      'Введите код из письма и новый пароль.';
+
+  @override
+  String get createChatDirectSearchLabel => 'Кому вы хотите написать?';
+
+  @override
+  String get addPeopleSearchLabel => 'Добавить по имени или @username';
+
+  @override
+  String get createChatDirectHelper =>
+      'Выберите одного человека — в личном чате ровно два участника';
+
+  @override
+  String createChatMembersHelper(int max) {
+    return 'Сейчас — до $max человек, остальных можно добавить позже';
+  }
+
+  @override
+  String get createChatDirectNeedsPeer =>
+      'Для личного чата нужен ровно один собеседник — найдите его по имени или @username';
+
+  @override
+  String createChatDirectTooMany(int count) {
+    return 'В личном чате только один собеседник, а выбрано: $count. Выберите «Группа»';
+  }
+
+  @override
+  String get createChatNameRequired => 'Укажите название чата';
+
+  @override
+  String createChatTooManyMembers(int max) {
+    return 'Сейчас можно добавить не больше $max человек — остальных добавьте после создания чата';
+  }
+
+  @override
+  String get createChatFailed => 'Не удалось создать чат';
+
+  @override
+  String get settingsRowHint => 'Уведомления, оформление, конфиденциальность';
+
+  @override
+  String profileBirthdayWithAge(String date, int age) {
+    String _temp0 = intl.Intl.pluralLogic(
+      age,
+      locale: localeName,
+      other: '$age года',
+      many: '$age лет',
+      few: '$age года',
+      one: '$age год',
+    );
+    return '$date ($_temp0)';
+  }
 }

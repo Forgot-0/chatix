@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -67,30 +68,35 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDirect = _chatType == ChatType.direct;
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).newChat)),
+      appBar: AppBar(title: Text(l10n.newChat)),
       body: ListView(
         padding: EdgeInsets.all(16),
         children: [
           SegmentedButton<ChatType>(
+            // The fill already says which is chosen; the tick only takes
+            // room, and four Russian labels in a phone's width need it
+            // ("Группа" broke in two).
+            showSelectedIcon: false,
             segments: [
               ButtonSegment(
                 value: ChatType.direct,
-                label: Text(AppLocalizations.of(context).chatTypeDirect),
+                label: Text(l10n.chatTypeDirect),
               ),
               ButtonSegment(
                 value: ChatType.group,
-                label: Text(AppLocalizations.of(context).chatTypeGroup),
+                label: Text(l10n.chatTypeGroup),
               ),
               ButtonSegment(
                 value: ChatType.supergroup,
-                label: Text(AppLocalizations.of(context).chatTypeSuper),
+                label: Text(l10n.chatTypeSuper),
               ),
               ButtonSegment(
                 value: ChatType.channel,
-                label: Text(AppLocalizations.of(context).chatTypeChannel),
+                label: Text(l10n.chatTypeChannel),
               ),
             ],
             selected: {_chatType},
@@ -104,7 +110,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
               controller: _nameController,
               maxLength: CreateChatUseCase.maxNameLength,
               decoration: InputDecoration(
-                labelText: AppLocalizations.of(context).chatName,
+                labelText: l10n.chatName,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -114,7 +120,7 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
               maxLength: CreateChatUseCase.maxDescriptionLength,
               maxLines: 3,
               decoration: InputDecoration(
-                labelText: AppLocalizations.of(context).chatDescription,
+                labelText: l10n.chatDescription,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -126,12 +132,13 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
             onAdd: _addMember,
             onRemove: _removeMember,
             labelText: isDirect
-                ? 'Who do you want to message?'
-                : 'Add people by name or @username',
+                ? l10n.createChatDirectSearchLabel
+                : l10n.addPeopleSearchLabel,
             helperText: isDirect
-                ? 'Pick exactly one person — a direct chat has two members'
-                : 'Up to ${CreateChatUseCase.maxInitialMembers} people now; '
-                      'you can add more later',
+                ? l10n.createChatDirectHelper
+                : l10n.createChatMembersHelper(
+                    CreateChatUseCase.maxInitialMembers,
+                  ),
           ),
           const SizedBox(height: 12),
 
@@ -139,26 +146,25 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
             SwitchListTile(
               value: _isPublic,
               onChanged: (value) => setState(() => _isPublic = value),
-              title: Text(AppLocalizations.of(context).chatPublic),
-              subtitle: Text(AppLocalizations.of(context).chatPublicHintCreate),
+              title: Text(l10n.chatPublic),
+              subtitle: Text(l10n.chatPublicHintCreate),
             ),
             SwitchListTile(
               value: _adminOnly,
               onChanged: (value) => setState(() => _adminOnly = value),
-              title: Text(AppLocalizations.of(context).chatAdminOnly),
-              subtitle: const Text(
-                'Only members with message:send_admin_only may post',
-              ),
+              title: Text(l10n.chatAdminOnly),
+              // The same words as the chat's own settings: who may post,
+              // not the name of the right that decides it.
+              subtitle: Text(l10n.chatAdminOnlyHint),
             ),
             TextField(
               controller: _slowModeController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: AppLocalizations.of(
-                  context,
-                ).chatSlowModeSecondsField,
-                helperText:
-                    '0 – ${CreateChatUseCase.maxSlowModeSeconds} (24 hours)',
+                labelText: l10n.chatSlowModeSecondsField,
+                helperText: l10n.chatSlowModeRange(
+                  CreateChatUseCase.maxSlowModeSeconds,
+                ),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -182,24 +188,47 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(AppLocalizations.of(context).createChat),
+                : Text(l10n.createChat),
           ),
         ],
       ),
     );
   }
 
+  /// What the form would be refused for, in the reader's words.
+  ///
+  /// [CreateChatUseCase] checks the same rules and answers in English — it
+  /// guards callers that never came through a form. Asking here first is
+  /// what keeps that English off the screen.
+  String? _validate(AppLocalizations l10n, List<int> memberIds) {
+    if (_chatType == ChatType.direct) {
+      if (memberIds.isEmpty) return l10n.createChatDirectNeedsPeer;
+      if (memberIds.length > 1) {
+        return l10n.createChatDirectTooMany(memberIds.length);
+      }
+      return null;
+    }
+
+    if (_nameController.text.trim().isEmpty) {
+      return l10n.createChatNameRequired;
+    }
+    if (memberIds.length > CreateChatUseCase.maxInitialMembers) {
+      return l10n.createChatTooManyMembers(CreateChatUseCase.maxInitialMembers);
+    }
+    final slowMode = int.tryParse(_slowModeController.text.trim()) ?? 0;
+    if (slowMode < 0 || slowMode > CreateChatUseCase.maxSlowModeSeconds) {
+      return l10n.chatSlowModeRange(CreateChatUseCase.maxSlowModeSeconds);
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     final memberIds = _memberIds;
 
-    if (_chatType == ChatType.direct && memberIds.length != 1) {
-      setState(() {
-        _error = memberIds.isEmpty
-            ? 'A direct chat needs exactly one other participant — '
-                  'search for them by username'
-            : 'A direct chat can only have one other participant, but '
-                  '${memberIds.length} were selected — pick Group instead';
-      });
+    final invalid = _validate(l10n, memberIds);
+    if (invalid != null) {
+      setState(() => _error = invalid);
       return;
     }
 
@@ -249,7 +278,13 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
           context.pushReplacement(ChatDetailRoute(existingChatId).location);
           return;
         }
-        setState(() => _error = chatFailureMessage(failure) ?? failure.message);
+        setState(
+          () => _error = friendlyFailureMessage(
+            failure,
+            l10n: l10n,
+            fallback: l10n.createChatFailed,
+          ),
+        );
       },
       (chat) {
         ref.read(chatListProvider.notifier).refresh();

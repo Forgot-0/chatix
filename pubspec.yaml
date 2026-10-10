@@ -139,6 +139,7 @@ dev_dependencies:
   # `WebSocketChannel` needs `StreamChannelMixin`. Already present transitively
   # via web_socket_channel; declared so `depend_on_referenced_packages` passes.
   stream_channel: ^2.1.4
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -159,17 +160,6 @@ flutter:
   # Assets for the application
   assets:
     - .env
-    # Common assets
-    - assets/images/
-    
-    # Language-specific assets
-    - assets/images/en/
-    - assets/images/es/
-    - assets/images/fr/
-    - assets/images/de/
-    - assets/images/ja/
-    - assets/images/bn/
-    
     # Fonts
     - assets/fonts/
 

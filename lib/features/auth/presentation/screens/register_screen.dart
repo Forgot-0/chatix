@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/brand/chatix_logo.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_failure_presentation.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
@@ -127,136 +129,138 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           padding: const EdgeInsets.all(AppSpacing.x6),
           child: Center(
             child: SingleChildScrollView(
-              child: AutofillGroup(
-                child: FormBuilder(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Icon(
-                        Icons.person_add_alt,
-                        size: 64,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: AppSpacing.x5),
-                      Text(
-                        l10n.registerHeadline,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x2),
-                      Text(
-                        l10n.registerSubtitle,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x6),
-                      // A duplicate username or email is said on the field
-                      // itself; the banner is for everything else.
-                      AuthErrorBanner(
-                        error: _error?.field == null ? _error : null,
-                      ),
-                      FormBuilderTextField(
-                        name: 'username',
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.newUsername],
-                        onSubmitted: (_) => _emailFocus.requestFocus(),
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: l10n.username,
-                          hintText: l10n.usernameHint,
-                          prefixIcon: const Icon(Icons.person_outline),
-                          errorText: _serverErrorFor('username'),
-                        ),
-                        validator: AuthFieldValidators.username,
-                      ),
-                      const SizedBox(height: AppSpacing.x4),
-                      FormBuilderTextField(
-                        name: 'email',
-                        focusNode: _emailFocus,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        autofillHints: const [AutofillHints.email],
-                        onSubmitted: (_) => _passwordFocus.requestFocus(),
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: l10n.email,
-                          hintText: l10n.emailHint,
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          errorText: _serverErrorFor('email'),
-                        ),
-                        validator: AuthFieldValidators.email,
-                      ),
-                      const SizedBox(height: AppSpacing.x4),
-                      AuthPasswordField(
-                        name: 'password',
-                        focusNode: _passwordFocus,
-                        labelText: l10n.password,
-                        hintText: l10n.passwordRule,
-                        autofillHints: const [AutofillHints.newPassword],
-                        textInputAction: TextInputAction.next,
-                        showStrengthMeter: true,
-                        onSubmitted: () => _repeatFocus.requestFocus(),
-                        onChanged: (_) => _formKey
-                            .currentState
-                            ?.fields['password_repeat']
-                            ?.validate(),
-                        validator: AuthFieldValidators.password,
-                      ),
-                      const SizedBox(height: AppSpacing.x4),
-                      AuthPasswordField(
-                        name: 'password_repeat',
-                        focusNode: _repeatFocus,
-                        labelText: l10n.confirmPassword,
-                        hintText: l10n.confirmPasswordHint,
-                        autofillHints: const [AutofillHints.newPassword],
-                        onSubmitted: _register,
-                        validator: AuthFieldValidators.passwordRepeat(
-                          _currentPassword,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.x6),
-                      FilledButton(
-                        onPressed: isLoading ? null : _register,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.x4,
+              child: AppContentWidth(
+                // A form column, not the window's width: outside the shell
+                // there is no pane to hold it in, and a 1400 px field reads
+                // as broken.
+                child: AutofillGroup(
+                  child: FormBuilder(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Center(child: ChatixLogo()),
+                        const SizedBox(height: AppSpacing.x5),
+                        Text(
+                          l10n.registerHeadline,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(l10n.register),
-                      ),
-                      const SizedBox(height: AppSpacing.x4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              l10n.authHaveAccount,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
+                        const SizedBox(height: AppSpacing.x2),
+                        Text(
+                          l10n.registerSubtitle,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.x6),
+                        // A duplicate username or email is said on the field
+                        // itself; the banner is for everything else.
+                        AuthErrorBanner(
+                          error: _error?.field == null ? _error : null,
+                        ),
+                        FormBuilderTextField(
+                          name: 'username',
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.newUsername],
+                          onSubmitted: (_) => _emailFocus.requestFocus(),
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            labelText: l10n.username,
+                            hintText: l10n.usernameHint,
+                            prefixIcon: const Icon(Icons.person_outline),
+                            errorText: _serverErrorFor('username'),
+                          ),
+                          validator: AuthFieldValidators.username(l10n),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        FormBuilderTextField(
+                          name: 'email',
+                          focusNode: _emailFocus,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
+                          onSubmitted: (_) => _passwordFocus.requestFocus(),
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            labelText: l10n.email,
+                            hintText: l10n.emailHint,
+                            prefixIcon: const Icon(Icons.email_outlined),
+                            errorText: _serverErrorFor('email'),
+                          ),
+                          validator: AuthFieldValidators.email(l10n),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        AuthPasswordField(
+                          name: 'password',
+                          focusNode: _passwordFocus,
+                          labelText: l10n.password,
+                          hintText: l10n.passwordRule,
+                          autofillHints: const [AutofillHints.newPassword],
+                          textInputAction: TextInputAction.next,
+                          showStrengthMeter: true,
+                          onSubmitted: () => _repeatFocus.requestFocus(),
+                          onChanged: (_) => _formKey
+                              .currentState
+                              ?.fields['password_repeat']
+                              ?.validate(),
+                          validator: AuthFieldValidators.password(l10n),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        AuthPasswordField(
+                          name: 'password_repeat',
+                          focusNode: _repeatFocus,
+                          labelText: l10n.confirmPassword,
+                          hintText: l10n.confirmPasswordHint,
+                          autofillHints: const [AutofillHints.newPassword],
+                          onSubmitted: _register,
+                          validator: AuthFieldValidators.passwordRepeat(
+                            l10n,
+                            _currentPassword,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.x6),
+                        FilledButton(
+                          onPressed: isLoading ? null : _register,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.x4,
                             ),
                           ),
-                          TextButton(
-                            onPressed: () => context.go(LoginRoute.location),
-                            child: Text(l10n.loginTitle),
-                          ),
-                        ],
-                      ),
-                    ],
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(l10n.register),
+                        ),
+                        const SizedBox(height: AppSpacing.x4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                l10n.authHaveAccount,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.go(LoginRoute.location),
+                              child: Text(l10n.loginTitle),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

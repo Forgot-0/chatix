@@ -9,7 +9,6 @@ import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/chats_pane_shell.dart';
 import 'package:chatix/core/router/locale_aware_router.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
-import 'package:chatix/examples/localization_assets_demo.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
@@ -439,18 +438,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // Demo-only surface from lib/examples. Kept for reference but excluded
-      // from release builds: `kDebugMode` is a compile-time constant, so the
-      // route and everything it pulls in is tree-shaken out of a release.
-      if (kDebugMode)
-        GoRoute(
-          path: LocalizationAssetsDemoRoute.path,
-          name: RouteNames.localizationAssetsDemo,
-          builder: (context, state) => const LocalizationAssetsDemo(),
-        ),
-
       // The design-system showcase: a developer surface for checking tokens
-      // against both themes, tree-shaken out of release alongside the demos.
+      // against both themes. `kDebugMode` is a compile-time constant, so the
+      // route and everything it pulls in is tree-shaken out of a release.
       if (kDebugMode)
         GoRoute(
           path: ComponentShowcaseRoute.path,

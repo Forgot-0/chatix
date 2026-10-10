@@ -83,8 +83,6 @@ class AppLocalizations {
 
 final Map<String, Map<String, String>> localizedValues = {
   'en': {
-    'app_title': 'Flutter Riverpod Clean Architecture',
-    'welcome_message': 'Welcome to Flutter Riverpod Clean Architecture',
     'home': 'Home',
     'settings': 'Settings',
     'profile': 'Profile',
@@ -111,8 +109,6 @@ final Map<String, Map<String, String>> localizedValues = {
     'cache_updated': 'Cache updated successfully',
   },
   'es': {
-    'app_title': 'Flutter Riverpod Arquitectura Limpia',
-    'welcome_message': 'Bienvenido a Flutter Riverpod Arquitectura Limpia',
     'home': 'Inicio',
     'settings': 'Configuraciones',
     'profile': 'Perfil',
@@ -138,10 +134,7 @@ final Map<String, Map<String, String>> localizedValues = {
     'cache_expired': 'El caché ha expirado',
     'cache_updated': 'Caché actualizado con éxito',
   },
-  'fr': {
-    'app_title': 'Flutter Riverpod Architecture Propre',
-    'welcome_message': 'Bienvenue à Flutter Riverpod Architecture Propre',
-  },
+  'fr': {},
 };
 
 extension LocalizationExtension on BuildContext {

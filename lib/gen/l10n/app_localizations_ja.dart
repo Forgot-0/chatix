@@ -9,12 +9,6 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appTitle => 'Flutter Riverpod クリーンアーキテクチャ';
-
-  @override
-  String get welcomeMessage => 'Flutter Riverpod クリーンアーキテクチャへようこそ';
-
-  @override
   String get home => 'ホーム';
 
   @override
@@ -66,27 +60,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get language_explanation => '選んだ言語はアプリ全体に適用されます';
 
   @override
-  String get localization_assets_demo => 'ローカライズとアセット';
-
-  @override
-  String get current_language => '現在の言語';
-
-  @override
-  String get language_code => '言語コード';
-
-  @override
-  String get language_name => '言語名';
-
-  @override
-  String get formatting_examples => '書式の例';
-
-  @override
-  String get date_full => '日付（完全）';
-
-  @override
-  String get date_short => '日付（短縮）';
-
-  @override
   String get time => '時刻';
 
   @override
@@ -94,25 +67,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get percent => 'パーセント';
-
-  @override
-  String get localized_assets => 'ローカライズされたアセット';
-
-  @override
-  String get localized_assets_explanation =>
-      'このセクションでは、選んだ言語に応じて別のアセットを読み込む方法を示します。画像や音声などのファイルは言語ごとに用意できます。';
-
-  @override
-  String get image_example => 'ローカライズされた画像の例';
-
-  @override
-  String get welcome_image_caption => 'この画像は選んだ言語に合わせて読み込まれます';
-
-  @override
-  String get common_image_example => '共通画像の例';
-
-  @override
-  String get common_image_caption => 'この画像はすべての言語で同じです';
 
   @override
   String get logout => 'ログアウト';
@@ -142,11 +96,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tryAgain => '再試行';
 
   @override
-  String greeting(String name) {
-    return 'こんにちは、$nameさん！';
-  }
-
-  @override
   String itemCount(num count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
@@ -161,14 +110,6 @@ class AppLocalizationsJa extends AppLocalizations {
       zero: 'アイテムなし',
     );
     return '$_temp0';
-  }
-
-  @override
-  String lastUpdated(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return '最終更新: $dateString';
   }
 
   @override
@@ -728,7 +669,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String deleteMessagesTitle(int count) {
-    return '$count 件のメッセージを削除しますか？';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 件のメッセージを削除しますか？',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3124,4 +3070,122 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get bubbleFillSolid => '単色';
+
+  @override
+  String get deleteMessageTitle => 'メッセージを削除しますか？';
+
+  @override
+  String get deleteMessageForEveryone => 'すべての参加者の画面から消えます。';
+
+  @override
+  String get deleteMessagesForEveryone => 'すべての参加者の画面から消えます。';
+
+  @override
+  String get messageDeleteFailed => 'メッセージを削除できませんでした。';
+
+  @override
+  String get validationLoginIdentifierRequired => 'メールアドレスまたはユーザー名を入力してください';
+
+  @override
+  String get validationUsernameRequired => 'ユーザー名を入力してください';
+
+  @override
+  String validationMinLength(int min) {
+    String _temp0 = intl.Intl.pluralLogic(
+      min,
+      locale: localeName,
+      other: '$min 文字以上で入力してください',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get validationUsernameCharacters =>
+      '使用できるのはラテン文字、数字、スペース、, . \' - のみです';
+
+  @override
+  String get validationEmailRequired => 'メールアドレスを入力してください';
+
+  @override
+  String get validationEmailInvalid => '有効なメールアドレスを入力してください';
+
+  @override
+  String get validationPasswordRequired => 'パスワードを入力してください';
+
+  @override
+  String get validationPasswordUppercase => '大文字を1文字以上含めてください';
+
+  @override
+  String get validationPasswordLowercase => '小文字を1文字以上含めてください';
+
+  @override
+  String get validationPasswordDigit => '数字を1文字以上含めてください';
+
+  @override
+  String validationPasswordSpecial(String characters) {
+    return '記号を1文字以上含めてください: $characters';
+  }
+
+  @override
+  String get validationPasswordRepeatRequired => 'パスワードをもう一度入力してください';
+
+  @override
+  String get validationPasswordsDoNotMatch => 'パスワードが一致しません';
+
+  @override
+  String get validationFieldRequired => 'この項目は必須です';
+
+  @override
+  String get resetPasswordRequestIntro =>
+      'アカウントのメールアドレスを入力すると、パスワード再設定用のコードをお送りします。';
+
+  @override
+  String get resetPasswordConfirmIntro => 'メールに届いたコードと新しいパスワードを入力してください。';
+
+  @override
+  String get createChatDirectSearchLabel => '誰にメッセージを送りますか？';
+
+  @override
+  String get addPeopleSearchLabel => '名前または @ユーザー名 で追加';
+
+  @override
+  String get createChatDirectHelper => '1人を選んでください。個人チャットのメンバーはちょうど2人です';
+
+  @override
+  String createChatMembersHelper(int max) {
+    return '今は最大 $max 人まで。あとから追加できます';
+  }
+
+  @override
+  String get createChatDirectNeedsPeer =>
+      '個人チャットには相手がちょうど1人必要です。名前または @ユーザー名 で探してください';
+
+  @override
+  String createChatDirectTooMany(int count) {
+    return '個人チャットの相手は1人だけですが、$count 人が選ばれています。グループを選んでください';
+  }
+
+  @override
+  String get createChatNameRequired => 'チャット名を入力してください';
+
+  @override
+  String createChatTooManyMembers(int max) {
+    return '今追加できるのは最大 $max 人です。残りはチャット作成後に追加してください';
+  }
+
+  @override
+  String get createChatFailed => 'チャットを作成できませんでした';
+
+  @override
+  String get settingsRowHint => '通知、表示、プライバシー';
+
+  @override
+  String profileBirthdayWithAge(String date, int age) {
+    String _temp0 = intl.Intl.pluralLogic(
+      age,
+      locale: localeName,
+      other: '$age歳',
+    );
+    return '$date（$_temp0）';
+  }
 }

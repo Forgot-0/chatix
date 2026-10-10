@@ -65,13 +65,16 @@ class _VideoNoteSheetState extends ConsumerState<VideoNoteSheet> {
 
   /// Taken once and closed in [dispose]: the camera belongs to this sheet,
   /// not to whatever else happens to be listening.
-  late final VideoNoteRecorder _recorder = ref.read(
-    videoNoteRecorderFactoryProvider,
-  )();
+  ///
+  /// Made in [initState] rather than lazily on first use. A lazy field reads
+  /// `ref` wherever it is first touched, and if that were ever [dispose],
+  /// Riverpod 3 would throw there and the camera would stay open.
+  late final VideoNoteRecorder _recorder;
 
   @override
   void initState() {
     super.initState();
+    _recorder = ref.read(videoNoteRecorderFactoryProvider)();
     unawaited(_open());
   }
 

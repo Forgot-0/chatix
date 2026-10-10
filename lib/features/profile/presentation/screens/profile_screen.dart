@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
@@ -146,13 +147,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   value: specialization,
                 ),
 
-              if (profile.dateBirthday != null)
+              if (profile.dateBirthday case final birthday?)
                 _InfoTile(
                   icon: Icons.cake_outlined,
                   label: l10n.profileBirthday,
-                  value: MaterialLocalizations.of(
-                    context,
-                  ).formatFullDate(profile.dateBirthday!),
+                  // `date_birthday` always carries a year today (api-docs
+                  // §4.3); a profile that could hide it would pass null.
+                  value: AppDateFormat.of(context).birthday(
+                    day: birthday.day,
+                    month: birthday.month,
+                    year: birthday.year,
+                  ),
                 ),
 
               if (bio != null && bio.isNotEmpty) ...[
@@ -510,7 +515,7 @@ class _AccountRows extends ConsumerWidget {
         ListTile(
           leading: const Icon(Icons.settings_outlined),
           title: Text(l10n.settings),
-          subtitle: Text(l10n.profileSettingsHint),
+          subtitle: Text(l10n.settingsRowHint),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(SettingsRoute.location),
         ),

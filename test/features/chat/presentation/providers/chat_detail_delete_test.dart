@@ -5,12 +5,14 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/domain/usecases/delete_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
@@ -26,6 +28,8 @@ class MockGetChatUseCase extends Mock implements GetChatUseCase {}
 class MockGetMessagesUseCase extends Mock implements GetMessagesUseCase {}
 
 class MockMarkReadUseCase extends Mock implements MarkReadUseCase {}
+
+class MockDeleteMessageUseCase extends Mock implements DeleteMessageUseCase {}
 
 class FakeAuthController extends AuthController {
   FakeAuthController(this._user);
@@ -82,6 +86,7 @@ void main() {
   late MockGetChatUseCase getChat;
   late MockGetMessagesUseCase getMessages;
   late MockMarkReadUseCase markRead;
+  late MockDeleteMessageUseCase deleteMessage;
   late FakeWebSocketChannel channel;
   late ChatSocketService socket;
 
@@ -89,6 +94,7 @@ void main() {
     getChat = MockGetChatUseCase();
     getMessages = MockGetMessagesUseCase();
     markRead = MockMarkReadUseCase();
+    deleteMessage = MockDeleteMessageUseCase();
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
       secureStorage: FakeSecureStorageService(
@@ -125,6 +131,7 @@ void main() {
         getChatUseCaseProvider.overrideWithValue(getChat),
         getMessagesUseCaseProvider.overrideWithValue(getMessages),
         markReadUseCaseProvider.overrideWithValue(markRead),
+        deleteMessageUseCaseProvider.overrideWithValue(deleteMessage),
         chatSocketServiceProvider.overrideWithValue(socket),
         authProvider.overrideWith(() => FakeAuthController(me)),
       ],
@@ -193,5 +200,45 @@ void main() {
 
     final state = container.read(chatDetailProvider(chatId)).value!;
     expect(state.messages.map((m) => m.id), ['m3', 'm2', 'm1']);
+  });
+
+  group('deleting from this device', () {
+    test('a refusal comes back as the Failure, not its English', () async {
+      const refused = ApiFailure(
+        code: 'CHAT_ACCESS_DENIED',
+        message: 'Access denied for chat',
+        detail: {'chat_id': chatId},
+        status: 403,
+      );
+      when(
+        () => deleteMessage.execute(chatId, 'm2'),
+      ).thenAnswer((_) async => const Left(refused));
+      final container = await boot();
+
+      final failure = await container
+          .read(chatDetailProvider(chatId).notifier)
+          .tryDeleteMessage('m2');
+
+      // The screen turns the code into a sentence; a String here could only
+      // ever have been the server's.
+      expect(failure, refused);
+      final state = container.read(chatDetailProvider(chatId)).value!;
+      expect(state.messages.map((m) => m.id), ['m3', 'm2', 'm1']);
+    });
+
+    test('success is null, and the message is gone', () async {
+      when(
+        () => deleteMessage.execute(chatId, 'm2'),
+      ).thenAnswer((_) async => const Right(null));
+      final container = await boot();
+
+      final failure = await container
+          .read(chatDetailProvider(chatId).notifier)
+          .tryDeleteMessage('m2');
+
+      expect(failure, isNull);
+      final state = container.read(chatDetailProvider(chatId)).value!;
+      expect(state.messages.map((m) => m.id), ['m3', 'm1']);
+    });
   });
 }

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
+import 'package:chatix/features/auth/presentation/utils/auth_failure_presentation.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -48,7 +51,10 @@ class _ResetPasswordConfirmScreenState
     result.fold(
       (failure) => AppUtils.showSnackBar(
         context,
-        message: failure.message,
+        message: describeAuthFailure(
+          failure,
+          AppLocalizations.of(context),
+        ).message,
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
       (_) {
@@ -63,19 +69,21 @@ class _ResetPasswordConfirmScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).setNewPassword)),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SingleChildScrollView(
+      appBar: AppBar(title: Text(l10n.setNewPassword)),
+      // A form column, not the window's width: outside the shell there is
+      // no pane to hold it in, and a 1400 px email field reads as broken.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.x6),
+        child: AppContentWidth(
           child: FormBuilder(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Enter the code from your email and a new password.',
-                ),
+                Text(l10n.resetPasswordConfirmIntro),
                 const SizedBox(height: 24),
                 FormBuilderTextField(
                   name: 'token',
@@ -83,7 +91,7 @@ class _ResetPasswordConfirmScreenState
                     labelText: AppLocalizations.of(context).resetCode,
                     prefixIcon: Icon(Icons.vpn_key_outlined),
                   ),
-                  validator: AuthFieldValidators.required,
+                  validator: AuthFieldValidators.required(l10n),
                 ),
                 const SizedBox(height: 16),
                 FormBuilderTextField(
@@ -108,7 +116,7 @@ class _ResetPasswordConfirmScreenState
                       ),
                     ),
                   ),
-                  validator: AuthFieldValidators.password,
+                  validator: AuthFieldValidators.password(l10n),
                 ),
                 const SizedBox(height: 16),
                 FormBuilderTextField(
@@ -130,12 +138,20 @@ class _ResetPasswordConfirmScreenState
                     ),
                   ),
                   validator: AuthFieldValidators.passwordRepeat(
+                    l10n,
                     _currentPassword,
                   ),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
+                // The same primary button as signing in, rather than a
+                // Material default that reads as a link in this theme.
+                FilledButton(
                   onPressed: _isSubmitting ? null : _submit,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.x4,
+                    ),
+                  ),
                   child: _isSubmitting
                       ? const SizedBox(
                           height: 20,

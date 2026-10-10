@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
@@ -45,6 +47,7 @@ import 'package:chatix/features/chat/presentation/widgets/chat_feed.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/forward_target_dialog.dart';
 import 'package:chatix/features/chat/presentation/widgets/in_chat_search_bar.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_delete_dialog.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// One conversation.
@@ -93,6 +96,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   String? _pendingFocusId;
   int? _pendingFocusSeq;
 
+  /// Taken in [initState] because [dispose] needs it, and `ref` is off
+  /// limits there: Riverpod 3 throws a StateError for any use of it once the
+  /// element is unmounting, which used to cost the draft and every
+  /// controller below the throw.
+  late final ChatDraftsController _drafts;
+
   ComposerController get _composer =>
       ref.read(composerProvider(widget.chatId).notifier);
 
@@ -100,10 +109,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void initState() {
     super.initState();
 
+    _drafts = ref.read(chatDraftsProvider.notifier);
+
     // Whatever was typed here last time and never sent. Restored before the
     // listener goes on, so putting it back does not count as a fresh edit.
-    _textController.text =
-        ref.read(chatDraftsProvider.notifier).of(widget.chatId) ?? '';
+    _textController.text = _drafts.of(widget.chatId) ?? '';
     _textController.selection = TextSelection.collapsed(
       offset: _textController.text.length,
     );
@@ -139,7 +149,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // the screen is about to be gone, and a draft that only exists in memory
     // is a draft the chat list will not show (api-docs has nowhere to put
     // one, so this device is the only place it lives).
-    unawaited(ref.read(chatDraftsProvider.notifier).flush());
+    unawaited(_drafts.flush());
 
     _textController.dispose();
     _composerFocus.dispose();
@@ -230,6 +240,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             onStartSelection: _startSelection,
             onToggleSelected: _toggleSelected,
             onEdit: _startEditing,
+            onDelete: (messageId) => unawaited(_deleteMessages([messageId])),
             onRefresh: () =>
                 ref.read(chatDetailProvider(widget.chatId).notifier).refresh(),
           ),
@@ -449,9 +460,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         .reversed
         .toList();
 
+    final l10n = AppLocalizations.of(context);
     final useCase = ref.read(forwardMessageUseCaseProvider);
-    await _runBulk(
-      label: AppLocalizations.of(context).bulkForwarding,
+    final failures = await _runBulk(
+      label: l10n.bulkForwarding,
       total: ordered.length,
       action: (index) async {
         final message = ordered[index];
@@ -463,8 +475,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // on every item of a bulk forward would spam the target chat.
           comment: index == 0 ? target.comment : null,
         );
-        return result.match((failure) => failure.message, (_) => null);
+        return result.match((failure) => failure, (_) => null);
       },
+    );
+    if (!mounted) return;
+
+    _clearSelection();
+    if (failures.isEmpty) {
+      AppSnackbar.quiet(
+        context,
+        l10n.bulkComplete(l10n.bulkForwarding, ordered.length),
+      );
+      return;
+    }
+    AppSnackbar.failure(
+      context,
+      l10n.bulkPartial(
+        ordered.length - failures.length,
+        ordered.length,
+        failures.length,
+        friendlyFailureMessage(failures.first, l10n: l10n),
+      ),
     );
   }
 
@@ -492,68 +523,93 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  Future<void> _deleteSelected() async {
-    final state = ref.read(chatDetailProvider(widget.chatId)).value;
+  void _deleteSelected() {
     final selected = _selectedMessageIds;
-    if (state == null || selected == null || selected.isEmpty) return;
+    if (selected == null || selected.isEmpty) return;
+    unawaited(_deleteMessages(selected.toList()));
+  }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        final l10n = AppLocalizations.of(dialogContext);
+  /// The one way messages are deleted. A single message from its menu and a
+  /// selection from the bar both come here: the same question first, the
+  /// same requests, and a refusal said the same way — in the reader's words
+  /// rather than the server's (failure_messages).
+  Future<void> _deleteMessages(List<String> ids) async {
+    if (ids.isEmpty) return;
 
-        return AlertDialog(
-          title: Text(l10n.deleteMessagesTitle(selected.length)),
-          content: Text(l10n.cannotBeUndone),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(l10n.messageDelete),
-            ),
-          ],
-        );
-      },
+    final confirmed = await MessageDeleteDialog.confirm(
+      context,
+      count: ids.length,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
 
-    final ids = selected.toList();
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(chatDetailProvider(widget.chatId).notifier);
-    await _runBulk(
-      label: AppLocalizations.of(context).bulkDeleting,
+    final failures = await _runBulk(
+      label: l10n.bulkDeleting,
       total: ids.length,
-      action: (index) => notifier.deleteMessageReportingFailure(ids[index]),
+      // One message is one request: a progress dialog for it would only
+      // flash. Success needs no word either way — the bubble leaving the
+      // feed says it.
+      showProgress: ids.length > 1,
+      action: (index) => notifier.tryDeleteMessage(ids[index]),
+    );
+    if (!mounted) return;
+
+    if (_selectionMode) _clearSelection();
+    if (failures.isEmpty) return;
+
+    final reason = friendlyFailureMessage(
+      failures.first,
+      l10n: l10n,
+      fallback: l10n.messageDeleteFailed,
+    );
+    AppSnackbar.failure(
+      context,
+      ids.length == 1
+          ? reason
+          : l10n.bulkPartial(
+              ids.length - failures.length,
+              ids.length,
+              failures.length,
+              reason,
+            ),
     );
   }
 
-  Future<void> _runBulk({
+  /// Runs [action] for each of [total] items, one request at a time — the
+  /// API has no batch form of these (api-docs §5.4) — and hands back what
+  /// failed. Reporting is the caller's: what a failure means depends on what
+  /// was being done.
+  Future<List<Failure>> _runBulk({
     required String label,
     required int total,
-    required Future<String?> Function(int index) action,
+    required Future<Failure?> Function(int index) action,
+    bool showProgress = true,
   }) async {
     final l10n = AppLocalizations.of(context);
     final progress = ValueNotifier<int>(0);
-    final failures = <String>[];
+    final failures = <Failure>[];
 
-    final dialog = showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        content: ValueListenableBuilder<int>(
-          valueListenable: progress,
-          builder: (_, done, _) => Row(
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 16),
-              Expanded(child: Text(l10n.bulkProgress(label, done, total))),
-            ],
-          ),
-        ),
-      ),
-    );
+    final dialog = showProgress
+        ? showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              content: ValueListenableBuilder<int>(
+                valueListenable: progress,
+                builder: (_, done, _) => Row(
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(width: AppSpacing.x4),
+                    Expanded(
+                      child: Text(l10n.bulkProgress(label, done, total)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+        : null;
 
     for (var index = 0; index < total; index++) {
       final failure = await action(index);
@@ -561,26 +617,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       progress.value = index + 1;
     }
 
-    if (mounted) Navigator.of(context, rootNavigator: true).pop();
-    await dialog;
+    if (dialog != null) {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      await dialog;
+    }
     progress.dispose();
-    if (!mounted) return;
-
-    _clearSelection();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          failures.isEmpty
-              ? l10n.bulkComplete(label, total)
-              : l10n.bulkPartial(
-                  total - failures.length,
-                  total,
-                  failures.length,
-                  failures.first,
-                ),
-        ),
-      ),
-    );
+    return failures;
   }
 
   // ------------------------------------------------------------- jump to one

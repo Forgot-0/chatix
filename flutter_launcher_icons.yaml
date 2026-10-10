@@ -1,22 +1,44 @@
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_launcher_icons: "^0.14.3"
-
+# Launcher icons for every platform, generated from the PNGs in assets/icon/.
+#
+# Those PNGs are themselves rendered from the logo's painter
+# (lib/core/ui/brand/chatix_logo.dart). After changing the mark:
+#
+#   flutter test tool/brand/export_brand_assets_test.dart
+#   dart run flutter_launcher_icons
 flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
   image_path: "assets/icon/app_icon.png"
-  min_sdk_android: 21 # android min sdk min:16, default 21
+
+  # Overwrites the existing @mipmap/ic_launcher rather than adding a second
+  # icon beside it, so the manifest keeps pointing at the right one.
+  android: true
+  min_sdk_android: 21
+  # The warm canvas white of the light theme (AppNeutrals.light[0]).
+  adaptive_icon_background: "#FCFAF8"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  # The foreground PNG already keeps the mark inside the 66 dp safe circle;
+  # the tool's default 16 % inset would shrink it a second time.
+  adaptive_icon_foreground_inset: 0
+  # Android 13+ themed icons: the silhouette with the X cut out.
+  adaptive_icon_monochrome: "assets/icon/app_icon_monochrome.png"
+
+  ios: true
+  # The App Store rejects icons with an alpha channel.
+  remove_alpha_ios: true
+
   web:
     generate: true
     image_path: "assets/icon/app_icon.png"
-    background_color: "#hex_color"
-    theme_color: "#hex_color"
+    # The light canvas (AppNeutrals.canvas) and the brand violet.
+    background_color: "#F8F5F1"
+    theme_color: "#6E56F8"
+
+  # Desktop icons are drawn by their own silhouette, so these use the bubble
+  # alone on a transparent ground: the bubble is the plate.
   windows:
     generate: true
-    image_path: "assets/icon/app_icon.png"
-    icon_size: 48 # min:48, max:256, default: 48
+    image_path: "assets/icon/app_icon_mark.png"
+    icon_size: 256
+
   macos:
     generate: true
-    image_path: "assets/icon/app_icon.png"
+    image_path: "assets/icon/app_icon_mark.png"

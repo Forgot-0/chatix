@@ -1432,12 +1432,17 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
     _sendRead(queued);
   }
 
-  Future<String?> deleteMessageReportingFailure(String messageId) async {
+  /// [deleteMessage] for a caller that reports rather than catches: the
+  /// [Failure] itself, or null once the message is gone.
+  ///
+  /// The failure, not its `message` — that is the server's English, written
+  /// for a log; the screen turns the code into a sentence (failure_messages).
+  Future<Failure?> tryDeleteMessage(String messageId) async {
     try {
       await deleteMessage(messageId);
       return null;
     } on Failure catch (failure) {
-      return failure.message;
+      return failure;
     }
   }
 

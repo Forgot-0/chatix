@@ -1,13 +1,5 @@
 {
   "@@locale": "en",
-  "appTitle": "Flutter Riverpod Clean Architecture",
-  "@appTitle": {
-    "description": "The title of the application"
-  },
-  "welcomeMessage": "Welcome to Flutter Riverpod Clean Architecture",
-  "@welcomeMessage": {
-    "description": "The welcome message displayed on the home screen"
-  },
   "home": "Home",
   "@home": {
     "description": "Label for the home tab or button"
@@ -76,34 +68,6 @@
   "@language_explanation": {
     "description": "Explanation of the language selection effects"
   },
-  "localization_assets_demo": "Localization & Assets Demo",
-  "@localization_assets_demo": {
-    "description": "Title for the localization assets demo screen"
-  },
-  "current_language": "Current Language",
-  "@current_language": {
-    "description": "Label for displaying current language info"
-  },
-  "language_code": "Language code",
-  "@language_code": {
-    "description": "Label for language code"
-  },
-  "language_name": "Language name",
-  "@language_name": {
-    "description": "Label for language name"
-  },
-  "formatting_examples": "Formatting Examples",
-  "@formatting_examples": {
-    "description": "Title for formatting examples section"
-  },
-  "date_full": "Date (full)",
-  "@date_full": {
-    "description": "Label for full date format example"
-  },
-  "date_short": "Date (short)",
-  "@date_short": {
-    "description": "Label for short date format example"
-  },
   "time": "Time",
   "@time": {
     "description": "Label for time format example"
@@ -115,30 +79,6 @@
   "percent": "Percent",
   "@percent": {
     "description": "Label for percent format example"
-  },
-  "localized_assets": "Localized Assets",
-  "@localized_assets": {
-    "description": "Title for localized assets section"
-  },
-  "localized_assets_explanation": "This section demonstrates how to load different assets based on the selected language. Images, audio, and other resources can be language-specific.",
-  "@localized_assets_explanation": {
-    "description": "Explanation of localized assets feature"
-  },
-  "image_example": "Localized Image Example",
-  "@image_example": {
-    "description": "Title for localized image example"
-  },
-  "welcome_image_caption": "This image is loaded based on your selected language",
-  "@welcome_image_caption": {
-    "description": "Caption for the welcome image example"
-  },
-  "common_image_example": "Common Image Example",
-  "@common_image_example": {
-    "description": "Title for common image example"
-  },
-  "common_image_caption": "This image is the same across all languages",
-  "@common_image_caption": {
-    "description": "Caption for the common image example"
   },
   "logout": "Logout",
   "@logout": {
@@ -176,16 +116,6 @@
   "@tryAgain": {
     "description": "Label for the try again button"
   },
-  "greeting": "Hello, {name}!",
-  "@greeting": {
-    "description": "A greeting message with the person's name",
-    "placeholders": {
-      "name": {
-        "type": "String",
-        "example": "John"
-      }
-    }
-  },
   "itemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
   "@itemCount": {
     "description": "A plural message based on an item count",
@@ -193,16 +123,6 @@
       "count": {
         "type": "num",
         "format": "compact"
-      }
-    }
-  },
-  "lastUpdated": "Last updated: {date}",
-  "@lastUpdated": {
-    "description": "When something was last updated",
-    "placeholders": {
-      "date": {
-        "type": "DateTime",
-        "format": "yMMMd"
       }
     }
   },
@@ -946,7 +866,7 @@
       }
     }
   },
-  "deleteMessagesTitle": "Delete {count} messages?",
+  "deleteMessagesTitle": "{count, plural, one{Delete {count} message?} other{Delete {count} messages?}}",
   "@deleteMessagesTitle": {
     "description": "Bulk delete confirmation",
     "placeholders": {
@@ -4077,5 +3997,162 @@
   "bubbleFillSolid": "Solid colour",
   "@bubbleFillSolid": {
     "description": "Bubble fill option: one flat accent colour"
+  },
+  "deleteMessageTitle": "Delete message?",
+  "@deleteMessageTitle": {
+    "description": "Confirmation title before deleting one message"
+  },
+  "deleteMessageForEveryone": "It will disappear for all participants.",
+  "@deleteMessageForEveryone": {
+    "description": "Body of the one-message delete dialog. DELETE removes the message for every member (api-docs 5.4); there is no \"only for me\""
+  },
+  "deleteMessagesForEveryone": "They will disappear for all participants.",
+  "@deleteMessagesForEveryone": {
+    "description": "Body of the bulk delete dialog. DELETE removes messages for every member (api-docs 5.4)"
+  },
+  "messageDeleteFailed": "Couldn't delete the message.",
+  "@messageDeleteFailed": {
+    "description": "Snackbar when deleting a message failed and the error code has no sentence of its own"
+  },
+  "validationLoginIdentifierRequired": "Enter your email or username",
+  "@validationLoginIdentifierRequired": {
+    "description": "Sign-in form: the email-or-username field is empty"
+  },
+  "validationUsernameRequired": "Username is required",
+  "@validationUsernameRequired": {
+    "description": "Registration form: the username field is empty"
+  },
+  "validationMinLength": "{min, plural, one{At least {min} character} other{At least {min} characters}}",
+  "@validationMinLength": {
+    "description": "Form field error: the value is shorter than the minimum",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "validationUsernameCharacters": "Only Latin letters, digits, spaces and , . ' - are allowed",
+  "@validationUsernameCharacters": {
+    "description": "Registration form: the username has a character outside [a-zA-Z0-9 ,.'-]"
+  },
+  "validationEmailRequired": "Email is required",
+  "@validationEmailRequired": {
+    "description": "Form field error: the email field is empty"
+  },
+  "validationEmailInvalid": "Enter a valid email address",
+  "@validationEmailInvalid": {
+    "description": "Form field error: the email is not well-formed"
+  },
+  "validationPasswordRequired": "Password is required",
+  "@validationPasswordRequired": {
+    "description": "Form field error: the password field is empty"
+  },
+  "validationPasswordUppercase": "Add at least one uppercase letter",
+  "@validationPasswordUppercase": {
+    "description": "Password rule: needs an uppercase letter"
+  },
+  "validationPasswordLowercase": "Add at least one lowercase letter",
+  "@validationPasswordLowercase": {
+    "description": "Password rule: needs a lowercase letter"
+  },
+  "validationPasswordDigit": "Add at least one digit",
+  "@validationPasswordDigit": {
+    "description": "Password rule: needs a digit"
+  },
+  "validationPasswordSpecial": "Add at least one special character: {characters}",
+  "@validationPasswordSpecial": {
+    "description": "Password rule: needs one of the listed special characters, passed in as-is",
+    "placeholders": {
+      "characters": {
+        "type": "String"
+      }
+    }
+  },
+  "validationPasswordRepeatRequired": "Please repeat your password",
+  "@validationPasswordRepeatRequired": {
+    "description": "Form field error: the repeat-password field is empty"
+  },
+  "validationPasswordsDoNotMatch": "Passwords do not match",
+  "@validationPasswordsDoNotMatch": {
+    "description": "Form field error: the two passwords differ"
+  },
+  "validationFieldRequired": "This field is required",
+  "@validationFieldRequired": {
+    "description": "Form field error: a required field is empty"
+  },
+  "resetPasswordRequestIntro": "Enter the email on your account and we will send you a code to reset your password.",
+  "@resetPasswordRequestIntro": {
+    "description": "Explains the reset-password request screen"
+  },
+  "resetPasswordConfirmIntro": "Enter the code from your email and a new password.",
+  "@resetPasswordConfirmIntro": {
+    "description": "Explains the reset-password confirm screen"
+  },
+  "createChatDirectSearchLabel": "Who do you want to message?",
+  "@createChatDirectSearchLabel": {
+    "description": "New chat, direct type: label of the people search field"
+  },
+  "addPeopleSearchLabel": "Add people by name or @username",
+  "@addPeopleSearchLabel": {
+    "description": "Label of the field that adds several people to a chat"
+  },
+  "createChatDirectHelper": "Pick one person — a direct chat has exactly two members",
+  "@createChatDirectHelper": {
+    "description": "New chat, direct type: helper under the people search field"
+  },
+  "createChatMembersHelper": "Up to {max} people now — you can add more later",
+  "@createChatMembersHelper": {
+    "description": "New chat, group types: helper under the people search field",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createChatDirectNeedsPeer": "A direct chat needs exactly one other person — find them by name or @username",
+  "@createChatDirectNeedsPeer": {
+    "description": "New chat, direct type: create tapped with nobody picked"
+  },
+  "createChatDirectTooMany": "A direct chat has only one other person, but {count} are selected — choose Group instead",
+  "@createChatDirectTooMany": {
+    "description": "New chat, direct type: more than one person picked",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createChatNameRequired": "Give the chat a name",
+  "@createChatNameRequired": {
+    "description": "New chat, group types: create tapped with an empty name"
+  },
+  "createChatTooManyMembers": "You can add up to {max} people now — add the rest once the chat is created",
+  "@createChatTooManyMembers": {
+    "description": "New chat: more people picked than a chat can be created with",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "createChatFailed": "Couldn't create the chat",
+  "@createChatFailed": {
+    "description": "New chat: the server refused and the error code has no sentence of its own"
+  },
+  "settingsRowHint": "Notifications, appearance, privacy",
+  "@settingsRowHint": {
+    "description": "Subtitle of the Settings row on your own profile"
+  },
+  "profileBirthdayWithAge": "{date} ({age, plural, one{{age} year old} other{{age} years old}})",
+  "@profileBirthdayWithAge": {
+    "description": "Birthday on a profile with the age it makes today. date is the formatted day, month and year",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
   }
 }

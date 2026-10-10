@@ -42,6 +42,7 @@ class ChatFeed extends ConsumerStatefulWidget {
     required this.onStartSelection,
     required this.onToggleSelected,
     required this.onEdit,
+    required this.onDelete,
     required this.onRefresh,
   });
 
@@ -55,6 +56,7 @@ class ChatFeed extends ConsumerStatefulWidget {
   final void Function(String messageId) onStartSelection;
   final void Function(String messageId) onToggleSelected;
   final void Function(MessageEntity message) onEdit;
+  final void Function(String messageId) onDelete;
 
   final Future<void> Function() onRefresh;
 
@@ -380,6 +382,7 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
           onStartSelection: widget.onStartSelection,
           onToggleSelected: widget.onToggleSelected,
           onEdit: widget.onEdit,
+          onDelete: widget.onDelete,
         ),
       },
     );

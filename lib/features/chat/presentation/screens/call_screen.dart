@@ -55,14 +55,20 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   Timer? _hideControls;
   Timer? _elapsedTicker;
 
+  /// Taken in [initState] because [dispose] needs it, and `ref` is off
+  /// limits there (Riverpod 3 throws a StateError once the element is
+  /// unmounting) — which is how the mini player used to stay hidden after
+  /// the user walked out of a running call.
+  late final CallScreenVisibility _visibility;
+
   @override
   void initState() {
     super.initState();
+    _visibility = ref.read(callScreenVisibleProvider.notifier);
+
     // Tells the mini player to stand down while this screen is on top.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(callScreenVisibleProvider.notifier).set(visible: true);
-      }
+      if (mounted) _visibility.show(this);
     });
     // Only the elapsed-time readout in the header needs this, so it stops
     // asking for frames the moment there is no call to time.
@@ -76,7 +82,12 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   void dispose() {
     _hideControls?.cancel();
     _elapsedTicker?.cancel();
-    ref.read(callScreenVisibleProvider.notifier).set(visible: false);
+
+    // Not now: dispose runs while the tree is locked, and a provider changed
+    // from here is refused ("modify a provider while the widget tree was
+    // building"). A microtask lands right after this frame, before the next.
+    final visibility = _visibility;
+    scheduleMicrotask(() => visibility.hide(this));
     super.dispose();
   }
 

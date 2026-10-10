@@ -147,6 +147,86 @@ void main() {
     });
   });
 
+  group('a birthday', () {
+    test('Russian: day, month and year, no weekday, the age in brackets', () {
+      expect(
+        ru().birthday(day: 12, month: 4, year: 1990),
+        '12 апреля 1990 (36 лет)',
+      );
+    });
+
+    test('the age agrees with its number in Russian', () {
+      // 1, 2–4 and 5+ are three different words ("год", "года", "лет").
+      expect(
+        ru().birthday(day: 1, month: 1, year: 2025),
+        '1 января 2025 (1 год)',
+      );
+      expect(
+        ru().birthday(day: 1, month: 1, year: 2023),
+        '1 января 2023 (3 года)',
+      );
+      expect(
+        ru().birthday(day: 1, month: 1, year: 2005),
+        '1 января 2005 (21 год)',
+      );
+      expect(
+        ru().birthday(day: 1, month: 1, year: 2014),
+        '1 января 2014 (12 лет)',
+      );
+    });
+
+    test('English keeps its own order and says "years old"', () {
+      expect(
+        en().birthday(day: 12, month: 4, year: 1990),
+        'April 12, 1990 (36 years old)',
+      );
+      expect(
+        en().birthday(day: 1, month: 1, year: 2025),
+        'January 1, 2025 (1 year old)',
+      );
+    });
+
+    test('without a year it is the day and month alone, and no age', () {
+      expect(ru().birthday(day: 12, month: 4), '12 апреля');
+      expect(en().birthday(day: 12, month: 4), 'April 12');
+      // A leap day with no year still has a day to stand on.
+      expect(ru().birthday(day: 29, month: 2), '29 февраля');
+    });
+
+    test('a date in the future is shown, without a negative age', () {
+      expect(ru().birthday(day: 1, month: 1, year: 2030), '1 января 2030');
+    });
+
+    test('a year is not counted until its day comes round', () {
+      final today = DateTime(2026, 10, 10);
+      expect(AppDateFormat.ageOn(today, day: 10, month: 10, year: 1990), 36);
+      expect(AppDateFormat.ageOn(today, day: 11, month: 10, year: 1990), 35);
+      expect(AppDateFormat.ageOn(today, day: 9, month: 10, year: 1990), 36);
+      expect(AppDateFormat.ageOn(today, day: 1, month: 11, year: 1990), 35);
+    });
+
+    test('29 February comes of age on 1 March in a common year', () {
+      expect(
+        AppDateFormat.ageOn(
+          DateTime(2027, 2, 28),
+          day: 29,
+          month: 2,
+          year: 2008,
+        ),
+        18,
+      );
+      expect(
+        AppDateFormat.ageOn(
+          DateTime(2027, 3, 1),
+          day: 29,
+          month: 2,
+          year: 2008,
+        ),
+        19,
+      );
+    });
+  });
+
   group('from a context', () {
     Future<AppDateFormat> formatIn(
       WidgetTester tester, {

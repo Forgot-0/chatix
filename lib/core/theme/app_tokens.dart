@@ -88,6 +88,55 @@ abstract final class AppPalette {
   ];
 }
 
+/// The ChatiX mark: one outgoing bubble with its anchor corner, and an X.
+///
+/// Every length is a share of the mark's side, so the one drawing serves a
+/// 16 px favicon and a 1024 px store icon alike. The colours are the brand's
+/// own and deliberately do not follow the accent picked in appearance
+/// settings: a logo that turns green for someone who likes green is no longer
+/// the logo.
+abstract final class AppBrandMark {
+  /// The three soft corners — the same share of the side as a default
+  /// bubble's 20 px radius is of a 64 px bubble.
+  static const double cornerRadius = 0.31;
+
+  /// The anchor corner, bottom right, where an outgoing bubble points.
+  static const double anchorRadius = 0.09;
+
+  /// How far each arm of the X reaches from the centre, along either axis.
+  static const double glyphReach = 0.19;
+
+  /// How hard each half of the X bows towards the other: where its curve's
+  /// control point sits past the centre, as a share of [glyphReach].
+  ///
+  /// The X is two strokes leaning in — ")(" pushed together, the two sides
+  /// of a conversation — and not a straight cross, because a white cross on
+  /// a coloured square is the close button.
+  static const double glyphBow = 0.9;
+
+  /// The stroke the X is drawn with.
+  static const double glyphStroke = 0.115;
+
+  /// Where the gradient starts (top left) and ends (bottom right).
+  static const Color gradientStart = AppPalette.violet;
+  static const Color gradientEnd = AppPalette.indigo;
+
+  /// The soft light in the top-left of the bubble: the same bloom the mesh
+  /// wallpapers are built from, small enough to read as depth, not as a
+  /// second colour.
+  static const Color bloom = AppPalette.violetSoft;
+  static const double bloomAlpha = 0.55;
+
+  /// The X. White in every theme: it sits on the gradient, never on a ground.
+  static const Color glyph = Color(0xFFFFFFFF);
+
+  /// The mark above a sign-in or sign-up form.
+  static const double authSize = 64;
+
+  /// The mark the welcome screen opens on.
+  static const double welcomeSize = 112;
+}
+
 /// Warm graphite neutrals, twelve steps, lightest to darkest.
 ///
 /// Both ramps are ordered the same way, so an index always means the same

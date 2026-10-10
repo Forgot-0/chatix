@@ -504,14 +504,49 @@ void main() {
       await container.read(callProvider.notifier).join(chatId);
       expect(container.read(callMiniPlayerVisibleProvider), isTrue);
 
-      container.read(callScreenVisibleProvider.notifier).set(visible: true);
+      final screen = Object();
+      container.read(callScreenVisibleProvider.notifier).show(screen);
       expect(container.read(callMiniPlayerVisibleProvider), isFalse);
 
-      container.read(callScreenVisibleProvider.notifier).set(visible: false);
+      container.read(callScreenVisibleProvider.notifier).hide(screen);
       expect(container.read(callMiniPlayerVisibleProvider), isTrue);
 
       await container.read(callProvider.notifier).leave();
       expect(container.read(callMiniPlayerVisibleProvider), isFalse);
+    });
+
+    test('a screen leaving late does not hide the one that replaced it', () {
+      // CallScreen says it has gone a microtask after dispose — Riverpod
+      // refuses a provider change from inside it — and by then a screen
+      // that replaced it in the same frame has already said it is here.
+      final container = boot();
+      final visibility = container.read(callScreenVisibleProvider.notifier);
+      final leaving = Object();
+      final arriving = Object();
+
+      visibility.show(leaving);
+      visibility.show(arriving);
+      visibility.hide(leaving);
+      expect(container.read(callScreenVisibleProvider), isTrue);
+
+      visibility.hide(arriving);
+      expect(container.read(callScreenVisibleProvider), isFalse);
+
+      // Twice, or for a screen that never showed: nothing to take back.
+      visibility.hide(arriving);
+      visibility.hide(Object());
+      expect(container.read(callScreenVisibleProvider), isFalse);
+    });
+
+    test('hiding after the container is gone is a no-op, not a throw', () {
+      final container = boot();
+      final visibility = container.read(callScreenVisibleProvider.notifier);
+      final screen = Object();
+      visibility.show(screen);
+
+      container.dispose();
+
+      expect(() => visibility.hide(screen), returnsNormally);
     });
 
     test('stays up while the call is reconnecting', () async {

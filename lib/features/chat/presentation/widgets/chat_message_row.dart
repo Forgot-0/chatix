@@ -55,6 +55,7 @@ class ChatMessageRow extends ConsumerWidget {
     required this.onStartSelection,
     required this.onToggleSelected,
     required this.onEdit,
+    required this.onDelete,
   });
 
   final String chatId;
@@ -67,6 +68,11 @@ class ChatMessageRow extends ConsumerWidget {
   final void Function(String messageId) onStartSelection;
   final void Function(String messageId) onToggleSelected;
   final void Function(MessageEntity message) onEdit;
+
+  /// Asks before deleting, and says so if the server refuses. The screen's,
+  /// so that one message from its menu and a whole selection from the bar
+  /// go through the same question and the same report.
+  final void Function(String messageId) onDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -192,7 +198,7 @@ class ChatMessageRow extends ConsumerWidget {
           ? () => onEdit(message)
           : null,
       onDelete: canDeleteMessage(state.chat, me, message.authorId)
-          ? () => notifier.deleteMessage(message.id)
+          ? () => onDelete(message.id)
           : null,
       onOpenAttachment: (attachment) =>
           _openAttachment(context, ref, message, attachment),

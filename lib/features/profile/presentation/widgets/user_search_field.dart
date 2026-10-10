@@ -17,7 +17,7 @@ class UserSearchField extends ConsumerStatefulWidget {
     super.key,
     required this.onSelected,
     this.excludedUserIds = const {},
-    this.labelText = 'Search by name or @username',
+    this.labelText,
     this.autofocus = false,
     this.debounce = const Duration(milliseconds: 300),
   });
@@ -26,7 +26,8 @@ class UserSearchField extends ConsumerStatefulWidget {
 
   final Set<int> excludedUserIds;
 
-  final String labelText;
+  /// The field's label; left out, the plain people search's.
+  final String? labelText;
   final bool autofocus;
   final Duration debounce;
 
@@ -156,7 +157,9 @@ class _UserSearchFieldState extends ConsumerState<UserSearchField> {
           textInputAction: TextInputAction.search,
           onChanged: _onChanged,
           decoration: InputDecoration(
-            labelText: widget.labelText,
+            labelText:
+                widget.labelText ??
+                AppLocalizations.of(context).searchPeopleHint,
             prefixIcon: const Icon(Icons.search),
             border: const OutlineInputBorder(),
             suffixIcon: hasQuery
@@ -294,7 +297,7 @@ class MultiUserSearchField extends StatelessWidget {
     required this.onAdd,
     required this.onRemove,
     this.excludedUserIds = const {},
-    this.labelText = 'Add people by name or @username',
+    this.labelText,
     this.helperText,
   });
 
@@ -307,7 +310,8 @@ class MultiUserSearchField extends StatelessWidget {
   /// kinder than letting them be tapped and quietly ignored.
   final Set<int> excludedUserIds;
 
-  final String labelText;
+  /// The field's label; left out, an invitation to add people.
+  final String? labelText;
   final String? helperText;
 
   @override
@@ -345,7 +349,8 @@ class MultiUserSearchField extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         UserSearchField(
-          labelText: labelText,
+          labelText:
+              labelText ?? AppLocalizations.of(context).addPeopleSearchLabel,
           excludedUserIds: {...excludedUserIds, ...selected.map((p) => p.id)},
           onSelected: onAdd,
         ),

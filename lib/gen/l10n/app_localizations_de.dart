@@ -9,13 +9,6 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
-  String get appTitle => 'Flutter Riverpod Saubere Architektur';
-
-  @override
-  String get welcomeMessage =>
-      'Willkommen bei Flutter Riverpod Saubere Architektur';
-
-  @override
   String get home => 'Startseite';
 
   @override
@@ -68,27 +61,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die gewählte Sprache gilt für die gesamte App';
 
   @override
-  String get localization_assets_demo => 'Lokalisierung & Assets';
-
-  @override
-  String get current_language => 'Aktuelle Sprache';
-
-  @override
-  String get language_code => 'Sprachcode';
-
-  @override
-  String get language_name => 'Sprachname';
-
-  @override
-  String get formatting_examples => 'Formatierungsbeispiele';
-
-  @override
-  String get date_full => 'Datum (vollständig)';
-
-  @override
-  String get date_short => 'Datum (kurz)';
-
-  @override
   String get time => 'Uhrzeit';
 
   @override
@@ -96,26 +68,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get percent => 'Prozent';
-
-  @override
-  String get localized_assets => 'Lokalisierte Assets';
-
-  @override
-  String get localized_assets_explanation =>
-      'Dieser Abschnitt zeigt, wie sich je nach Sprache andere Assets laden lassen. Bilder, Audio und andere Ressourcen können sprachabhängig sein.';
-
-  @override
-  String get image_example => 'Beispiel für ein lokalisiertes Bild';
-
-  @override
-  String get welcome_image_caption =>
-      'Dieses Bild richtet sich nach deiner Sprache';
-
-  @override
-  String get common_image_example => 'Beispiel für ein gemeinsames Bild';
-
-  @override
-  String get common_image_caption => 'Dieses Bild ist in allen Sprachen gleich';
 
   @override
   String get logout => 'Abmelden';
@@ -145,11 +97,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tryAgain => 'Erneut versuchen';
 
   @override
-  String greeting(String name) {
-    return 'Hallo, $name!';
-  }
-
-  @override
   String itemCount(num count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
@@ -164,14 +111,6 @@ class AppLocalizationsDe extends AppLocalizations {
       zero: 'Keine Elemente',
     );
     return '$_temp0';
-  }
-
-  @override
-  String lastUpdated(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return 'Zuletzt aktualisiert: $dateString';
   }
 
   @override
@@ -743,7 +682,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String deleteMessagesTitle(int count) {
-    return '$count Nachrichten löschen?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Nachrichten löschen?',
+      one: '$count Nachricht löschen?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3288,4 +3233,133 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get bubbleFillSolid => 'Einfarbig';
+
+  @override
+  String get deleteMessageTitle => 'Nachricht löschen?';
+
+  @override
+  String get deleteMessageForEveryone =>
+      'Sie verschwindet für alle Teilnehmer.';
+
+  @override
+  String get deleteMessagesForEveryone =>
+      'Sie verschwinden für alle Teilnehmer.';
+
+  @override
+  String get messageDeleteFailed =>
+      'Die Nachricht konnte nicht gelöscht werden.';
+
+  @override
+  String get validationLoginIdentifierRequired =>
+      'Gib deine E-Mail-Adresse oder deinen Benutzernamen ein';
+
+  @override
+  String get validationUsernameRequired => 'Gib einen Benutzernamen ein';
+
+  @override
+  String validationMinLength(int min) {
+    String _temp0 = intl.Intl.pluralLogic(
+      min,
+      locale: localeName,
+      other: 'Mindestens $min Zeichen',
+      one: 'Mindestens $min Zeichen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get validationUsernameCharacters =>
+      'Nur lateinische Buchstaben, Ziffern, Leerzeichen und , . \' - sind erlaubt';
+
+  @override
+  String get validationEmailRequired => 'Gib deine E-Mail-Adresse ein';
+
+  @override
+  String get validationEmailInvalid => 'Gib eine gültige E-Mail-Adresse ein';
+
+  @override
+  String get validationPasswordRequired => 'Gib ein Passwort ein';
+
+  @override
+  String get validationPasswordUppercase =>
+      'Füge mindestens einen Großbuchstaben hinzu';
+
+  @override
+  String get validationPasswordLowercase =>
+      'Füge mindestens einen Kleinbuchstaben hinzu';
+
+  @override
+  String get validationPasswordDigit => 'Füge mindestens eine Ziffer hinzu';
+
+  @override
+  String validationPasswordSpecial(String characters) {
+    return 'Füge mindestens ein Sonderzeichen hinzu: $characters';
+  }
+
+  @override
+  String get validationPasswordRepeatRequired => 'Wiederhole dein Passwort';
+
+  @override
+  String get validationPasswordsDoNotMatch =>
+      'Die Passwörter stimmen nicht überein';
+
+  @override
+  String get validationFieldRequired => 'Dieses Feld ist erforderlich';
+
+  @override
+  String get resetPasswordRequestIntro =>
+      'Gib die E-Mail-Adresse deines Kontos ein, und wir schicken dir einen Code zum Zurücksetzen des Passworts.';
+
+  @override
+  String get resetPasswordConfirmIntro =>
+      'Gib den Code aus der E-Mail und ein neues Passwort ein.';
+
+  @override
+  String get createChatDirectSearchLabel => 'Wem möchtest du schreiben?';
+
+  @override
+  String get addPeopleSearchLabel => 'Per Name oder @Benutzername hinzufügen';
+
+  @override
+  String get createChatDirectHelper =>
+      'Wähle eine Person – ein Direktchat hat genau zwei Mitglieder';
+
+  @override
+  String createChatMembersHelper(int max) {
+    return 'Jetzt bis zu $max Personen – weitere kannst du später hinzufügen';
+  }
+
+  @override
+  String get createChatDirectNeedsPeer =>
+      'Ein Direktchat braucht genau eine weitere Person – such sie per Name oder @Benutzername';
+
+  @override
+  String createChatDirectTooMany(int count) {
+    return 'Ein Direktchat hat nur eine weitere Person, ausgewählt sind aber $count – wähle stattdessen Gruppe';
+  }
+
+  @override
+  String get createChatNameRequired => 'Gib dem Chat einen Namen';
+
+  @override
+  String createChatTooManyMembers(int max) {
+    return 'Du kannst jetzt bis zu $max Personen hinzufügen – den Rest, sobald der Chat erstellt ist';
+  }
+
+  @override
+  String get createChatFailed => 'Der Chat konnte nicht erstellt werden';
+
+  @override
+  String get settingsRowHint => 'Benachrichtigungen, Darstellung, Privatsphäre';
+
+  @override
+  String profileBirthdayWithAge(String date, int age) {
+    String _temp0 = intl.Intl.pluralLogic(
+      age,
+      locale: localeName,
+      other: '$age Jahre',
+      one: '$age Jahr',
+    );
+    return '$date ($_temp0)';
+  }
 }

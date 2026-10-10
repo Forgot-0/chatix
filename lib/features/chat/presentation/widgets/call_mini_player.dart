@@ -35,7 +35,12 @@ class CallOverlay extends ConsumerWidget {
       textDirection: Directionality.of(context),
       children: [
         child,
-        if (visible) const Positioned.fill(child: CallMiniPlayer()),
+        // An overlay of its own: this layer sits above the navigator, and so
+        // above the navigator's overlay, which is the one a tooltip on the
+        // pill's buttons would otherwise look for — and not find. Taps that
+        // miss the pill still fall through to the app underneath.
+        if (visible)
+          Positioned.fill(child: Overlay.wrap(child: const CallMiniPlayer())),
       ],
     );
   }

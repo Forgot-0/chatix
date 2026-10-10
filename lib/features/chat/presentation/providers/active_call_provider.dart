@@ -29,13 +29,32 @@ final isCallActiveProvider = Provider<bool>(
 /// Set by `CallScreen` itself as it comes and goes. The floating mini player
 /// keys off it: a call is always *running*, but it only needs a window
 /// following the user around when its own screen is not on top.
+///
+/// Kept per screen rather than as one flag. A screen may not touch a
+/// provider while it is being disposed, so it says it has gone a moment
+/// later — and by then a screen that replaced it in the same frame may
+/// already have said it is here. A single flag would take the later word
+/// and put the mini player over a call screen that is on top.
 class CallScreenVisibility extends Notifier<bool> {
+  final Set<Object> _screens = {};
+
   @override
   bool build() => false;
 
-  void set({required bool visible}) {
-    if (state == visible) return;
-    state = visible;
+  /// [screen] is on top. Any object that stays the same for the screen's
+  /// lifetime will do; `CallScreen` passes its own state.
+  void show(Object screen) {
+    if (!ref.mounted) return;
+    _screens.add(screen);
+    state = true;
+  }
+
+  /// [screen] has gone. Safe to call late, twice, or after the container
+  /// itself has been torn down — the screen's dispose cannot know which.
+  void hide(Object screen) {
+    if (!ref.mounted) return;
+    if (!_screens.remove(screen)) return;
+    state = _screens.isNotEmpty;
   }
 }
 

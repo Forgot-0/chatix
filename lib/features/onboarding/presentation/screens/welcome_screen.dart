@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/brand/chatix_logo.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/onboarding/presentation/providers/onboarding_providers.dart';
 import 'package:chatix/features/onboarding/presentation/widgets/onboarding_page_view.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -121,40 +123,44 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 AppSpacing.x6,
                 AppSpacing.x6,
               ),
-              child: Column(
-                children: [
-                  Semantics(
-                    label: l10n.onboardingPageOf(_index + 1, _pageCount),
-                    child: OnboardingDots(count: _pageCount, current: _index),
-                  ),
-                  const SizedBox(height: AppSpacing.x6),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _advance,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.x4,
+              child: AppContentWidth(
+                // The same column as the sign-in form it leads to: a button the
+                // width of a monitor is not a button.
+                child: Column(
+                  children: [
+                    Semantics(
+                      label: l10n.onboardingPageOf(_index + 1, _pageCount),
+                      child: OnboardingDots(count: _pageCount, current: _index),
+                    ),
+                    const SizedBox(height: AppSpacing.x6),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _advance,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.x4,
+                          ),
+                        ),
+                        child: Text(switch (_index) {
+                          0 => l10n.welcomeGetStarted,
+                          _ when _isLastPage => l10n.onboardingDone,
+                          _ => l10n.onboardingNext,
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.x2),
+                    TextButton(
+                      onPressed: () => _leave(LoginRoute.location),
+                      child: Text(
+                        l10n.welcomeSignIn,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
                         ),
                       ),
-                      child: Text(switch (_index) {
-                        0 => l10n.welcomeGetStarted,
-                        _ when _isLastPage => l10n.onboardingDone,
-                        _ => l10n.onboardingNext,
-                      }),
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.x2),
-                  TextButton(
-                    onPressed: () => _leave(LoginRoute.location),
-                    child: Text(
-                      l10n.welcomeSignIn,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -193,10 +199,7 @@ class _WelcomeIntro extends StatelessWidget {
             child: AnimatedOpacity(
               opacity: entered ? 1 : 0,
               duration: at(AppMotion.slow),
-              child: const OnboardingGlyph(
-                icon: Icons.chat_bubble_outline,
-                size: 128,
-              ),
+              child: const ChatixLogo(size: AppBrandMark.welcomeSize),
             ),
           ),
           const SizedBox(height: AppSpacing.x8),

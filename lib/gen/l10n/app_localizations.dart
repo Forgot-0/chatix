@@ -108,18 +108,6 @@ abstract class AppLocalizations {
     Locale('bn'),
   ];
 
-  /// The title of the application
-  ///
-  /// In en, this message translates to:
-  /// **'Flutter Riverpod Clean Architecture'**
-  String get appTitle;
-
-  /// The welcome message displayed on the home screen
-  ///
-  /// In en, this message translates to:
-  /// **'Welcome to Flutter Riverpod Clean Architecture'**
-  String get welcomeMessage;
-
   /// Label for the home tab or button
   ///
   /// In en, this message translates to:
@@ -222,48 +210,6 @@ abstract class AppLocalizations {
   /// **'The selected language will be applied across the entire application'**
   String get language_explanation;
 
-  /// Title for the localization assets demo screen
-  ///
-  /// In en, this message translates to:
-  /// **'Localization & Assets Demo'**
-  String get localization_assets_demo;
-
-  /// Label for displaying current language info
-  ///
-  /// In en, this message translates to:
-  /// **'Current Language'**
-  String get current_language;
-
-  /// Label for language code
-  ///
-  /// In en, this message translates to:
-  /// **'Language code'**
-  String get language_code;
-
-  /// Label for language name
-  ///
-  /// In en, this message translates to:
-  /// **'Language name'**
-  String get language_name;
-
-  /// Title for formatting examples section
-  ///
-  /// In en, this message translates to:
-  /// **'Formatting Examples'**
-  String get formatting_examples;
-
-  /// Label for full date format example
-  ///
-  /// In en, this message translates to:
-  /// **'Date (full)'**
-  String get date_full;
-
-  /// Label for short date format example
-  ///
-  /// In en, this message translates to:
-  /// **'Date (short)'**
-  String get date_short;
-
   /// Label for time format example
   ///
   /// In en, this message translates to:
@@ -281,42 +227,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Percent'**
   String get percent;
-
-  /// Title for localized assets section
-  ///
-  /// In en, this message translates to:
-  /// **'Localized Assets'**
-  String get localized_assets;
-
-  /// Explanation of localized assets feature
-  ///
-  /// In en, this message translates to:
-  /// **'This section demonstrates how to load different assets based on the selected language. Images, audio, and other resources can be language-specific.'**
-  String get localized_assets_explanation;
-
-  /// Title for localized image example
-  ///
-  /// In en, this message translates to:
-  /// **'Localized Image Example'**
-  String get image_example;
-
-  /// Caption for the welcome image example
-  ///
-  /// In en, this message translates to:
-  /// **'This image is loaded based on your selected language'**
-  String get welcome_image_caption;
-
-  /// Title for common image example
-  ///
-  /// In en, this message translates to:
-  /// **'Common Image Example'**
-  String get common_image_example;
-
-  /// Caption for the common image example
-  ///
-  /// In en, this message translates to:
-  /// **'This image is the same across all languages'**
-  String get common_image_caption;
 
   /// Label for the logout button
   ///
@@ -372,23 +282,11 @@ abstract class AppLocalizations {
   /// **'Try Again'**
   String get tryAgain;
 
-  /// A greeting message with the person's name
-  ///
-  /// In en, this message translates to:
-  /// **'Hello, {name}!'**
-  String greeting(String name);
-
   /// A plural message based on an item count
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =0{No items} =1{1 item} other{{count} items}}'**
   String itemCount(num count);
-
-  /// When something was last updated
-  ///
-  /// In en, this message translates to:
-  /// **'Last updated: {date}'**
-  String lastUpdated(DateTime date);
 
   /// Tooltip for the action that opens the people directory
   ///
@@ -1419,7 +1317,7 @@ abstract class AppLocalizations {
   /// Bulk delete confirmation
   ///
   /// In en, this message translates to:
-  /// **'Delete {count} messages?'**
+  /// **'{count, plural, one{Delete {count} message?} other{Delete {count} messages?}}'**
   String deleteMessagesTitle(int count);
 
   /// Destructive confirmation body
@@ -5627,6 +5525,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Solid colour'**
   String get bubbleFillSolid;
+
+  /// Confirmation title before deleting one message
+  ///
+  /// In en, this message translates to:
+  /// **'Delete message?'**
+  String get deleteMessageTitle;
+
+  /// Body of the one-message delete dialog. DELETE removes the message for every member (api-docs 5.4); there is no "only for me"
+  ///
+  /// In en, this message translates to:
+  /// **'It will disappear for all participants.'**
+  String get deleteMessageForEveryone;
+
+  /// Body of the bulk delete dialog. DELETE removes messages for every member (api-docs 5.4)
+  ///
+  /// In en, this message translates to:
+  /// **'They will disappear for all participants.'**
+  String get deleteMessagesForEveryone;
+
+  /// Snackbar when deleting a message failed and the error code has no sentence of its own
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the message.'**
+  String get messageDeleteFailed;
+
+  /// Sign-in form: the email-or-username field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email or username'**
+  String get validationLoginIdentifierRequired;
+
+  /// Registration form: the username field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Username is required'**
+  String get validationUsernameRequired;
+
+  /// Form field error: the value is shorter than the minimum
+  ///
+  /// In en, this message translates to:
+  /// **'{min, plural, one{At least {min} character} other{At least {min} characters}}'**
+  String validationMinLength(int min);
+
+  /// Registration form: the username has a character outside [a-zA-Z0-9 ,.'-]
+  ///
+  /// In en, this message translates to:
+  /// **'Only Latin letters, digits, spaces and , . \' - are allowed'**
+  String get validationUsernameCharacters;
+
+  /// Form field error: the email field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get validationEmailRequired;
+
+  /// Form field error: the email is not well-formed
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get validationEmailInvalid;
+
+  /// Form field error: the password field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Password is required'**
+  String get validationPasswordRequired;
+
+  /// Password rule: needs an uppercase letter
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one uppercase letter'**
+  String get validationPasswordUppercase;
+
+  /// Password rule: needs a lowercase letter
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one lowercase letter'**
+  String get validationPasswordLowercase;
+
+  /// Password rule: needs a digit
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one digit'**
+  String get validationPasswordDigit;
+
+  /// Password rule: needs one of the listed special characters, passed in as-is
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one special character: {characters}'**
+  String validationPasswordSpecial(String characters);
+
+  /// Form field error: the repeat-password field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Please repeat your password'**
+  String get validationPasswordRepeatRequired;
+
+  /// Form field error: the two passwords differ
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get validationPasswordsDoNotMatch;
+
+  /// Form field error: a required field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get validationFieldRequired;
+
+  /// Explains the reset-password request screen
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the email on your account and we will send you a code to reset your password.'**
+  String get resetPasswordRequestIntro;
+
+  /// Explains the reset-password confirm screen
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your email and a new password.'**
+  String get resetPasswordConfirmIntro;
+
+  /// New chat, direct type: label of the people search field
+  ///
+  /// In en, this message translates to:
+  /// **'Who do you want to message?'**
+  String get createChatDirectSearchLabel;
+
+  /// Label of the field that adds several people to a chat
+  ///
+  /// In en, this message translates to:
+  /// **'Add people by name or @username'**
+  String get addPeopleSearchLabel;
+
+  /// New chat, direct type: helper under the people search field
+  ///
+  /// In en, this message translates to:
+  /// **'Pick one person — a direct chat has exactly two members'**
+  String get createChatDirectHelper;
+
+  /// New chat, group types: helper under the people search field
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {max} people now — you can add more later'**
+  String createChatMembersHelper(int max);
+
+  /// New chat, direct type: create tapped with nobody picked
+  ///
+  /// In en, this message translates to:
+  /// **'A direct chat needs exactly one other person — find them by name or @username'**
+  String get createChatDirectNeedsPeer;
+
+  /// New chat, direct type: more than one person picked
+  ///
+  /// In en, this message translates to:
+  /// **'A direct chat has only one other person, but {count} are selected — choose Group instead'**
+  String createChatDirectTooMany(int count);
+
+  /// New chat, group types: create tapped with an empty name
+  ///
+  /// In en, this message translates to:
+  /// **'Give the chat a name'**
+  String get createChatNameRequired;
+
+  /// New chat: more people picked than a chat can be created with
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {max} people now — add the rest once the chat is created'**
+  String createChatTooManyMembers(int max);
+
+  /// New chat: the server refused and the error code has no sentence of its own
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the chat'**
+  String get createChatFailed;
+
+  /// Subtitle of the Settings row on your own profile
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications, appearance, privacy'**
+  String get settingsRowHint;
+
+  /// Birthday on a profile with the age it makes today. date is the formatted day, month and year
+  ///
+  /// In en, this message translates to:
+  /// **'{date} ({age, plural, one{{age} year old} other{{age} years old}})'**
+  String profileBirthdayWithAge(String date, int age);
 }
 
 class _AppLocalizationsDelegate

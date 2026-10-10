@@ -9,12 +9,6 @@ class AppLocalizationsBn extends AppLocalizations {
   AppLocalizationsBn([String locale = 'bn']) : super(locale);
 
   @override
-  String get appTitle => 'Flutter Riverpod ক্লিন আর্কিটেকচার';
-
-  @override
-  String get welcomeMessage => 'Flutter Riverpod ক্লিন আর্কিটেকচারে স্বাগতম';
-
-  @override
   String get home => 'হোম';
 
   @override
@@ -68,27 +62,6 @@ class AppLocalizationsBn extends AppLocalizations {
       'বেছে নেওয়া ভাষা পুরো অ্যাপে প্রযোজ্য হবে';
 
   @override
-  String get localization_assets_demo => 'লোকালাইজেশন ও অ্যাসেট';
-
-  @override
-  String get current_language => 'বর্তমান ভাষা';
-
-  @override
-  String get language_code => 'ভাষার কোড';
-
-  @override
-  String get language_name => 'ভাষার নাম';
-
-  @override
-  String get formatting_examples => 'ফরম্যাটের উদাহরণ';
-
-  @override
-  String get date_full => 'তারিখ (পূর্ণ)';
-
-  @override
-  String get date_short => 'তারিখ (সংক্ষিপ্ত)';
-
-  @override
   String get time => 'সময়';
 
   @override
@@ -96,25 +69,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get percent => 'শতাংশ';
-
-  @override
-  String get localized_assets => 'লোকালাইজ করা অ্যাসেট';
-
-  @override
-  String get localized_assets_explanation =>
-      'এই অংশে দেখানো হয়েছে কীভাবে ভাষা অনুযায়ী আলাদা অ্যাসেট লোড করা যায়। ছবি, অডিও ও অন্যান্য ফাইল ভাষাভেদে আলাদা হতে পারে।';
-
-  @override
-  String get image_example => 'লোকালাইজ করা ছবির উদাহরণ';
-
-  @override
-  String get welcome_image_caption => 'এই ছবিটি আপনার ভাষা অনুযায়ী লোড হয়';
-
-  @override
-  String get common_image_example => 'সাধারণ ছবির উদাহরণ';
-
-  @override
-  String get common_image_caption => 'এই ছবিটি সব ভাষাতেই এক';
 
   @override
   String get logout => 'লগআউট';
@@ -144,11 +98,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get tryAgain => 'আবার চেষ্টা করুন';
 
   @override
-  String greeting(String name) {
-    return 'হ্যালো, $name!';
-  }
-
-  @override
   String itemCount(num count) {
     final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
       locale: localeName,
@@ -163,14 +112,6 @@ class AppLocalizationsBn extends AppLocalizations {
       zero: 'কোন আইটেম নেই',
     );
     return '$_temp0';
-  }
-
-  @override
-  String lastUpdated(DateTime date) {
-    final intl.DateFormat dateDateFormat = intl.DateFormat.yMMMd(localeName);
-    final String dateString = dateDateFormat.format(date);
-
-    return 'সর্বশেষ আপডেট: $dateString';
   }
 
   @override
@@ -736,7 +677,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String deleteMessagesTitle(int count) {
-    return '$countটি বার্তা মুছবেন?';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি বার্তা মুছবেন?',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3234,4 +3180,129 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get bubbleFillSolid => 'একরঙা';
+
+  @override
+  String get deleteMessageTitle => 'বার্তাটি মুছবেন?';
+
+  @override
+  String get deleteMessageForEveryone =>
+      'এটি সব অংশগ্রহণকারীর কাছ থেকে মুছে যাবে।';
+
+  @override
+  String get deleteMessagesForEveryone =>
+      'এগুলো সব অংশগ্রহণকারীর কাছ থেকে মুছে যাবে।';
+
+  @override
+  String get messageDeleteFailed => 'বার্তাটি মোছা যায়নি।';
+
+  @override
+  String get validationLoginIdentifierRequired =>
+      'আপনার ইমেল বা ইউজারনেম লিখুন';
+
+  @override
+  String get validationUsernameRequired => 'ইউজারনেম লিখুন';
+
+  @override
+  String validationMinLength(int min) {
+    String _temp0 = intl.Intl.pluralLogic(
+      min,
+      locale: localeName,
+      other: 'কমপক্ষে $minটি অক্ষর',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get validationUsernameCharacters =>
+      'শুধু লাতিন অক্ষর, সংখ্যা, স্পেস এবং , . \' - ব্যবহার করা যাবে';
+
+  @override
+  String get validationEmailRequired => 'ইমেল লিখুন';
+
+  @override
+  String get validationEmailInvalid => 'একটি সঠিক ইমেল ঠিকানা লিখুন';
+
+  @override
+  String get validationPasswordRequired => 'পাসওয়ার্ড লিখুন';
+
+  @override
+  String get validationPasswordUppercase =>
+      'অন্তত একটি বড় হাতের অক্ষর যোগ করুন';
+
+  @override
+  String get validationPasswordLowercase =>
+      'অন্তত একটি ছোট হাতের অক্ষর যোগ করুন';
+
+  @override
+  String get validationPasswordDigit => 'অন্তত একটি সংখ্যা যোগ করুন';
+
+  @override
+  String validationPasswordSpecial(String characters) {
+    return 'অন্তত একটি বিশেষ অক্ষর যোগ করুন: $characters';
+  }
+
+  @override
+  String get validationPasswordRepeatRequired => 'পাসওয়ার্ডটি আবার লিখুন';
+
+  @override
+  String get validationPasswordsDoNotMatch => 'পাসওয়ার্ড মিলছে না';
+
+  @override
+  String get validationFieldRequired => 'এই ঘরটি পূরণ করা আবশ্যক';
+
+  @override
+  String get resetPasswordRequestIntro =>
+      'আপনার অ্যাকাউন্টের ইমেল লিখুন, পাসওয়ার্ড রিসেট করার জন্য আমরা একটি কোড পাঠাব।';
+
+  @override
+  String get resetPasswordConfirmIntro =>
+      'ইমেলে পাওয়া কোড এবং নতুন পাসওয়ার্ড লিখুন।';
+
+  @override
+  String get createChatDirectSearchLabel => 'কাকে বার্তা পাঠাতে চান?';
+
+  @override
+  String get addPeopleSearchLabel => 'নাম বা @username দিয়ে লোক যোগ করুন';
+
+  @override
+  String get createChatDirectHelper =>
+      'একজনকে বেছে নিন — সরাসরি চ্যাটে ঠিক দুজন সদস্য থাকে';
+
+  @override
+  String createChatMembersHelper(int max) {
+    return 'এখন সর্বোচ্চ $max জন — পরে আরও যোগ করতে পারবেন';
+  }
+
+  @override
+  String get createChatDirectNeedsPeer =>
+      'সরাসরি চ্যাটে ঠিক একজন অন্য ব্যক্তি লাগবে — নাম বা @username দিয়ে খুঁজুন';
+
+  @override
+  String createChatDirectTooMany(int count) {
+    return 'সরাসরি চ্যাটে শুধু একজন অন্য ব্যক্তি থাকে, কিন্তু $count জন বাছাই করা হয়েছে — বরং গ্রুপ বেছে নিন';
+  }
+
+  @override
+  String get createChatNameRequired => 'চ্যাটের একটি নাম দিন';
+
+  @override
+  String createChatTooManyMembers(int max) {
+    return 'এখন সর্বোচ্চ $max জনকে যোগ করা যাবে — বাকিদের চ্যাট তৈরির পরে যোগ করুন';
+  }
+
+  @override
+  String get createChatFailed => 'চ্যাট তৈরি করা যায়নি';
+
+  @override
+  String get settingsRowHint => 'নোটিফিকেশন, চেহারা, গোপনীয়তা';
+
+  @override
+  String profileBirthdayWithAge(String date, int age) {
+    String _temp0 = intl.Intl.pluralLogic(
+      age,
+      locale: localeName,
+      other: '$age বছর',
+    );
+    return '$date ($_temp0)';
+  }
 }

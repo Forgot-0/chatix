@@ -8,6 +8,7 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:chatix/features/auth/domain/entities/session_entity.dart';
@@ -71,20 +72,39 @@ void main() {
     contacts: [],
   );
 
+  // Your own, as you see it: the account rows under it, and a birthday.
+  final mine = ProfileEntity(
+    id: _me,
+    username: 'me',
+    avatars: const {},
+    specialization: 'Инженер по релизам',
+    displayName: 'Мария Иванова',
+    bio: null,
+    dateBirthday: DateTime(1990, 4, 12),
+    skills: const [],
+    contacts: const [],
+  );
+
   Future<void> pump(
     WidgetTester tester, {
     required PaneWindow window,
     bool dark = false,
+    int profileId = _other,
+    ProfileEntity? profile,
+    Locale? locale,
   }) async {
-    when(() => profiles.getMyProfile()).thenAnswer((_) async => right(ada));
-    when(() => profiles.getProfile(any())).thenAnswer((_) async => right(ada));
+    final shown = profile ?? ada;
+    when(() => profiles.getMyProfile()).thenAnswer((_) async => right(shown));
+    when(
+      () => profiles.getProfile(any()),
+    ).thenAnswer((_) async => right(shown));
 
     final router = GoRouter(
       initialLocation: '/here',
       routes: [
         GoRoute(
           path: '/here',
-          builder: (_, _) => const ProfileScreen(profileId: _other),
+          builder: (_, _) => ProfileScreen(profileId: profileId),
         ),
       ],
     );
@@ -101,9 +121,15 @@ void main() {
           debugShowCheckedModeBanner: false,
           routerConfig: router,
           theme: dark ? AppTheme.dark() : AppTheme.light(),
+          locale: locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) => PaneFrame(window: window, child: child!),
+          // The age next to a birthday is counted from "today": pinned, so
+          // the golden says the same thing next year.
+          builder: (context, child) => AppClock(
+            now: DateTime(2026, 10, 10, 12),
+            child: PaneFrame(window: window, child: child!),
+          ),
         ),
       ),
       wrapper: (child) => child,
@@ -157,6 +183,70 @@ void main() {
           await screenMatchesGolden(
             tester,
             'profile_${window.name}_${theme.key}',
+          );
+        });
+      }
+    }
+  });
+
+  group('your own profile', () {
+    testWidgets('names the birthday with the age, and no weekday', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        window: PaneWindow.phone,
+        profileId: _me,
+        profile: mine,
+        locale: const Locale('ru'),
+      );
+
+      expect(find.text('12 апреля 1990 (36 лет)'), findsOneWidget);
+      expect(find.textContaining('воскресенье'), findsNothing);
+    });
+
+    testWidgets('settings has its own subtitle, not the profile row\'s', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        window: PaneWindow.phone,
+        profileId: _me,
+        profile: mine,
+        locale: const Locale('ru'),
+      );
+
+      final settings = find.ancestor(
+        of: find.text('Настройки'),
+        matching: find.byType(ListTile),
+      );
+      expect(
+        find.descendant(
+          of: settings,
+          matching: find.text('Уведомления, оформление, конфиденциальность'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Ваше имя, аватар и контакты'), findsNothing);
+    });
+
+    for (final window in [PaneWindow.phone, PaneWindow.desktop]) {
+      for (final theme in {'light': false, 'dark': true}.entries) {
+        testGoldens('own profile, ${window.name}, ${theme.key}', (
+          tester,
+        ) async {
+          await pump(
+            tester,
+            window: window,
+            dark: theme.value,
+            profileId: _me,
+            profile: mine,
+            locale: const Locale('ru'),
+          );
+
+          await screenMatchesGolden(
+            tester,
+            'profile_own_${window.name}_${theme.key}',
           );
         });
       }

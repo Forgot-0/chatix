@@ -45,7 +45,6 @@ abstract final class RouteNames {
   static const String languageSettings = 'languageSettings';
   static const String notificationSettings = 'notificationSettings';
   static const String sessions = 'sessions';
-  static const String localizationAssetsDemo = 'localizationAssetsDemo';
   static const String componentShowcase = 'componentShowcase';
 }
 
@@ -405,15 +404,10 @@ abstract final class NotificationSettingsRoute {
   static const String location = '/settings/notifications';
 }
 
-/// The design-system showcase. Debug-only, like the other demo surfaces.
+/// The design-system showcase. Debug-only.
 abstract final class ComponentShowcaseRoute {
   static const String path = '/demo/design-system';
   static const String location = '/demo/design-system';
-}
-
-abstract final class LocalizationAssetsDemoRoute {
-  static const String path = '/demo/localization/assets';
-  static const String location = '/demo/localization/assets';
 }
 
 const Set<String> publicRoutePrefixes = {
