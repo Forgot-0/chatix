@@ -105,6 +105,7 @@ extension ChatStateModelX on ChatStateModel {
       notificationsMutedUntil: _parseDate(notificationsMutedUntil),
       isMutedByMe: isMutedByMe,
       draft: draft,
+      draftUpdatedAt: _parseDate(draftUpdatedAt),
     );
   }
 }
@@ -171,6 +172,11 @@ class ChatModel extends Equatable {
 
   final String? draft;
 
+  /// When [draft] was last written, by whichever device wrote it. Only
+  /// `ChatStateDTO` documents it (api-docs §5.2); read here too, so a list
+  /// that carries it lets the newer of two drafts win straight away.
+  final String? draftUpdatedAt;
+
   const ChatModel({
     required this.id,
     required this.seqCounter,
@@ -200,6 +206,7 @@ class ChatModel extends Equatable {
     this.notificationsMutedUntil,
     this.isMutedByMe = false,
     this.draft,
+    this.draftUpdatedAt,
   });
 
   /// The state block as its own value.
@@ -215,7 +222,8 @@ class ChatModel extends Equatable {
         isMutedByMe ||
         pinnedAt != null ||
         notificationsMutedUntil != null ||
-        draft != null;
+        draft != null ||
+        draftUpdatedAt != null;
     if (!hasState) return null;
 
     return ChatStateModel(
@@ -225,6 +233,7 @@ class ChatModel extends Equatable {
       notificationsMutedUntil: notificationsMutedUntil,
       isMutedByMe: isMutedByMe,
       draft: draft,
+      draftUpdatedAt: draftUpdatedAt,
     );
   }
 
@@ -258,6 +267,7 @@ class ChatModel extends Equatable {
     notificationsMutedUntil,
     isMutedByMe,
     draft,
+    draftUpdatedAt,
   ];
 
   factory ChatModel.fromJson(Map<String, dynamic> json) =>

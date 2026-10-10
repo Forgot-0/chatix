@@ -25,6 +25,7 @@ import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_profile_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
@@ -131,11 +132,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   ComposerController get _composer =>
       ref.read(composerProvider(widget.chatId).notifier);
 
+  /// This chat's row in whichever chat list is alive — never starting one
+  /// that is not, which for the archive would be a request nobody asked for.
+  ChatEntity? _listedRow() {
+    for (final list in [chatListProvider, archivedChatListProvider]) {
+      if (!ref.exists(list)) continue;
+      final row = ref.read(list.notifier).rowOf(widget.chatId);
+      if (row != null) return row;
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
 
     _drafts = ref.read(chatDraftsProvider.notifier);
+
+    // The list row carries the server's copy of the draft — possibly typed
+    // on another device, and newer than this one's. Whichever is newer is
+    // the one to open on.
+    final listed = _listedRow();
+    if (listed != null) _drafts.reconcile([listed]);
 
     // Whatever was typed here last time and never sent. Restored before the
     // listener goes on, so putting it back does not count as a fresh edit.
@@ -171,10 +189,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void dispose() {
     _textController.removeListener(_onTextChanged);
 
-    // Whatever is in the box goes to disk now rather than on the debounce:
-    // the screen is about to be gone, and a draft that only exists in memory
-    // is a draft the chat list will not show (api-docs has nowhere to put
-    // one, so this device is the only place it lives).
+    // Whatever is in the box goes to disk and to the server now rather than
+    // on the debounce: the screen is about to be gone, and a draft that only
+    // exists in memory is a draft neither the list nor another device shows.
     unawaited(_drafts.flush());
 
     _textController.dispose();

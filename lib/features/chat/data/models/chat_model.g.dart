@@ -95,6 +95,7 @@ ChatModel _$ChatModelFromJson(Map<String, dynamic> json) => ChatModel(
   notificationsMutedUntil: json['notifications_muted_until'] as String?,
   isMutedByMe: json['is_muted_by_me'] as bool? ?? false,
   draft: json['draft'] as String?,
+  draftUpdatedAt: json['draft_updated_at'] as String?,
 );
 
 Map<String, dynamic> _$ChatModelToJson(ChatModel instance) => <String, dynamic>{
@@ -126,6 +127,7 @@ Map<String, dynamic> _$ChatModelToJson(ChatModel instance) => <String, dynamic>{
   'notifications_muted_until': instance.notificationsMutedUntil,
   'is_muted_by_me': instance.isMutedByMe,
   'draft': instance.draft,
+  'draft_updated_at': instance.draftUpdatedAt,
 };
 
 ListChatsModel _$ListChatsModelFromJson(Map<String, dynamic> json) =>

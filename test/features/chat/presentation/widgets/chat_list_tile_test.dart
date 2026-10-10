@@ -77,6 +77,14 @@ void main() {
     when(
       () => updateState.unmute(any()),
     ).thenAnswer((_) async => const Right(ChatStateEntity()));
+    when(() => updateState.setDraft(any(), any())).thenAnswer(
+      (invocation) async => Right(
+        ChatStateEntity(
+          draft: invocation.positionalArguments[1] as String?,
+          draftUpdatedAt: DateTime.utc(2026, 1, 1, 12),
+        ),
+      ),
+    );
 
     when(
       () => getMembers.execute(
@@ -251,6 +259,42 @@ void main() {
     expect(find.textContaining(l10n.draftLabel), findsOneWidget);
     expect(find.textContaining('on my way'), findsOneWidget);
     expect(find.textContaining('ship it'), findsNothing);
+  });
+
+  testWidgets('a draft typed on another device shows from the row', (
+    tester,
+  ) async {
+    await pumpTile(
+      tester,
+      chat(last: message(content: 'ship it')).copyWith(
+        state: ChatStateEntity(
+          draft: 'from the laptop',
+          draftUpdatedAt: DateTime.utc(2026, 1, 1, 10),
+        ),
+      ),
+    );
+
+    expect(find.textContaining(l10n.draftLabel), findsOneWidget);
+    expect(find.textContaining('from the laptop'), findsOneWidget);
+  });
+
+  testWidgets('a newer draft on this device beats the row copy', (
+    tester,
+  ) async {
+    // Typed here just now; the row's copy is from the start of the year.
+    await pumpTile(
+      tester,
+      chat(last: message(content: 'ship it')).copyWith(
+        state: ChatStateEntity(
+          draft: 'from the laptop',
+          draftUpdatedAt: DateTime.utc(2026, 1, 1, 10),
+        ),
+      ),
+      draft: 'from the phone',
+    );
+
+    expect(find.textContaining('from the phone'), findsOneWidget);
+    expect(find.textContaining('from the laptop'), findsNothing);
   });
 
   testWidgets('an unread count shows as a badge', (tester) async {

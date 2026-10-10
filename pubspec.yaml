@@ -145,6 +145,10 @@ dev_dependencies:
   # `WebSocketChannel` needs `StreamChannelMixin`. Already present transitively
   # via web_socket_channel; declared so `depend_on_referenced_packages` passes.
   stream_channel: ^2.1.4
+  # Drives the drafts' debounce, retry and rate-limit timers in unit tests
+  # (test/features/chat/presentation/providers/chat_drafts_test.dart) without
+  # waiting out real seconds. Already present transitively via flutter_test.
+  fake_async: ^1.3.3
   flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the

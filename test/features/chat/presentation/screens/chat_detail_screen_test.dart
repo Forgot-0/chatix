@@ -18,6 +18,7 @@ import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
+import 'package:chatix/features/chat/data/models/chat_draft_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
@@ -29,6 +30,7 @@ import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_context_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
@@ -56,6 +58,9 @@ class _MockDeleteMessageUseCase extends Mock implements DeleteMessageUseCase {}
 class _MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
 
 class _MockNotificationService extends Mock implements NotificationService {}
+
+class _MockUpdateChatStateUseCase extends Mock
+    implements UpdateChatStateUseCase {}
 
 class _FakeAuthController extends AuthController {
   _FakeAuthController(this._user);
@@ -167,6 +172,7 @@ void main() {
   late _MockDeleteMessageUseCase deleteMessage;
   late _MockGetMembersUseCase getMembers;
   late _MockNotificationService notifications;
+  late _MockUpdateChatStateUseCase updateState;
   late FakeWebSocketChannel channel;
   late ChatSocketService socket;
 
@@ -178,6 +184,15 @@ void main() {
     deleteMessage = _MockDeleteMessageUseCase();
     getMembers = _MockGetMembersUseCase();
     notifications = _MockNotificationService();
+    updateState = _MockUpdateChatStateUseCase();
+    when(() => updateState.setDraft(any(), any())).thenAnswer(
+      (invocation) async => Right(
+        ChatStateEntity(
+          draft: invocation.positionalArguments[1] as String?,
+          draftUpdatedAt: DateTime.utc(2026, 10, 10, 12),
+        ),
+      ),
+    );
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
       secureStorage: FakeSecureStorageService(
@@ -249,6 +264,7 @@ void main() {
         getMembersUseCaseProvider.overrideWithValue(getMembers),
         chatSocketServiceProvider.overrideWithValue(socket),
         notificationServiceProvider.overrideWithValue(notifications),
+        updateChatStateUseCaseProvider.overrideWithValue(updateState),
         authProvider.overrideWith(() => _FakeAuthController(me)),
         chatDraftsProvider.overrideWith(_RecordingDrafts.new),
       ],
@@ -333,9 +349,13 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(drafts.flushes, 1);
-      expect(container.read(chatLocalDataSourceProvider).readDrafts(), {
-        chatId: 'half a thought',
-      });
+      // And on its way to the server, which keeps it for the account
+      // (api-docs §5.2) — not a debounce later, but as the screen goes.
+      await tester.pump();
+      verify(() => updateState.setDraft(chatId, 'half a thought')).called(1);
+      final stored = container.read(chatLocalDataSourceProvider).readDrafts();
+      expect(stored.keys, [chatId]);
+      expect(ChatDraftCodec.decode(stored[chatId]!)?.text, 'half a thought');
     });
   });
 

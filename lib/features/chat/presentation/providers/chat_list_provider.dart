@@ -10,6 +10,7 @@ import 'package:chatix/features/chat/data/models/message_model.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_realtime_merge.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
@@ -443,7 +444,8 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     _mutate((s) {
       final index = s.items.indexWhere((c) => c.id == chat.id);
       final items = index >= 0
-          ? ([...s.items]..[index] = _keepWhatTheFetchLeftOut(s.items[index], chat))
+          ? ([...s.items]
+              ..[index] = _keepWhatTheFetchLeftOut(s.items[index], chat))
           : [chat, ...s.items];
       return s.copyWith(
         items: ChatRealtimeMerge.sortByActivity(items),
@@ -519,8 +521,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   }
 
   /// Puts a row back exactly as it was.
-  void restoreRow(ChatEntity chat) =>
-      _patchRow(chat.id, (_) => chat);
+  void restoreRow(ChatEntity chat) => _patchRow(chat.id, (_) => chat);
 
   ChatEntity? rowOf(String chatId) {
     for (final chat in state.value?.items ?? const <ChatEntity>[]) {
@@ -623,6 +624,8 @@ class ChatListController extends AsyncNotifier<ChatListState> {
 
     final latest = state.value ?? current;
 
+    result.match((_) {}, (page) => _absorbDrafts(page.chats));
+
     state = result.fold(
       (failure) => AsyncValue.data(latest.copyWith(isLoadingMore: false)),
       (page) => AsyncValue.data(
@@ -642,11 +645,23 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     );
   }
 
+  /// Hands the server's drafts on these rows to the drafts, which keep
+  /// whichever copy is newer (api-docs §5.2). Only fresh pages: a cached row
+  /// is the server as it was, not as it is.
+  void _absorbDrafts(List<ChatEntity> chats) {
+    try {
+      ref.read(chatDraftsProvider.notifier).reconcile(chats);
+    } catch (error) {
+      Logger.warning('ChatList: drafts not reconciled ($error)');
+    }
+  }
+
   Future<ChatListState> _fetchFirstPage() async {
     final result = await ref
         .read(getChatsUseCaseProvider)
         .execute(limit: _pageSize, archived: isArchive);
     return result.fold((failure) => throw failure, (page) {
+      _absorbDrafts(page.chats);
       return ChatListState(
         items: page.chats,
         hasNext: page.hasNext,

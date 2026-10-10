@@ -8,6 +8,7 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/widgets/app_swipe_actions.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/domain/entities/chat_draft.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_state_failures.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart'
@@ -37,10 +38,11 @@ enum ChatRowAction { markRead, pin, archive, mute, delete }
 /// One conversation in the chats list.
 ///
 /// Everything on the row comes from the list response — `ChatDTO` carries
-/// `last_message`, `unread_count` and `me` (api-docs §5.2) — except two
-/// things: the presence dot, which costs a member request per direct chat and
-/// is cached in [chatPresenceProvider], and the draft, which only ever existed
-/// on this device.
+/// `last_message`, `unread_count`, `me` and the draft (api-docs §5.2) —
+/// except the presence dot, which costs a member request per direct chat
+/// and is cached in [chatPresenceProvider]. The draft is the newer of the
+/// row's and this device's own copy, which may not have reached the server
+/// yet.
 class ChatListTile extends ConsumerStatefulWidget {
   const ChatListTile({
     super.key,
@@ -96,7 +98,13 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final chatix = ChatixTheme.of(context);
 
     final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
-    final draft = ref.watch(chatDraftProvider(chat.id));
+    // This device's copy against the one the row carries from the server:
+    // the newer wins, so a draft typed on another device shows here too,
+    // and one typed here offline shows before it has gone anywhere.
+    final draft = ChatDraftMerge.textOf(
+      local: ref.watch(chatDraftEntryProvider(chat.id)),
+      server: ServerDraft.of(chat.state),
+    );
 
     // Pinned, archived and silenced ride on the row now: they are the
     // caller's own fields of `ChatDTO` (api-docs §5.2), not device flags.

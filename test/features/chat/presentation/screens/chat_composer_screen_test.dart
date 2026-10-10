@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/recent_emoji_provider.dart';
@@ -149,6 +150,27 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(EmojiPanel), findsNothing);
+    });
+  });
+
+  group('the draft', () {
+    testWidgets('reaches the server once the typing stops, not per key', (
+      tester,
+    ) async {
+      await harness.pump(tester);
+
+      await tester.enterText(field(), 'з');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.enterText(field(), 'завтра');
+      await tester.pump(const Duration(milliseconds: 1400));
+
+      verifyNever(() => harness.updateState.setDraft(any(), any()));
+
+      await tester.pump(const Duration(milliseconds: 200));
+
+      verify(
+        () => harness.updateState.setDraft(ChatScreenHarness.chatId, 'завтра'),
+      ).called(1);
     });
   });
 

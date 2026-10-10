@@ -21,6 +21,7 @@ client now uses it. Kept here as a record of what moved, not as work:
 | Searching messages | `GET /chats/messages/search/`, cursor over message ids |
 | Searching people in one field | `GET /profiles/?q=`, matching username OR display name |
 | A profile knowing its own handle | `ProfileDTO.username` — non-null, on `GET /profiles/{id}/` and on the list |
+| Drafts that follow the account | `ChatDTO.draft`, `PATCH /chats/{id}/state/ {draft}` → `ChatStateDTO.draft_updated_at` (see §4 for what is still missing) |
 
 On the client: `features/chat/presentation/providers/chat_state_actions.dart`
 writes all three through one endpoint and moves the row while the request is
@@ -127,18 +128,29 @@ wants search history to follow the account.
 
 ---
 
-## 4. Drafts are on the server but not in the client yet (П-4)
+## 4. Drafts: synced, with two holes left on the server side
 
-`ChatDTO.draft` and `PATCH /chats/{id}/state/ {draft}` exist (api-docs §5.2),
-and `UpdateChatStateUseCase.setDraft` already speaks to them. The UI does
-not: `chat_drafts`, a JSON map of chat id to text in shared preferences, is
-still what the composer reads and writes, so a draft typed on a phone is
-still not there on the desktop.
+The client now writes drafts to the server and reads them back
+(`presentation/providers/chat_drafts_provider.dart`): one write 1.5 s after
+the typing stops, never more than the endpoint's 60 a minute (shared with
+pins, mutes and the archive, ten slots always left for those), and the
+device's copy kept as the offline cache. When the two copies disagree the
+newer `draft_updated_at` wins (`domain/entities/chat_draft.dart`); the chat
+list row shows the winner.
 
-This one is client work, not a backend gap. It needs a rule for which copy
-wins when both have one — the server carries `draft_updated_at` for exactly
-that — and a debounce, since the endpoint takes 60 writes a minute and a
-composer produces more.
+What the API still does not give:
+
+- **`ChatDTO` has no `draft_updated_at`.** Only `ChatStateDTO` (the answer to
+  a write) documents it. Without it on the list, a draft that changed on
+  another device cannot be compared by time: the client falls back to "a
+  local edit not yet written wins, otherwise the server's copy does". The
+  model already reads `draft_updated_at` from `ChatDTO` if it appears —
+  adding it to the list response is all it takes.
+- **No realtime signal for a draft.** `chat_updated` carries chat settings,
+  not the per-user state, so a draft typed on the laptop reaches the phone's
+  list only on its next fetch (opening the app, pull to refresh). A
+  `chat_state_updated` event to the user's own sessions with the
+  `ChatStateDTO` would make it live.
 
 ---
 

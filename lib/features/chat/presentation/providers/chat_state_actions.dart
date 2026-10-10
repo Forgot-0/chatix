@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/core/utils/sliding_window_rate_limiter.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_state_failures.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
@@ -22,6 +23,19 @@ class ChatStateActions {
 
   UpdateChatStateUseCase get _useCase =>
       _ref.read(updateChatStateUseCaseProvider);
+
+  /// Counts this write against the endpoint's limit, so drafts — which can
+  /// wait — leave room for it.
+  void _countWrite() =>
+      _ref.read(chatStateWriteLimiterProvider).record(DateTime.now());
+
+  /// Puts a state the server answered with into whichever lists hold the
+  /// row — what a draft write does with the `ChatStateDTO` it gets back.
+  void absorb(String chatId, ChatStateEntity state) {
+    for (final provider in _liveLists()) {
+      _ref.read(provider.notifier).patchState(chatId, (_) => state);
+    }
+  }
 
   /// Pins a chat or lets it go.
   ///
@@ -56,10 +70,7 @@ class ChatStateActions {
   /// The two are separate sets on the server, so this is a move rather than
   /// a flag: the row leaves one list and joins the other at once, and goes
   /// back where it came from if the write fails.
-  Future<Failure?> setArchived(
-    String chatId, {
-    required bool archived,
-  }) async {
+  Future<Failure?> setArchived(String chatId, {required bool archived}) async {
     final from = archived ? chatListProvider : archivedChatListProvider;
     final to = archived ? archivedChatListProvider : chatListProvider;
 
@@ -76,6 +87,7 @@ class ChatStateActions {
       if (_ref.exists(to)) _ref.read(to.notifier).adoptRow(moved);
     }
 
+    _countWrite();
     final result = await _useCase.setArchived(chatId, archived: archived);
 
     return result.match((failure) {
@@ -130,17 +142,18 @@ class ChatStateActions {
     final rollbacks = <ChatEntity>[];
 
     for (final provider in _liveLists()) {
-      final before = _ref.read(provider.notifier).patchState(chatId, optimistic);
+      final before = _ref
+          .read(provider.notifier)
+          .patchState(chatId, optimistic);
       if (before != null) rollbacks.add(before);
     }
 
+    _countWrite();
     final result = await call();
 
     return result.match(
       (failure) {
-        Logger.warning(
-          'ChatState: $chatId not updated (${failure.message})',
-        );
+        Logger.warning('ChatState: $chatId not updated (${failure.message})');
         for (final provider in _liveLists()) {
           for (final row in rollbacks) {
             _ref.read(provider.notifier).restoreRow(row);
@@ -187,7 +200,8 @@ class ChatStateActions {
   /// Turns the server's own refusal into the failure the UI already knows
   /// how to explain.
   Failure _asDomainFailure(Failure failure) {
-    if (failure is ApiFailure && failure.code == 'PINNED_CHATS_LIMIT_EXCEEDED') {
+    if (failure is ApiFailure &&
+        failure.code == 'PINNED_CHATS_LIMIT_EXCEEDED') {
       final detail = failure.detail;
       final limit = detail is Map<String, dynamic> ? detail['limit'] : null;
       return PinnedChatsLimitFailure(
@@ -200,4 +214,15 @@ class ChatStateActions {
 
 final chatStateActionsProvider = Provider<ChatStateActions>(
   ChatStateActions.new,
+);
+
+/// `PATCH /chats/{chat_id}/state/` allows 60 writes a minute (api-docs
+/// §5.2), and pins, mutes, the archive and drafts all go through it. One
+/// count for all of them: drafts ask it before writing and wait their turn,
+/// the rest only report what they sent.
+final chatStateWriteLimiterProvider = Provider<SlidingWindowRateLimiter>(
+  (ref) => SlidingWindowRateLimiter(
+    capacity: 60,
+    window: const Duration(minutes: 1),
+  ),
 );

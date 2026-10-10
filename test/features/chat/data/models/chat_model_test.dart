@@ -123,6 +123,49 @@ void main() {
       expect(chat.draft, 'on my way');
     });
 
+    test('the draft carries the time it was written, when the row says', () {
+      final chat = parse(
+        chatJson(
+          state: {
+            'draft': 'on my way',
+            'draft_updated_at': '2026-03-10T09:30:00Z',
+          },
+        ),
+      );
+
+      expect(chat.state?.draftUpdatedAt, DateTime.utc(2026, 3, 10, 9, 30));
+      expect(
+        ChatModel.fromJson(
+          chatJson(state: {'draft': 'x'}),
+        ).toEntity().state?.draftUpdatedAt,
+        isNull,
+      );
+    });
+
+    test('a draft time survives the trip through the chat-list cache', () {
+      final json = chatJson(
+        state: {'draft': 'hi', 'draft_updated_at': '2026-03-10T09:30:00Z'},
+      );
+
+      final cached = ChatModel.fromJson(ChatModel.fromJson(json).toJson());
+
+      expect(cached.draftUpdatedAt, '2026-03-10T09:30:00Z');
+    });
+
+    test('the answer to a state write reads the same way', () {
+      final state = ChatStateModel.fromJson({
+        'chat_id': 'c1',
+        'is_pinned': false,
+        'is_archived': false,
+        'is_muted_by_me': false,
+        'draft': 'saved',
+        'draft_updated_at': '2026-03-10T09:31:00Z',
+      }).toEntity();
+
+      expect(state.draft, 'saved');
+      expect(state.draftUpdatedAt, DateTime.utc(2026, 3, 10, 9, 31));
+    });
+
     test('a chat nobody has touched reports none of it', () {
       final chat = parse(chatJson());
 

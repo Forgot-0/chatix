@@ -78,6 +78,7 @@ class ChatStateEntity extends Equatable {
     this.notificationsMutedUntil,
     this.isMutedByMe = false,
     this.draft,
+    this.draftUpdatedAt,
   });
 
   final bool isPinned;
@@ -100,6 +101,11 @@ class ChatStateEntity extends Equatable {
   /// What was typed here and never sent.
   final String? draft;
 
+  /// When [draft] was last written, on the server's clock. Null when the
+  /// response did not say — `ChatDTO` does not document it, only
+  /// `ChatStateDTO` does (api-docs §5.2).
+  final DateTime? draftUpdatedAt;
+
   ChatStateEntity copyWith({
     bool? isPinned,
     DateTime? pinnedAt,
@@ -107,6 +113,7 @@ class ChatStateEntity extends Equatable {
     DateTime? notificationsMutedUntil,
     bool? isMutedByMe,
     String? draft,
+    DateTime? draftUpdatedAt,
     bool clearPinnedAt = false,
     bool clearMutedUntil = false,
     bool clearDraft = false,
@@ -120,6 +127,7 @@ class ChatStateEntity extends Equatable {
           : (notificationsMutedUntil ?? this.notificationsMutedUntil),
       isMutedByMe: isMutedByMe ?? this.isMutedByMe,
       draft: clearDraft ? null : (draft ?? this.draft),
+      draftUpdatedAt: draftUpdatedAt ?? this.draftUpdatedAt,
     );
   }
 
@@ -131,6 +139,7 @@ class ChatStateEntity extends Equatable {
     notificationsMutedUntil,
     isMutedByMe,
     draft,
+    draftUpdatedAt,
   ];
 }
 

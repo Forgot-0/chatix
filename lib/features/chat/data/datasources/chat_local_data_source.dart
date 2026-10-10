@@ -57,6 +57,8 @@ abstract interface class ChatLocalDataSource {
 
   Future<void> deleteAttachments(Iterable<String> s3Keys);
 
+  /// Drafts by chat id, each one string as `ChatDraftCodec` writes it — the
+  /// offline copy of the server's `ChatDTO.draft`.
   Map<String, String> readDrafts();
 
   Future<void> writeDrafts(Map<String, String> drafts);

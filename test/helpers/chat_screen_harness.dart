@@ -27,6 +27,7 @@ import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_context_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
@@ -48,6 +49,9 @@ class _MockGetMessagesContextUseCase extends Mock
 class _MockMarkReadUseCase extends Mock implements MarkReadUseCase {}
 
 class _MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
+
+class _MockUpdateChatStateUseCase extends Mock
+    implements UpdateChatStateUseCase {}
 
 class _MockNotificationService extends Mock implements NotificationService {}
 
@@ -126,6 +130,10 @@ class ChatScreenHarness {
   late final GetMessagesContextUseCase getContext;
   late final MarkReadUseCase markRead;
   late final GetMembersUseCase getMembers;
+
+  /// Answers every draft write as the server would: with the text it now
+  /// holds and the time it took it.
+  late final UpdateChatStateUseCase updateState;
   late final NotificationService notifications;
   late final FakeWebSocketChannel channel;
   late final ChatSocketService socket;
@@ -194,6 +202,7 @@ class ChatScreenHarness {
     getContext = _MockGetMessagesContextUseCase();
     markRead = _MockMarkReadUseCase();
     getMembers = _MockGetMembersUseCase();
+    updateState = _MockUpdateChatStateUseCase();
     notifications = _MockNotificationService();
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
@@ -207,6 +216,14 @@ class ChatScreenHarness {
       () => markRead.execute(any(), any()),
     ).thenAnswer((_) async => const Right(null));
     when(() => notifications.cancelGroup(any())).thenAnswer((_) async {});
+    when(() => updateState.setDraft(any(), any())).thenAnswer(
+      (invocation) async => Right(
+        ChatStateEntity(
+          draft: invocation.positionalArguments[1] as String?,
+          draftUpdatedAt: DateTime.utc(2026, 10, 10, 12),
+        ),
+      ),
+    );
     when(
       () => getMembers.execute(
         any(),
@@ -255,6 +272,7 @@ class ChatScreenHarness {
         getMessagesContextUseCaseProvider.overrideWithValue(getContext),
         markReadUseCaseProvider.overrideWithValue(markRead),
         getMembersUseCaseProvider.overrideWithValue(getMembers),
+        updateChatStateUseCaseProvider.overrideWithValue(updateState),
         chatSocketServiceProvider.overrideWithValue(socket),
         notificationServiceProvider.overrideWithValue(notifications),
         authProvider.overrideWith(() => _FakeAuthController(me)),
