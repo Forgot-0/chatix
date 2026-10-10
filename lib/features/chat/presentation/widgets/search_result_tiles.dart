@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/typography/highlighted_text.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_search.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
@@ -190,11 +190,7 @@ class MessageSearchResultTile extends ConsumerWidget {
           ),
           const SizedBox(width: AppSpacing.x2),
           Text(
-            formatChatTimestamp(
-              hit.message.createdAt,
-              l10n,
-              locale: Localizations.localeOf(context).toLanguageTag(),
-            ),
+            AppDateFormat.of(context).listStamp(hit.message.createdAt),
             style: theme.textTheme.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),

@@ -17,22 +17,33 @@ import 'package:chatix/features/settings/presentation/widgets/accent_picker.dart
 import 'package:chatix/features/settings/presentation/widgets/wallpaper_gallery.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
+import '../../helpers/pane_frame.dart';
+
 /// The appearance screen's promise is that nothing on it needs a restart and
 /// nothing on it is forgotten by one. Both halves are checked here: the live
 /// theme after each tap, and a second container standing in for the next
 /// launch.
 class _AppearanceHarness extends ConsumerWidget {
-  const _AppearanceHarness();
+  const _AppearanceHarness({this.window, this.locale});
+
+  /// Where the shell would put the screen; null draws it bare.
+  final PaneWindow? window;
+  final Locale? locale;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final window = this.window;
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ref.watch(lightThemeProvider),
       darkTheme: ref.watch(darkThemeProvider),
       themeMode: ref.watch(themeModeProvider),
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const AppearanceSettingsScreen(),
+      home: window == null
+          ? const AppearanceSettingsScreen()
+          : PaneFrame(window: window, child: const AppearanceSettingsScreen()),
     );
   }
 }
@@ -60,6 +71,8 @@ void main() {
       AvatarAccentStatus.noAvatar,
     ),
     Size viewport = const Size(1200, 3600),
+    PaneWindow? window,
+    Locale? locale,
   }) async {
     tester.view.physicalSize = viewport;
     tester.view.devicePixelRatio = 1;
@@ -81,7 +94,7 @@ void main() {
           }),
           avatarAccentPickerProvider.overrideWithValue(() async => eyedropper),
         ],
-        child: const _AppearanceHarness(),
+        child: _AppearanceHarness(window: window, locale: locale),
       ),
     );
     await settle(tester);
@@ -272,6 +285,26 @@ void main() {
     expect(relaunch(prefs).bubbleAnchored, isFalse);
   });
 
+  testWidgets('a solid fill flattens your bubbles and is written down', (
+    tester,
+  ) async {
+    final prefs = await pumpAppearance(tester);
+    final gradient = chatix(tester).bubbleOutgoingGradient.colors;
+    expect(gradient.first, isNot(gradient.last));
+
+    await tapText(tester, strings(tester).bubbleFillSolid);
+
+    final solid = chatix(tester).bubbleOutgoingGradient.colors;
+    expect(solid.first, solid.last);
+    // The same accent, only without the fade.
+    expect(solid.first, gradient.first);
+    expect(relaunch(prefs).bubbleGradient, isFalse);
+
+    await tapText(tester, strings(tester).bubbleFillGradient);
+    expect(chatix(tester).bubbleOutgoingGradient.colors, gradient);
+    expect(relaunch(prefs).bubbleGradient, isTrue);
+  });
+
   testWidgets('auto-download is set per kind and survives a restart', (
     tester,
   ) async {
@@ -375,5 +408,53 @@ void main() {
 
     expect(chatix(tester).density, AppDensity.cozy);
     expect(relaunch(prefs), const AppearanceSettings());
+  });
+
+  // The bubble section — the corner slider, the anchor and the new fill
+  // switch — where the shell puts the screen: a whole phone, and the pane
+  // beside the rail and the chat list on a desktop.
+  group('goldens', () {
+    for (final window in [PaneWindow.phone, PaneWindow.desktop]) {
+      for (final dark in [false, true]) {
+        final name = '${window.name}_${dark ? 'dark' : 'light'}';
+
+        testWidgets('the bubble section, $name', (tester) async {
+          await pumpAppearance(
+            tester,
+            viewport: window.size,
+            window: window,
+            locale: const Locale('ru'),
+          );
+          if (dark) await tapText(tester, strings(tester).darkMode);
+
+          // Scrolled so the fill switch sits mid-screen, the preview's
+          // bubbles still in view on a desktop.
+          await tester.scrollUntilVisible(
+            find.text(strings(tester).bubbleFillSolid),
+            200,
+            scrollable: find.byType(Scrollable).first,
+          );
+          await tapText(tester, strings(tester).bubbleFillSolid);
+          // The section in the middle of the screen, the switch under its
+          // label, the anchor and the corner slider above it.
+          await tester.scrollUntilVisible(
+            find.text(strings(tester).bubbleShape),
+            -200,
+            scrollable: find.byType(Scrollable).first,
+          );
+          await Scrollable.ensureVisible(
+            tester.element(find.text(strings(tester).bubbleShape)),
+            alignment: 0.3,
+          );
+          await tester.pump(const Duration(seconds: 1));
+
+          expect(tester.takeException(), isNull);
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('goldens/appearance_bubbles_$name.png'),
+          );
+        });
+      }
+    }
   });
 }

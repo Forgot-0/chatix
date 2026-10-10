@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
+import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/network/transfer_cancellation.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
@@ -526,14 +527,11 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final material = MaterialLocalizations.of(context);
     final message = item?.message;
 
-    final local = message?.createdAt.toLocal();
-    final when = local == null
+    final when = message == null
         ? null
-        : '${material.formatFullDate(local)}, '
-              '${material.formatTimeOfDay(TimeOfDay.fromDateTime(local))}';
+        : AppDateFormat.of(context).fullDateTime(message.createdAt);
 
     return Container(
       decoration: const BoxDecoration(
@@ -658,7 +656,11 @@ class _Footer extends StatelessWidget {
               ),
               Text(
                 [
-                  ChatAttachmentLimits.formatBytes(item.attachment.size),
+                  formatFileSize(
+                    item.attachment.size,
+                    AppLocalizations.of(context),
+                    locale: Localizations.localeOf(context).toLanguageTag(),
+                  ),
                   ?position,
                 ].join(' · '),
                 textAlign: TextAlign.center,

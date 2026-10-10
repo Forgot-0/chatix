@@ -4,7 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/theme/app_theme.dart';
+import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
@@ -27,6 +30,8 @@ import 'package:chatix/features/chat/presentation/widgets/chat_type_glyph.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
+
+import '../../../../helpers/pane_frame.dart';
 
 class MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
 
@@ -66,9 +71,9 @@ void main() {
     when(
       () => updateState.setPinned(any(), pinned: any(named: 'pinned')),
     ).thenAnswer((_) async => const Right(ChatStateEntity(isPinned: true)));
-    when(() => updateState.mute(any(), until: any(named: 'until'))).thenAnswer(
-      (_) async => const Right(ChatStateEntity(isMutedByMe: true)),
-    );
+    when(
+      () => updateState.mute(any(), until: any(named: 'until')),
+    ).thenAnswer((_) async => const Right(ChatStateEntity(isMutedByMe: true)));
     when(
       () => updateState.unmute(any()),
     ).thenAnswer((_) async => const Right(ChatStateEntity()));
@@ -133,10 +138,11 @@ void main() {
     ChatMemberEntity? membership,
     bool pinned = false,
     bool muted = false,
+    DateTime? at,
   }) => ChatEntity(
     id: chatId,
     seqCounter: 9,
-    lastActivityAt: DateTime.now(),
+    lastActivityAt: at ?? DateTime.now(),
     type: type,
     name: name,
     description: null,
@@ -268,10 +274,7 @@ void main() {
   testWidgets('a pinned chat with nothing unread shows the pin', (
     tester,
   ) async {
-    await pumpTile(
-      tester,
-      chat(last: message(content: 'hi'), pinned: true),
-    );
+    await pumpTile(tester, chat(last: message(content: 'hi'), pinned: true));
 
     expect(find.byIcon(Icons.push_pin), findsOneWidget);
   });
@@ -442,5 +445,142 @@ void main() {
       dark: true,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  // The stamp reads the same clock as the bubbles: "09:02" today, a word for
+  // yesterday, a capitalised weekday this week, a date before that.
+  group('goldens', () {
+    // A Saturday, so six days back is a Sunday — "Вс".
+    final now = DateTime(2026, 10, 10, 12);
+
+    List<ChatEntity> rows() => [
+      chat(
+        type: ChatType.direct,
+        name: 'Ада',
+        unread: 2,
+        at: DateTime(2026, 10, 10, 9, 2),
+        last: message(content: 'Кто берёт палатку?'),
+      ),
+      chat(
+        name: 'Поход на Кавказ',
+        at: DateTime(2026, 10, 9, 21, 40),
+        last: message(content: 'Маршрут готов', authorId: myUserId),
+      ),
+      chat(
+        type: ChatType.direct,
+        name: 'Грейс',
+        at: DateTime(2026, 10, 4, 18, 5),
+        last: message(content: 'До встречи в воскресенье'),
+        muted: true,
+      ),
+      chat(
+        name: 'Архив проекта',
+        at: DateTime(2025, 3, 2, 10, 15),
+        last: message(content: 'Итоги года'),
+        pinned: true,
+      ),
+    ];
+
+    Future<void> pumpList(
+      WidgetTester tester, {
+      required Size window,
+      required bool dark,
+    }) async {
+      tester.view.physicalSize = window;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final container = ProviderContainer(
+        overrides: [
+          chatLocalPrefsStoreProvider.overrideWithValue(store),
+          chatOrganizerDataSourceProvider.overrideWithValue(
+            InMemoryChatOrganizerDataSource(),
+          ),
+          getMembersUseCaseProvider.overrideWithValue(getMembers),
+          updateChatStateUseCaseProvider.overrideWithValue(updateState),
+          authProvider.overrideWith(() => FakeAuthController(me)),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(authProvider.future);
+      await container.read(chatOrganizerProvider.future);
+
+      final list = Column(
+        children: [
+          for (final row in rows()) ChatListTile(chat: row, peerReadSeq: 9),
+        ],
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: AppClock(
+              now: now,
+              child: Scaffold(
+                body: window.width < AppBreakpoints.medium
+                    ? list
+                    // The list as the desktop shell draws it: after the
+                    // rail, 360 px wide, the open chat beside it.
+                    : Builder(
+                        builder: (context) {
+                          final scheme = Theme.of(context).colorScheme;
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(
+                                width: PaneWindow.rail,
+                                child: ColoredBox(
+                                  color: scheme.surfaceContainer,
+                                ),
+                              ),
+                              const VerticalDivider(width: 1, thickness: 1),
+                              SizedBox(
+                                width: AppBreakpoints.listPaneWidth,
+                                child: list,
+                              ),
+                              const VerticalDivider(width: 1, thickness: 1),
+                              Expanded(
+                                child: ColoredBox(
+                                  color: ChatixTheme.of(context).chatBackground,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    for (final window in [PaneWindow.phone, PaneWindow.desktop]) {
+      for (final dark in [false, true]) {
+        final name = '${window.name}_${dark ? 'dark' : 'light'}';
+
+        testWidgets('chat list stamps, $name', (tester) async {
+          await pumpList(tester, window: window.size, dark: dark);
+
+          expect(find.text('09:02'), findsOneWidget);
+          expect(find.text('Вчера'), findsOneWidget);
+          expect(find.text('Вс'), findsOneWidget);
+          expect(find.text('02.03.25'), findsOneWidget);
+
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('goldens/chat_list_stamps_$name.png'),
+          );
+        });
+      }
+    }
   });
 }

@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart' show MaterialLocalizations;
-
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// How long ago a notification arrived, in words.
@@ -7,11 +6,11 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// Rounds down at every step, which is what makes it read as a timestamp
 /// rather than a countdown: something 119 seconds old is "just now", not "2
 /// min ago". Anything older than a week is a date, because "38 days ago" is a
-/// number nobody converts.
+/// number nobody converts — written the way the chat writes its dates.
 String formatNotificationTimestamp(
   DateTime timestamp,
   AppLocalizations l10n,
-  MaterialLocalizations material, {
+  AppDateFormat dates, {
   DateTime? now,
 }) {
   final local = timestamp.toLocal();
@@ -24,5 +23,5 @@ String formatNotificationTimestamp(
   if (difference.inDays < 1) return l10n.timeHoursAgo(difference.inHours);
   if (difference.inDays < 7) return l10n.timeDaysAgo(difference.inDays);
 
-  return material.formatMediumDate(local);
+  return dates.date(local);
 }

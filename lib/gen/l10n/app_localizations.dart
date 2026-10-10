@@ -5549,6 +5549,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Update'**
   String get updateAction;
+
+  /// A size in bytes; value is already formatted for the locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} B'**
+  String sizeBytes(String value);
+
+  /// A size in kilobytes (1024 bytes); value is already formatted for the locale.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} KB'**
+  String sizeKilobytes(String value);
+
+  /// Under a document while it downloads: how much has arrived out of the whole, both already formatted as file sizes
+  ///
+  /// In en, this message translates to:
+  /// **'{received} / {total}'**
+  String attachmentDownloadProgress(String received, String total);
+
+  /// Screen-reader label of the round button that downloads a document in a message
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get attachmentDownload;
+
+  /// A document in a message could not be downloaded
+  ///
+  /// In en, this message translates to:
+  /// **'Could not download this file'**
+  String get attachmentDownloadFailed;
+
+  /// The system share sheet could not be opened for a document
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share this file'**
+  String get attachmentShareFailed;
+
+  /// The file manager could not be opened on a saved document
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the folder'**
+  String get attachmentRevealFailed;
+
+  /// Message menu action on a document: keep a copy in Downloads
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get messageSaveFile;
+
+  /// Message menu action on a document: hand it to another app through the system share sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get messageShareFile;
+
+  /// Message menu action on a document, desktop only: open the file manager on the saved copy
+  ///
+  /// In en, this message translates to:
+  /// **'Show in folder'**
+  String get messageShowInFolder;
+
+  /// Appearance setting: how your own message bubbles are filled
+  ///
+  /// In en, this message translates to:
+  /// **'Your bubbles'**
+  String get bubbleFill;
+
+  /// Bubble fill option: the accent fades into a slightly deeper shade
+  ///
+  /// In en, this message translates to:
+  /// **'Gradient'**
+  String get bubbleFillGradient;
+
+  /// Bubble fill option: one flat accent colour
+  ///
+  /// In en, this message translates to:
+  /// **'Solid colour'**
+  String get bubbleFillSolid;
 }
 
 class _AppLocalizationsDelegate

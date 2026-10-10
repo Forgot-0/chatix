@@ -22,12 +22,19 @@ class AttachmentImage extends ConsumerStatefulWidget {
     required this.messageId,
     this.fit = BoxFit.cover,
     this.borderRadius,
+    this.fallback,
   });
 
   final AttachmentEntity attachment;
   final String messageId;
   final BoxFit fit;
   final BorderRadius? borderRadius;
+
+  /// What a thumbnail too small for words shows when there is no picture:
+  /// the fetch failed, or the reader's settings are waiting for a tap. A
+  /// failure notice or a "tap to download" squeezed into 36 px is an empty
+  /// grey square; a glyph saying what the picture was is not.
+  final Widget? fallback;
 
   @override
   ConsumerState<AttachmentImage> createState() => _AttachmentImageState();
@@ -56,9 +63,11 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
           .watch(attachmentFileProvider(_key))
           .when(
             loading: () => const AttachmentImagePlaceholder(),
-            error: (_, _) => AttachmentImageFailure(
-              onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
-            ),
+            error: (_, _) =>
+                widget.fallback ??
+                AttachmentImageFailure(
+                  onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+                ),
             data: _image,
           );
     }
@@ -67,15 +76,18 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
         .watch(autoAttachmentFileProvider(_key))
         .when(
           loading: () => const AttachmentImagePlaceholder(),
-          error: (_, _) => AttachmentImageFailure(
-            onRetry: () => ref.invalidate(autoAttachmentFileProvider(_key)),
-          ),
+          error: (_, _) =>
+              widget.fallback ??
+              AttachmentImageFailure(
+                onRetry: () => ref.invalidate(autoAttachmentFileProvider(_key)),
+              ),
           // Null is the settings answer: not on this connection, not before
-          // you ask. So ask.
+          // you ask. So ask — or, too small to ask, say what it was.
           data: (file) => file == null
-              ? AttachmentTapToDownload(
-                  onTap: () => setState(() => _asked = true),
-                )
+              ? widget.fallback ??
+                    AttachmentTapToDownload(
+                      onTap: () => setState(() => _asked = true),
+                    )
               : _image(file),
         );
   }
@@ -106,9 +118,11 @@ class _AttachmentImageState extends ConsumerState<AttachmentImage> {
           // The bytes behind an `s3_key` never change, so a frame already
           // decoded is always the right one to keep showing.
           gaplessPlayback: true,
-          errorBuilder: (_, _, _) => AttachmentImageFailure(
-            onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
-          ),
+          errorBuilder: (_, _, _) =>
+              widget.fallback ??
+              AttachmentImageFailure(
+                onRetry: () => ref.invalidate(attachmentFileProvider(_key)),
+              ),
         );
       },
     );

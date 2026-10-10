@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
@@ -68,7 +69,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (failure != null) {
       AppSnackbar.failure(
         context,
-        friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
+        friendlyFailureMessage(
+          failure,
+          l10n: l10n,
+          fallback: l10n.errorOccurred,
+        ),
       );
     }
 
@@ -88,7 +93,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     result.match(
       (failure) => AppSnackbar.failure(
         context,
-        friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
+        friendlyFailureMessage(
+          failure,
+          l10n: l10n,
+          fallback: l10n.errorOccurred,
+        ),
       ),
       // `PATCH /notifications/read_all/` answers with a bare number, not an
       // object (api-docs §7.4) — it is how many rows it touched, and saying
@@ -337,7 +346,7 @@ class _NotificationTile extends StatelessWidget {
                             formatNotificationTimestamp(
                               notification.createdAt,
                               l10n,
-                              MaterialLocalizations.of(context),
+                              AppDateFormat.of(context),
                             ),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: scheme.onSurfaceVariant,

@@ -4,11 +4,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
@@ -148,7 +148,13 @@ class _Tray extends ConsumerWidget {
                       [
                         l10n.attachmentSelection(
                           state.selected.length,
-                          ChatAttachmentLimits.formatBytes(totalBytes),
+                          formatFileSize(
+                            totalBytes,
+                            l10n,
+                            locale: Localizations.localeOf(
+                              context,
+                            ).toLanguageTag(),
+                          ),
                         ),
                         ?status,
                       ].join(' — '),

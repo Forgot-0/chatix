@@ -378,6 +378,37 @@ void main() {
       expect(find.text('Reply'), findsNothing);
     });
 
+    testWidgets('save, share and show in folder reach the document', (
+      tester,
+    ) async {
+      final picked = <String>[];
+
+      for (final (label, action) in [
+        ('Save', MessageAction.saveFile),
+        ('Share', MessageAction.shareFile),
+        ('Show in folder', MessageAction.showInFolder),
+      ]) {
+        await pump(
+          tester,
+          MessageBubble(
+            message: message(),
+            isMine: false,
+            actions: [action],
+            onSaveFile: () => picked.add('save'),
+            onShareFile: () => picked.add('share'),
+            onShowInFolder: () => picked.add('folder'),
+          ),
+        );
+
+        await tester.longPress(find.text('hello'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+      }
+
+      expect(picked, ['save', 'share', 'folder']);
+    });
+
     testWidgets('picking a quick reaction sends it', (tester) async {
       final sent = <String>[];
 
@@ -762,14 +793,12 @@ void main() {
             showAuthor: true,
             isFirstInGroup: true,
             isLastInGroup: false,
-            showMeta: false,
           ),
           MessageBubble(
             message: message(id: 'm3', seq: 3, content: 'Stacked under it'),
             isMine: false,
             isFirstInGroup: false,
             isLastInGroup: false,
-            showMeta: false,
           ),
           MessageBubble(
             message: message(

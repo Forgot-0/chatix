@@ -7,6 +7,7 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
@@ -311,6 +312,10 @@ void main() {
           theme: dark ? AppTheme.dark(appearance) : AppTheme.light(appearance),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
+          // Date chips name the year when it is not this one: pinned, so a
+          // golden reads the same in any year it is rendered in.
+          builder: (context, child) =>
+              AppClock(now: DateTime(2026, 10, 10, 12), child: child!),
           home: PaneFrame(window: window, child: screen),
         ),
       ),

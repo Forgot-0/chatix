@@ -142,34 +142,115 @@ void main() {
   });
 
   // Somebody who picks a different accent should not lose the clock inside
-  // their own bubbles.
+  // their own bubbles — with the gradient or without it.
   group('every accent the picker offers', () {
     for (final seed in AppPalette.accentSeeds) {
       for (final brightness in Brightness.values) {
-        test('$seed on ${brightness.name}', () {
-          final theme = ChatixTheme.fromScheme(
-            scheme: ColorScheme.fromSeed(
-              seedColor: seed,
-              brightness: brightness,
-            ),
-            density: AppDensity.cozy,
-            accent: seed,
-          );
+        for (final gradient in [true, false]) {
+          test('$seed on ${brightness.name}, '
+              '${gradient ? 'gradient' : 'solid'}', () {
+            final theme = ChatixTheme.fromScheme(
+              scheme: ColorScheme.fromSeed(
+                seedColor: seed,
+                brightness: brightness,
+              ),
+              density: AppDensity.cozy,
+              accent: seed,
+              bubbleGradient: gradient,
+            );
 
-          for (final stop in theme.bubbleOutgoingGradient.colors) {
-            expectReadable(
-              stop,
-              theme.bubbleOutgoingForeground,
-              what: 'outgoing text on $stop',
-            );
-            expectReadable(
-              stop,
-              theme.bubbleOutgoingMuted,
-              what: 'outgoing meta on $stop',
-            );
-          }
-        });
+            for (final stop in theme.bubbleOutgoingGradient.colors) {
+              expectReadable(
+                stop,
+                theme.bubbleOutgoingForeground,
+                what: 'outgoing text on $stop',
+              );
+              expectReadable(
+                stop,
+                theme.bubbleOutgoingMuted,
+                what: 'outgoing meta on $stop',
+              );
+            }
+          });
+        }
       }
     }
+  });
+
+  // The tail used to sit 0.16 darker at full saturation — on violet, an
+  // electric indigo louder than the accent itself.
+  group('the outgoing gradient stays one colour', () {
+    for (final seed in AppPalette.accentSeeds) {
+      test('$seed moves at most 0.08 in lightness, and loses chroma', () {
+        final theme = ChatixTheme.fromScheme(
+          scheme: ColorScheme.fromSeed(seedColor: seed),
+          density: AppDensity.cozy,
+          accent: seed,
+        );
+        final [head, tail] = theme.bubbleOutgoingGradient.colors;
+        final h = HSLColor.fromColor(head);
+        final t = HSLColor.fromColor(tail);
+
+        expect((h.lightness - t.lightness).abs(), lessThanOrEqualTo(0.081));
+        expect(t.saturation, lessThanOrEqualTo(h.saturation + 0.001));
+        expect((h.hue - t.hue).abs(), lessThan(1.5));
+      });
+    }
+
+    test('a solid fill is the same head, held flat', () {
+      final gradient = ChatixTheme.light();
+      final solid = ChatixTheme.fromScheme(
+        scheme: ColorScheme.fromSeed(seedColor: AppPalette.violet),
+        density: AppDensity.cozy,
+        bubbleGradient: false,
+      );
+      final [head, tail] = solid.bubbleOutgoingGradient.colors;
+
+      expect(head, tail);
+      expect(head, gradient.bubbleOutgoingGradient.colors.first);
+      expect(solid.bubbleOutgoingForeground, gradient.bubbleOutgoingForeground);
+    });
+  });
+
+  group('the contrast helpers', () {
+    test('minRatio is the worst of the grounds', () {
+      expect(
+        AppContrast.minRatio(Colors.white, [Colors.black, Colors.white]),
+        moreOrLessEquals(1),
+      );
+      expect(
+        AppContrast.minRatio(Colors.white, [Colors.black]),
+        moreOrLessEquals(21),
+      );
+    });
+
+    test('mutedOn holds the ratio over every ground it is given', () {
+      // The violet gradient's own stops, and a ground the muted colour has
+      // to be walked further towards opaque for.
+      const head = Color(0xFF5F45F7);
+      const tail = Color(0xFF4529EB);
+      const harder = Color(0xFF7A66F9);
+
+      final muted = AppContrast.mutedOn(head, Colors.white, alsoOn: [tail]);
+      expect(AppContrast.ratio(head, muted), greaterThanOrEqualTo(4.5));
+      expect(AppContrast.ratio(tail, muted), greaterThanOrEqualTo(4.5));
+
+      final held = AppContrast.mutedOn(tail, Colors.white, alsoOn: [harder]);
+      final loose = AppContrast.mutedOn(tail, Colors.white);
+      expect(
+        AppContrast.ratio(harder, held),
+        greaterThan(AppContrast.ratio(harder, loose)),
+      );
+    });
+
+    test('iconOn keeps white wherever white clears 3:1', () {
+      // The PDF red: white is 3.9:1 there — plenty for a glyph.
+      expect(AppContrast.iconOn(const Color(0xFFE5484D)), Colors.white);
+      // Amber is 2:1 under white; a glyph there goes dark.
+      expect(
+        AppContrast.iconOn(const Color(0xFFF5A524)),
+        AppNeutrals.light[11],
+      );
+    });
   });
 }

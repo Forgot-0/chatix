@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
@@ -346,7 +347,11 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       (failure) => messenger.showSnackBar(
         SnackBar(
           content: Text(
-            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.startChatFailed),
+            friendlyFailureMessage(
+              failure,
+              l10n: l10n,
+              fallback: l10n.startChatFailed,
+            ),
           ),
         ),
       ),
@@ -452,7 +457,11 @@ class _ChatMembersScreenState extends ConsumerState<ChatMembersScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.memberActionFailed),
+            friendlyFailureMessage(
+              failure,
+              l10n: l10n,
+              fallback: l10n.memberActionFailed,
+            ),
           ),
         ),
       );
@@ -781,11 +790,7 @@ class _BanDialogState extends State<_BanDialog> {
                       title: Text(_durationLabel(l10n, option)),
                       subtitle:
                           option == BanDuration.untilDate && _until != null
-                          ? Text(
-                              MaterialLocalizations.of(
-                                context,
-                              ).formatMediumDate(_until!.toLocal()),
-                            )
+                          ? Text(AppDateFormat.of(context).date(_until!))
                           : null,
                       secondary: option == BanDuration.untilDate
                           ? TextButton(

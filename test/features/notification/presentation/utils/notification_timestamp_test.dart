@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/features/notification/presentation/utils/notification_timestamp.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -22,7 +23,7 @@ void main() {
             result = formatNotificationTimestamp(
               timestamp,
               AppLocalizations.of(context),
-              MaterialLocalizations.of(context),
+              AppDateFormat.of(context, now: now),
               now: now,
             );
             return const SizedBox.shrink();

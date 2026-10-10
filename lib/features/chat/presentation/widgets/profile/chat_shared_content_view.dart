@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_shared_content.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
 import 'package:chatix/features/chat/presentation/widgets/document_attachment_row.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_player.dart';
@@ -103,6 +103,8 @@ class ChatSharedContentSliver extends StatelessWidget {
           attachment: items[index].attachment,
           messageId: items[index].messageId,
           foreground: scheme.onSurface,
+          muted: scheme.onSurfaceVariant,
+          showMenu: true,
         ),
       ),
     );
@@ -131,7 +133,7 @@ class ChatSharedContentSliver extends StatelessWidget {
 
   Widget _linksList(BuildContext context, AppLocalizations l10n) {
     final items = content.links;
-    final locale = Localizations.localeOf(context).toLanguageTag();
+    final dates = AppDateFormat.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return SliverList.separated(
@@ -139,11 +141,7 @@ class ChatSharedContentSliver extends StatelessWidget {
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final item = items[index];
-        final when = formatChatTimestamp(
-          item.message.createdAt,
-          l10n,
-          locale: locale,
-        );
+        final when = dates.listStamp(item.message.createdAt);
 
         return ListTile(
           leading: const Icon(Icons.link),

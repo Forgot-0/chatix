@@ -216,9 +216,25 @@ void main() {
       expect(flat.bubbleAnchorRadius, flat.bubbleRadius);
     });
 
+    test('the bubble fill defaults to the gradient and survives a restart', () {
+      const settings = AppearanceSettings();
+      expect(settings.bubbleGradient, isTrue);
+
+      final solid = settings.copyWith(bubbleGradient: false);
+      expect(solid, isNot(settings));
+      expect(solid.toJson()['bubbleGradient'], false);
+      expect(AppearanceSettings.fromJson(solid.toJson()), solid);
+      // Written before the setting existed: the gradient, as it always was.
+      expect(
+        AppearanceSettings.fromJson(const {'density': 'cozy'}).bubbleGradient,
+        isTrue,
+      );
+    });
+
     test('a field of the wrong type reads as its default', () {
       final settings = AppearanceSettings.fromJson(const {
         'amoled': 'yes please',
+        'bubbleGradient': 'flat',
         'bubbleAnchored': 3,
         'bubbleRadius': 'wide',
         'wallpaperIntensity': 'loud',

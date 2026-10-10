@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
@@ -208,8 +209,10 @@ class _ComposerAttachmentSheetState
                     label: l10n.attachMedia,
                     subtitle: l10n.attachMediaLimits(
                       ChatAttachmentLimits.maxMediaCount,
-                      ChatAttachmentLimits.formatBytes(
+                      formatFileSize(
                         ChatAttachmentLimits.maxMediaSizeBytes,
+                        l10n,
+                        locale: Localizations.localeOf(context).toLanguageTag(),
                       ),
                     ),
                     onTap: () =>
@@ -225,8 +228,10 @@ class _ComposerAttachmentSheetState
                     icon: Icons.description_outlined,
                     label: l10n.attachDocument,
                     subtitle: l10n.attachDocumentLimits(
-                      ChatAttachmentLimits.formatBytes(
+                      formatFileSize(
                         ChatAttachmentLimits.maxFileSizeBytes,
+                        l10n,
+                        locale: Localizations.localeOf(context).toLanguageTag(),
                       ),
                     ),
                     onTap: () =>

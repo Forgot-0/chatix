@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
+import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -42,8 +43,6 @@ class MessageDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final material = MaterialLocalizations.of(context);
-    final local = message.createdAt.toLocal();
 
     return SafeArea(
       child: ConstrainedBox(
@@ -63,9 +62,7 @@ class MessageDetailsSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.x3),
             _DetailRow(
               label: l10n.detailsSentAt,
-              value:
-                  '${material.formatFullDate(local)}, '
-                  '${material.formatTimeOfDay(TimeOfDay.fromDateTime(local))}',
+              value: AppDateFormat.of(context).fullDateTime(message.createdAt),
             ),
             _DetailRow(label: l10n.detailsAuthor, value: message.authorLabel),
             _DetailRow(label: l10n.detailsSequence, value: '#${message.seq}'),
@@ -159,7 +156,11 @@ class _AttachmentStatusRow extends StatelessWidget {
       AttachmentStatus.success => (
         Icons.check_circle_outline,
         chatix.success,
-        ChatAttachmentLimits.formatBytes(attachment.size),
+        formatFileSize(
+          attachment.size,
+          l10n,
+          locale: Localizations.localeOf(context).toLanguageTag(),
+        ),
       ),
     };
 

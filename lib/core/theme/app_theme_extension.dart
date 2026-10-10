@@ -136,6 +136,17 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
   static const double _headMinLightness = 0.42;
   static const double _headMinSaturation = 0.55;
 
+  /// How far the gradient's tail moves from its head in lightness, and how
+  /// much of the head's saturation it keeps.
+  ///
+  /// The tail used to sit 0.16 darker at full saturation, and on violet
+  /// that is an electric indigo louder than the accent it came from — the
+  /// bottom of every long message shouted. Half the travel, a touch less
+  /// chroma: the bubble still has depth, and its far end is a shade of the
+  /// same colour rather than a second one.
+  static const double _tailLightnessShift = 0.08;
+  static const double _tailSaturation = 0.9;
+
   static const Duration fastDuration = AppMotion.fast;
   static const Duration duration = AppMotion.base;
   static const Duration slowDuration = AppMotion.slow;
@@ -170,6 +181,7 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     Color? accent,
     double bubbleRadius = AppearanceSettings.defaultBubbleRadius,
     double bubbleAnchorRadius = AppearanceSettings.anchorRadius,
+    bool bubbleGradient = true,
     AppWallpaper wallpaperStyle = AppWallpaper.fallback,
     double wallpaperIntensity = AppearanceSettings.defaultWallpaperIntensity,
     double wallpaperPattern = AppearanceSettings.defaultWallpaperPattern,
@@ -208,15 +220,16 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
     final towardsDark =
         AppContrast.ratio(head, outgoingForeground) ==
         AppContrast.ratio(head, Colors.white);
-    final headLightness = HSLColor.fromColor(head).lightness;
-    final tail = HSLColor.fromColor(head)
-        .withLightness(
-          (towardsDark ? headLightness - 0.16 : headLightness + 0.16).clamp(
-            0.0,
-            1.0,
-          ),
-        )
-        .toColor();
+    final headHsl = HSLColor.fromColor(head);
+    final shift = towardsDark ? -_tailLightnessShift : _tailLightnessShift;
+    // A solid bubble is a gradient whose two stops agree, so switching the
+    // setting cross-fades through `lerp` instead of jumping.
+    final tail = bubbleGradient
+        ? headHsl
+              .withLightness((headHsl.lightness + shift).clamp(0.0, 1.0))
+              .withSaturation(headHsl.saturation * _tailSaturation)
+              .toColor()
+        : head;
 
     final incoming = switch ((isDark, amoled)) {
       (true, true) => AppAmoled.step(2),
@@ -246,9 +259,13 @@ class ChatixTheme extends ThemeExtension<ChatixTheme> {
         colors: <Color>[head, tail],
       ),
       bubbleOutgoingForeground: outgoingForeground,
-      // Measured at the head, which the rule above makes the worst of the
-      // two stops for whichever foreground was chosen.
-      bubbleOutgoingMuted: AppContrast.mutedOn(head, outgoingForeground),
+      // Blended over the head, held to AA over the tail as well: a long
+      // message puts its clock at the far end of the gradient.
+      bubbleOutgoingMuted: AppContrast.mutedOn(
+        head,
+        outgoingForeground,
+        alsoOn: [tail],
+      ),
       bubbleIncoming: incoming,
       bubbleIncomingForeground: scheme.onSurface,
       bubbleIncomingMuted: AppContrast.mutedOn(incoming, scheme.onSurface),

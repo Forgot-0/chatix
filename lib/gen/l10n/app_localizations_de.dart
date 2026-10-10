@@ -3241,4 +3241,51 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get updateAction => 'Aktualisieren';
+
+  @override
+  String sizeBytes(String value) {
+    return '$value B';
+  }
+
+  @override
+  String sizeKilobytes(String value) {
+    return '$value KB';
+  }
+
+  @override
+  String attachmentDownloadProgress(String received, String total) {
+    return '$received / $total';
+  }
+
+  @override
+  String get attachmentDownload => 'Herunterladen';
+
+  @override
+  String get attachmentDownloadFailed =>
+      'Die Datei konnte nicht heruntergeladen werden';
+
+  @override
+  String get attachmentShareFailed => 'Die Datei konnte nicht geteilt werden';
+
+  @override
+  String get attachmentRevealFailed =>
+      'Der Ordner konnte nicht geöffnet werden';
+
+  @override
+  String get messageSaveFile => 'Speichern';
+
+  @override
+  String get messageShareFile => 'Teilen';
+
+  @override
+  String get messageShowInFolder => 'Im Ordner anzeigen';
+
+  @override
+  String get bubbleFill => 'Deine Blasen';
+
+  @override
+  String get bubbleFillGradient => 'Verlauf';
+
+  @override
+  String get bubbleFillSolid => 'Einfarbig';
 }

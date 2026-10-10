@@ -46,6 +46,9 @@ class AppearanceController extends Notifier<AppearanceSettings> {
   Future<void> setBubbleAnchored(bool anchored) =>
       _apply(state.copyWith(bubbleAnchored: anchored));
 
+  Future<void> setBubbleGradient(bool gradient) =>
+      _apply(state.copyWith(bubbleGradient: gradient));
+
   Future<void> setTextScale(double scale) =>
       _apply(state.copyWith(textScale: scale));
 

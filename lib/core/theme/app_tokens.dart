@@ -270,6 +270,38 @@ abstract final class ChatLayout {
     vertical: 2,
   );
 
+  /// The air between the last word of a message and its time, when the two
+  /// share a line.
+  static const double metaGap = 6;
+
+  /// Between the "edited" mark, the time and the ticks.
+  static const double metaItemGap = AppSpacing.x1;
+
+  /// The delivery ticks beside the time.
+  static const double metaTickSize = 14;
+
+  /// The picture in a reply's quote: its side, its corners, and the air
+  /// between it and the quote's rule.
+  static const double replyThumbnailSize = 36;
+  static const double replyThumbnailRadius = AppRadii.xs;
+  static const double replyThumbnailInset = 6;
+
+  /// The round button a document in a bubble leads with — download, its
+  /// progress, then the kind of file — and the glyph inside it.
+  static const double documentButtonSize = 44;
+  static const double documentGlyphSize = 22;
+
+  /// The ring drawn around that button while a document comes down.
+  static const double documentRingStroke = 2.5;
+
+  /// How many lines a document's name may take before it is cut in the
+  /// middle, keeping its extension in sight.
+  static const int documentNameMaxLines = 2;
+
+  /// The air above and below an attachment's row inside a bubble, and
+  /// between a document's name and its size.
+  static const double attachmentRowPaddingY = 2;
+
   /// How far a bubble keeps from the side of the feed it hangs off.
   static const double bubbleInsetX = AppSpacing.x3;
 
@@ -485,11 +517,15 @@ abstract final class AppContrast {
   ///
   /// Returns an opaque colour: the caller is spared compositing it, and the
   /// ratio measured here is the one the eye actually gets.
+  ///
+  /// [alsoOn] are other grounds the same colour will be drawn on — the far
+  /// stop of a gradient — and the ratio has to hold over each of them too.
   static Color mutedOn(
     Color background,
     Color foreground, {
     double alpha = 0.66,
     double minimum = 4.5,
+    List<Color> alsoOn = const <Color>[],
   }) {
     // Worst case is fully opaque, which is what `foregroundOn` already
     // guarantees — so this terminates with a readable colour or with the
@@ -499,10 +535,35 @@ abstract final class AppContrast {
         foreground.withValues(alpha: step),
         background,
       );
-      if (ratio(background, blended) >= minimum) return blended;
+      if (minRatio(blended, <Color>[background, ...alsoOn]) >= minimum) {
+        return blended;
+      }
     }
 
     return Color.alphaBlend(foreground, background);
+  }
+
+  /// White for a glyph on [background] wherever white reaches [minimum] —
+  /// 3:1, what WCAG asks of an icon — and the darkest neutral otherwise.
+  ///
+  /// Not [foregroundOn]: that picks whichever reads *better*, which for
+  /// body text is right, but turns the arrow on a red or blue disc black
+  /// when white was perfectly legible and is what such a disc is expected
+  /// to carry.
+  static Color iconOn(Color background, {double minimum = 3.0}) =>
+      ratio(background, Colors.white) >= minimum
+      ? Colors.white
+      : AppNeutrals.light[11];
+
+  /// The worst contrast [foreground] gets over any of [grounds] — the number
+  /// that matters for something drawn across a gradient.
+  static double minRatio(Color foreground, Iterable<Color> grounds) {
+    var worst = double.infinity;
+    for (final ground in grounds) {
+      final value = ratio(ground, foreground);
+      if (value < worst) worst = value;
+    }
+    return worst;
   }
 }
 

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/storage/file_revealer.dart';
+import 'package:chatix/core/storage/file_sharer.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -12,6 +14,7 @@ import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/recent_reactions_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/attachment_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_feed_items.dart';
@@ -80,6 +83,19 @@ class ChatMessageRow extends ConsumerWidget {
         : ref.read(recentReactionsProvider.notifier).ordered(policy.isAllowed);
 
     final canReact = quickReactions.isNotEmpty;
+
+    // The document the menu's save, share and show-in-folder act on, once
+    // the gateway has confirmed it — before that there is nothing to fetch.
+    final confirmed = ref.watch(confirmedAttachmentTokensProvider);
+    final document = message.attachments
+        .where(
+          (a) =>
+              a.attachmentType == AttachmentType.file &&
+              (a.attachmentStatus == AttachmentStatus.success ||
+                  (a.attachmentStatus != AttachmentStatus.error &&
+                      confirmed.contains(a.id))),
+        )
+        .firstOrNull;
     final deliveryStatus = resolveDeliveryStatus(
       isMine: item.isMine,
       isDirect: state.chat?.type == ChatType.direct,
@@ -94,7 +110,6 @@ class ChatMessageRow extends ConsumerWidget {
       isFirstInGroup: item.startsGroup,
       isLastInGroup: item.endsGroup,
       showAuthor: item.showsAuthor,
-      showMeta: item.endsGroup,
       selectionMode: selectionMode,
       isSelected: isSelected,
       onSelectionToggled: () => onToggleSelected(message.id),
@@ -105,6 +120,9 @@ class ChatMessageRow extends ConsumerWidget {
         message: message,
         canReact: canReact,
         canSelect: !selectionMode,
+        hasDocument: document != null,
+        canShareFiles: ref.watch(fileSharerProvider).isSupported,
+        canRevealFiles: ref.watch(fileRevealerProvider).isSupported,
       ),
       reactions: state.reactionsFor(message.id),
       quickReactions: quickReactions,
@@ -141,6 +159,30 @@ class ChatMessageRow extends ConsumerWidget {
           : null,
       onForward: () => _forward(context, ref, message),
       onCopy: () => _copy(context, message),
+      onSaveFile: document == null
+          ? null
+          : () => AttachmentActions.saveDocument(
+              context,
+              ref,
+              attachment: document,
+              messageId: message.id,
+            ),
+      onShareFile: document == null
+          ? null
+          : () => AttachmentActions.share(
+              context,
+              ref,
+              attachment: document,
+              messageId: message.id,
+            ),
+      onShowInFolder: document == null
+          ? null
+          : () => AttachmentActions.showInFolder(
+              context,
+              ref,
+              attachment: document,
+              messageId: message.id,
+            ),
       onShowDetails: () => MessageDetailsSheet.show(
         context,
         message: message,

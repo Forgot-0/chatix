@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/widgets/date_chip.dart';
-import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The day label that sits between two days of conversation.
 class ChatDateSeparator extends StatelessWidget {
@@ -11,21 +11,11 @@ class ChatDateSeparator extends StatelessWidget {
 
   final DateTime date;
 
-  /// "Today", "Yesterday", or the date itself — the same wording the sticky
-  /// header uses, so the two never disagree about what day it is.
-  static String label(BuildContext context, DateTime value) {
-    final l10n = AppLocalizations.of(context);
-    final local = value.toLocal();
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final that = DateTime(local.year, local.month, local.day);
-
-    final delta = today.difference(that).inDays;
-    if (delta == 0) return l10n.dateToday;
-    if (delta == 1) return l10n.dateYesterday;
-
-    return MaterialLocalizations.of(context).formatMediumDate(local);
-  }
+  /// "Today", "Yesterday", "2 March", and "2 March 2025" once the year is
+  /// not this one — the same wording the sticky header uses, so the two
+  /// never disagree about what day it is.
+  static String label(BuildContext context, DateTime value) =>
+      AppDateFormat.of(context).day(value);
 
   @override
   Widget build(BuildContext context) {

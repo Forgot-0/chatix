@@ -1,278 +1,397 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chatix/core/network/transfer_cancellation.dart';
+import 'package:chatix/core/localization/file_size_format.dart';
+import 'package:chatix/core/storage/file_revealer.dart';
+import 'package:chatix/core/storage/file_sharer.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
-import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
+import 'package:chatix/core/ui/typography/middle_ellipsis_text.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_download_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/attachment_actions.dart';
-import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_meta.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// What a document looks like in a bubble: the kind of file it is, how big,
-/// and what can be done with it.
+/// What a document looks like in a bubble: a round button that says what a
+/// tap will do, the file's name, and how big it is.
 ///
-/// A message carries at most one (api-docs §5.5), so this is a row rather
-/// than a list. Until the gateway confirms the slot — `attachment_success`
-/// over the socket, or `attachment_status` catching up — there is nothing to
-/// open, so the glyph is a spinner and both actions are withheld.
+/// One tap does the one obvious thing — downloads the file, and once it is
+/// here, opens it; tapped while it comes down, it stops. The ring around the
+/// button counts the download. Saving, sharing and finding the saved copy
+/// are in the message's own menu, where the rest of what can be done to a
+/// message lives, rather than as a row of buttons in every bubble.
 ///
-/// Saving is the row's own business, because it is the only action with
-/// something to show: the file comes down through the cache, the ring counts
-/// it, and the button in the middle of the ring stops it.
-class DocumentAttachmentRow extends ConsumerStatefulWidget {
+/// A message carries at most one (api-docs §5.5). Until the gateway
+/// confirms the slot — `attachment_success` over the socket, or
+/// `attachment_status` catching up — there is nothing to download, and the
+/// button only spins.
+class DocumentAttachmentRow extends ConsumerWidget {
   const DocumentAttachmentRow({
     super.key,
     required this.attachment,
     required this.messageId,
     required this.foreground,
+    this.muted,
+    this.isMine = false,
     this.onRetry,
+    this.anchorsMeta = false,
+    this.showMenu = false,
   });
 
   final AttachmentEntity attachment;
   final String messageId;
   final Color foreground;
 
+  /// The size line's colour; [foreground] at a readable strength when not
+  /// given.
+  final Color? muted;
+
+  /// On your own bubble the button is a pale disc on the accent; on anyone
+  /// else's it is the file kind's colour.
+  final bool isMine;
+
   /// Re-reads the message — all a failed slot can be offered (§5.5 carries
   /// no reason and nothing to re-run).
   final VoidCallback? onRetry;
 
-  @override
-  ConsumerState<DocumentAttachmentRow> createState() =>
-      _DocumentAttachmentRowState();
-}
+  /// Whether the bubble's time shares the size line, when this row ends
+  /// the bubble.
+  final bool anchorsMeta;
 
-class _DocumentAttachmentRowState extends ConsumerState<DocumentAttachmentRow> {
-  TransferCancellation? _transfer;
-  double? _progress;
-
-  @override
-  void dispose() {
-    _transfer?.cancel();
-    super.dispose();
-  }
-
-  bool get _isSaving => _transfer != null;
-
-  Future<void> _save() async {
-    if (_isSaving) return;
-
-    final transfer = TransferCancellation();
-    setState(() {
-      _transfer = transfer;
-      _progress = null;
-    });
-
-    await AttachmentActions.save(
-      context,
-      ref,
-      attachment: widget.attachment,
-      messageId: widget.messageId,
-      cancellation: transfer,
-      onProgress: (received, total) {
-        if (!mounted) return;
-        setState(() => _progress = total > 0 ? received / total : null);
-      },
-    );
-
-    if (!mounted) return;
-    setState(() {
-      _transfer = null;
-      _progress = null;
-    });
-  }
-
-  void _cancel() {
-    _transfer?.cancel();
-    setState(() {
-      _transfer = null;
-      _progress = null;
-    });
-  }
+  /// Whether the row carries its own menu of save, share and show in
+  /// folder. A bubble has the message's menu for that; a list of a chat's
+  /// files has nothing else.
+  final bool showMenu;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final chatix = ChatixTheme.of(context);
     final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
 
-    final attachment = widget.attachment;
-
-    // Watched for its side effect: with auto-download on for files this puts
-    // the document on disk before it is tapped, and with it off — the
-    // default, a document being the most expensive thing in a chat — it does
-    // nothing. Opening one fetches it either way.
-    ref.watch(
-      autoAttachmentFileProvider(
-        attachmentFileKey(attachment, messageId: widget.messageId),
-      ),
-    );
+    final key = attachmentFileKey(attachment, messageId: messageId);
+    final download = ref.watch(attachmentDownloadProvider(key));
 
     final confirmed = ref.watch(confirmedAttachmentTokensProvider);
-    final isReady =
-        attachment.attachmentStatus == AttachmentStatus.success ||
-        confirmed.contains(attachment.id);
     final hasFailed = attachment.attachmentStatus == AttachmentStatus.error;
+    final isReady =
+        !hasFailed &&
+        (attachment.attachmentStatus == AttachmentStatus.success ||
+            confirmed.contains(attachment.id));
 
     final kind = DocumentKind.of(attachment.originalFilename);
+    final muted = this.muted ?? foreground.withValues(alpha: 0.72);
 
-    final Widget leading;
+    final _ButtonState button;
     if (hasFailed) {
-      leading = TransferProgressRing(
-        state: TransferRingState.failed,
-        progress: 1,
-        onPressed: widget.onRetry,
-        size: 40,
-        semanticLabel: l10n.retry,
-      );
+      button = _ButtonState.failed;
     } else if (!isReady) {
-      leading = TransferProgressRing(
-        state: TransferRingState.waiting,
-        size: 40,
-        semanticLabel: l10n.attachmentProcessing,
-      );
-    } else if (_isSaving) {
-      leading = TransferProgressRing(
-        state: TransferRingState.running,
-        progress: _progress,
-        onPressed: _cancel,
-        size: 40,
-        semanticLabel: l10n.cancel,
-      );
+      button = _ButtonState.processing;
     } else {
-      leading = _KindBadge(kind: kind);
+      button = switch (download.phase) {
+        AttachmentDownloadPhase.downloading => _ButtonState.downloading,
+        AttachmentDownloadPhase.local => _ButtonState.local,
+        AttachmentDownloadPhase.remote ||
+        AttachmentDownloadPhase.unknown => _ButtonState.remote,
+      };
     }
 
+    final size = formatFileSize(attachment.size, l10n, locale: locale);
     final String subtitle;
     if (hasFailed) {
       subtitle = l10n.attachmentFailed;
     } else if (!isReady) {
       subtitle = l10n.attachmentProcessing;
+    } else if (button == _ButtonState.downloading && download.total > 0) {
+      subtitle = l10n.attachmentDownloadProgress(
+        formatFileSize(download.received, l10n, locale: locale),
+        size,
+      );
     } else {
-      subtitle =
-          '${kind.label} · '
-          '${ChatAttachmentLimits.formatBytes(attachment.size)}';
+      subtitle = '$size · ${kind.label}';
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          leading,
-          const SizedBox(width: AppSpacing.x3),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  attachment.originalFilename,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: widget.foreground,
-                    fontWeight: FontWeight.w600,
-                  ),
+    final VoidCallback? onTap = switch (button) {
+      _ButtonState.failed => onRetry,
+      _ButtonState.processing => null,
+      _ButtonState.remote => () => AttachmentActions.download(
+        context,
+        ref,
+        attachment: attachment,
+        messageId: messageId,
+      ),
+      _ButtonState.downloading =>
+        ref.read(attachmentDownloadProvider(key).notifier).cancel,
+      _ButtonState.local => () => AttachmentActions.open(
+        context,
+        ref,
+        attachment: attachment,
+        messageId: messageId,
+        local: download.file,
+      ),
+    };
+
+    final actionLabel = switch (button) {
+      _ButtonState.failed => l10n.retry,
+      _ButtonState.processing => null,
+      _ButtonState.remote => l10n.attachmentDownload,
+      _ButtonState.downloading => l10n.cancel,
+      _ButtonState.local => l10n.attachmentOpen,
+    };
+
+    final subtitleStyle = theme.textTheme.labelSmall?.copyWith(
+      color: hasFailed ? chatix.danger : muted,
+      fontFeatures: AppTypography.tabularFigures,
+    );
+    final sizeLine = Text(subtitle, style: subtitleStyle);
+
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _DocumentButton(
+          state: button,
+          kind: kind,
+          progress: download.progress,
+          isMine: isMine,
+          foreground: foreground,
+        ),
+        const SizedBox(width: AppSpacing.x3),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              MiddleEllipsisText(
+                attachment.originalFilename,
+                maxLines: ChatLayout.documentNameMaxLines,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w600,
                 ),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: hasFailed
-                        ? chatix.danger
-                        : widget.foreground.withValues(alpha: 0.7),
-                  ),
-                ),
-                if (isReady && !hasFailed)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.x1),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _Action(
-                          label: l10n.attachmentOpen,
-                          icon: Icons.open_in_new_rounded,
-                          color: widget.foreground,
-                          onPressed: () => AttachmentActions.open(
-                            context,
-                            ref,
-                            attachment: attachment,
-                            messageId: widget.messageId,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.x2),
-                        _Action(
-                          label: l10n.save,
-                          icon: Icons.download_rounded,
-                          color: widget.foreground,
-                          onPressed: _isSaving ? null : _save,
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
+              ),
+              const SizedBox(height: ChatLayout.attachmentRowPaddingY),
+              if (anchorsMeta) MessageMetaAnchor(child: sizeLine) else sizeLine,
+            ],
           ),
+        ),
+        if (showMenu && isReady) ...[
+          const SizedBox(width: AppSpacing.x1),
+          _DocumentMenu(attachment: attachment, messageId: messageId),
         ],
+      ],
+    );
+
+    return Semantics(
+      button: onTap != null,
+      onTapHint: actionLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: ChatLayout.attachmentRowPaddingY,
+          ),
+          child: row,
+        ),
       ),
     );
   }
 }
 
-class _KindBadge extends StatelessWidget {
-  const _KindBadge({required this.kind});
+enum _ButtonState { failed, processing, remote, downloading, local }
 
-  final DocumentKind kind;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: kind.color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(AppRadii.md),
-      ),
-      alignment: Alignment.center,
-      child: Icon(kind.icon, size: 20, color: kind.color),
-    );
-  }
-}
-
-class _Action extends StatelessWidget {
-  const _Action({
-    required this.label,
-    required this.icon,
-    required this.color,
-    this.onPressed,
+/// The round button a document leads with.
+///
+/// Its glyph is what a tap will do: an arrow to download, a cross to stop,
+/// the kind of file once it is here to open. While it comes down a ring
+/// around the inside of the disc fills.
+class _DocumentButton extends StatelessWidget {
+  const _DocumentButton({
+    required this.state,
+    required this.kind,
+    required this.progress,
+    required this.isMine,
+    required this.foreground,
   });
 
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback? onPressed;
+  final _ButtonState state;
+  final DocumentKind kind;
+  final double? progress;
+  final bool isMine;
+  final Color foreground;
 
   @override
   Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 14),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: color,
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
-        minimumSize: const Size(0, 28),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: Theme.of(context).textTheme.labelSmall,
+    final chatix = ChatixTheme.of(context);
+
+    // On your own bubble the disc is a lighter wash of the bubble's own
+    // foreground, so it reads as part of the accent rather than a sticker
+    // on it; elsewhere it is the kind's colour, with a white glyph wherever
+    // white reads on it.
+    final Color fill;
+    final Color glyph;
+    if (state == _ButtonState.failed) {
+      fill = chatix.danger;
+      glyph = AppContrast.iconOn(chatix.danger);
+    } else if (isMine) {
+      fill = foreground.withValues(alpha: 0.22);
+      glyph = foreground;
+    } else {
+      fill = kind.color;
+      glyph = AppContrast.iconOn(kind.color);
+    }
+
+    final icon = switch (state) {
+      _ButtonState.failed => Icons.refresh_rounded,
+      _ButtonState.processing => kind.icon,
+      _ButtonState.remote => Icons.arrow_downward_rounded,
+      _ButtonState.downloading => Icons.close_rounded,
+      _ButtonState.local => kind.icon,
+    };
+
+    final ring = switch (state) {
+      _ButtonState.downloading => _Ring(value: progress, color: glyph),
+      // Nothing to count yet: the gateway is still checking the upload.
+      _ButtonState.processing => _Ring(value: null, color: glyph),
+      _ => null,
+    };
+
+    return SizedBox.square(
+      dimension: ChatLayout.documentButtonSize,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            ?ring,
+            AnimatedSwitcher(
+              duration: AppMotion.fast,
+              child: Icon(
+                icon,
+                key: ValueKey(icon),
+                size: ChatLayout.documentGlyphSize,
+                color: glyph,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _Ring extends StatelessWidget {
+  const _Ring({required this.value, required this.color});
+
+  final double? value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    const inset = ChatLayout.documentRingStroke * 1.5;
+
+    return Padding(
+      padding: const EdgeInsets.all(inset),
+      child: SizedBox.expand(
+        child: CircularProgressIndicator(
+          value: value,
+          strokeWidth: ChatLayout.documentRingStroke,
+          strokeCap: StrokeCap.round,
+          color: color,
+          backgroundColor: color.withValues(alpha: 0.25),
+        ),
+      ),
+    );
+  }
+}
+
+/// Save, share and show in folder, for a row that is not in a bubble and so
+/// has no message menu to put them in.
+class _DocumentMenu extends ConsumerWidget {
+  const _DocumentMenu({required this.attachment, required this.messageId});
+
+  final AttachmentEntity attachment;
+  final String messageId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final canShare = ref.watch(fileSharerProvider).isSupported;
+    final canReveal = ref.watch(fileRevealerProvider).isSupported;
+
+    return PopupMenuButton<DocumentAction>(
+      tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+      icon: const Icon(Icons.more_vert_rounded),
+      onSelected: (action) => DocumentAction.run(
+        action,
+        context,
+        ref,
+        attachment: attachment,
+        messageId: messageId,
+      ),
+      itemBuilder: (context) => [
+        for (final action in DocumentAction.values)
+          if (action != DocumentAction.share || canShare)
+            if (action != DocumentAction.showInFolder || canReveal)
+              PopupMenuItem(
+                value: action,
+                child: ListTile(
+                  leading: Icon(action.icon),
+                  title: Text(action.label(l10n)),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+      ],
+    );
+  }
+}
+
+/// What can be done with a document beyond opening it.
+enum DocumentAction {
+  save(Icons.download_rounded),
+  share(Icons.ios_share_rounded),
+  showInFolder(Icons.folder_open_rounded);
+
+  const DocumentAction(this.icon);
+
+  final IconData icon;
+
+  String label(AppLocalizations l10n) => switch (this) {
+    DocumentAction.save => l10n.messageSaveFile,
+    DocumentAction.share => l10n.messageShareFile,
+    DocumentAction.showInFolder => l10n.messageShowInFolder,
+  };
+
+  static Future<void> run(
+    DocumentAction action,
+    BuildContext context,
+    WidgetRef ref, {
+    required AttachmentEntity attachment,
+    required String messageId,
+  }) => switch (action) {
+    DocumentAction.save => AttachmentActions.saveDocument(
+      context,
+      ref,
+      attachment: attachment,
+      messageId: messageId,
+    ),
+    DocumentAction.share => AttachmentActions.share(
+      context,
+      ref,
+      attachment: attachment,
+      messageId: messageId,
+    ),
+    DocumentAction.showInFolder => AttachmentActions.showInFolder(
+      context,
+      ref,
+      attachment: attachment,
+      messageId: messageId,
+    ),
+  };
 }
 
 /// What kind of document a filename says it is.

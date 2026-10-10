@@ -906,5 +906,18 @@
   "updateWhatsNew": "Что нового",
   "updateLater": "Позже",
   "updateNow": "Обновить сейчас",
-  "updateAction": "Обновить"
+  "updateAction": "Обновить",
+  "sizeBytes": "{value} Б",
+  "sizeKilobytes": "{value} КБ",
+  "attachmentDownloadProgress": "{received} / {total}",
+  "attachmentDownload": "Скачать",
+  "attachmentDownloadFailed": "Не удалось скачать файл",
+  "attachmentShareFailed": "Не удалось поделиться файлом",
+  "attachmentRevealFailed": "Не удалось открыть папку",
+  "messageSaveFile": "Сохранить",
+  "messageShareFile": "Поделиться",
+  "messageShowInFolder": "Показать в папке",
+  "bubbleFill": "Ваши пузыри",
+  "bubbleFillGradient": "Градиент",
+  "bubbleFillSolid": "Сплошной цвет"
 }

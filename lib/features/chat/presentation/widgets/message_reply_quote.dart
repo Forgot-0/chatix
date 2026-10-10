@@ -34,8 +34,6 @@ class MessageReplyQuote extends StatelessWidget {
 
   final VoidCallback? onTap;
 
-  static const double _thumbnail = 34;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -68,11 +66,28 @@ class MessageReplyQuote extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (thumbnail != null)
-                SizedBox.square(
-                  dimension: _thumbnail,
-                  child: AttachmentImage(
-                    attachment: thumbnail,
-                    messageId: message!.id,
+                // Set off from the rule rather than pressed against it, with
+                // corners of its own: a picture flush with a coloured bar
+                // reads as part of the bar.
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: ChatLayout.replyThumbnailInset,
+                    top: AppSpacing.x1,
+                    bottom: AppSpacing.x1,
+                  ),
+                  child: SizedBox.square(
+                    dimension: ChatLayout.replyThumbnailSize,
+                    child: AttachmentImage(
+                      attachment: thumbnail,
+                      messageId: message!.id,
+                      borderRadius: BorderRadius.circular(
+                        ChatLayout.replyThumbnailRadius,
+                      ),
+                      fallback: _ThumbnailFallback(
+                        icon: preview?.icon ?? Icons.photo_outlined,
+                        color: accent,
+                      ),
+                    ),
                   ),
                 ),
               Flexible(
@@ -140,5 +155,28 @@ class MessageReplyQuote extends StatelessWidget {
       }
     }
     return null;
+  }
+}
+
+/// What a quote's thumbnail shows when the picture will not come: the kind
+/// of thing it was, on a wash of the quote's own colour.
+class _ThumbnailFallback extends StatelessWidget {
+  const _ThumbnailFallback({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: color.withValues(alpha: 0.16),
+      child: Center(
+        child: Icon(
+          icon,
+          size: ChatLayout.replyThumbnailSize / 2,
+          color: color,
+        ),
+      ),
+    );
   }
 }

@@ -48,6 +48,7 @@ abstract final class ThemeGenerator {
           accent: settings.accentSeed,
           bubbleRadius: settings.bubbleRadius,
           bubbleAnchorRadius: settings.bubbleAnchorRadius,
+          bubbleGradient: settings.bubbleGradient,
           wallpaperStyle: settings.wallpaper,
           wallpaperIntensity: settings.wallpaperIntensity,
           wallpaperPattern: settings.wallpaperPattern,

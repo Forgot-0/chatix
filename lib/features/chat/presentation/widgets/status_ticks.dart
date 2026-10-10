@@ -48,15 +48,23 @@ class StatusTicks extends StatelessWidget {
     super.key,
     required this.status,
     this.color,
+    this.readColor,
     this.size = 14,
   });
 
   final MessageDeliveryStatus status;
 
   /// The colour for [MessageDeliveryStatus.sending] and
-  /// [MessageDeliveryStatus.sent]; "read" always uses the success accent, so
-  /// it stays recognisable on the outgoing gradient.
+  /// [MessageDeliveryStatus.sent].
   final Color? color;
+
+  /// The colour for [MessageDeliveryStatus.read]; the success accent unless
+  /// given.
+  ///
+  /// The chat list keeps the accent, where it sits on a plain surface. A
+  /// bubble passes its own meta colour instead: mint on an outgoing accent
+  /// is 1–2.7:1, and the second tick already says "read" by its shape.
+  final Color? readColor;
 
   final double size;
 
@@ -75,7 +83,7 @@ class StatusTicks extends StatelessWidget {
       MessageDeliveryStatus.sent => (Icons.done, muted, l10n.messageSent),
       MessageDeliveryStatus.read => (
         Icons.done_all,
-        chatix.success,
+        readColor ?? chatix.success,
         l10n.messageRead,
       ),
     };

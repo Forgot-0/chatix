@@ -4007,5 +4007,75 @@
   "updateAction": "Update",
   "@updateAction": {
     "description": "Starts an optional update"
+  },
+  "sizeBytes": "{value} B",
+  "@sizeBytes": {
+    "description": "A size in bytes; value is already formatted for the locale.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeKilobytes": "{value} KB",
+  "@sizeKilobytes": {
+    "description": "A size in kilobytes (1024 bytes); value is already formatted for the locale.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentDownloadProgress": "{received} / {total}",
+  "@attachmentDownloadProgress": {
+    "description": "Under a document while it downloads: how much has arrived out of the whole, both already formatted as file sizes",
+    "placeholders": {
+      "received": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "attachmentDownload": "Download",
+  "@attachmentDownload": {
+    "description": "Screen-reader label of the round button that downloads a document in a message"
+  },
+  "attachmentDownloadFailed": "Could not download this file",
+  "@attachmentDownloadFailed": {
+    "description": "A document in a message could not be downloaded"
+  },
+  "attachmentShareFailed": "Could not share this file",
+  "@attachmentShareFailed": {
+    "description": "The system share sheet could not be opened for a document"
+  },
+  "attachmentRevealFailed": "Could not open the folder",
+  "@attachmentRevealFailed": {
+    "description": "The file manager could not be opened on a saved document"
+  },
+  "messageSaveFile": "Save",
+  "@messageSaveFile": {
+    "description": "Message menu action on a document: keep a copy in Downloads"
+  },
+  "messageShareFile": "Share",
+  "@messageShareFile": {
+    "description": "Message menu action on a document: hand it to another app through the system share sheet"
+  },
+  "messageShowInFolder": "Show in folder",
+  "@messageShowInFolder": {
+    "description": "Message menu action on a document, desktop only: open the file manager on the saved copy"
+  },
+  "bubbleFill": "Your bubbles",
+  "@bubbleFill": {
+    "description": "Appearance setting: how your own message bubbles are filled"
+  },
+  "bubbleFillGradient": "Gradient",
+  "@bubbleFillGradient": {
+    "description": "Bubble fill option: the accent fades into a slightly deeper shade"
+  },
+  "bubbleFillSolid": "Solid colour",
+  "@bubbleFillSolid": {
+    "description": "Bubble fill option: one flat accent colour"
   }
 }

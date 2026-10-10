@@ -30,10 +30,14 @@ enum AppDensity {
   comfortable;
 
   /// Vertical padding inside a message bubble.
+  ///
+  /// Tighter than a card's, because the time no longer takes a line of its
+  /// own: it shares the last line of the text, and the old padding was
+  /// sized for a bubble that ended in a row of small print.
   double get bubblePaddingY => switch (this) {
-    AppDensity.compact => 6,
-    AppDensity.cozy => 9,
-    AppDensity.comfortable => 13,
+    AppDensity.compact => 4,
+    AppDensity.cozy => 7,
+    AppDensity.comfortable => 10,
   };
 
   /// Horizontal padding inside a message bubble.
@@ -155,6 +159,7 @@ class AppearanceSettings {
     this.wallpaperPattern = defaultWallpaperPattern,
     this.bubbleRadius = defaultBubbleRadius,
     this.bubbleAnchored = true,
+    this.bubbleGradient = true,
     this.textScale = 1,
     this.haptics = true,
   });
@@ -185,6 +190,7 @@ class AppearanceSettings {
         _number(json['bubbleRadius']) ?? defaultBubbleRadius,
       ),
       bubbleAnchored: json['bubbleAnchored'] != false,
+      bubbleGradient: json['bubbleGradient'] != false,
       textScale: clampTextScale(_number(json['textScale']) ?? defaultTextScale),
       haptics: json['haptics'] != false,
     );
@@ -258,6 +264,10 @@ class AppearanceSettings {
   /// Whether the corner on the author's side is pulled tight into an anchor.
   final bool bubbleAnchored;
 
+  /// Whether your own bubbles fade from the accent into a slightly deeper
+  /// shade of it, or are one flat colour.
+  final bool bubbleGradient;
+
   final double textScale;
 
   /// Whether the app may vibrate at all.
@@ -284,6 +294,7 @@ class AppearanceSettings {
     double? wallpaperPattern,
     double? bubbleRadius,
     bool? bubbleAnchored,
+    bool? bubbleGradient,
     double? textScale,
     bool? haptics,
   }) {
@@ -303,6 +314,7 @@ class AppearanceSettings {
           ? this.bubbleRadius
           : clampBubbleRadius(bubbleRadius),
       bubbleAnchored: bubbleAnchored ?? this.bubbleAnchored,
+      bubbleGradient: bubbleGradient ?? this.bubbleGradient,
       textScale: textScale == null ? this.textScale : clampTextScale(textScale),
       haptics: haptics ?? this.haptics,
     );
@@ -318,6 +330,7 @@ class AppearanceSettings {
     'wallpaperPattern': wallpaperPattern,
     'bubbleRadius': bubbleRadius,
     'bubbleAnchored': bubbleAnchored,
+    'bubbleGradient': bubbleGradient,
     'textScale': textScale,
     'haptics': haptics,
   };
@@ -335,6 +348,7 @@ class AppearanceSettings {
           other.wallpaperPattern == wallpaperPattern &&
           other.bubbleRadius == bubbleRadius &&
           other.bubbleAnchored == bubbleAnchored &&
+          other.bubbleGradient == bubbleGradient &&
           other.textScale == textScale &&
           other.haptics == haptics;
 
@@ -349,6 +363,7 @@ class AppearanceSettings {
     wallpaperPattern,
     bubbleRadius,
     bubbleAnchored,
+    bubbleGradient,
     textScale,
     haptics,
   );
@@ -359,6 +374,7 @@ class AppearanceSettings {
       'density: ${density.name}, accentSeed: $accentSeed, '
       'wallpaperId: $wallpaperId, wallpaperIntensity: $wallpaperIntensity, '
       'wallpaperPattern: $wallpaperPattern, bubbleRadius: $bubbleRadius, '
-      'bubbleAnchored: $bubbleAnchored, textScale: $textScale, '
+      'bubbleAnchored: $bubbleAnchored, bubbleGradient: $bubbleGradient, '
+      'textScale: $textScale, '
       'haptics: $haptics)';
 }

@@ -9,9 +9,9 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 
 import '../../../../helpers/chat_golden.dart';
 
-/// A run of messages by one author reads as one block: the clock appears once,
-/// at the bottom of the run, and the gaps inside it are tighter than the gap
-/// between runs.
+/// A run of messages by one author reads as one block — the gaps inside it
+/// are tighter than the gap between runs — and every message in it still
+/// says when it was sent, on its own last line, at no cost in height.
 void main() {
   MessageEntity message({
     required int seq,
@@ -45,8 +45,7 @@ void main() {
     isFirstInGroup: isFirst,
     isLastInGroup: isLast,
     showAuthor: isFirst && !isMine,
-    showMeta: isLast,
-    deliveryStatus: isMine && isLast ? MessageDeliveryStatus.read : null,
+    deliveryStatus: isMine ? MessageDeliveryStatus.read : null,
   );
 
   Future<void> pump(WidgetTester tester, Widget child) =>
@@ -59,7 +58,7 @@ void main() {
         surfaceSize: const Size(360, 400),
       );
 
-  testWidgets('only the last message of a run shows the time', (tester) async {
+  testWidgets('every message of a run shows its own time', (tester) async {
     await pump(
       tester,
       Column(
@@ -72,7 +71,25 @@ void main() {
       ),
     );
 
-    expect(find.text('2:30 PM'), findsOneWidget);
+    expect(find.text('2:30 PM'), findsNWidgets(3));
+  });
+
+  testWidgets('the time costs a short message no height', (tester) async {
+    await pump(
+      tester,
+      bubble(
+        message: message(seq: 1, content: 'ok'),
+        isFirst: false,
+        isLast: false,
+      ),
+    );
+
+    // The word and the clock share one line: the bubble is that line and
+    // its padding, not a line of text over a line of small print.
+    final word = tester.getRect(find.text('ok'));
+    final clock = tester.getRect(find.text('2:30 PM'));
+    expect(clock.bottom, closeTo(word.bottom, 1));
+    expect(clock.left, greaterThan(word.right));
   });
 
   testWidgets('only the first message of a run names its author', (
@@ -110,7 +127,7 @@ void main() {
     expect(find.text('edited'), findsOneWidget);
   });
 
-  testWidgets('ticks ride the last message of my own run', (tester) async {
+  testWidgets('ticks ride every message of my own run', (tester) async {
     await pump(
       tester,
       Column(
@@ -132,7 +149,7 @@ void main() {
       ),
     );
 
-    expect(find.byType(StatusTicks), findsOneWidget);
+    expect(find.byType(StatusTicks), findsNWidgets(2));
   });
 
   group('goldens', () {
@@ -155,7 +172,7 @@ void main() {
                 isLast: false,
               ),
               bubble(
-                message: message(seq: 2, content: 'Middle, no clock'),
+                message: message(seq: 2, content: 'Middle, own clock'),
                 isFirst: false,
                 isLast: false,
               ),

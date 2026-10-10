@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/rbac/permission_helpers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
@@ -18,7 +19,6 @@ import 'package:chatix/features/chat/presentation/providers/chat_providers.dart'
 import 'package:chatix/features/chat/presentation/providers/chat_state_actions.dart';
 import 'package:chatix/features/chat/presentation/providers/search_history_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_preview.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/utils/open_chat.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
@@ -111,9 +111,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
       color: widget.isSelected ? scheme.secondaryContainer : Colors.transparent,
       child: InkWell(
         onTap: () => openChat(context, ref, chat.id),
-        onLongPress: widget.enableActions
-            ? () => _openMenu(myUserId)
-            : null,
+        onLongPress: widget.enableActions ? () => _openMenu(myUserId) : null,
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.x4,
@@ -227,7 +225,11 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     _toast(
       failure is PinnedChatsLimitFailure
           ? l10n.pinLimitReached(failure.limit)
-          : friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
+          : friendlyFailureMessage(
+              failure,
+              l10n: l10n,
+              fallback: l10n.errorOccurred,
+            ),
     );
   }
 
@@ -251,10 +253,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final chatId = widget.chat.id;
     final wasArchived = widget.chat.isArchived;
 
-    final failure = await actions.setArchived(
-      chatId,
-      archived: !wasArchived,
-    );
+    final failure = await actions.setArchived(chatId, archived: !wasArchived);
 
     if (!mounted) return;
 
@@ -262,7 +261,11 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
 
     if (failure != null) {
       _toast(
-        friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
+        friendlyFailureMessage(
+          failure,
+          l10n: l10n,
+          fallback: l10n.errorOccurred,
+        ),
       );
       return;
     }
@@ -426,7 +429,11 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     result.match(
       (failure) => _toast(
         chatFailureMessage(failure) ??
-            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.errorOccurred),
+            friendlyFailureMessage(
+              failure,
+              l10n: l10n,
+              fallback: l10n.errorOccurred,
+            ),
       ),
       (_) {
         ref.read(chatListProvider.notifier).removeLocally(widget.chat.id);
@@ -581,11 +588,7 @@ class _TitleLine extends StatelessWidget {
         if (stamp != null) ...[
           const SizedBox(width: AppSpacing.x1 + 2),
           Text(
-            formatChatTimestamp(
-              stamp,
-              l10n,
-              locale: Localizations.localeOf(context).toLanguageTag(),
-            ),
+            AppDateFormat.of(context).listStamp(stamp),
             style: theme.textTheme.labelSmall?.copyWith(
               color: isUnread ? scheme.primary : scheme.onSurfaceVariant,
               fontWeight: isUnread ? FontWeight.w600 : null,

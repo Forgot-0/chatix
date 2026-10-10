@@ -210,6 +210,36 @@ class AppearanceSettingsScreen extends ConsumerWidget {
             subtitle: Text(l10n.bubbleAnchorHint),
             secondary: const Icon(Icons.chat_bubble_outline),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x4,
+              AppSpacing.x2,
+              AppSpacing.x4,
+              AppSpacing.x2,
+            ),
+            child: Text(l10n.bubbleFill, style: theme.textTheme.titleSmall),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+            child: SegmentedButton<bool>(
+              segments: [
+                ButtonSegment(
+                  value: true,
+                  icon: const Icon(Icons.gradient_rounded),
+                  label: Text(l10n.bubbleFillGradient),
+                ),
+                ButtonSegment(
+                  value: false,
+                  icon: const Icon(Icons.square_rounded),
+                  label: Text(l10n.bubbleFillSolid),
+                ),
+              ],
+              selected: {settings.bubbleGradient},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) =>
+                  controller.setBubbleGradient(selection.first),
+            ),
+          ),
 
           const Divider(height: AppSpacing.x6),
 

@@ -1196,5 +1196,18 @@
   },
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "sizeBytes": "{value} B",
+  "sizeKilobytes": "{value} KB",
+  "attachmentDownloadProgress": "{received} / {total}",
+  "attachmentDownload": "Descargar",
+  "attachmentDownloadFailed": "No se pudo descargar el archivo",
+  "attachmentShareFailed": "No se pudo compartir el archivo",
+  "attachmentRevealFailed": "No se pudo abrir la carpeta",
+  "messageSaveFile": "Guardar",
+  "messageShareFile": "Compartir",
+  "messageShowInFolder": "Mostrar en la carpeta",
+  "bubbleFill": "Tus burbujas",
+  "bubbleFillGradient": "Degradado",
+  "bubbleFillSolid": "Color sólido"
 }

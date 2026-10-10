@@ -110,6 +110,10 @@ dependencies:
   firebase_core: ^4.14.0
   firebase_messaging: ^16.6.0
   flutter_local_notifications: ^22.3.0
+  # "Share" in a document message's menu: the system share sheet on
+  # Android, iOS, macOS and Windows. Linux has none, and the item is not
+  # offered there (core/storage/file_sharer.dart).
+  share_plus: ^12.0.2
 
 dev_dependencies:
   flutter_test:

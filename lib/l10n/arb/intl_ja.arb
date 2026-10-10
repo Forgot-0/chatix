@@ -1196,5 +1196,18 @@
   },
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "sizeBytes": "{value} B",
+  "sizeKilobytes": "{value} KB",
+  "attachmentDownloadProgress": "{received} / {total}",
+  "attachmentDownload": "ダウンロード",
+  "attachmentDownloadFailed": "ファイルをダウンロードできませんでした",
+  "attachmentShareFailed": "ファイルを共有できませんでした",
+  "attachmentRevealFailed": "フォルダを開けませんでした",
+  "messageSaveFile": "保存",
+  "messageShareFile": "共有",
+  "messageShowInFolder": "フォルダに表示",
+  "bubbleFill": "自分の吹き出し",
+  "bubbleFillGradient": "グラデーション",
+  "bubbleFillSolid": "単色"
 }

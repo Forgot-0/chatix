@@ -3079,4 +3079,49 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get updateAction => '更新';
+
+  @override
+  String sizeBytes(String value) {
+    return '$value B';
+  }
+
+  @override
+  String sizeKilobytes(String value) {
+    return '$value KB';
+  }
+
+  @override
+  String attachmentDownloadProgress(String received, String total) {
+    return '$received / $total';
+  }
+
+  @override
+  String get attachmentDownload => 'ダウンロード';
+
+  @override
+  String get attachmentDownloadFailed => 'ファイルをダウンロードできませんでした';
+
+  @override
+  String get attachmentShareFailed => 'ファイルを共有できませんでした';
+
+  @override
+  String get attachmentRevealFailed => 'フォルダを開けませんでした';
+
+  @override
+  String get messageSaveFile => '保存';
+
+  @override
+  String get messageShareFile => '共有';
+
+  @override
+  String get messageShowInFolder => 'フォルダに表示';
+
+  @override
+  String get bubbleFill => '自分の吹き出し';
+
+  @override
+  String get bubbleFillGradient => 'グラデーション';
+
+  @override
+  String get bubbleFillSolid => '単色';
 }

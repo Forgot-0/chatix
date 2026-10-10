@@ -6,6 +6,7 @@ import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_meta.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -40,6 +41,9 @@ class ChatPendingBubble extends ConsumerWidget {
     final foreground = chatix.bubbleOutgoingForeground;
     final muted = chatix.bubbleOutgoingMuted;
     final labelStyle = theme.textTheme.labelSmall?.copyWith(color: muted);
+    final bodyStyle =
+        theme.textTheme.bodyMedium?.copyWith(color: foreground) ??
+        TextStyle(color: foreground);
 
     final stuck = pending.needsAttention;
     final waiting = !stuck && pending.attempts > 0;
@@ -49,6 +53,46 @@ class ChatPendingBubble extends ConsumerWidget {
     // business standing up the whole chat controller just to be drawn.
     ChatDetailController notifier() =>
         ref.read(chatDetailProvider(chatId).notifier);
+
+    // Still ours to send, just not right now: saying so is what keeps a
+    // queued message from reading as a lost one. There is no server time to
+    // show yet, so the clock tick stands in for it.
+    final meta = MessageMeta(
+      label: waiting ? l10n.messageWaitingToSend : '',
+      color: muted,
+      deliveryStatus: MessageDeliveryStatus.sending,
+      speakLabel: waiting,
+    );
+
+    final hasText = content != null && content.isNotEmpty;
+    final hasFiles = pending.uploadTokens.isNotEmpty;
+
+    // [anchored] marks the line the time shares: the last one there is.
+    List<Widget> body({required bool anchored}) {
+      Widget anchor(Widget text, {required bool last}) =>
+          anchored && last ? MessageMetaAnchor(child: text) : text;
+
+      return [
+        if (hasText) anchor(Text(content, style: bodyStyle), last: !hasFiles),
+        if (hasFiles)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.attach_file_rounded, size: 14, color: muted),
+              const SizedBox(width: AppSpacing.x1),
+              Flexible(
+                child: anchor(
+                  Text(
+                    l10n.attachmentsCount(pending.uploadTokens.length),
+                    style: labelStyle,
+                  ),
+                  last: true,
+                ),
+              ),
+            ],
+          ),
+      ];
+    }
 
     final buttonStyle = TextButton.styleFrom(
       foregroundColor: foreground,
@@ -86,73 +130,54 @@ class ChatPendingBubble extends ConsumerWidget {
                   : BorderSide.none,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (content != null && content.isNotEmpty)
-                Text(
-                  content,
-                  style:
-                      theme.textTheme.bodyMedium?.copyWith(color: foreground) ??
-                      TextStyle(color: foreground),
-                ),
-              if (pending.uploadTokens.isNotEmpty)
-                Row(
+          child: stuck
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.attach_file_rounded, size: 14, color: muted),
-                    const SizedBox(width: AppSpacing.x1),
-                    Text(
-                      l10n.attachmentsCount(pending.uploadTokens.length),
-                      style: labelStyle,
+                    ...body(anchored: false),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: AppSpacing.x1,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 14,
+                            color: foreground,
+                          ),
+                          Text(
+                            pending.failureMessage ?? l10n.messageNotSent,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: foreground,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => notifier().retry(pending),
+                            style: buttonStyle,
+                            child: Text(l10n.retry),
+                          ),
+                          TextButton(
+                            onPressed: () => notifier().discard(pending),
+                            style: buttonStyle,
+                            child: Text(l10n.discard),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: switch ((stuck, waiting)) {
-                  (true, _) => Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: AppSpacing.x1,
-                    children: [
-                      Icon(Icons.error_outline, size: 14, color: foreground),
-                      Text(
-                        pending.failureMessage ?? l10n.messageNotSent,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: foreground,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => notifier().retry(pending),
-                        style: buttonStyle,
-                        child: Text(l10n.retry),
-                      ),
-                      TextButton(
-                        onPressed: () => notifier().discard(pending),
-                        style: buttonStyle,
-                        child: Text(l10n.discard),
-                      ),
-                    ],
-                  ),
-                  // Still ours to send, just not right now. Saying so is
-                  // what keeps a queued message from reading as a lost one.
-                  (false, true) => Row(
+                )
+              // Going out, or waiting for another try: either way it says so
+              // where the time will be, on the last line of the text.
+              : MessageMetaLayout(
+                  content: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.schedule, size: 14, color: muted),
-                      const SizedBox(width: AppSpacing.x1),
-                      Text(l10n.messageWaitingToSend, style: labelStyle),
-                    ],
+                    children: body(anchored: true),
                   ),
-                  (false, false) => StatusTicks(
-                    status: MessageDeliveryStatus.sending,
-                    color: muted,
-                  ),
-                },
-              ),
-            ],
-          ),
+                  meta: meta,
+                ),
         ),
       ),
     );

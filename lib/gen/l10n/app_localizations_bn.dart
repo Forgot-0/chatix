@@ -3189,4 +3189,49 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get updateAction => 'আপডেট';
+
+  @override
+  String sizeBytes(String value) {
+    return '$value B';
+  }
+
+  @override
+  String sizeKilobytes(String value) {
+    return '$value KB';
+  }
+
+  @override
+  String attachmentDownloadProgress(String received, String total) {
+    return '$received / $total';
+  }
+
+  @override
+  String get attachmentDownload => 'ডাউনলোড';
+
+  @override
+  String get attachmentDownloadFailed => 'ফাইলটি ডাউনলোড করা যায়নি';
+
+  @override
+  String get attachmentShareFailed => 'ফাইলটি শেয়ার করা যায়নি';
+
+  @override
+  String get attachmentRevealFailed => 'ফোল্ডারটি খোলা যায়নি';
+
+  @override
+  String get messageSaveFile => 'সংরক্ষণ';
+
+  @override
+  String get messageShareFile => 'শেয়ার';
+
+  @override
+  String get messageShowInFolder => 'ফোল্ডারে দেখান';
+
+  @override
+  String get bubbleFill => 'আপনার বাবল';
+
+  @override
+  String get bubbleFillGradient => 'গ্রেডিয়েন্ট';
+
+  @override
+  String get bubbleFillSolid => 'একরঙা';
 }

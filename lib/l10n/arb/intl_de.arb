@@ -1196,5 +1196,18 @@
   },
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "sizeBytes": "{value} B",
+  "sizeKilobytes": "{value} KB",
+  "attachmentDownloadProgress": "{received} / {total}",
+  "attachmentDownload": "Herunterladen",
+  "attachmentDownloadFailed": "Die Datei konnte nicht heruntergeladen werden",
+  "attachmentShareFailed": "Die Datei konnte nicht geteilt werden",
+  "attachmentRevealFailed": "Der Ordner konnte nicht geöffnet werden",
+  "messageSaveFile": "Speichern",
+  "messageShareFile": "Teilen",
+  "messageShowInFolder": "Im Ordner anzeigen",
+  "bubbleFill": "Deine Blasen",
+  "bubbleFillGradient": "Verlauf",
+  "bubbleFillSolid": "Einfarbig"
 }

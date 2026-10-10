@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_meta.dart';
 
 /// The body of a message, drawn as text and nothing else.
 ///
@@ -17,6 +18,7 @@ class MessageText extends StatefulWidget {
     required this.linkColor,
     this.isKnownMention,
     this.onOpenLink,
+    this.anchorsMeta = false,
   });
 
   final String content;
@@ -30,6 +32,10 @@ class MessageText extends StatefulWidget {
   final bool Function(String handle)? isKnownMention;
 
   final void Function(LinkSpan link)? onOpenLink;
+
+  /// Whether the bubble's time shares this text's last line — see
+  /// [MessageMetaLayout].
+  final bool anchorsMeta;
 
   @override
   State<MessageText> createState() => _MessageTextState();
@@ -98,6 +104,11 @@ class _MessageTextState extends State<MessageText> {
 
   @override
   Widget build(BuildContext context) {
+    final text = _text();
+    return widget.anchorsMeta ? MessageMetaAnchor(child: text) : text;
+  }
+
+  Widget _text() {
     // Nothing to tap means nothing to style differently, and the whole
     // message is one plain span.
     if (widget.onOpenLink == null || _recognizers.isEmpty) {

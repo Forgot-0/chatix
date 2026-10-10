@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
@@ -112,7 +113,11 @@ class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
         title: Text(
           l10n.attachmentSelection(
             _uploads.length,
-            ChatAttachmentLimits.formatBytes(totalBytes),
+            formatFileSize(
+              totalBytes,
+              l10n,
+              locale: Localizations.localeOf(context).toLanguageTag(),
+            ),
           ),
         ),
         leading: IconButton(

@@ -9,6 +9,15 @@ enum MessageAction {
   react,
   copy,
   forward,
+
+  /// Keep a copy of the message's document in Downloads.
+  saveFile,
+
+  /// Hand the document to another app through the system share sheet.
+  shareFile,
+
+  /// Open the file manager on the saved copy. Desktop only.
+  showInFolder,
   edit,
   select,
   delete,
@@ -26,12 +35,20 @@ enum MessageAction {
 /// right, but no endpoint in api-docs pins anything, so there is nothing the
 /// menu item could call.
 abstract final class MessageActions {
+  ///
+  /// [hasDocument] says the message carries a document the gateway has
+  /// confirmed — there is nothing to save before that. [canShareFiles] and
+  /// [canRevealFiles] are what the platform can do: there is no share sheet
+  /// on Linux and no file manager to point at on a phone.
   static List<MessageAction> of({
     required ChatEntity? chat,
     required ChatMemberEntity? me,
     required MessageEntity message,
     required bool canReact,
     required bool canSelect,
+    bool hasDocument = false,
+    bool canShareFiles = false,
+    bool canRevealFiles = false,
   }) {
     // A system message is the server talking about the conversation. There is
     // no author to reply to and nothing to edit.
@@ -46,6 +63,11 @@ abstract final class MessageActions {
       if (canReact) MessageAction.react,
       if (hasText) MessageAction.copy,
       MessageAction.forward,
+      if (hasDocument) ...[
+        MessageAction.saveFile,
+        if (canShareFiles) MessageAction.shareFile,
+        if (canRevealFiles) MessageAction.showInFolder,
+      ],
       if (canEditMessage(me, message.authorId)) MessageAction.edit,
       if (canSelect) MessageAction.select,
       if (canDeleteMessage(chat, me, message.authorId)) MessageAction.delete,

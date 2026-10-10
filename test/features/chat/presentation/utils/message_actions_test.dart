@@ -67,12 +67,18 @@ void main() {
     MessageEntity? forMessage,
     bool canReact = true,
     bool canSelect = true,
+    bool hasDocument = false,
+    bool canShareFiles = false,
+    bool canRevealFiles = false,
   }) => MessageActions.of(
     chat: forChat ?? chat(),
     me: forMe ?? member(),
     message: forMessage ?? message(),
     canReact: canReact,
     canSelect: canSelect,
+    hasDocument: hasDocument,
+    canShareFiles: canShareFiles,
+    canRevealFiles: canRevealFiles,
   );
 
   group('editing', () {
@@ -249,6 +255,59 @@ void main() {
         MessageAction.react,
         MessageAction.copy,
         MessageAction.forward,
+        MessageAction.edit,
+        MessageAction.select,
+        MessageAction.delete,
+        MessageAction.details,
+      ]);
+    });
+  });
+
+  // What used to be two text buttons in every document bubble.
+  group('a document', () {
+    test('can be saved, once the gateway has confirmed it', () {
+      expect(actionsFor(), isNot(contains(MessageAction.saveFile)));
+      expect(actionsFor(hasDocument: true), contains(MessageAction.saveFile));
+    });
+
+    test('is shared and shown in its folder only where the platform can', () {
+      final phoneless = actionsFor(hasDocument: true);
+      expect(phoneless, isNot(contains(MessageAction.shareFile)));
+      expect(phoneless, isNot(contains(MessageAction.showInFolder)));
+
+      final desktop = actionsFor(
+        hasDocument: true,
+        canShareFiles: true,
+        canRevealFiles: true,
+      );
+      expect(
+        desktop,
+        containsAll([MessageAction.shareFile, MessageAction.showInFolder]),
+      );
+    });
+
+    test('offers nothing for files on a message without one', () {
+      final actions = actionsFor(canShareFiles: true, canRevealFiles: true);
+      expect(actions, isNot(contains(MessageAction.shareFile)));
+      expect(actions, isNot(contains(MessageAction.showInFolder)));
+    });
+
+    test('puts its actions after forwarding, before editing', () {
+      final actions = actionsFor(
+        forMessage: message(authorId: me),
+        hasDocument: true,
+        canShareFiles: true,
+        canRevealFiles: true,
+      );
+
+      expect(actions, [
+        MessageAction.reply,
+        MessageAction.react,
+        MessageAction.copy,
+        MessageAction.forward,
+        MessageAction.saveFile,
+        MessageAction.shareFile,
+        MessageAction.showInFolder,
         MessageAction.edit,
         MessageAction.select,
         MessageAction.delete,

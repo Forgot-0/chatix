@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
-import 'package:chatix/features/chat/presentation/utils/chat_timestamp.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
@@ -15,6 +15,7 @@ import 'package:chatix/features/chat/presentation/widgets/message_actions_overla
 import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_attachments.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_forward_header.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_meta.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_reply_quote.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_chip.dart';
@@ -43,6 +44,9 @@ class MessageBubble extends StatefulWidget {
     this.onEdit,
     this.onDelete,
     this.onCopy,
+    this.onSaveFile,
+    this.onShareFile,
+    this.onShowInFolder,
     this.onShowDetails,
     this.onOpenAttachment,
     this.onRetryAttachment,
@@ -63,7 +67,6 @@ class MessageBubble extends StatefulWidget {
     this.isFirstInGroup = true,
     this.isLastInGroup = true,
     this.showAuthor = false,
-    this.showMeta = true,
   });
 
   final MessageEntity message;
@@ -78,6 +81,13 @@ class MessageBubble extends StatefulWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onCopy;
+
+  /// What the menu's "Save", "Share" and "Show in folder" do with the
+  /// message's document.
+  final VoidCallback? onSaveFile;
+  final VoidCallback? onShareFile;
+  final VoidCallback? onShowInFolder;
+
   final VoidCallback? onShowDetails;
 
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
@@ -127,14 +137,6 @@ class MessageBubble extends StatefulWidget {
   final bool isLastInGroup;
 
   final bool showAuthor;
-
-  /// Whether this bubble carries the timestamp and the delivery ticks.
-  ///
-  /// Off for every message in a run but the last, which is what turns a burst
-  /// of messages into one block instead of a column of clocks. An edited
-  /// message shows them anyway: the "edited" mark lives on that row, and
-  /// hiding it would quietly drop the only sign the text changed.
-  final bool showMeta;
 
   @override
   State<MessageBubble> createState() => _MessageBubbleState();
@@ -190,7 +192,6 @@ class _MessageBubbleState extends State<MessageBubble> {
       message: _message,
       isMine: widget.isMine,
       showAuthor: widget.showAuthor,
-      showMeta: widget.showMeta,
       deliveryStatus: widget.deliveryStatus,
       reactions: widget.reactions,
       isFirstInGroup: widget.isFirstInGroup,
@@ -318,6 +319,12 @@ class _MessageBubbleState extends State<MessageBubble> {
         widget.onCopy?.call();
       case MessageAction.forward:
         widget.onForward?.call();
+      case MessageAction.saveFile:
+        widget.onSaveFile?.call();
+      case MessageAction.shareFile:
+        widget.onShareFile?.call();
+      case MessageAction.showInFolder:
+        widget.onShowInFolder?.call();
       case MessageAction.edit:
         widget.onEdit?.call();
       case MessageAction.select:
@@ -338,12 +345,17 @@ class _MessageBubbleState extends State<MessageBubble> {
 }
 
 /// The painted bubble: its shape, its ground, and everything inside it.
+///
+/// Every bubble carries its time, its "edited" mark and — on your own — its
+/// ticks. They cost no height: they ride the last line of whatever ends the
+/// bubble (see [MessageMetaLayout]), so a run of short messages is still a
+/// run of one-line bubbles, and the time of the one in the middle is there
+/// to read.
 class _BubbleBody extends StatelessWidget {
   const _BubbleBody({
     required this.message,
     required this.isMine,
     required this.showAuthor,
-    required this.showMeta,
     required this.deliveryStatus,
     required this.reactions,
     required this.isFirstInGroup,
@@ -362,7 +374,6 @@ class _BubbleBody extends StatelessWidget {
   final MessageEntity message;
   final bool isMine;
   final bool showAuthor;
-  final bool showMeta;
   final MessageDeliveryStatus? deliveryStatus;
   final MessageReactionsEntity? reactions;
   final bool isFirstInGroup;
@@ -447,6 +458,29 @@ class _BubbleBody extends StatelessWidget {
         ),
     ];
 
+    final hasReactions = reactions?.groups.isNotEmpty ?? false;
+
+    final meta = MessageMeta(
+      label: AppDateFormat.of(context).time(message.createdAt),
+      color: muted,
+      isEdited: message.isEdited,
+      deliveryStatus: deliveryStatus,
+      onTap: onShowDetails,
+    );
+    final reserve = MessageMetaReserve.of(
+      context,
+      label: meta.label,
+      isEdited: message.isEdited,
+      hasTicks: deliveryStatus != null,
+    );
+
+    // What ends the bubble keeps the room for the time: the reactions when
+    // there are any, otherwise the last line of the text, otherwise a
+    // document's size or a voice message's length.
+    final metaOnChips = hasReactions;
+    final metaOnText = !metaOnChips && hasText;
+    final metaOnAttachments = !metaOnChips && !hasText;
+
     // What reads as text: a voice note or a document row, and the words.
     // Under a photo this is its caption.
     final caption = <Widget>[
@@ -458,9 +492,14 @@ class _BubbleBody extends StatelessWidget {
           onOpen: onOpenAttachment,
           onRetry: onRetryAttachment,
           foreground: foreground,
+          muted: muted,
           author: message.profile,
           authorId: message.authorId,
           isMine: isMine,
+          // The air between the rows and the words below them, which a
+          // message with no words does not need.
+          trailingGap: hasText,
+          metaReserve: metaOnAttachments ? reserve : null,
         ),
       if (hasText)
         MessageText(
@@ -471,30 +510,22 @@ class _BubbleBody extends StatelessWidget {
           linkColor: isMine ? foreground : theme.colorScheme.primary,
           isKnownMention: isKnownMention,
           onOpenLink: onOpenLink,
+          anchorsMeta: metaOnText,
         ),
     ];
-
-    final showsMeta = showMeta || message.isEdited;
-
-    _MessageMeta meta({required Color color, EdgeInsets? padding}) =>
-        _MessageMeta(
-          message: message,
-          muted: color,
-          deliveryStatus: deliveryStatus,
-          onTap: onShowDetails,
-          padding: padding,
-        );
 
     // Always in the tree, empty or not: the burst fires on the frame a
     // message goes from no reactions to one, and a row that is created along
     // with its first chip never sees that happen.
-    _ReactionChips chips({required bool onSurface}) => _ReactionChips(
-      key: const ValueKey('reaction-chips'),
-      groups: reactions?.groups ?? const [],
-      onTap: onToggleReaction,
-      onLongPress: onShowReactionUsers,
-      onSurface: onSurface,
-    );
+    _ReactionChips chips({required bool onSurface, required bool hostsMeta}) =>
+        _ReactionChips(
+          key: const ValueKey('reaction-chips'),
+          groups: reactions?.groups ?? const [],
+          onTap: onToggleReaction,
+          onLongPress: onShowReactionUsers,
+          onSurface: onSurface,
+          metaReserve: hostsMeta && metaOnChips ? reserve : null,
+        );
 
     final padding = EdgeInsets.symmetric(
       horizontal: density.bubblePaddingX,
@@ -509,17 +540,20 @@ class _BubbleBody extends StatelessWidget {
           maxWidth: ChatFeedMetrics.of(context).bubbleMaxWidth,
         ),
         decoration: ground,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          // Without this the bubble swells to whatever height it is offered,
-          // which is also the rect the context menu measures to lift it.
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ...header,
-            ...caption,
-            if (showsMeta) meta(color: muted),
-            chips(onSurface: isMine),
-          ],
+        child: MessageMetaLayout(
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            // Without this the bubble swells to whatever height it is
+            // offered, which is also the rect the context menu measures to
+            // lift it.
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...header,
+              ...caption,
+              chips(onSurface: isMine, hostsMeta: true),
+            ],
+          ),
+          meta: meta,
         ),
       );
     } else {
@@ -535,11 +569,10 @@ class _BubbleBody extends StatelessWidget {
           padding: padding,
           header: header,
           caption: caption,
-          meta: showsMeta ? meta : null,
+          meta: meta,
           chips: chips,
           isMine: isMine,
-          muted: muted,
-          hasReactions: reactions?.groups.isNotEmpty ?? false,
+          hasReactions: hasReactions,
           onOpenAttachment: onOpenAttachment,
           onRetryAttachment: onRetryAttachment,
         ),
@@ -585,7 +618,6 @@ class _MediaBubble extends StatelessWidget {
     required this.meta,
     required this.chips,
     required this.isMine,
-    required this.muted,
     required this.hasReactions,
     required this.onOpenAttachment,
     required this.onRetryAttachment,
@@ -606,17 +638,21 @@ class _MediaBubble extends StatelessWidget {
   final EdgeInsets padding;
 
   final List<Widget> header;
+
+  /// The words under the picture, with the room for the time already left
+  /// at the end of their last line.
   final List<Widget> caption;
 
-  /// Builds the time-and-ticks row; null when this bubble does not carry
-  /// one.
-  final _MessageMeta Function({required Color color, EdgeInsets? padding})?
-  meta;
+  /// The time-and-ticks row, in the bubble's muted colour.
+  final MessageMeta meta;
 
-  final _ReactionChips Function({required bool onSurface}) chips;
+  final _ReactionChips Function({
+    required bool onSurface,
+    required bool hostsMeta,
+  })
+  chips;
 
   final bool isMine;
-  final Color muted;
   final bool hasReactions;
   final void Function(AttachmentEntity attachment)? onOpenAttachment;
   final VoidCallback? onRetryAttachment;
@@ -636,7 +672,7 @@ class _MediaBubble extends StatelessWidget {
 
     // With no caption the time has no line of its own to sit on, so it
     // goes over the picture.
-    final metaOnPicture = meta != null && caption.isEmpty;
+    final metaOnPicture = caption.isEmpty;
 
     final picture = Stack(
       children: [
@@ -654,8 +690,8 @@ class _MediaBubble extends StatelessWidget {
           onRetry: onRetryAttachment,
         ),
         if (metaOnPicture)
-          Positioned(
-            right: ChatLayout.mediaMetaInset,
+          PositionedDirectional(
+            end: ChatLayout.mediaMetaInset,
             bottom: ChatLayout.mediaMetaInset,
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -664,9 +700,12 @@ class _MediaBubble extends StatelessWidget {
               ),
               child: Padding(
                 padding: ChatLayout.mediaMetaPadding,
-                child: meta!(
+                child: MessageMeta(
+                  label: meta.label,
                   color: AppPalette.onMediaScrim,
-                  padding: EdgeInsets.zero,
+                  isEdited: meta.isEdited,
+                  deliveryStatus: meta.deliveryStatus,
+                  onTap: meta.onTap,
                 ),
               ),
             ),
@@ -676,6 +715,17 @@ class _MediaBubble extends StatelessWidget {
 
     // One shape whether or not there are reactions yet, so the chips keep
     // their element — and their first-reaction burst — when one arrives.
+    final rows = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ...caption,
+        // Under a bare picture the chips sit on the wallpaper, not on the
+        // outgoing gradient.
+        chips(onSurface: isMine && !bare, hostsMeta: !metaOnPicture),
+      ],
+    );
+
     final footer = Padding(
       padding: switch ((bare, caption.isEmpty)) {
         (true, _) => EdgeInsets.zero,
@@ -685,17 +735,9 @@ class _MediaBubble extends StatelessWidget {
           bottom: hasReactions ? padding.bottom : 0,
         ),
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ...caption,
-          if (meta != null && !metaOnPicture) meta!(color: muted),
-          // Under a bare picture the chips sit on the wallpaper, not on the
-          // outgoing gradient.
-          chips(onSurface: isMine && !bare),
-        ],
-      ),
+      child: metaOnPicture
+          ? rows
+          : MessageMetaLayout(content: rows, meta: meta),
     );
 
     final body = SizedBox(
@@ -736,92 +778,11 @@ String semanticHeaderOf(
   required BuildContext context,
 }) {
   final l10n = AppLocalizations.of(context);
-  final time = formatMessageClock(context, message.createdAt);
+  final time = AppDateFormat.of(context).time(message.createdAt);
 
   return isMine
       ? l10n.a11yMessageMine(time)
       : l10n.a11yMessageFrom(message.authorLabel, time);
-}
-
-/// The time, the edited mark and the ticks — and the way into the details.
-class _MessageMeta extends StatelessWidget {
-  const _MessageMeta({
-    required this.message,
-    required this.muted,
-    required this.deliveryStatus,
-    required this.onTap,
-    this.padding,
-  });
-
-  final MessageEntity message;
-  final Color muted;
-  final MessageDeliveryStatus? deliveryStatus;
-  final VoidCallback? onTap;
-
-  /// Defaults to a little air above the row, where it follows the text. On
-  /// a plate over a picture the plate has its own.
-  final EdgeInsets? padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-
-    // The ticks and the italic "edited" are shapes; this is the sentence
-    // they stand for. Joined rather than nested so a bubble with neither
-    // still reads as a plain details button.
-    final spoken = <String>[
-      if (message.isEdited) l10n.messageEdited,
-      if (deliveryStatus != null)
-        switch (deliveryStatus!) {
-          MessageDeliveryStatus.sending => l10n.messageSending,
-          MessageDeliveryStatus.sent => l10n.messageSent,
-          MessageDeliveryStatus.read => l10n.messageRead,
-        },
-      if (onTap != null) l10n.messageDetails,
-    ];
-
-    return Semantics(
-      button: onTap != null,
-      label: spoken.isEmpty ? null : spoken.join(', '),
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          // Only above: the bubble's own padding closes the bottom, and the
-          // extra sides give the tap target somewhere to be.
-          padding: padding ?? const EdgeInsets.only(top: 2),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Already announced in the bubble's own header, so reading it
-              // again here would make every message say its time twice.
-              ExcludeSemantics(
-                child: Text(
-                  formatMessageClock(context, message.createdAt),
-                  style: theme.textTheme.labelSmall?.copyWith(color: muted),
-                ),
-              ),
-              if (message.isEdited) ...[
-                const SizedBox(width: 4),
-                Text(
-                  l10n.messageEdited,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: muted,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-              if (deliveryStatus != null) ...[
-                const SizedBox(width: 4),
-                StatusTicks(status: deliveryStatus!, color: muted),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// What the server says about the conversation, not what anyone said in it.
@@ -919,6 +880,7 @@ class _ReactionChips extends StatefulWidget {
     required this.onSurface,
     this.onTap,
     this.onLongPress,
+    this.metaReserve,
   });
 
   final List<ReactionGroupEntity> groups;
@@ -927,6 +889,10 @@ class _ReactionChips extends StatefulWidget {
   final bool onSurface;
   final void Function(String emoji)? onTap;
   final void Function(String emoji)? onLongPress;
+
+  /// Room for the time after the last chip, when the reactions end the
+  /// bubble: the time goes on their line rather than under them.
+  final MessageMetaReserve? metaReserve;
 
   @override
   State<_ReactionChips> createState() => _ReactionChipsState();
@@ -977,6 +943,9 @@ class _ReactionChipsState extends State<_ReactionChips> {
         child: Wrap(
           spacing: AppSpacing.x1,
           runSpacing: AppSpacing.x1,
+          // So the time, which is shorter than a chip, sits level with the
+          // middle of the chips rather than with their tops.
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             for (final summary in widget.groups)
               ReactionBloom(
@@ -995,6 +964,7 @@ class _ReactionChipsState extends State<_ReactionChips> {
                       : () => widget.onLongPress!(summary.emoji),
                 ),
               ),
+            ?widget.metaReserve?.box(),
           ],
         ),
       ),

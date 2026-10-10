@@ -1196,5 +1196,18 @@
   },
   "@videoNotePreview": {
     "description": "Accessible label of the live camera circle before a take starts"
-  }
+  },
+  "sizeBytes": "{value} B",
+  "sizeKilobytes": "{value} KB",
+  "attachmentDownloadProgress": "{received} / {total}",
+  "attachmentDownload": "ডাউনলোড",
+  "attachmentDownloadFailed": "ফাইলটি ডাউনলোড করা যায়নি",
+  "attachmentShareFailed": "ফাইলটি শেয়ার করা যায়নি",
+  "attachmentRevealFailed": "ফোল্ডারটি খোলা যায়নি",
+  "messageSaveFile": "সংরক্ষণ",
+  "messageShareFile": "শেয়ার",
+  "messageShowInFolder": "ফোল্ডারে দেখান",
+  "bubbleFill": "আপনার বাবল",
+  "bubbleFillGradient": "গ্রেডিয়েন্ট",
+  "bubbleFillSolid": "একরঙা"
 }

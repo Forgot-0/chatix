@@ -3241,4 +3241,49 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get updateAction => 'Обновить';
+
+  @override
+  String sizeBytes(String value) {
+    return '$value Б';
+  }
+
+  @override
+  String sizeKilobytes(String value) {
+    return '$value КБ';
+  }
+
+  @override
+  String attachmentDownloadProgress(String received, String total) {
+    return '$received / $total';
+  }
+
+  @override
+  String get attachmentDownload => 'Скачать';
+
+  @override
+  String get attachmentDownloadFailed => 'Не удалось скачать файл';
+
+  @override
+  String get attachmentShareFailed => 'Не удалось поделиться файлом';
+
+  @override
+  String get attachmentRevealFailed => 'Не удалось открыть папку';
+
+  @override
+  String get messageSaveFile => 'Сохранить';
+
+  @override
+  String get messageShareFile => 'Поделиться';
+
+  @override
+  String get messageShowInFolder => 'Показать в папке';
+
+  @override
+  String get bubbleFill => 'Ваши пузыри';
+
+  @override
+  String get bubbleFillGradient => 'Градиент';
+
+  @override
+  String get bubbleFillSolid => 'Сплошной цвет';
 }

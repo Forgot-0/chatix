@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/domain/entities/session_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
@@ -83,11 +84,7 @@ class _SessionTile extends StatelessWidget {
           ),
           if (lastActive != null)
             Text(
-              l10n.deviceLastActive(
-                MaterialLocalizations.of(
-                  context,
-                ).formatMediumDate(lastActive.toLocal()),
-              ),
+              l10n.deviceLastActive(AppDateFormat.of(context).date(lastActive)),
               style: theme.textTheme.labelSmall,
             ),
         ],

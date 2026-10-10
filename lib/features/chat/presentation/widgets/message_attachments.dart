@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/document_attachment_row.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_album.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_meta.dart';
 import 'package:chatix/features/chat/presentation/widgets/video_note_player.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_player.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -26,10 +28,13 @@ class MessageAttachments extends StatelessWidget {
     required this.messageId,
     required this.attachments,
     required this.foreground,
+    this.muted,
     this.author,
     this.authorId,
     this.isMine = false,
     this.showAlbum = true,
+    this.trailingGap = true,
+    this.metaReserve,
     this.onOpen,
     this.onRetry,
   });
@@ -37,6 +42,17 @@ class MessageAttachments extends StatelessWidget {
   final String messageId;
   final List<AttachmentEntity> attachments;
   final Color foreground;
+
+  /// The quieter colour for a document's size line; [foreground] at a
+  /// readable strength when not given.
+  final Color? muted;
+
+  /// Whether a little air follows the last row — for the text below it.
+  final bool trailingGap;
+
+  /// Room for the time at the end of the last row, when these rows end the
+  /// bubble: a document's size line or a voice message's length.
+  final MessageMetaReserve? metaReserve;
 
   /// Whether the photos and videos are drawn here too.
   ///
@@ -99,6 +115,15 @@ class MessageAttachments extends StatelessWidget {
 
     final accent = ChatixTheme.of(context).success;
 
+    // Only the row that ends the bubble keeps room for the time. Anything
+    // drawn after a voice message — a stalled slot, a video note — has no
+    // line to share, and the time gets one of its own.
+    final metaOnDocument = documents.isNotEmpty ? metaReserve : null;
+    final metaOnVoice =
+        documents.isEmpty && stalled.isEmpty && videoNotes.isEmpty
+        ? metaReserve
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -127,6 +152,7 @@ class MessageAttachments extends StatelessWidget {
             author: author,
             authorId: authorId,
             isMine: isMine,
+            metaReserve: attachment == voice.last ? metaOnVoice : null,
           ),
         for (final attachment in videoNotes)
           VideoNotePlayer(attachment: attachment, messageId: messageId),
@@ -151,9 +177,12 @@ class MessageAttachments extends StatelessWidget {
             attachment: attachment,
             messageId: messageId,
             foreground: foreground,
+            muted: muted,
+            isMine: isMine,
             onRetry: onRetry,
+            anchorsMeta: attachment == documents.last && metaOnDocument != null,
           ),
-        const SizedBox(height: 4),
+        if (trailingGap) const SizedBox(height: AppSpacing.x1),
       ],
     );
   }

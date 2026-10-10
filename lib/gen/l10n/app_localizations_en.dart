@@ -3200,4 +3200,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateAction => 'Update';
+
+  @override
+  String sizeBytes(String value) {
+    return '$value B';
+  }
+
+  @override
+  String sizeKilobytes(String value) {
+    return '$value KB';
+  }
+
+  @override
+  String attachmentDownloadProgress(String received, String total) {
+    return '$received / $total';
+  }
+
+  @override
+  String get attachmentDownload => 'Download';
+
+  @override
+  String get attachmentDownloadFailed => 'Could not download this file';
+
+  @override
+  String get attachmentShareFailed => 'Could not share this file';
+
+  @override
+  String get attachmentRevealFailed => 'Could not open the folder';
+
+  @override
+  String get messageSaveFile => 'Save';
+
+  @override
+  String get messageShareFile => 'Share';
+
+  @override
+  String get messageShowInFolder => 'Show in folder';
+
+  @override
+  String get bubbleFill => 'Your bubbles';
+
+  @override
+  String get bubbleFillGradient => 'Gradient';
+
+  @override
+  String get bubbleFillSolid => 'Solid colour';
 }

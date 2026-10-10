@@ -10,6 +10,7 @@ import 'package:chatix/features/chat/domain/entities/voice_waveform.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_playback_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/message_meta.dart';
 import 'package:chatix/features/chat/presentation/widgets/voice_waveform_bars.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -31,10 +32,16 @@ class VoicePlayer extends ConsumerWidget {
     this.author,
     this.authorId,
     this.isMine = false,
+    this.metaReserve,
   });
 
   final AttachmentEntity attachment;
   final String messageId;
+
+  /// Room for the time at the end of the length line, under the right end
+  /// of the waveform — clear of the speed control, which takes the right
+  /// edge of the bubble while a message plays.
+  final MessageMetaReserve? metaReserve;
 
   /// The bubble's text colour, which everything here is drawn against.
   final Color foreground;
@@ -88,6 +95,32 @@ class VoicePlayer extends ConsumerWidget {
     final progress = isCurrent ? playback.progress : 0.0;
     final heard = playback.hasBeenHeard(attachment.id);
 
+    final lengthLine = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          failed ? l10n.voiceUnavailable : formatVoiceDuration(shown),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: foreground.withValues(alpha: 0.75),
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        // The unheard dot, on incoming messages only, and only
+        // until it has been played through.
+        if (!isMine && !heard) ...[
+          const SizedBox(width: 6),
+          Semantics(
+            label: l10n.voiceNotListened,
+            child: Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+            ),
+          ),
+        ],
+      ],
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -132,34 +165,19 @@ class VoicePlayer extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    failed ? l10n.voiceUnavailable : formatVoiceDuration(shown),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: foreground.withValues(alpha: 0.75),
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                    ),
+              if (metaReserve == null)
+                lengthLine
+              else
+                // As wide as the waveform at least, with the time's room at
+                // its far end.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: _waveformWidth),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [lengthLine, metaReserve!.box(alignToEnd: false)],
                   ),
-                  // The unheard dot, on incoming messages only, and only
-                  // until it has been played through.
-                  if (!isMine && !heard) ...[
-                    const SizedBox(width: 6),
-                    Semantics(
-                      label: l10n.voiceNotListened,
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: accent,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
             ],
           ),
           // The speed control belongs to the message being played, not to
