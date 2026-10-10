@@ -1257,5 +1257,6 @@
   "emojiGroupTravel": "Viajes y lugares",
   "emojiGroupObjects": "Objetos",
   "emojiGroupSymbols": "Símbolos",
-  "emojiGroupFlags": "Banderas"
+  "emojiGroupFlags": "Banderas",
+  "mentionListLabel": "Mencionar a alguien"
 }

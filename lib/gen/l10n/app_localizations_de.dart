@@ -3489,4 +3489,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get emojiGroupFlags => 'Flaggen';
+
+  @override
+  String get mentionListLabel => 'Jemanden erwähnen';
 }

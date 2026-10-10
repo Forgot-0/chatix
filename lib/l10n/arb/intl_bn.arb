@@ -1257,5 +1257,6 @@
   "emojiGroupTravel": "ভ্রমণ ও স্থান",
   "emojiGroupObjects": "বস্তু",
   "emojiGroupSymbols": "প্রতীক",
-  "emojiGroupFlags": "পতাকা"
+  "emojiGroupFlags": "পতাকা",
+  "mentionListLabel": "কাউকে উল্লেখ করুন"
 }

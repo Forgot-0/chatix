@@ -5915,6 +5915,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Flags'**
   String get emojiGroupFlags;
+
+  /// Accessibility label of the list of chat members shown above the composer while an @mention is being typed
+  ///
+  /// In en, this message translates to:
+  /// **'Mention someone'**
+  String get mentionListLabel;
 }
 
 class _AppLocalizationsDelegate

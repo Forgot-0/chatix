@@ -47,6 +47,26 @@ void main() {
     });
   });
 
+  group('replaceRange', () {
+    test('swaps a mention query for the handle, caret after it', () {
+      final next = ComposerTextEdits.replaceRange(
+        at('ask @ad now', 7),
+        4,
+        7,
+        '@ada ',
+      );
+
+      expect(next.text, 'ask @ada  now');
+      expect(next.selection, const TextSelection.collapsed(offset: 9));
+    });
+
+    test('a range past the end is pulled back in', () {
+      final next = ComposerTextEdits.replaceRange(at('@a', 2), 0, 99, '@ada ');
+
+      expect(next.text, '@ada ');
+    });
+  });
+
   group('backspace', () {
     test('deletes the character before the caret', () {
       final next = ComposerTextEdits.backspace(at('abc', 2));

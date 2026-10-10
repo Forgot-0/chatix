@@ -967,5 +967,6 @@
   "emojiGroupTravel": "Путешествия и места",
   "emojiGroupObjects": "Предметы",
   "emojiGroupSymbols": "Символы",
-  "emojiGroupFlags": "Флаги"
+  "emojiGroupFlags": "Флаги",
+  "mentionListLabel": "Упомянуть участника"
 }

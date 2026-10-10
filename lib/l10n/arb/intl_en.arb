@@ -4316,5 +4316,9 @@
   "emojiGroupFlags": "Flags",
   "@emojiGroupFlags": {
     "description": "Emoji panel section title"
+  },
+  "mentionListLabel": "Mention someone",
+  "@mentionListLabel": {
+    "description": "Accessibility label of the list of chat members shown above the composer while an @mention is being typed"
   }
 }

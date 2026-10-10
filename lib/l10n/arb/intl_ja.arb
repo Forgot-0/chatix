@@ -1257,5 +1257,6 @@
   "emojiGroupTravel": "旅行と場所",
   "emojiGroupObjects": "物",
   "emojiGroupSymbols": "記号",
-  "emojiGroupFlags": "旗"
+  "emojiGroupFlags": "旗",
+  "mentionListLabel": "メンバーをメンション"
 }

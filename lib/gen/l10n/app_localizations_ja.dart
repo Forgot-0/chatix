@@ -3313,4 +3313,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get emojiGroupFlags => '旗';
+
+  @override
+  String get mentionListLabel => 'メンバーをメンション';
 }

@@ -3432,4 +3432,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get emojiGroupFlags => 'পতাকা';
+
+  @override
+  String get mentionListLabel => 'কাউকে উল্লেখ করুন';
 }

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:chatix/features/chat/presentation/utils/mention_syntax.dart';
+
 /// What a run of message text turned out to be.
 enum MessageLinkKind { url, email, phone, mention }
 
@@ -53,7 +55,10 @@ abstract final class MessageLinkifier {
     "'"
     r']+)'
     r'|(?<email>[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z]{2,})+)'
-    r'|(?<mention>(?<![A-Za-z0-9_@.])@[A-Za-z0-9][A-Za-z0-9._-]{0,99})'
+    // The same shape the composer writes mentions in (MentionSyntax), so
+    // what it inserts is exactly what is found again here.
+    '|(?<mention>${MentionSyntax.boundaryLookbehind}'
+    '@${MentionSyntax.handlePattern})'
     r'|(?<phone>(?<![\d+])\+\d[\d  ()\-]{5,20}\d)',
     caseSensitive: false,
   );

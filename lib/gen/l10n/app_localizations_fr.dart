@@ -3494,4 +3494,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get emojiGroupFlags => 'Drapeaux';
+
+  @override
+  String get mentionListLabel => 'Mentionner quelqu\'un';
 }

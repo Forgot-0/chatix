@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
+import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/recent_emoji_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/chat_composer.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/emoji_panel.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/mention_suggestions.dart';
 
 import '../../../../helpers/chat_screen_harness.dart';
 import '../../../../helpers/pane_frame.dart';
@@ -149,6 +152,91 @@ void main() {
     });
   });
 
+  group('mentions', () {
+    Finder suggestion(String handle) => find.descendant(
+      of: find.byType(MentionSuggestions),
+      matching: find.textContaining(handle),
+    );
+
+    testWidgets('an @ offers the group, without the writer', (tester) async {
+      await harness.pump(tester);
+
+      await tester.enterText(field(), '@');
+      await tester.pump();
+
+      expect(find.byType(MentionSuggestions), findsOneWidget);
+      expect(suggestion('@ada'), findsOneWidget);
+      expect(suggestion('@linus'), findsOneWidget);
+      expect(suggestion('@me'), findsNothing);
+    });
+
+    testWidgets('narrows by username and by name as the query grows', (
+      tester,
+    ) async {
+      await harness.pump(tester);
+
+      await tester.enterText(field(), 'спрошу @ad');
+      await tester.pump();
+      expect(suggestion('@ada'), findsOneWidget);
+      expect(suggestion('@adele'), findsOneWidget);
+      expect(suggestion('@grace'), findsNothing);
+
+      await tester.enterText(field(), 'спрошу @Лин');
+      await tester.pump();
+      expect(suggestion('@linus'), findsOneWidget);
+      expect(suggestion('@ada'), findsNothing);
+    });
+
+    testWidgets('picking one writes @username and a space', (tester) async {
+      await harness.pump(tester);
+
+      await tester.enterText(field(), 'спрошу @gr');
+      await tester.pump();
+      await tester.tap(suggestion('@grace'));
+      await tester.pump();
+
+      expect(textOf(tester), 'спрошу @grace ');
+      expect(find.byType(MentionSuggestions), findsNothing);
+    });
+
+    testWidgets('arrows and Enter pick from the keyboard; Esc puts it away', (
+      tester,
+    ) async {
+      await harness.pump(tester);
+
+      await tester.enterText(field(), '@ad');
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+
+      // Ada first, Adele second.
+      expect(textOf(tester), '@adele ');
+
+      await tester.enterText(field(), '@ad');
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+
+      expect(find.byType(MentionSuggestions), findsNothing);
+      expect(textOf(tester), '@ad');
+    });
+
+    testWidgets('nothing to mention in a direct chat', (tester) async {
+      await harness.tearDown();
+      harness = ChatScreenHarness(
+        type: ChatType.direct,
+        people: const [ChatScreenHarness.myself, ChatScreenHarness.ada],
+      )..setUp();
+      await harness.pump(tester);
+
+      await tester.enterText(field(), '@a');
+      await tester.pump();
+
+      expect(find.byType(MentionSuggestions), findsNothing);
+    });
+  });
+
   group('goldens', () {
     final states = <String, Future<void> Function(WidgetTester tester)>{
       'empty': (tester) async {},
@@ -171,6 +259,10 @@ void main() {
       ),
       'emoji': (tester) async {
         await openEmoji(tester);
+      },
+      'mentions': (tester) async {
+        await tester.enterText(field(), 'Спрошу у @a');
+        await tester.pumpAndSettle();
       },
     };
 

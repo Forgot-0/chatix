@@ -346,3 +346,33 @@ watching a field for movement.
 `await` on the event; the poll schedule, `AvatarPollSchedule`, and
 `AvatarProcessingFailure`'s "we waited and nothing happened" meaning all go
 away.
+
+---
+
+## 13. A mention is text, not an entity 🔴
+
+`SendMessageRequest` (api-docs §5.4) carries `content` and nothing that
+marks part of it as a person: no `entities`, no `mentions: user_id[]`. So an
+`@mention` is the characters `@username` in the text, and the reader's
+client finds them again by pattern and resolves them against the chat's
+roster (`MessageLinkifier`, `MentionSyntax`).
+
+**What the client does.** The composer offers members of groups and
+channels when `@` is typed, filtered by username and display name, and
+inserts `@username `. Only usernames that read back unambiguously are
+offered — letters, digits, `.`, `_`, `-`, not ending in a dot.
+
+**What the user loses.**
+
+- `username` may be `^[a-zA-Z0-9 ,.'-]+$` (api-docs §3.2). A username with a
+  space, a comma or an apostrophe has no end a pattern can find, so those
+  people are not in the list and cannot be mentioned at all.
+- Nobody is notified of being mentioned: there is no server-side notion of
+  it, so no push, no "you were mentioned" badge, no jump to the mention.
+- A mention survives a rename only as the old text.
+
+**What the backend would need.** Mention entities on the message —
+`mentions: [{user_id, offset, length}]` in `SendMessageRequest` and
+`MessageDTO` — validated against the roster, with a push to the mentioned
+user and an `unread_mentions_count` on `ChatDTO`. The client would keep the
+same composer and swap its pattern for the entity list when drawing.

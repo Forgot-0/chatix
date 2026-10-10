@@ -18,6 +18,8 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_attachment_provider.dart';
@@ -36,8 +38,10 @@ import 'package:chatix/features/chat/presentation/providers/voice_recorder_provi
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/utils/composer_text_edits.dart';
+import 'package:chatix/features/chat/presentation/utils/mention_syntax.dart';
 import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_banners.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_skeleton.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_wallpaper.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/chat_composer.dart';
@@ -46,6 +50,7 @@ import 'package:chatix/features/chat/presentation/widgets/composer/composer_atta
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_locked_notice.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_panel_host.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/emoji_panel.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/mention_suggestions.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/video_note_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
@@ -90,6 +95,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   /// Keyboard, emoji panel, or neither — what sits under the composer.
   final _input = ComposerInputController();
+
+  /// The `@query` the caret is in, in a chat where people can be mentioned.
+  final _mention = ValueNotifier<MentionQuery?>(null);
+
+  /// The suggestion the arrow keys are on, on a desktop.
+  final _mentionHighlight = ValueNotifier<int>(0);
+
+  /// A query put away with Esc stays away until the person types on.
+  MentionQuery? _dismissedMention;
 
   /// Holds focus while messages are being picked, so Esc reaches the screen
   /// and not whatever had focus before — usually the composer, which the
@@ -166,6 +180,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _textController.dispose();
     _composerFocus.dispose();
     _input.dispose();
+    _mention.dispose();
+    _mentionHighlight.dispose();
     _searchController.dispose();
     _screenFocus.dispose();
     super.dispose();
@@ -292,30 +308,48 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         if (state.isRealtimeRejected) const ChatRealtimeRejectedBanner(),
         ChatOngoingCallBanner(chatId: widget.chatId),
         Expanded(
-          // A tap on the conversation puts the emoji panel away, as it
-          // would the keyboard. Only a tap nothing in the feed claimed: a
-          // bubble's own tap still wins.
-          child: ListenableBuilder(
-            listenable: _input,
-            builder: (context, child) => GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: _input.isEmojiOpen ? _closeEmojiPanel : null,
-              child: child,
-            ),
-            child: ChatFeed(
-              chatId: widget.chatId,
-              state: state,
-              myUserId: myUserId,
-              selectionMode: _selectionMode,
-              selectedIds: _selectedMessageIds ?? const <String>{},
-              onStartSelection: _startSelection,
-              onToggleSelected: _toggleSelected,
-              onEdit: _startEditing,
-              onDelete: (messageId) => unawaited(_deleteMessages([messageId])),
-              onRefresh: () => ref
-                  .read(chatDetailProvider(widget.chatId).notifier)
-                  .refresh(),
-            ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                // A tap on the conversation puts the emoji panel away, as
+                // it would the keyboard. Only a tap nothing in the feed
+                // claimed: a bubble's own tap still wins.
+                child: ListenableBuilder(
+                  listenable: _input,
+                  builder: (context, child) => GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _input.isEmojiOpen ? _closeEmojiPanel : null,
+                    child: child,
+                  ),
+                  child: ChatFeed(
+                    chatId: widget.chatId,
+                    state: state,
+                    myUserId: myUserId,
+                    selectionMode: _selectionMode,
+                    selectedIds: _selectedMessageIds ?? const <String>{},
+                    onStartSelection: _startSelection,
+                    onToggleSelected: _toggleSelected,
+                    onEdit: _startEditing,
+                    onDelete: (messageId) =>
+                        unawaited(_deleteMessages([messageId])),
+                    onRefresh: () => ref
+                        .read(chatDetailProvider(widget.chatId).notifier)
+                        .refresh(),
+                  ),
+                ),
+              ),
+              // Over the bottom of the feed rather than in the column: the
+              // list comes and goes with each keystroke, and the messages
+              // should not bounce with it.
+              Positioned(
+                left: 0,
+                right: 0,
+                // One pixel past the edge: the list's bottom border is
+                // clipped, and the composer's top line is the only one.
+                bottom: -1,
+                child: _buildMentionSuggestions(state, myUserId),
+              ),
+            ],
           ),
         ),
         if (state.isViewingHistory)
@@ -332,19 +366,26 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // its send state and the two recorders change on every keystroke,
           // and watching them up here would put the whole feed — every
           // visible bubble — in the rebuild scope of typing a character.
-          _ComposerSection(
-            chatId: widget.chatId,
-            controller: _textController,
-            focusNode: _composerFocus,
-            input: _input,
-            replyTo: state.replyTo,
-            onCancelContext: _cancelComposerContext,
-            onAttach: _openAttachmentSheet,
-            onSend: _send,
-            onVoiceRecorded: _sendVoice,
-            onVideoNoteRecorded: _sendVideoNote,
-            onToggleEmoji: _toggleEmojiPanel,
-            onFieldTap: _onComposerFieldTap,
+          ValueListenableBuilder<MentionQuery?>(
+            valueListenable: _mention,
+            builder: (context, query, child) => CallbackShortcuts(
+              bindings: _mentionShortcuts(state, myUserId, query),
+              child: child!,
+            ),
+            child: _ComposerSection(
+              chatId: widget.chatId,
+              controller: _textController,
+              focusNode: _composerFocus,
+              input: _input,
+              replyTo: state.replyTo,
+              onCancelContext: _cancelComposerContext,
+              onAttach: _openAttachmentSheet,
+              onSend: _send,
+              onVoiceRecorded: _sendVoice,
+              onVideoNoteRecorded: _sendVideoNote,
+              onToggleEmoji: _toggleEmojiPanel,
+              onFieldTap: _onComposerFieldTap,
+            ),
           ),
         ],
       ],
@@ -835,6 +876,121 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (!ref.read(composerProvider(widget.chatId)).isEditing) {
       ref.read(chatDraftsProvider.notifier).save(widget.chatId, text);
     }
+
+    _updateMention();
+  }
+
+  // ---------------------------------------------------------------- mentions
+
+  /// Groups and channels: a direct chat has one other person in it, and
+  /// nobody to tell apart with an `@`.
+  static bool _mentionsIn(ChatType? type) =>
+      type == ChatType.group ||
+      type == ChatType.supergroup ||
+      type == ChatType.channel;
+
+  /// Re-reads the `@query` under the caret — on every keystroke and every
+  /// move of the caret, both of which the controller reports.
+  void _updateMention() {
+    final chat = ref.read(chatDetailProvider(widget.chatId)).value?.chat;
+    var query = _mentionsIn(chat?.type)
+        ? MentionSyntax.queryAt(_textController.value)
+        : null;
+
+    if (query != null && query == _dismissedMention) query = null;
+    if (query == null) _dismissedMention = null;
+
+    if (query?.start != _mention.value?.start ||
+        query?.query != _mention.value?.query) {
+      _mentionHighlight.value = 0;
+    }
+    _mention.value = query;
+  }
+
+  List<ChatMemberEntity> _mentionCandidatesFor(
+    ChatDetailState state,
+    int? myUserId,
+    MentionQuery? query,
+  ) {
+    if (query == null) return const [];
+    return mentionCandidates(
+      state.chat?.members ?? const [],
+      query.query,
+      myUserId: myUserId,
+    );
+  }
+
+  Widget _buildMentionSuggestions(ChatDetailState state, int? myUserId) {
+    return ValueListenableBuilder<MentionQuery?>(
+      valueListenable: _mention,
+      builder: (context, query, _) {
+        final candidates = _mentionCandidatesFor(state, myUserId, query);
+        if (candidates.isEmpty) return const SizedBox.shrink();
+
+        return ChatColumn(
+          // Inside the field's tap region, so a click on a row does not
+          // first take the caret out of the field it is about to edit.
+          child: TextFieldTapRegion(
+            child: ValueListenableBuilder<int>(
+              valueListenable: _mentionHighlight,
+              builder: (context, highlight, _) => MentionSuggestions(
+                candidates: candidates,
+                // Only where there are arrow keys to move it with.
+                highlighted: _input.softKeyboard ? null : highlight,
+                onSelected: _pickMention,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Arrows, Enter, Tab and Esc for the list — only while it is showing, so
+  /// Enter and the arrows go back to the text the moment it is not.
+  Map<ShortcutActivator, VoidCallback> _mentionShortcuts(
+    ChatDetailState state,
+    int? myUserId,
+    MentionQuery? query,
+  ) {
+    final candidates = _mentionCandidatesFor(state, myUserId, query);
+    if (candidates.isEmpty) return const {};
+
+    void move(int by) {
+      final count = candidates.length;
+      _mentionHighlight.value = (_mentionHighlight.value + by) % count;
+    }
+
+    void pick() {
+      final index = _mentionHighlight.value.clamp(0, candidates.length - 1);
+      _pickMention(candidates[index]);
+    }
+
+    return {
+      const SingleActivator(LogicalKeyboardKey.arrowDown): () => move(1),
+      const SingleActivator(LogicalKeyboardKey.arrowUp): () => move(-1),
+      const SingleActivator(LogicalKeyboardKey.enter): pick,
+      const SingleActivator(LogicalKeyboardKey.tab): pick,
+      const SingleActivator(LogicalKeyboardKey.escape): () {
+        _dismissedMention = query;
+        _mention.value = null;
+      },
+    };
+  }
+
+  /// Swaps the `@query` for the person's handle and a space.
+  void _pickMention(ChatMemberEntity member) {
+    final query = _mention.value;
+    final username = member.profile?.username;
+    if (query == null || username == null) return;
+
+    _textController.value = ComposerTextEdits.replaceRange(
+      _textController.value,
+      query.start,
+      query.end,
+      MentionSyntax.insertionFor(username),
+    );
+    if (!_composerFocus.hasFocus) _composerFocus.requestFocus();
   }
 
   Future<void> _send() async {

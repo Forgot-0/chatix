@@ -448,6 +448,19 @@ abstract final class ComposerSizes {
   static const double emojiIconSize = 24;
 }
 
+/// The list of people an `@` being typed could mean, floating over the
+/// bottom of the conversation.
+abstract final class MentionListSizes {
+  /// One person: a face, the name and the handle on a line.
+  static const double rowHeight = 48;
+
+  /// Four rows and half of a fifth, so a longer list shows that it scrolls
+  /// without covering half the conversation.
+  static const double visibleRows = 4.5;
+
+  static const double maxHeight = rowHeight * visibleRows + AppSpacing.x1 * 2;
+}
+
 /// The emoji panel that takes the keyboard's place under the composer.
 abstract final class EmojiPanelSizes {
   /// What the panel opens at before this device has ever shown a keyboard

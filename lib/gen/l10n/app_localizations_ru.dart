@@ -3491,4 +3491,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get emojiGroupFlags => 'Флаги';
+
+  @override
+  String get mentionListLabel => 'Упомянуть участника';
 }

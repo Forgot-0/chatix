@@ -24,6 +24,24 @@ abstract final class ComposerTextEdits {
     );
   }
 
+  /// [replacement] in place of `start..end`, caret after it — what picking
+  /// a mention does to the `@query` it was picked for.
+  static TextEditingValue replaceRange(
+    TextEditingValue value,
+    int start,
+    int end,
+    String replacement,
+  ) {
+    final text = value.text;
+    final from = start.clamp(0, text.length);
+    final to = end.clamp(from, text.length);
+
+    return TextEditingValue(
+      text: text.replaceRange(from, to, replacement),
+      selection: TextSelection.collapsed(offset: from + replacement.length),
+    );
+  }
+
   /// Deletes the selection, or the one character before the caret.
   ///
   /// One *character* as a reader counts them: a flag, a family, a thumbs-up
