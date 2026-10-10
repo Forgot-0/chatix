@@ -105,6 +105,15 @@ void main() {
                           path: ChatDetailRoute.path,
                           builder: (_, state) =>
                               _Probe('chat:${ChatDetailRoute.idFrom(state)}'),
+                          routes: [
+                            // Where tapping the chat's header goes.
+                            GoRoute(
+                              path: ChatInfoRoute.path,
+                              builder: (_, state) => _Probe(
+                                'info:${ChatDetailRoute.idFrom(state)}',
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -301,6 +310,38 @@ void main() {
           .toList();
       expect(tiles.map((tile) => tile.isSelected), [false, true]);
     });
+
+    testWidgets(
+      'the chat\'s profile opens beside the list, chat still marked',
+      (tester) async {
+        final router = await pumpShell(
+          tester,
+          size: desktop,
+          chats: [chat('a', unread: 0), chat('b', unread: 0)],
+        );
+
+        router.go(const ChatDetailRoute('b').location);
+        await tester.pumpAndSettle();
+
+        // What a tap on the header does.
+        router.push(ChatInfoRoute.locationOf('b'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('info:b'), findsOneWidget);
+        expect(find.byType(ChatsListScreen), findsOneWidget);
+        final tiles = tester
+            .widgetList<ChatListTile>(find.byType(ChatListTile))
+            .toList();
+        expect(tiles.map((tile) => tile.isSelected), [false, true]);
+
+        // And back from it is the same chat, not the empty pane.
+        router.pop();
+        await tester.pumpAndSettle();
+
+        expect(find.text('chat:b'), findsOneWidget);
+        expect(find.byType(NoChatSelectedPane), findsNothing);
+      },
+    );
 
     testWidgets('the open chat survives a rotation into one pane and back', (
       tester,

@@ -21,6 +21,7 @@ import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/slow_mode.dart';
 import 'package:chatix/features/chat/domain/usecases/get_chat_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_context_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
@@ -46,6 +47,8 @@ class _MockGetMessagesContextUseCase extends Mock
     implements GetMessagesContextUseCase {}
 
 class _MockMarkReadUseCase extends Mock implements MarkReadUseCase {}
+
+class _MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
 
 class _FakeAuthController extends AuthController {
   _FakeAuthController(this._user);
@@ -175,6 +178,7 @@ void main() {
   late _MockGetMessagesUseCase getMessages;
   late _MockGetMessagesContextUseCase getContext;
   late _MockMarkReadUseCase markRead;
+  late _MockGetMembersUseCase getMembers;
   late FakeWebSocketChannel channel;
   late ChatSocketService socket;
 
@@ -183,6 +187,24 @@ void main() {
     getMessages = _MockGetMessagesUseCase();
     getContext = _MockGetMessagesContextUseCase();
     markRead = _MockMarkReadUseCase();
+    getMembers = _MockGetMembersUseCase();
+    // The header counts who is here; for this feed, nobody but the reader.
+    when(
+      () => getMembers.execute(
+        any(),
+        limit: any(named: 'limit'),
+        includePresence: any(named: 'includePresence'),
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        MembersPage(
+          members: [member(me.id), member(ada), member(grace), member(linus)],
+          hasNext: false,
+          nextUserId: null,
+          presence: [MemberPresenceEntity(userId: me.id, isOnline: true)],
+        ),
+      ),
+    );
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
       secureStorage: FakeSecureStorageService(
@@ -227,6 +249,7 @@ void main() {
         getMessagesUseCaseProvider.overrideWithValue(getMessages),
         getMessagesContextUseCaseProvider.overrideWithValue(getContext),
         markReadUseCaseProvider.overrideWithValue(markRead),
+        getMembersUseCaseProvider.overrideWithValue(getMembers),
         chatSocketServiceProvider.overrideWithValue(socket),
         authProvider.overrideWith(() => _FakeAuthController(me)),
       ],
@@ -262,10 +285,11 @@ void main() {
               onTap: () {},
             ),
             actions: [
-              IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.call_outlined),
+              ChatHeaderActions(
+                chat: state.chat!,
+                me: state.me,
+                onSearch: () {},
+                onSelectMessages: () {},
               ),
             ],
           ),

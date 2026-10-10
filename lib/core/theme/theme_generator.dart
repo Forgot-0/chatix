@@ -165,6 +165,22 @@ abstract final class ThemeGenerator {
           borderRadius: BorderRadius.circular(AppRadii.xl),
         ),
       ),
+      // A menu is a sheet of paper over the bar it came from: the lifted
+      // surface every card uses, rounded like the rest of the app rather
+      // than Material's 4 px, and — in dark, where a shadow on near-black
+      // says nothing — held apart from the bar by a hairline instead.
+      popupMenuTheme: PopupMenuThemeData(
+        color: isDark
+            ? scheme.surfaceContainerHigh
+            : scheme.surfaceContainerLowest,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.md),
+          side: isDark
+              ? BorderSide(color: scheme.outlineVariant)
+              : BorderSide.none,
+        ),
+      ),
       bottomSheetTheme: const BottomSheetThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(

@@ -84,6 +84,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _composerFocus = FocusNode();
   final _searchController = TextEditingController();
 
+  /// Holds focus while messages are being picked, so Esc reaches the screen
+  /// and not whatever had focus before — usually the composer, which the
+  /// selection takes the keyboard away from anyway.
+  final _screenFocus = FocusNode(debugLabel: 'ChatDetailScreen');
+
   Set<String>? _selectedMessageIds;
 
   bool get _selectionMode => _selectedMessageIds != null;
@@ -154,6 +159,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _textController.dispose();
     _composerFocus.dispose();
     _searchController.dispose();
+    _screenFocus.dispose();
     super.dispose();
   }
 
@@ -192,6 +198,31 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       );
     }
 
+    // Back and Esc step out of a mode before they step out of the chat: a
+    // selection or a search is a state of this screen, not a page on the
+    // stack, and losing the whole chat to undo either is the wrong size of
+    // answer.
+    final inMode = _selectionMode || _searchMode;
+
+    return PopScope(
+      canPop: !inMode,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leaveMode();
+      },
+      child: CallbackShortcuts(
+        bindings: {
+          if (inMode)
+            const SingleActivator(LogicalKeyboardKey.escape): _leaveMode,
+        },
+        child: Focus(
+          focusNode: _screenFocus,
+          child: _buildScaffold(detail, myUserId),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(AsyncValue<ChatDetailState> detail, int? myUserId) {
     return Scaffold(
       appBar: _buildAppBar(detail.value, myUserId),
       body: detail.when(
@@ -281,42 +312,42 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (_selectionMode) return _buildSelectionAppBar(state);
     if (_searchMode) return _buildSearchAppBar();
 
-    final l10n = AppLocalizations.of(context);
+    final chat = state?.chat;
 
     return AppBar(
       // In two-pane mode the list stays on screen beside the chat, so there
       // is nothing for a back arrow to reveal.
       automaticallyImplyLeading: !AppLayoutScope.of(context).isTwoPane,
       titleSpacing: 0,
+      // The profile is nested under the chat's own location, so in two-pane
+      // mode it opens in the right pane and the list keeps this chat marked.
       title: ChatHeaderTitle(
         chatId: widget.chatId,
-        chat: state?.chat,
+        chat: chat,
         myUserId: myUserId,
-        onTap: state?.chat == null
+        onTap: chat == null
             ? null
             : () => context.push(ChatInfoRoute.locationOf(widget.chatId)),
       ),
       actions: [
-        IconButton(
-          tooltip: l10n.searchInChat,
-          icon: const Icon(Icons.search),
-          onPressed: () => _setSearchMode(on: true),
-        ),
-        IconButton(
-          tooltip: l10n.callTitle,
-          icon: const Icon(Icons.call_outlined),
-          onPressed: state?.chat == null
-              ? null
-              : () => context.push(ChatCallRoute.locationOf(widget.chatId)),
-        ),
-        IconButton(
-          tooltip: l10n.membersTitle,
-          icon: const Icon(Icons.people_outline),
-          onPressed: () =>
-              context.push(ChatMembersRoute.locationOf(widget.chatId)),
-        ),
+        if (chat != null)
+          ChatHeaderActions(
+            chat: chat,
+            me: state?.me,
+            onSearch: () => _setSearchMode(on: true),
+            onSelectMessages: _startEmptySelection,
+          ),
       ],
     );
+  }
+
+  /// Back, or Esc: out of whichever mode the header is in.
+  void _leaveMode() {
+    if (_selectionMode) {
+      _clearSelection();
+      return;
+    }
+    if (_searchMode) _setSearchMode(on: false);
   }
 
   /// Turns the header into a search field, and back.
@@ -397,7 +428,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         icon: const Icon(Icons.close),
         onPressed: _clearSelection,
       ),
-      title: Text(l10n.selectedCount(selected.length)),
+      // Opened from the menu, a selection starts empty: say what to do
+      // rather than "0 selected".
+      title: Text(
+        selected.isEmpty
+            ? l10n.selectMessagesHint
+            : l10n.selectedCount(selected.length),
+      ),
       actions: [
         IconButton(
           tooltip: l10n.messageCopy,
@@ -422,6 +459,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   void _startSelection(String messageId) {
     setState(() => _selectedMessageIds = {messageId});
+    _screenFocus.requestFocus();
+  }
+
+  /// "Select messages" from the menu: the mode, with nothing in it yet.
+  void _startEmptySelection() {
+    setState(() => _selectedMessageIds = <String>{});
+    _screenFocus.requestFocus();
   }
 
   void _toggleSelected(String messageId) {

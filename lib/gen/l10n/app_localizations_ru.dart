@@ -135,14 +135,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatFallbackTitle => 'Чат';
 
   @override
-  String membersCount(num count) {
+  String membersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count участника',
-      many: '$count участников',
-      few: '$count участника',
-      one: '$count участник',
+      other: '$countString участника',
+      many: '$countString участников',
+      few: '$countString участника',
+      one: '$countString участник',
       zero: 'Нет участников',
     );
     return '$_temp0';
@@ -3362,4 +3366,87 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$date ($_temp0)';
   }
+
+  @override
+  String get chatStatusOnline => 'в сети';
+
+  @override
+  String chatStatusOnlineCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString в сети';
+  }
+
+  @override
+  String chatStatusMembersOnline(String members, String online) {
+    return '$members, $online';
+  }
+
+  @override
+  String subscribersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString подписчика',
+      many: '$countString подписчиков',
+      few: '$countString подписчика',
+      one: '$countString подписчик',
+      zero: 'Нет подписчиков',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get muteForTwoDays => 'Выключить на 2 дня';
+
+  @override
+  String get chatMenuSearch => 'Поиск';
+
+  @override
+  String get chatMenuMute => 'Выключить уведомления';
+
+  @override
+  String get chatMenuUnmute => 'Включить уведомления';
+
+  @override
+  String get chatMenuPin => 'Закрепить чат';
+
+  @override
+  String get chatMenuUnpin => 'Открепить чат';
+
+  @override
+  String get chatPinnedToast => 'Чат закреплён';
+
+  @override
+  String get chatUnpinnedToast => 'Чат откреплён';
+
+  @override
+  String get selectMessages => 'Выбрать сообщения';
+
+  @override
+  String get selectMessagesHint => 'Выберите сообщения';
+
+  @override
+  String get manageGroup => 'Управление группой';
+
+  @override
+  String get manageChannel => 'Управление каналом';
+
+  @override
+  String get leaveGroup => 'Покинуть группу';
+
+  @override
+  String get leaveChannel => 'Покинуть канал';
+
+  @override
+  String get deleteGroup => 'Удалить группу';
+
+  @override
+  String get deleteChannel => 'Удалить канал';
 }

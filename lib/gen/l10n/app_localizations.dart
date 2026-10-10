@@ -328,7 +328,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =0{No members} =1{1 member} other{{count} members}}'**
-  String membersCount(num count);
+  String membersCount(int count);
 
   /// Attachment is still being validated by the backend
   ///
@@ -5711,6 +5711,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{date} ({age, plural, one{{age} year old} other{{age} years old}})'**
   String profileBirthdayWithAge(String date, int age);
+
+  /// Under a direct chat's name in its app bar: the other person is online right now. Lowercase, like a status line
+  ///
+  /// In en, this message translates to:
+  /// **'online'**
+  String get chatStatusOnline;
+
+  /// How many members of a group are online, joined to the member count in the app bar
+  ///
+  /// In en, this message translates to:
+  /// **'{count} online'**
+  String chatStatusOnlineCount(int count);
+
+  /// A group's app bar status: the member count, then how many are online. Both parts are already formatted
+  ///
+  /// In en, this message translates to:
+  /// **'{members}, {online}'**
+  String chatStatusMembersOnline(String members, String online);
+
+  /// A channel's audience, under its name in the app bar
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No subscribers} =1{1 subscriber} other{{count} subscribers}}'**
+  String subscribersCount(int count);
+
+  /// Mute duration option
+  ///
+  /// In en, this message translates to:
+  /// **'Mute for 2 days'**
+  String get muteForTwoDays;
+
+  /// Chat menu item: open the search field over this chat
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get chatMenuSearch;
+
+  /// Chat menu item: silence notifications; opens the choice of how long
+  ///
+  /// In en, this message translates to:
+  /// **'Mute notifications'**
+  String get chatMenuMute;
+
+  /// Chat menu item: turn this chat's notifications back on
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute notifications'**
+  String get chatMenuUnmute;
+
+  /// Chat menu item: pin this chat to the top of the list
+  ///
+  /// In en, this message translates to:
+  /// **'Pin chat'**
+  String get chatMenuPin;
+
+  /// Chat menu item: unpin this chat
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin chat'**
+  String get chatMenuUnpin;
+
+  /// Confirmation after pinning a chat from inside it
+  ///
+  /// In en, this message translates to:
+  /// **'Chat pinned'**
+  String get chatPinnedToast;
+
+  /// Confirmation after unpinning a chat from inside it
+  ///
+  /// In en, this message translates to:
+  /// **'Chat unpinned'**
+  String get chatUnpinnedToast;
+
+  /// Chat menu item: start picking messages to copy, forward or delete
+  ///
+  /// In en, this message translates to:
+  /// **'Select messages'**
+  String get selectMessages;
+
+  /// Title of the selection bar while nothing is selected yet
+  ///
+  /// In en, this message translates to:
+  /// **'Select messages'**
+  String get selectMessagesHint;
+
+  /// Chat menu item for an owner or admin: the group's settings
+  ///
+  /// In en, this message translates to:
+  /// **'Manage group'**
+  String get manageGroup;
+
+  /// Chat menu item for an owner or admin: the channel's settings
+  ///
+  /// In en, this message translates to:
+  /// **'Manage channel'**
+  String get manageChannel;
+
+  /// Leave a group or supergroup
+  ///
+  /// In en, this message translates to:
+  /// **'Leave group'**
+  String get leaveGroup;
+
+  /// Leave (unsubscribe from) a channel
+  ///
+  /// In en, this message translates to:
+  /// **'Leave channel'**
+  String get leaveChannel;
+
+  /// Delete a group for everyone
+  ///
+  /// In en, this message translates to:
+  /// **'Delete group'**
+  String get deleteGroup;
+
+  /// Delete a channel for everyone
+  ///
+  /// In en, this message translates to:
+  /// **'Delete channel'**
+  String get deleteChannel;
 }
 
 class _AppLocalizationsDelegate

@@ -416,6 +416,24 @@ abstract final class AppDialogSizes {
   static const double pickerMaxWidth = 440;
 }
 
+/// Popup menus — the "⋮" of a chat and the choices it opens.
+abstract final class AppMenuSizes {
+  /// The glyph a menu line starts with: a step under the app bar's own 24,
+  /// so the words lead and the glyphs keep the column.
+  static const double iconSize = 20;
+
+  /// Between that glyph and the words.
+  static const double iconGap = AppSpacing.x4;
+
+  /// The narrowest a menu is drawn: wide enough that a short menu does not
+  /// look like a tooltip next to a long one…
+  static const double minWidth = 220;
+
+  /// …and the widest, where "Mute until I turn it back on" still fits on a
+  /// line in the languages that say it at length.
+  static const double maxWidth = 320;
+}
+
 /// Four levels of lift.
 ///
 /// Light themes cast a warm shadow. Dark themes do not: a black shadow on a

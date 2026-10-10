@@ -131,11 +131,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatFallbackTitle => 'チャット';
 
   @override
-  String membersCount(num count) {
+  String membersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count 人のメンバー',
+      other: '$countString 人のメンバー',
     );
     return '$_temp0';
   }
@@ -3188,4 +3192,83 @@ class AppLocalizationsJa extends AppLocalizations {
     );
     return '$date（$_temp0）';
   }
+
+  @override
+  String get chatStatusOnline => 'オンライン';
+
+  @override
+  String chatStatusOnlineCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return 'オンライン $countString 人';
+  }
+
+  @override
+  String chatStatusMembersOnline(String members, String online) {
+    return '$members、$online';
+  }
+
+  @override
+  String subscribersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString 人の登録者',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get muteForTwoDays => '2日間ミュート';
+
+  @override
+  String get chatMenuSearch => '検索';
+
+  @override
+  String get chatMenuMute => '通知をオフ';
+
+  @override
+  String get chatMenuUnmute => '通知をオン';
+
+  @override
+  String get chatMenuPin => 'チャットをピン留め';
+
+  @override
+  String get chatMenuUnpin => 'ピン留めを外す';
+
+  @override
+  String get chatPinnedToast => 'チャットをピン留めしました';
+
+  @override
+  String get chatUnpinnedToast => 'ピン留めを外しました';
+
+  @override
+  String get selectMessages => 'メッセージを選択';
+
+  @override
+  String get selectMessagesHint => 'メッセージを選んでください';
+
+  @override
+  String get manageGroup => 'グループを管理';
+
+  @override
+  String get manageChannel => 'チャンネルを管理';
+
+  @override
+  String get leaveGroup => 'グループを退出';
+
+  @override
+  String get leaveChannel => 'チャンネルを退出';
+
+  @override
+  String get deleteGroup => 'グループを削除';
+
+  @override
+  String get deleteChannel => 'チャンネルを削除';
 }

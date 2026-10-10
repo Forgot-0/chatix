@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +25,7 @@ import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/delete_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_chat_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_context_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/get_messages_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/mark_read_use_case.dart';
@@ -50,6 +52,8 @@ class _MockGetMessagesContextUseCase extends Mock
 class _MockMarkReadUseCase extends Mock implements MarkReadUseCase {}
 
 class _MockDeleteMessageUseCase extends Mock implements DeleteMessageUseCase {}
+
+class _MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
 
 class _MockNotificationService extends Mock implements NotificationService {}
 
@@ -161,6 +165,7 @@ void main() {
   late _MockGetMessagesContextUseCase getContext;
   late _MockMarkReadUseCase markRead;
   late _MockDeleteMessageUseCase deleteMessage;
+  late _MockGetMembersUseCase getMembers;
   late _MockNotificationService notifications;
   late FakeWebSocketChannel channel;
   late ChatSocketService socket;
@@ -171,6 +176,7 @@ void main() {
     getContext = _MockGetMessagesContextUseCase();
     markRead = _MockMarkReadUseCase();
     deleteMessage = _MockDeleteMessageUseCase();
+    getMembers = _MockGetMembersUseCase();
     notifications = _MockNotificationService();
     channel = FakeWebSocketChannel();
     socket = ChatSocketService(
@@ -187,6 +193,26 @@ void main() {
     when(
       () => deleteMessage.execute(any(), any()),
     ).thenAnswer((_) async => const Right(null));
+    // Both of them here, which is what the header's count is made of.
+    when(
+      () => getMembers.execute(
+        any(),
+        limit: any(named: 'limit'),
+        includePresence: any(named: 'includePresence'),
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        MembersPage(
+          members: [member(me.id), member(ada)],
+          hasNext: false,
+          nextUserId: null,
+          presence: const [
+            MemberPresenceEntity(userId: 7, isOnline: true),
+            MemberPresenceEntity(userId: ada, isOnline: true),
+          ],
+        ),
+      ),
+    );
   });
 
   tearDown(() async {
@@ -220,6 +246,7 @@ void main() {
         getMessagesContextUseCaseProvider.overrideWithValue(getContext),
         markReadUseCaseProvider.overrideWithValue(markRead),
         deleteMessageUseCaseProvider.overrideWithValue(deleteMessage),
+        getMembersUseCaseProvider.overrideWithValue(getMembers),
         chatSocketServiceProvider.overrideWithValue(socket),
         notificationServiceProvider.overrideWithValue(notifications),
         authProvider.overrideWith(() => _FakeAuthController(me)),
@@ -431,6 +458,109 @@ void main() {
     });
   });
 
+  group('the app bar', () {
+    Future<void> openMenuItem(WidgetTester tester, String label) async {
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+    }
+
+    Finder appBarText(String text) =>
+        find.descendant(of: find.byType(AppBar), matching: find.text(text));
+
+    testWidgets('says how many are in the group and how many are here', (
+      tester,
+    ) async {
+      await pumpChat(tester);
+
+      expect(appBarText('2 members, 2 online'), findsOneWidget);
+    });
+
+    testWidgets('carries a call and the menu, and no member list', (
+      tester,
+    ) async {
+      await pumpChat(tester);
+
+      expect(find.byTooltip('Call'), findsOneWidget);
+      expect(find.byIcon(Icons.more_vert), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsNothing);
+      expect(find.byIcon(Icons.people_outline), findsNothing);
+    });
+
+    testWidgets('search opens from the menu, and Esc closes it', (
+      tester,
+    ) async {
+      await pumpChat(tester);
+
+      await openMenuItem(tester, 'Search');
+      expect(find.byType(TextField), findsNWidgets(2));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TextField), findsOneWidget);
+      expect(appBarText('Release crew'), findsOneWidget);
+    });
+
+    testWidgets('"Select messages" starts with nothing picked', (tester) async {
+      await pumpChat(tester);
+
+      await openMenuItem(tester, 'Select messages');
+
+      expect(appBarText('Select messages'), findsOneWidget);
+      expect(find.text('0 selected'), findsNothing);
+
+      await tester.tap(find.text('Almost — two sections left'));
+      await tester.pumpAndSettle();
+
+      expect(appBarText('1 selected'), findsOneWidget);
+    });
+
+    testWidgets('Esc leaves a selection, and the chat stays', (tester) async {
+      await pumpChat(tester);
+
+      await pickFromMenu(tester, 'Sending it before lunch', 'Select');
+      expect(appBarText('1 selected'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(appBarText('1 selected'), findsNothing);
+      expect(appBarText('Release crew'), findsOneWidget);
+      expect(find.text('Sending it before lunch'), findsOneWidget);
+    });
+
+    testWidgets('back leaves a selection rather than the chat', (tester) async {
+      await pumpChat(tester);
+
+      await pickFromMenu(tester, 'Sending it before lunch', 'Select');
+      expect(appBarText('1 selected'), findsOneWidget);
+
+      // What the system back gesture does.
+      final handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(appBarText('1 selected'), findsNothing);
+      expect(find.byType(ChatDetailScreen), findsOneWidget);
+    });
+
+    testWidgets('back leaves a search the same way', (tester) async {
+      await pumpChat(tester);
+
+      await openMenuItem(tester, 'Search');
+      expect(find.byType(TextField), findsNWidgets(2));
+
+      final handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(ChatDetailScreen), findsOneWidget);
+    });
+  });
+
   group('goldens', () {
     for (final window in [PaneWindow.phone, PaneWindow.desktop]) {
       for (final theme in {'light': false, 'dark': true}.entries) {
@@ -449,6 +579,27 @@ void main() {
           await screenMatchesGolden(
             tester,
             'chat_delete_message_${window.name}_${theme.key}',
+          );
+        });
+
+        testGoldens('empty selection, ${window.name}, ${theme.key}', (
+          tester,
+        ) async {
+          await pumpChat(
+            tester,
+            locale: const Locale('ru'),
+            window: window,
+            dark: theme.value,
+          );
+
+          await tester.tap(find.byIcon(Icons.more_vert));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Выбрать сообщения'));
+          await tester.pumpAndSettle();
+
+          await screenMatchesGolden(
+            tester,
+            'chat_select_messages_${window.name}_${theme.key}',
           );
         });
       }

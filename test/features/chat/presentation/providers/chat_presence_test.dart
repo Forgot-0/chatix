@@ -180,6 +180,92 @@ void main() {
     ).called(1);
   });
 
+  group('online count of a group', () {
+    const groupId = 'g1';
+
+    MembersPage roster({required List<bool> online, bool hasNext = false}) =>
+        MembersPage(
+          members: [for (var i = 0; i < online.length; i++) member(100 + i)],
+          hasNext: hasNext,
+          nextUserId: hasNext ? 100 + online.length : null,
+          presence: [
+            for (var i = 0; i < online.length; i++)
+              MemberPresenceEntity(userId: 100 + i, isOnline: online[i]),
+          ],
+        );
+
+    test('counts everyone the server says is here', () async {
+      answerWith(roster(online: [true, false, true, true, false]));
+      final container = await boot();
+
+      container.read(chatOnlineCountProvider.notifier).ensureFresh(groupId);
+      await settle();
+
+      expect(container.read(chatMembersOnlineProvider(groupId)), 3);
+    });
+
+    test('asks for the largest page there is, with presence', () async {
+      answerWith(roster(online: [true]));
+      final container = await boot();
+
+      container.read(chatOnlineCountProvider.notifier).ensureFresh(groupId);
+      await settle();
+
+      verify(
+        () => getMembers.execute(
+          groupId,
+          limit: GetMembersUseCase.maxLimit,
+          includePresence: true,
+        ),
+      ).called(1);
+    });
+
+    test('a group bigger than one page has no count, not a low one', () async {
+      answerWith(roster(online: [true, true], hasNext: true));
+      final container = await boot();
+
+      container.read(chatOnlineCountProvider.notifier).ensureFresh(groupId);
+      await settle();
+
+      expect(container.read(chatMembersOnlineProvider(groupId)), isNull);
+    });
+
+    test(
+      'is cached like the peer presence, and dropped the same way',
+      () async {
+        answerWith(roster(online: [true, true]));
+        final container = await boot();
+
+        final controller = container.read(chatOnlineCountProvider.notifier);
+        controller.ensureFresh(groupId);
+        await settle();
+        controller.ensureFresh(groupId);
+        await settle();
+
+        verify(
+          () => getMembers.execute(
+            groupId,
+            limit: any(named: 'limit'),
+            includePresence: true,
+          ),
+        ).called(1);
+
+        controller.invalidate();
+        expect(container.read(chatMembersOnlineProvider(groupId)), isNull);
+      },
+    );
+
+    test('does not touch the direct-chat cache', () async {
+      answerWith(roster(online: [true, true]));
+      final container = await boot();
+
+      container.read(chatOnlineCountProvider.notifier).ensureFresh(groupId);
+      await settle();
+
+      expect(container.read(chatPeerOnlineProvider(groupId)), isNull);
+    });
+  });
+
   test('nobody signed in means nothing to ask about', () async {
     answerWith(page(peerOnline: true));
     final container = await boot(user: null);

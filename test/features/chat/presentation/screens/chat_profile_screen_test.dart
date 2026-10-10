@@ -157,22 +157,19 @@ void main() {
   testWidgets('an ordinary member is offered the door', (tester) async {
     await pumpProfile(tester, chat(), member(ChatRole.member));
 
-    expect(find.text(l10n.leaveChat), findsOneWidget);
-    expect(find.text(l10n.deleteChat), findsNothing);
+    // Named after what is being left: this one is a group.
+    expect(find.text(l10n.leaveGroup), findsOneWidget);
+    expect(find.text(l10n.deleteGroup), findsNothing);
   });
 
   testWidgets('the creator is told why there is no way out but delete', (
     tester,
   ) async {
-    await pumpProfile(
-      tester,
-      chat(createdBy: me),
-      member(ChatRole.owner),
-    );
+    await pumpProfile(tester, chat(createdBy: me), member(ChatRole.owner));
 
-    expect(find.text(l10n.leaveChat), findsNothing);
+    expect(find.text(l10n.leaveGroup), findsNothing);
     expect(find.text(l10n.leaveChatOwnerBlocked), findsOneWidget);
-    expect(find.text(l10n.deleteChat), findsOneWidget);
+    expect(find.text(l10n.deleteGroup), findsOneWidget);
   });
 
   testWidgets('an owner gets the settings pencil', (tester) async {

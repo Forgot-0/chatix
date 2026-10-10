@@ -133,11 +133,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get chatFallbackTitle => 'চ্যাট';
 
   @override
-  String membersCount(num count) {
+  String membersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count জন সদস্য',
+      other: '$countString জন সদস্য',
       one: '১ জন সদস্য',
       zero: 'কোন সদস্য নেই',
     );
@@ -3305,4 +3309,85 @@ class AppLocalizationsBn extends AppLocalizations {
     );
     return '$date ($_temp0)';
   }
+
+  @override
+  String get chatStatusOnline => 'অনলাইন';
+
+  @override
+  String chatStatusOnlineCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString জন অনলাইন';
+  }
+
+  @override
+  String chatStatusMembersOnline(String members, String online) {
+    return '$members, $online';
+  }
+
+  @override
+  String subscribersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString জন সাবস্ক্রাইবার',
+      one: '১ জন সাবস্ক্রাইবার',
+      zero: 'কোন সাবস্ক্রাইবার নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get muteForTwoDays => '২ দিন নীরব';
+
+  @override
+  String get chatMenuSearch => 'খুঁজুন';
+
+  @override
+  String get chatMenuMute => 'নোটিফিকেশন বন্ধ করুন';
+
+  @override
+  String get chatMenuUnmute => 'নোটিফিকেশন চালু করুন';
+
+  @override
+  String get chatMenuPin => 'চ্যাট পিন করুন';
+
+  @override
+  String get chatMenuUnpin => 'চ্যাট আনপিন করুন';
+
+  @override
+  String get chatPinnedToast => 'চ্যাট পিন করা হয়েছে';
+
+  @override
+  String get chatUnpinnedToast => 'চ্যাট আনপিন করা হয়েছে';
+
+  @override
+  String get selectMessages => 'বার্তা নির্বাচন করুন';
+
+  @override
+  String get selectMessagesHint => 'বার্তা বেছে নিন';
+
+  @override
+  String get manageGroup => 'গ্রুপ পরিচালনা';
+
+  @override
+  String get manageChannel => 'চ্যানেল পরিচালনা';
+
+  @override
+  String get leaveGroup => 'গ্রুপ ছাড়ুন';
+
+  @override
+  String get leaveChannel => 'চ্যানেল ছাড়ুন';
+
+  @override
+  String get deleteGroup => 'গ্রুপ মুছুন';
+
+  @override
+  String get deleteChannel => 'চ্যানেল মুছুন';
 }

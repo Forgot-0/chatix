@@ -152,7 +152,13 @@
   },
   "membersCount": "{count, plural, =0{No members} =1{1 member} other{{count} members}}",
   "@membersCount": {
-    "description": "Member count shown under a chat title"
+    "description": "Member count shown under a chat title",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "attachmentProcessing": "Processing…",
   "@attachmentProcessing": {
@@ -4154,5 +4160,105 @@
         "type": "int"
       }
     }
+  },
+  "chatStatusOnline": "online",
+  "@chatStatusOnline": {
+    "description": "Under a direct chat's name in its app bar: the other person is online right now. Lowercase, like a status line"
+  },
+  "chatStatusOnlineCount": "{count} online",
+  "@chatStatusOnlineCount": {
+    "description": "How many members of a group are online, joined to the member count in the app bar",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "chatStatusMembersOnline": "{members}, {online}",
+  "@chatStatusMembersOnline": {
+    "description": "A group's app bar status: the member count, then how many are online. Both parts are already formatted",
+    "placeholders": {
+      "members": {
+        "type": "String"
+      },
+      "online": {
+        "type": "String"
+      }
+    }
+  },
+  "subscribersCount": "{count, plural, =0{No subscribers} =1{1 subscriber} other{{count} subscribers}}",
+  "@subscribersCount": {
+    "description": "A channel's audience, under its name in the app bar",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "muteForTwoDays": "Mute for 2 days",
+  "@muteForTwoDays": {
+    "description": "Mute duration option"
+  },
+  "chatMenuSearch": "Search",
+  "@chatMenuSearch": {
+    "description": "Chat menu item: open the search field over this chat"
+  },
+  "chatMenuMute": "Mute notifications",
+  "@chatMenuMute": {
+    "description": "Chat menu item: silence notifications; opens the choice of how long"
+  },
+  "chatMenuUnmute": "Unmute notifications",
+  "@chatMenuUnmute": {
+    "description": "Chat menu item: turn this chat's notifications back on"
+  },
+  "chatMenuPin": "Pin chat",
+  "@chatMenuPin": {
+    "description": "Chat menu item: pin this chat to the top of the list"
+  },
+  "chatMenuUnpin": "Unpin chat",
+  "@chatMenuUnpin": {
+    "description": "Chat menu item: unpin this chat"
+  },
+  "chatPinnedToast": "Chat pinned",
+  "@chatPinnedToast": {
+    "description": "Confirmation after pinning a chat from inside it"
+  },
+  "chatUnpinnedToast": "Chat unpinned",
+  "@chatUnpinnedToast": {
+    "description": "Confirmation after unpinning a chat from inside it"
+  },
+  "selectMessages": "Select messages",
+  "@selectMessages": {
+    "description": "Chat menu item: start picking messages to copy, forward or delete"
+  },
+  "selectMessagesHint": "Select messages",
+  "@selectMessagesHint": {
+    "description": "Title of the selection bar while nothing is selected yet"
+  },
+  "manageGroup": "Manage group",
+  "@manageGroup": {
+    "description": "Chat menu item for an owner or admin: the group's settings"
+  },
+  "manageChannel": "Manage channel",
+  "@manageChannel": {
+    "description": "Chat menu item for an owner or admin: the channel's settings"
+  },
+  "leaveGroup": "Leave group",
+  "@leaveGroup": {
+    "description": "Leave a group or supergroup"
+  },
+  "leaveChannel": "Leave channel",
+  "@leaveChannel": {
+    "description": "Leave (unsubscribe from) a channel"
+  },
+  "deleteGroup": "Delete group",
+  "@deleteGroup": {
+    "description": "Delete a group for everyone"
+  },
+  "deleteChannel": "Delete channel",
+  "@deleteChannel": {
+    "description": "Delete a channel for everyone"
   }
 }

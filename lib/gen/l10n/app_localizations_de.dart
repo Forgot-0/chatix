@@ -132,11 +132,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get chatFallbackTitle => 'Chat';
 
   @override
-  String membersCount(num count) {
+  String membersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count Mitglieder',
+      other: '$countString Mitglieder',
       one: '1 Mitglied',
       zero: 'Keine Mitglieder',
     );
@@ -3362,4 +3366,85 @@ class AppLocalizationsDe extends AppLocalizations {
     );
     return '$date ($_temp0)';
   }
+
+  @override
+  String get chatStatusOnline => 'online';
+
+  @override
+  String chatStatusOnlineCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString online';
+  }
+
+  @override
+  String chatStatusMembersOnline(String members, String online) {
+    return '$members, $online';
+  }
+
+  @override
+  String subscribersCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString Abonnenten',
+      one: '1 Abonnent',
+      zero: 'Keine Abonnenten',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get muteForTwoDays => '2 Tage stummschalten';
+
+  @override
+  String get chatMenuSearch => 'Suchen';
+
+  @override
+  String get chatMenuMute => 'Benachrichtigungen aus';
+
+  @override
+  String get chatMenuUnmute => 'Benachrichtigungen an';
+
+  @override
+  String get chatMenuPin => 'Chat anheften';
+
+  @override
+  String get chatMenuUnpin => 'Chat loslösen';
+
+  @override
+  String get chatPinnedToast => 'Chat angeheftet';
+
+  @override
+  String get chatUnpinnedToast => 'Chat losgelöst';
+
+  @override
+  String get selectMessages => 'Nachrichten auswählen';
+
+  @override
+  String get selectMessagesHint => 'Nachrichten auswählen';
+
+  @override
+  String get manageGroup => 'Gruppe verwalten';
+
+  @override
+  String get manageChannel => 'Kanal verwalten';
+
+  @override
+  String get leaveGroup => 'Gruppe verlassen';
+
+  @override
+  String get leaveChannel => 'Kanal verlassen';
+
+  @override
+  String get deleteGroup => 'Gruppe löschen';
+
+  @override
+  String get deleteChannel => 'Kanal löschen';
 }
