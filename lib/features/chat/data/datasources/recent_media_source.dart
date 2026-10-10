@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/features/chat/data/datasources/media_type_sniffer.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
-import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 
 /// One photo or video out of the device gallery, as the attachment strip
 /// needs it: something to draw now, and a file to read only if it is picked.
@@ -144,10 +144,13 @@ class PhotoManagerRecentMediaSource implements RecentMediaSource {
       final name = asset.title ?? file.path.split('/').last;
 
       // The server checks the MIME it is handed against the file's magic
-      // bytes, so a guess from the name is safer than nothing but worse than
-      // what the gallery itself recorded.
-      final mimeType =
-          await asset.mimeTypeAsync ?? ChatAttachmentLimits.mimeFromName(name);
+      // bytes, so those come first; what the gallery recorded is next, and a
+      // guess from the name is the last resort.
+      final mimeType = MediaTypeSniffer.resolve(
+        header: await _headerOf(file),
+        reported: await asset.mimeTypeAsync,
+        name: name,
+      );
 
       return AttachmentUploadRequestEntity(
         filename: name,
@@ -160,6 +163,18 @@ class PhotoManagerRecentMediaSource implements RecentMediaSource {
       return null;
     }
   }
+}
+
+Future<List<int>> _headerOf(File file) async {
+  final header = <int>[];
+  try {
+    await for (final chunk in file.openRead(0, MediaTypeSniffer.headerLength)) {
+      header.addAll(chunk);
+    }
+  } catch (error) {
+    Logger.warning('Recent media: could not read ${file.path} ($error)');
+  }
+  return header;
 }
 
 /// Nothing to show — what every platform without a gallery gets, and what a
