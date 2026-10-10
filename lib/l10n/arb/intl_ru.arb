@@ -953,5 +953,19 @@
   "leaveGroup": "Покинуть группу",
   "leaveChannel": "Покинуть канал",
   "deleteGroup": "Удалить группу",
-  "deleteChannel": "Удалить канал"
+  "deleteChannel": "Удалить канал",
+  "composerEmojiOpen": "Эмодзи",
+  "composerKeyboardOpen": "Клавиатура",
+  "emojiSearchHint": "Поиск эмодзи",
+  "emojiSearchEmpty": "Ничего не нашлось",
+  "emojiBackspace": "Стереть",
+  "emojiGroupRecent": "Недавние",
+  "emojiGroupSmileys": "Смайлы и люди",
+  "emojiGroupAnimals": "Животные и природа",
+  "emojiGroupFood": "Еда и напитки",
+  "emojiGroupActivities": "Занятия",
+  "emojiGroupTravel": "Путешествия и места",
+  "emojiGroupObjects": "Предметы",
+  "emojiGroupSymbols": "Символы",
+  "emojiGroupFlags": "Флаги"
 }

@@ -15,7 +15,7 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/set_reaction_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/recent_reactions_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/recent_emoji_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/attachment_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_feed_items.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
@@ -83,10 +83,10 @@ class ChatMessageRow extends ConsumerWidget {
 
     // Recents decide the order of the quick bar and what a double tap sends,
     // so the gesture matches the habit rather than a fixed default.
-    ref.watch(recentReactionsProvider);
+    ref.watch(recentEmojiProvider);
     final quickReactions = policy == null || !policy.enabled
         ? const <String>[]
-        : ref.read(recentReactionsProvider.notifier).ordered(policy.isAllowed);
+        : ref.read(recentEmojiProvider.notifier).ordered(policy.isAllowed);
 
     final canReact = quickReactions.isNotEmpty;
 
@@ -145,7 +145,7 @@ class ChatMessageRow extends ConsumerWidget {
               // of the four ways it was asked for — double tap, the menu's
               // row, the picker, or tapping the chip.
               AppHaptics.reactionToggled();
-              ref.read(recentReactionsProvider.notifier).remember(emoji);
+              ref.read(recentEmojiProvider.notifier).remember(emoji);
               notifier.toggleReaction(message.id, emoji);
             }
           : null,
@@ -286,11 +286,11 @@ class ChatMessageRow extends ConsumerWidget {
       context,
       reactions: state.reactionsFor(message.id),
       policy: policy,
-      recent: ref.read(recentReactionsProvider),
+      recent: ref.read(recentEmojiProvider),
     );
     if (emoji == null) return;
 
-    ref.read(recentReactionsProvider.notifier).remember(emoji);
+    ref.read(recentEmojiProvider.notifier).remember(emoji);
     ref
         .read(chatDetailProvider(chatId).notifier)
         .toggleReaction(message.id, emoji);

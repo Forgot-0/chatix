@@ -1243,5 +1243,19 @@
   "leaveGroup": "Salir del grupo",
   "leaveChannel": "Salir del canal",
   "deleteGroup": "Eliminar grupo",
-  "deleteChannel": "Eliminar canal"
+  "deleteChannel": "Eliminar canal",
+  "composerEmojiOpen": "Emoji",
+  "composerKeyboardOpen": "Teclado",
+  "emojiSearchHint": "Buscar emoji",
+  "emojiSearchEmpty": "No se encontraron emoji",
+  "emojiBackspace": "Borrar",
+  "emojiGroupRecent": "Recientes",
+  "emojiGroupSmileys": "Caras y personas",
+  "emojiGroupAnimals": "Animales y naturaleza",
+  "emojiGroupFood": "Comida y bebida",
+  "emojiGroupActivities": "Actividades",
+  "emojiGroupTravel": "Viajes y lugares",
+  "emojiGroupObjects": "Objetos",
+  "emojiGroupSymbols": "Símbolos",
+  "emojiGroupFlags": "Banderas"
 }

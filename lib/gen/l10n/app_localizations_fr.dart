@@ -3452,4 +3452,46 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteChannel => 'Supprimer la chaîne';
+
+  @override
+  String get composerEmojiOpen => 'Émoji';
+
+  @override
+  String get composerKeyboardOpen => 'Clavier';
+
+  @override
+  String get emojiSearchHint => 'Rechercher un émoji';
+
+  @override
+  String get emojiSearchEmpty => 'Aucun émoji trouvé';
+
+  @override
+  String get emojiBackspace => 'Effacer';
+
+  @override
+  String get emojiGroupRecent => 'Récents';
+
+  @override
+  String get emojiGroupSmileys => 'Smileys et personnes';
+
+  @override
+  String get emojiGroupAnimals => 'Animaux et nature';
+
+  @override
+  String get emojiGroupFood => 'Nourriture et boissons';
+
+  @override
+  String get emojiGroupActivities => 'Activités';
+
+  @override
+  String get emojiGroupTravel => 'Voyages et lieux';
+
+  @override
+  String get emojiGroupObjects => 'Objets';
+
+  @override
+  String get emojiGroupSymbols => 'Symboles';
+
+  @override
+  String get emojiGroupFlags => 'Drapeaux';
 }

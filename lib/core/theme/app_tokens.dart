@@ -434,6 +434,61 @@ abstract final class AppMenuSizes {
   static const double maxWidth = 320;
 }
 
+/// The composer's input row: the field's pill and what sits inside it.
+abstract final class ComposerSizes {
+  /// The pill the field is drawn in — Android's 48 dp target, the stricter
+  /// of the two platforms' guidelines.
+  static const double fieldMinHeight = 48;
+
+  /// The emoji button at the start of the pill: as tall as the pill, a
+  /// little narrower than square so the text does not start far from the
+  /// edge.
+  static const Size emojiButton = Size(40, fieldMinHeight);
+
+  static const double emojiIconSize = 24;
+}
+
+/// The emoji panel that takes the keyboard's place under the composer.
+abstract final class EmojiPanelSizes {
+  /// What the panel opens at before this device has ever shown a keyboard
+  /// — every desktop, and a phone on its very first emoji.
+  static const double defaultHeight = 300;
+
+  /// Never shorter than this, whatever the keyboard was: under it the grid
+  /// is a row and a half between the search field and the tabs…
+  static const double minHeight = 220;
+
+  /// …and never more than this share of the pane, so a tall keyboard on a
+  /// short landscape window leaves the conversation some room.
+  static const double maxHeightFactor = 0.55;
+
+  /// A keyboard shorter than this is an accessory bar or a hardware
+  /// keyboard's candidate strip, not a height worth opening the panel at.
+  static const double minKeyboard = 120;
+
+  /// One emoji's tap target. Rows are exactly this tall; columns share the
+  /// width, so cells come out square or a little wider.
+  static const double cell = 44;
+
+  /// The glyph inside it.
+  static const double glyph = 28;
+
+  /// The search field along the top.
+  static const double searchBarHeight = 48;
+
+  /// A section's title above its part of the grid.
+  static const double sectionHeaderHeight = 32;
+
+  /// The strip of category icons along the bottom, and the icons in it.
+  static const double tabBarHeight = 44;
+  static const double tabIconSize = 22;
+
+  /// While the panel's own search has the keyboard, the panel shrinks to
+  /// this above it: the field, and one row of answers.
+  static const double searchStripHeight =
+      searchBarHeight + cell + AppSpacing.x2;
+}
+
 /// Four levels of lift.
 ///
 /// Light themes cast a warm shadow. Dark themes do not: a black shadow on a

@@ -6,20 +6,30 @@ import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 
-/// The emoji this person actually uses, most recent first.
+/// The emoji this person actually uses, most recent first — one history for
+/// the whole app.
 ///
-/// Two things read it: the quick-reaction bar orders itself by it, and the
-/// double-tap shortcut sends whichever is at the front. Before anyone has
-/// reacted to anything it falls back to the default set, so the shortcut
-/// works on day one rather than doing nothing until primed.
-class RecentReactionsController extends Notifier<List<String>> {
-  /// A row someone can aim at, and the same eight the quick bar shows — a
-  /// longer memory would only ever surface through the full catalog, which
-  /// has its own order.
-  static const int maxRemembered = ReactionCatalog.quickBarLength;
+/// Three things read it: the composer's emoji panel opens on it, the
+/// quick-reaction bar orders itself by it, and the double-tap shortcut sends
+/// whichever allowed one is at the front. An emoji typed into a message and
+/// one put on a message are the same habit, so both land here; the reaction
+/// surfaces filter it through the chat's policy, which already drops anything
+/// outside the server's catalog (api-docs §5.7.2).
+///
+/// Before anyone has used anything the reaction bar falls back to the
+/// default set, so the shortcut works on day one rather than doing nothing
+/// until primed.
+class RecentEmojiController extends Notifier<List<String>> {
+  /// Five rows of the emoji panel. The quick bar only ever takes the first
+  /// [ReactionCatalog.quickBarLength] that a chat allows, so a longer memory
+  /// costs it nothing and keeps a reaction from being pushed out by a burst
+  /// of typing.
+  static const int maxRemembered = 40;
 
   @override
   List<String> build() {
+    // Still the key the reaction-only history was kept under: that history
+    // is where this one starts.
     final stored = ref.watch(chatLocalPrefsStoreProvider).readRecentReactions();
 
     return stored.isEmpty
@@ -58,14 +68,14 @@ class RecentReactionsController extends Notifier<List<String>> {
           .writeRecentReactions(next)
           .catchError(
             (Object error) => Logger.warning(
-              'Chat prefs: recent reactions not persisted ($error)',
+              'Chat prefs: recent emoji not persisted ($error)',
             ),
           ),
     );
   }
 }
 
-final recentReactionsProvider =
-    NotifierProvider<RecentReactionsController, List<String>>(
-      RecentReactionsController.new,
+final recentEmojiProvider =
+    NotifierProvider<RecentEmojiController, List<String>>(
+      RecentEmojiController.new,
     );

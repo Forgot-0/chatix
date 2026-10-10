@@ -4,10 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/recent_reactions_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/recent_emoji_provider.dart';
 
 /// Which emoji someone reaches for is a habit, not chat data — there is no
-/// endpoint that stores it, so it lives on the device and drives both the
+/// endpoint that stores it, so it lives on the device. One history for the
+/// whole app: the composer's emoji panel opens on it, and it drives both the
 /// quick bar's order and what a double tap sends.
 void main() {
   ProviderContainer boot({List<String> stored = const []}) {
@@ -21,8 +22,8 @@ void main() {
     return container;
   }
 
-  RecentReactionsController notifierOf(ProviderContainer container) =>
-      container.read(recentReactionsProvider.notifier);
+  RecentEmojiController notifierOf(ProviderContainer container) =>
+      container.read(recentEmojiProvider.notifier);
 
   bool anything(String emoji) => true;
 
@@ -34,7 +35,7 @@ void main() {
       notifier.remember('👍');
       notifier.remember('🔥');
 
-      expect(container.read(recentReactionsProvider), ['🔥', '👍']);
+      expect(container.read(recentEmojiProvider), ['🔥', '👍']);
     });
 
     test('using one again moves it rather than repeating it', () {
@@ -45,28 +46,36 @@ void main() {
       notifier.remember('🔥');
       notifier.remember('👍');
 
-      expect(container.read(recentReactionsProvider), ['👍', '🔥']);
+      expect(container.read(recentEmojiProvider), ['👍', '🔥']);
     });
 
     test('the list stays short enough to aim at', () {
       final container = boot();
       final notifier = notifierOf(container);
 
-      for (final emoji in ['1', '2', '3', '4', '5', '6', '7', '8']) {
-        notifier.remember(emoji);
-      }
+      final used = [
+        for (var i = 0; i < RecentEmojiController.maxRemembered + 5; i++) '$i',
+      ];
+      used.forEach(notifier.remember);
 
       expect(
-        container.read(recentReactionsProvider),
-        hasLength(RecentReactionsController.maxRemembered),
+        container.read(recentEmojiProvider),
+        hasLength(RecentEmojiController.maxRemembered),
       );
-      expect(container.read(recentReactionsProvider).first, '8');
+      expect(container.read(recentEmojiProvider).first, used.last);
+    });
+
+    test('remembers more than the quick bar shows, for the emoji panel', () {
+      expect(
+        RecentEmojiController.maxRemembered,
+        greaterThan(ReactionCatalog.quickBarLength),
+      );
     });
 
     test('what was used last session comes back', () {
       final container = boot(stored: ['🎉', '😢']);
 
-      expect(container.read(recentReactionsProvider), ['🎉', '😢']);
+      expect(container.read(recentEmojiProvider), ['🎉', '😢']);
     });
   });
 
@@ -135,6 +144,27 @@ void main() {
       expect(
         notifierOf(container).ordered(ReactionCatalog.isKnown),
         isNot(contains('🫠')),
+      );
+    });
+
+    test('an emoji typed into a message never reaches the bar if the '
+        'server would refuse it as a reaction', () {
+      final container = boot();
+      final notifier = notifierOf(container);
+
+      // Typed from the composer's panel: fine in a message, not a reaction.
+      notifier.remember('🫠');
+      notifier.remember('🔥');
+      notifier.remember('🧑‍🚀');
+
+      expect(container.read(recentEmojiProvider), ['🧑‍🚀', '🔥', '🫠']);
+      expect(
+        notifierOf(container).ordered(ReactionCatalog.isKnown),
+        allOf(contains('🔥'), isNot(contains('🫠')), isNot(contains('🧑‍🚀'))),
+      );
+      expect(
+        notifierOf(container).ordered(ReactionCatalog.isKnown).first,
+        '🔥',
       );
     });
 

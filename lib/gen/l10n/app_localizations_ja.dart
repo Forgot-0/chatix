@@ -3271,4 +3271,46 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get deleteChannel => 'チャンネルを削除';
+
+  @override
+  String get composerEmojiOpen => '絵文字';
+
+  @override
+  String get composerKeyboardOpen => 'キーボード';
+
+  @override
+  String get emojiSearchHint => '絵文字を検索';
+
+  @override
+  String get emojiSearchEmpty => '絵文字が見つかりません';
+
+  @override
+  String get emojiBackspace => '削除';
+
+  @override
+  String get emojiGroupRecent => '最近使用';
+
+  @override
+  String get emojiGroupSmileys => 'スマイリーと人';
+
+  @override
+  String get emojiGroupAnimals => '動物と自然';
+
+  @override
+  String get emojiGroupFood => '食べ物と飲み物';
+
+  @override
+  String get emojiGroupActivities => 'アクティビティ';
+
+  @override
+  String get emojiGroupTravel => '旅行と場所';
+
+  @override
+  String get emojiGroupObjects => '物';
+
+  @override
+  String get emojiGroupSymbols => '記号';
+
+  @override
+  String get emojiGroupFlags => '旗';
 }

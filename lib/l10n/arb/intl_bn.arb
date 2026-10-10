@@ -1243,5 +1243,19 @@
   "leaveGroup": "গ্রুপ ছাড়ুন",
   "leaveChannel": "চ্যানেল ছাড়ুন",
   "deleteGroup": "গ্রুপ মুছুন",
-  "deleteChannel": "চ্যানেল মুছুন"
+  "deleteChannel": "চ্যানেল মুছুন",
+  "composerEmojiOpen": "ইমোজি",
+  "composerKeyboardOpen": "কীবোর্ড",
+  "emojiSearchHint": "ইমোজি খুঁজুন",
+  "emojiSearchEmpty": "কোনো ইমোজি পাওয়া যায়নি",
+  "emojiBackspace": "মুছুন",
+  "emojiGroupRecent": "সাম্প্রতিক",
+  "emojiGroupSmileys": "স্মাইলি ও মানুষ",
+  "emojiGroupAnimals": "প্রাণী ও প্রকৃতি",
+  "emojiGroupFood": "খাবার ও পানীয়",
+  "emojiGroupActivities": "কার্যকলাপ",
+  "emojiGroupTravel": "ভ্রমণ ও স্থান",
+  "emojiGroupObjects": "বস্তু",
+  "emojiGroupSymbols": "প্রতীক",
+  "emojiGroupFlags": "পতাকা"
 }

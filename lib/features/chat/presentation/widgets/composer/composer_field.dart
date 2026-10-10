@@ -18,8 +18,10 @@ class ComposerField extends StatelessWidget {
     required this.focusNode,
     required this.enabled,
     required this.length,
+    this.readOnly = false,
     this.hintText,
     this.onSubmitted,
+    this.onTap,
   });
 
   /// One line to start, six at most — past that the text scrolls.
@@ -35,8 +37,14 @@ class ComposerField extends StatelessWidget {
   /// counter can be rebuilt without every listener rebuilding the field.
   final int length;
 
+  /// The emoji panel is where the keyboard was. The field keeps its focus
+  /// and shows its caret — an emoji goes in where the person was typing —
+  /// but asks for no keyboard until it is tapped.
+  final bool readOnly;
+
   final String? hintText;
   final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +63,9 @@ class ComposerField extends StatelessWidget {
             controller: controller,
             focusNode: focusNode,
             enabled: enabled,
+            readOnly: readOnly,
+            showCursor: readOnly ? true : null,
+            onTap: onTap,
             minLines: minLines,
             maxLines: maxLines,
             // Deliberately no maxLength: the cap is enforced on send

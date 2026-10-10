@@ -4260,5 +4260,61 @@
   "deleteChannel": "Delete channel",
   "@deleteChannel": {
     "description": "Delete a channel for everyone"
+  },
+  "composerEmojiOpen": "Emoji",
+  "@composerEmojiOpen": {
+    "description": "Tooltip of the smiley button in the composer that swaps the keyboard for the emoji panel"
+  },
+  "composerKeyboardOpen": "Keyboard",
+  "@composerKeyboardOpen": {
+    "description": "Tooltip of the same button while the emoji panel is open: brings the keyboard back"
+  },
+  "emojiSearchHint": "Search emoji",
+  "@emojiSearchHint": {
+    "description": "Hint of the search field at the top of the emoji panel"
+  },
+  "emojiSearchEmpty": "No emoji found",
+  "@emojiSearchEmpty": {
+    "description": "Shown in the emoji panel when a search matches nothing"
+  },
+  "emojiBackspace": "Delete",
+  "@emojiBackspace": {
+    "description": "Tooltip of the button in the emoji panel that deletes the character before the cursor"
+  },
+  "emojiGroupRecent": "Recent",
+  "@emojiGroupRecent": {
+    "description": "Emoji panel section: emoji this person used lately, in messages or as reactions"
+  },
+  "emojiGroupSmileys": "Smileys & people",
+  "@emojiGroupSmileys": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupAnimals": "Animals & nature",
+  "@emojiGroupAnimals": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupFood": "Food & drink",
+  "@emojiGroupFood": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupActivities": "Activities",
+  "@emojiGroupActivities": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupTravel": "Travel & places",
+  "@emojiGroupTravel": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupObjects": "Objects",
+  "@emojiGroupObjects": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupSymbols": "Symbols",
+  "@emojiGroupSymbols": {
+    "description": "Emoji panel section title"
+  },
+  "emojiGroupFlags": "Flags",
+  "@emojiGroupFlags": {
+    "description": "Emoji panel section title"
   }
 }

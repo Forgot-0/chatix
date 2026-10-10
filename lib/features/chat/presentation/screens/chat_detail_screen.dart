@@ -29,11 +29,13 @@ import 'package:chatix/features/chat/presentation/providers/chat_socket_provider
 import 'package:chatix/features/chat/presentation/providers/in_chat_search_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/composer_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/reaction_notice_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/recent_emoji_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_playback_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/video_note_record_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/utils/composer_text_edits.dart';
 import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_banners.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_skeleton.dart';
@@ -42,6 +44,8 @@ import 'package:chatix/features/chat/presentation/widgets/composer/chat_composer
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_attachment_tray.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_locked_notice.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_panel_host.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/emoji_panel.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/video_note_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
@@ -83,6 +87,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _textController = TextEditingController();
   final _composerFocus = FocusNode();
   final _searchController = TextEditingController();
+
+  /// Keyboard, emoji panel, or neither — what sits under the composer.
+  final _input = ComposerInputController();
 
   /// Holds focus while messages are being picked, so Esc reaches the screen
   /// and not whatever had focus before — usually the composer, which the
@@ -158,6 +165,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     _textController.dispose();
     _composerFocus.dispose();
+    _input.dispose();
     _searchController.dispose();
     _screenFocus.dispose();
     super.dispose();
@@ -204,26 +212,48 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // answer.
     final inMode = _selectionMode || _searchMode;
 
-    return PopScope(
-      canPop: !inMode,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leaveMode();
+    // The emoji panel is the innermost of these: back puts it away first,
+    // the way it would the keyboard it stands in for.
+    return ListenableBuilder(
+      listenable: _input,
+      builder: (context, child) {
+        final panelOpen = _input.showsPanel;
+
+        return PopScope(
+          canPop: !inMode && !panelOpen,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            if (panelOpen) {
+              _closeEmojiPanel();
+              return;
+            }
+            _leaveMode();
+          },
+          child: CallbackShortcuts(
+            bindings: {
+              if (panelOpen)
+                const SingleActivator(LogicalKeyboardKey.escape):
+                    _closeEmojiPanel
+              else if (inMode)
+                const SingleActivator(LogicalKeyboardKey.escape): _leaveMode,
+            },
+            child: child!,
+          ),
+        );
       },
-      child: CallbackShortcuts(
-        bindings: {
-          if (inMode)
-            const SingleActivator(LogicalKeyboardKey.escape): _leaveMode,
-        },
-        child: Focus(
-          focusNode: _screenFocus,
-          child: _buildScaffold(detail, myUserId),
-        ),
+      child: Focus(
+        focusNode: _screenFocus,
+        child: _buildScaffold(detail, myUserId),
       ),
     );
   }
 
   Widget _buildScaffold(AsyncValue<ChatDetailState> detail, int? myUserId) {
     return Scaffold(
+      // The keyboard is made room for by [ComposerPanelHost] instead: a
+      // scaffold can only shrink the body by it, and keeping the body still
+      // while the keyboard and the emoji panel trade places is the point.
+      resizeToAvoidBottomInset: false,
       appBar: _buildAppBar(detail.value, myUserId),
       body: detail.when(
         // The shape of the conversation, not a spinner: the bubbles land in
@@ -256,24 +286,36 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (mounted) _composer.syncSlowMode(interval);
     });
 
-    return Column(
+    final body = Column(
       children: [
         const ChatConnectionStrip(),
         if (state.isRealtimeRejected) const ChatRealtimeRejectedBanner(),
         ChatOngoingCallBanner(chatId: widget.chatId),
         Expanded(
-          child: ChatFeed(
-            chatId: widget.chatId,
-            state: state,
-            myUserId: myUserId,
-            selectionMode: _selectionMode,
-            selectedIds: _selectedMessageIds ?? const <String>{},
-            onStartSelection: _startSelection,
-            onToggleSelected: _toggleSelected,
-            onEdit: _startEditing,
-            onDelete: (messageId) => unawaited(_deleteMessages([messageId])),
-            onRefresh: () =>
-                ref.read(chatDetailProvider(widget.chatId).notifier).refresh(),
+          // A tap on the conversation puts the emoji panel away, as it
+          // would the keyboard. Only a tap nothing in the feed claimed: a
+          // bubble's own tap still wins.
+          child: ListenableBuilder(
+            listenable: _input,
+            builder: (context, child) => GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _input.isEmojiOpen ? _closeEmojiPanel : null,
+              child: child,
+            ),
+            child: ChatFeed(
+              chatId: widget.chatId,
+              state: state,
+              myUserId: myUserId,
+              selectionMode: _selectionMode,
+              selectedIds: _selectedMessageIds ?? const <String>{},
+              onStartSelection: _startSelection,
+              onToggleSelected: _toggleSelected,
+              onEdit: _startEditing,
+              onDelete: (messageId) => unawaited(_deleteMessages([messageId])),
+              onRefresh: () => ref
+                  .read(chatDetailProvider(widget.chatId).notifier)
+                  .refresh(),
+            ),
           ),
         ),
         if (state.isViewingHistory)
@@ -294,15 +336,35 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             chatId: widget.chatId,
             controller: _textController,
             focusNode: _composerFocus,
+            input: _input,
             replyTo: state.replyTo,
             onCancelContext: _cancelComposerContext,
             onAttach: _openAttachmentSheet,
             onSend: _send,
             onVoiceRecorded: _sendVoice,
             onVideoNoteRecorded: _sendVideoNote,
+            onToggleEmoji: _toggleEmojiPanel,
+            onFieldTap: _onComposerFieldTap,
           ),
         ],
       ],
+    );
+
+    return ComposerPanelHost(
+      controller: _input,
+      panelBuilder: (context, height, compact) => TextFieldTapRegion(
+        child: EmojiPanel(
+          // Read, not watched: the panel takes its "Recent" once, as it
+          // opens, so the row does not reshuffle under the finger.
+          recent: ref.read(recentEmojiProvider),
+          compact: compact,
+          onEmoji: _insertEmoji,
+          onBackspace: _deleteBackwards,
+          onSearchFocusChanged: (focused) =>
+              _input.setSearching(value: focused),
+        ),
+      ),
+      child: body,
     );
   }
 
@@ -360,6 +422,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (!on) {
       _searchController.clear();
       ref.read(inChatSearchProvider(widget.chatId).notifier).clear();
+    } else {
+      // The search field takes the keyboard; the panel would only sit
+      // under it.
+      _closeEmojiPanel();
     }
 
     setState(() => _searchMode = on);
@@ -692,6 +758,50 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _composerFocus.requestFocus();
   }
 
+  // ------------------------------------------------------------ emoji panel
+
+  /// The smiley in the field: keyboard to panel, or panel back to keyboard.
+  void _toggleEmojiPanel() {
+    if (_input.isEmojiOpen) {
+      _input.showKeyboard();
+      if (!_composerFocus.hasFocus) _composerFocus.requestFocus();
+      return;
+    }
+
+    _input.openEmoji();
+    // After the frame that turns the field read-only: focused before it,
+    // the field would raise the keyboard for a frame and then drop it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _composerFocus.requestFocus();
+    });
+  }
+
+  /// A tap on the field while the panel holds the keyboard down asks for the
+  /// keyboard back.
+  void _onComposerFieldTap() {
+    if (_input.holdsKeyboard) _input.showKeyboard();
+  }
+
+  /// Puts the panel away, and on a phone the caret with it — otherwise the
+  /// field, no longer read-only, would raise the keyboard in its place.
+  void _closeEmojiPanel() {
+    if (!_input.showsPanel) return;
+    if (_input.softKeyboard) _composerFocus.unfocus();
+    _input.close();
+  }
+
+  void _insertEmoji(String emoji) {
+    _textController.value = ComposerTextEdits.insert(
+      _textController.value,
+      emoji,
+    );
+    ref.read(recentEmojiProvider.notifier).remember(emoji);
+  }
+
+  void _deleteBackwards() {
+    _textController.value = ComposerTextEdits.backspace(_textController.value);
+  }
+
   /// Drops whatever the banner is showing — the edit if there is one, the
   /// reply otherwise. One gesture, because the banner is one strip.
   void _cancelComposerContext() {
@@ -1019,11 +1129,15 @@ class _ComposerSection extends ConsumerWidget {
     required this.onSend,
     required this.onVoiceRecorded,
     required this.onVideoNoteRecorded,
+    required this.input,
+    required this.onToggleEmoji,
+    required this.onFieldTap,
   });
 
   final String chatId;
   final TextEditingController controller;
   final FocusNode focusNode;
+  final ComposerInputController input;
   final MessageEntity? replyTo;
 
   final VoidCallback onCancelContext;
@@ -1031,6 +1145,8 @@ class _ComposerSection extends ConsumerWidget {
   final Future<void> Function() onSend;
   final Future<void> Function(VoiceRecording recording) onVoiceRecorded;
   final Future<void> Function(VideoNoteTake take) onVideoNoteRecorded;
+  final VoidCallback onToggleEmoji;
+  final VoidCallback onFieldTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1048,23 +1164,30 @@ class _ComposerSection extends ConsumerWidget {
         ref.watch(voiceRecordProvider.select((it) => it.isActive)) ||
         ref.watch(videoNoteRecordProvider.select((it) => it.isActive));
 
-    return ChatComposer(
-      controller: controller,
-      focusNode: focusNode,
-      length: composer.length,
-      hasAttachments: hasAttachments,
-      isRecording: isRecording,
-      slowMode: composer.slowMode,
-      isSending: composer.isSending,
-      replyTo: replyTo,
-      editing: composer.editing,
-      onCancelContext: onCancelContext,
-      // An edit gains no attachments: `PATCH .../messages/{id}/` only
-      // carries `content` (api-docs §5.4).
-      onAttach: composer.isEditing ? null : onAttach,
-      onSend: onSend,
-      onVoiceRecorded: composer.isEditing ? null : onVoiceRecorded,
-      onVideoNoteRecorded: composer.isEditing ? null : onVideoNoteRecorded,
+    return ListenableBuilder(
+      listenable: input,
+      builder: (context, _) => ChatComposer(
+        controller: controller,
+        focusNode: focusNode,
+        length: composer.length,
+        hasAttachments: hasAttachments,
+        isRecording: isRecording,
+        slowMode: composer.slowMode,
+        isSending: composer.isSending,
+        replyTo: replyTo,
+        editing: composer.editing,
+        onCancelContext: onCancelContext,
+        // An edit gains no attachments: `PATCH .../messages/{id}/` only
+        // carries `content` (api-docs §5.4).
+        onAttach: composer.isEditing ? null : onAttach,
+        onSend: onSend,
+        onVoiceRecorded: composer.isEditing ? null : onVoiceRecorded,
+        onVideoNoteRecorded: composer.isEditing ? null : onVideoNoteRecorded,
+        isEmojiOpen: input.isEmojiOpen,
+        holdsKeyboard: input.holdsKeyboard,
+        onToggleEmoji: onToggleEmoji,
+        onFieldTap: onFieldTap,
+      ),
     );
   }
 }

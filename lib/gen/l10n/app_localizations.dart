@@ -5831,6 +5831,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete channel'**
   String get deleteChannel;
+
+  /// Tooltip of the smiley button in the composer that swaps the keyboard for the emoji panel
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get composerEmojiOpen;
+
+  /// Tooltip of the same button while the emoji panel is open: brings the keyboard back
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard'**
+  String get composerKeyboardOpen;
+
+  /// Hint of the search field at the top of the emoji panel
+  ///
+  /// In en, this message translates to:
+  /// **'Search emoji'**
+  String get emojiSearchHint;
+
+  /// Shown in the emoji panel when a search matches nothing
+  ///
+  /// In en, this message translates to:
+  /// **'No emoji found'**
+  String get emojiSearchEmpty;
+
+  /// Tooltip of the button in the emoji panel that deletes the character before the cursor
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get emojiBackspace;
+
+  /// Emoji panel section: emoji this person used lately, in messages or as reactions
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get emojiGroupRecent;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Smileys & people'**
+  String get emojiGroupSmileys;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Animals & nature'**
+  String get emojiGroupAnimals;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Food & drink'**
+  String get emojiGroupFood;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Activities'**
+  String get emojiGroupActivities;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Travel & places'**
+  String get emojiGroupTravel;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Objects'**
+  String get emojiGroupObjects;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get emojiGroupSymbols;
+
+  /// Emoji panel section title
+  ///
+  /// In en, this message translates to:
+  /// **'Flags'**
+  String get emojiGroupFlags;
 }
 
 class _AppLocalizationsDelegate

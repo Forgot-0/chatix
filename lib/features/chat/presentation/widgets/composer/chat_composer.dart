@@ -40,6 +40,10 @@ class ChatComposer extends StatelessWidget {
     this.onSend,
     this.onVoiceRecorded,
     this.onVideoNoteRecorded,
+    this.isEmojiOpen = false,
+    this.holdsKeyboard = false,
+    this.onToggleEmoji,
+    this.onFieldTap,
   });
 
   final TextEditingController controller;
@@ -78,6 +82,21 @@ class ChatComposer extends StatelessWidget {
   /// Null where video notes are not on offer; the send button then has
   /// nothing to swap the microphone for.
   final void Function(VideoNoteTake take)? onVideoNoteRecorded;
+
+  /// The emoji panel is open under the composer; the smiley at the start of
+  /// the field turns into a keyboard that brings the keyboard back.
+  final bool isEmojiOpen;
+
+  /// The panel is in the keyboard's place, so the field keeps its caret but
+  /// raises no keyboard until it is tapped.
+  final bool holdsKeyboard;
+
+  /// Null hides the smiley — there is no panel to open.
+  final VoidCallback? onToggleEmoji;
+
+  /// A tap on the field itself: what takes a phone from the panel back to
+  /// the keyboard.
+  final VoidCallback? onFieldTap;
 
   /// Which of its four shapes this is, most specific first.
   ///
@@ -125,6 +144,7 @@ class ChatComposer extends StatelessWidget {
     final theme = Theme.of(context);
     final chatix = ChatixTheme.of(context);
     final l10n = AppLocalizations.of(context);
+    final hasEmojiButton = onToggleEmoji != null && !isRecording;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -179,24 +199,41 @@ class ChatComposer extends StatelessWidget {
                         // 48, not 44: Android's guideline is the stricter of
                         // the two, and the field inside now fills it rather
                         // than sitting in the middle of it.
-                        constraints: const BoxConstraints(minHeight: 48),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.x3,
+                        constraints: const BoxConstraints(
+                          minHeight: ComposerSizes.fieldMinHeight,
+                        ),
+                        padding: EdgeInsetsDirectional.only(
+                          start: hasEmojiButton ? 0 : AppSpacing.x3,
+                          end: AppSpacing.x3,
                         ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(AppRadii.xl),
                         ),
-                        child: Center(
-                          child: isRecording
-                              ? const ComposerRecordingBar()
-                              : ComposerField(
-                                  controller: controller,
-                                  focusNode: focusNode,
-                                  enabled: !isSending,
-                                  length: length,
-                                ),
-                        ),
+                        child: isRecording
+                            ? const Center(child: ComposerRecordingBar())
+                            : Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (hasEmojiButton)
+                                    _EmojiButton(
+                                      isOpen: isEmojiOpen,
+                                      onPressed: isSending
+                                          ? null
+                                          : onToggleEmoji,
+                                    ),
+                                  Expanded(
+                                    child: ComposerField(
+                                      controller: controller,
+                                      focusNode: focusNode,
+                                      enabled: !isSending,
+                                      readOnly: holdsKeyboard,
+                                      onTap: onFieldTap,
+                                      length: length,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.x1),
@@ -212,6 +249,43 @@ class ChatComposer extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The smiley at the start of the field, or — with the panel open — the
+/// keyboard that brings typing back.
+class _EmojiButton extends StatelessWidget {
+  const _EmojiButton({required this.isOpen, required this.onPressed});
+
+  final bool isOpen;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    // Inside the field's tap region: on a desktop a click here would
+    // otherwise count as a click away from the field and take its focus —
+    // and its caret, which is where the emoji is meant to go.
+    return TextFieldTapRegion(
+      child: IconButton(
+        tooltip: isOpen ? l10n.composerKeyboardOpen : l10n.composerEmojiOpen,
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        constraints: BoxConstraints.tight(ComposerSizes.emojiButton),
+        iconSize: ComposerSizes.emojiIconSize,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        icon: AnimatedSwitcher(
+          duration: AppMotion.fast,
+          transitionBuilder: (child, animation) =>
+              ScaleTransition(scale: animation, child: child),
+          child: Icon(
+            isOpen ? Icons.keyboard_outlined : Icons.emoji_emotions_outlined,
+            key: ValueKey(isOpen),
           ),
         ),
       ),

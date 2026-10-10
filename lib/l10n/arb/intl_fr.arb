@@ -1243,5 +1243,19 @@
   "leaveGroup": "Quitter le groupe",
   "leaveChannel": "Quitter la chaîne",
   "deleteGroup": "Supprimer le groupe",
-  "deleteChannel": "Supprimer la chaîne"
+  "deleteChannel": "Supprimer la chaîne",
+  "composerEmojiOpen": "Émoji",
+  "composerKeyboardOpen": "Clavier",
+  "emojiSearchHint": "Rechercher un émoji",
+  "emojiSearchEmpty": "Aucun émoji trouvé",
+  "emojiBackspace": "Effacer",
+  "emojiGroupRecent": "Récents",
+  "emojiGroupSmileys": "Smileys et personnes",
+  "emojiGroupAnimals": "Animaux et nature",
+  "emojiGroupFood": "Nourriture et boissons",
+  "emojiGroupActivities": "Activités",
+  "emojiGroupTravel": "Voyages et lieux",
+  "emojiGroupObjects": "Objets",
+  "emojiGroupSymbols": "Symboles",
+  "emojiGroupFlags": "Drapeaux"
 }

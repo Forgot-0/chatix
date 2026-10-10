@@ -114,6 +114,12 @@ dependencies:
   # Android, iOS, macOS and Windows. Linux has none, and the item is not
   # offered there (core/storage/file_sharer.dart).
   share_plus: ^12.0.2
+  # Emoji data for the composer's emoji panel: ~1600 emoji in eight
+  # categories, with search keywords in en/ru/de/es/fr/ja. Only the data is
+  # used — the panel itself is drawn by the app (emoji_panel.dart), so its
+  # "Recent" row is the same history the reaction bar reads rather than the
+  # package's own copy in shared preferences.
+  emoji_picker_flutter: ^4.5.4
 
 dev_dependencies:
   flutter_test:

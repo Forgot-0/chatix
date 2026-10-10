@@ -3390,4 +3390,46 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get deleteChannel => 'চ্যানেল মুছুন';
+
+  @override
+  String get composerEmojiOpen => 'ইমোজি';
+
+  @override
+  String get composerKeyboardOpen => 'কীবোর্ড';
+
+  @override
+  String get emojiSearchHint => 'ইমোজি খুঁজুন';
+
+  @override
+  String get emojiSearchEmpty => 'কোনো ইমোজি পাওয়া যায়নি';
+
+  @override
+  String get emojiBackspace => 'মুছুন';
+
+  @override
+  String get emojiGroupRecent => 'সাম্প্রতিক';
+
+  @override
+  String get emojiGroupSmileys => 'স্মাইলি ও মানুষ';
+
+  @override
+  String get emojiGroupAnimals => 'প্রাণী ও প্রকৃতি';
+
+  @override
+  String get emojiGroupFood => 'খাবার ও পানীয়';
+
+  @override
+  String get emojiGroupActivities => 'কার্যকলাপ';
+
+  @override
+  String get emojiGroupTravel => 'ভ্রমণ ও স্থান';
+
+  @override
+  String get emojiGroupObjects => 'বস্তু';
+
+  @override
+  String get emojiGroupSymbols => 'প্রতীক';
+
+  @override
+  String get emojiGroupFlags => 'পতাকা';
 }

@@ -1243,5 +1243,19 @@
   "leaveGroup": "グループを退出",
   "leaveChannel": "チャンネルを退出",
   "deleteGroup": "グループを削除",
-  "deleteChannel": "チャンネルを削除"
+  "deleteChannel": "チャンネルを削除",
+  "composerEmojiOpen": "絵文字",
+  "composerKeyboardOpen": "キーボード",
+  "emojiSearchHint": "絵文字を検索",
+  "emojiSearchEmpty": "絵文字が見つかりません",
+  "emojiBackspace": "削除",
+  "emojiGroupRecent": "最近使用",
+  "emojiGroupSmileys": "スマイリーと人",
+  "emojiGroupAnimals": "動物と自然",
+  "emojiGroupFood": "食べ物と飲み物",
+  "emojiGroupActivities": "アクティビティ",
+  "emojiGroupTravel": "旅行と場所",
+  "emojiGroupObjects": "物",
+  "emojiGroupSymbols": "記号",
+  "emojiGroupFlags": "旗"
 }

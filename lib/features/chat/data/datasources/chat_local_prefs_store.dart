@@ -22,6 +22,14 @@ abstract interface class ChatLocalPrefsStore {
   List<String> readRecentReactions();
 
   Future<void> writeRecentReactions(List<String> emojis);
+
+  /// How tall the on-screen keyboard last was, in logical pixels — what the
+  /// emoji panel opens at, so swapping one for the other does not move the
+  /// conversation. A property of this device and its keyboard, nothing the
+  /// account carries.
+  double? readKeyboardHeight();
+
+  Future<void> writeKeyboardHeight(double height);
 }
 
 /// The real store: shared preferences, with one JSON blob for the drafts.
@@ -30,6 +38,7 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
 
   static const String _draftsKey = 'chat_drafts';
   static const String _recentReactionsKey = 'chat.recent_reactions';
+  static const String _keyboardHeightKey = 'chat.keyboard_height';
 
   final LocalStorageService _storage;
 
@@ -69,6 +78,14 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
     }
     await _storage.setStringList(_recentReactionsKey, emojis);
   }
+
+  @override
+  double? readKeyboardHeight() => _storage.getDouble(_keyboardHeightKey);
+
+  @override
+  Future<void> writeKeyboardHeight(double height) async {
+    await _storage.setDouble(_keyboardHeightKey, height);
+  }
 }
 
 /// The fallback used where shared preferences were never wired up — widget
@@ -77,6 +94,7 @@ class SharedPrefsChatLocalPrefsStore implements ChatLocalPrefsStore {
 class InMemoryChatLocalPrefsStore implements ChatLocalPrefsStore {
   Map<String, String> _drafts = const <String, String>{};
   List<String> _recentReactions = const <String>[];
+  double? _keyboardHeight;
 
   @override
   Map<String, String> readDrafts() => _drafts;
@@ -92,5 +110,13 @@ class InMemoryChatLocalPrefsStore implements ChatLocalPrefsStore {
   @override
   Future<void> writeRecentReactions(List<String> emojis) async {
     _recentReactions = [...emojis];
+  }
+
+  @override
+  double? readKeyboardHeight() => _keyboardHeight;
+
+  @override
+  Future<void> writeKeyboardHeight(double height) async {
+    _keyboardHeight = height;
   }
 }

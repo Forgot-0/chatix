@@ -3449,4 +3449,46 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteChannel => 'Удалить канал';
+
+  @override
+  String get composerEmojiOpen => 'Эмодзи';
+
+  @override
+  String get composerKeyboardOpen => 'Клавиатура';
+
+  @override
+  String get emojiSearchHint => 'Поиск эмодзи';
+
+  @override
+  String get emojiSearchEmpty => 'Ничего не нашлось';
+
+  @override
+  String get emojiBackspace => 'Стереть';
+
+  @override
+  String get emojiGroupRecent => 'Недавние';
+
+  @override
+  String get emojiGroupSmileys => 'Смайлы и люди';
+
+  @override
+  String get emojiGroupAnimals => 'Животные и природа';
+
+  @override
+  String get emojiGroupFood => 'Еда и напитки';
+
+  @override
+  String get emojiGroupActivities => 'Занятия';
+
+  @override
+  String get emojiGroupTravel => 'Путешествия и места';
+
+  @override
+  String get emojiGroupObjects => 'Предметы';
+
+  @override
+  String get emojiGroupSymbols => 'Символы';
+
+  @override
+  String get emojiGroupFlags => 'Флаги';
 }
