@@ -8,8 +8,10 @@ import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/features/chat/data/datasources/photo_compressor.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/local_media_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 import '../../../../helpers/chat_golden.dart';
@@ -182,6 +184,72 @@ void main() {
     await tester.tap(removeButtons());
 
     expect(await preview.closed(), isNull);
+  });
+
+  group('the caption', () {
+    /// A caption [left] characters short of the cap, in words, so it wraps
+    /// the way a real one would.
+    String nearTheCap(int left) {
+      const word = 'озеро ';
+      final full = word * (MessageLimits.maxContentLength ~/ word.length + 1);
+      return full.substring(0, MessageLimits.maxContentLength - left);
+    }
+
+    Finder sendButton() => find.ancestor(
+      of: find.byIcon(Icons.send_rounded),
+      matching: find.byType(FilledButton),
+    );
+
+    testWidgets('near the cap the counter shows, clear of the send button', (
+      tester,
+    ) async {
+      final preview = _Preview(tester);
+      await preview.open(uploads: [image('a.jpg')]);
+
+      await tester.enterText(find.byType(TextField), nearTheCap(12));
+      await tester.pumpAndSettle();
+
+      final counter = find.text(l10n.composerCharactersLeft(12));
+      expect(counter, findsOneWidget);
+      final counterBox = tester.getRect(counter);
+      final buttonBox = tester.getRect(sendButton());
+      expect(counterBox.overlaps(buttonBox), isFalse);
+      expect(counterBox.right, lessThanOrEqualTo(buttonBox.left));
+    });
+
+    testWidgets('over the cap nothing is cut off, and it cannot be sent', (
+      tester,
+    ) async {
+      final preview = _Preview(tester);
+      await preview.open(uploads: [image('a.jpg')]);
+
+      final tooLong = '${nearTheCap(0)}и ещё';
+      await tester.enterText(find.byType(TextField), tooLong);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        tooLong,
+      );
+      expect(find.text(l10n.composerTooLongBy(5)), findsOneWidget);
+      expect(tester.widget<FilledButton>(sendButton()).onPressed, isNull);
+    });
+
+    testWidgets('is the composer field itself, counter inside its pill', (
+      tester,
+    ) async {
+      final preview = _Preview(tester);
+      await preview.open(uploads: [image('a.jpg')]);
+
+      expect(find.byType(ComposerField), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(ComposerField),
+          matching: find.byType(ComposerCounter),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 
   group('compression', () {
@@ -391,6 +459,59 @@ void main() {
           await screenMatchesGolden(
             tester,
             'media_preview_compressing_${window.name}_${theme.key}',
+            customPump: (tester) => tester.pump(),
+          );
+        });
+
+        testGoldens('caption at the cap, ${window.name}, ${theme.key}', (
+          tester,
+        ) async {
+          final ratios = {
+            for (final (index, upload) in album.indexed)
+              upload.filePath: [1.5, 0.66, 1.0][index],
+          };
+          const word = 'Выходные на озере, ';
+          final caption = (word * 300).substring(
+            0,
+            MessageLimits.maxContentLength - 9,
+          );
+
+          await tester.pumpWidgetBuilder(
+            ProviderScope(
+              overrides: [
+                localMediaRatioProvider.overrideWith(
+                  (ref, key) async => ratios[key.path],
+                ),
+                photoCompressorProvider.overrideWithValue(
+                  FakePhotoCompressor(),
+                ),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: chatGoldenTheme(dark: theme.value),
+                locale: const Locale('ru'),
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: PaneFrame(
+                  window: window,
+                  child: MediaPreviewScreen(
+                    chatId: 'a3f1c2d4-0000-4000-8000-000000000001',
+                    uploads: album,
+                    initialCaption: caption,
+                  ),
+                ),
+              ),
+            ),
+            wrapper: (child) => child,
+            surfaceSize: window.size,
+          );
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          await tester.pumpAndSettle();
+          await loadPictures(tester);
+
+          await screenMatchesGolden(
+            tester,
+            'media_preview_caption_${window.name}_${theme.key}',
             customPump: (tester) => tester.pump(),
           );
         });

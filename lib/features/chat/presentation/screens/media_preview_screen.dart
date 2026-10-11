@@ -1,7 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/localization/file_size_format.dart';
@@ -16,6 +16,7 @@ import 'package:chatix/features/chat/presentation/providers/local_media_provider
 import 'package:chatix/features/chat/presentation/utils/album_layout.dart';
 import 'package:chatix/features/chat/presentation/utils/media_compression_queue.dart';
 import 'package:chatix/features/chat/presentation/widgets/album_mosaic.dart';
+import 'package:chatix/features/chat/presentation/widgets/composer/composer_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What the preview screen hands back: what is actually being sent, and the
@@ -76,6 +77,7 @@ class MediaPreviewScreen extends ConsumerStatefulWidget {
 
 class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
   late final TextEditingController _caption;
+  final _captionFocus = FocusNode(debugLabel: 'MediaPreview.caption');
   late List<AttachmentUploadRequestEntity> _uploads;
   late final MediaCompressionQueue _compression;
 
@@ -89,17 +91,23 @@ class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
   void initState() {
     super.initState();
     _uploads = List.of(widget.uploads);
-    _caption = TextEditingController(text: widget.initialCaption ?? '');
+    _caption = TextEditingController(text: widget.initialCaption ?? '')
+      ..addListener(_onCaptionChanged);
     _compression = MediaCompressionQueue(ref.read(photoCompressorProvider))
       ..addAll(_uploads);
   }
 
   @override
   void dispose() {
+    _caption.removeListener(_onCaptionChanged);
     _caption.dispose();
+    _captionFocus.dispose();
     _compression.dispose();
     super.dispose();
   }
+
+  /// The counter and the send button follow the caption's length.
+  void _onCaptionChanged() => setState(() {});
 
   /// What would go out right now, compressed or not.
   List<AttachmentUploadRequestEntity> get _outgoing => _compress
@@ -164,8 +172,9 @@ class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
     final l10n = AppLocalizations.of(context);
     final canCompress = MediaCompressionQueue.anyApplies(_uploads);
 
-    final length = _caption.text.characters.length;
-    final isOverLimit = MessageLimits.isOverLimit(length);
+    // Counted as the composer counts, so the two agree about the cap
+    // (api-docs §5.4: 4096 for any message content, a caption included).
+    final isOverLimit = MessageLimits.isOverLimit(_caption.text.length);
 
     return ListenableBuilder(
       listenable: _compression,
@@ -237,7 +246,7 @@ class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
     bool isOverLimit,
   ) {
     final theme = Theme.of(context);
-    final length = _caption.text.characters.length;
+    final length = _caption.text.length;
 
     return Column(
       children: [
@@ -270,59 +279,99 @@ class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
             value: _compress,
             onChanged: (value) => setState(() => _compress = value),
           ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.x3,
-            0,
-            AppSpacing.x3,
-            AppSpacing.x3,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _caption,
-                  minLines: 1,
-                  maxLines: 4,
-                  textCapitalization: TextCapitalization.sentences,
-                  onChanged: (_) => setState(() {}),
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(
-                      MessageLimits.maxContentLength,
-                    ),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: l10n.mediaPreviewCaptionHint,
-                    border: const OutlineInputBorder(),
-                    isDense: true,
-                    counterText: MessageLimits.showsCounter(length)
-                        ? '${MessageLimits.remaining(length)}'
-                        : '',
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.x2),
-              FilledButton(
-                onPressed: _uploads.isEmpty || isOverLimit ? null : _send,
-                style: FilledButton.styleFrom(
-                  shape: const CircleBorder(),
-                  padding: const EdgeInsets.all(AppSpacing.x3),
-                ),
-                child: _waitingToSend
-                    ? SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.onPrimary,
-                        ),
-                      )
-                    : const Icon(Icons.send_rounded, size: 20),
-              ),
-            ],
-          ),
+        _CaptionBar(
+          controller: _caption,
+          focusNode: _captionFocus,
+          length: length,
+          isWaiting: _waitingToSend,
+          onSend: _uploads.isEmpty || isOverLimit ? null : _send,
         ),
       ],
+    );
+  }
+}
+
+/// The album's caption and the send button — the composer's own field, so
+/// it grows, scrolls and counts the same way.
+///
+/// One caption per album, because that is all the API has: it becomes the
+/// message's `content` (api-docs §5.4), there is no caption per photo. The
+/// counter lives inside the field's pill, under the text, so however close
+/// to the cap the caption gets the number never slides under the button.
+class _CaptionBar extends StatelessWidget {
+  const _CaptionBar({
+    required this.controller,
+    required this.focusNode,
+    required this.length,
+    required this.isWaiting,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final int length;
+  final bool isWaiting;
+  final VoidCallback? onSend;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x3,
+        AppSpacing.x1,
+        AppSpacing.x3,
+        AppSpacing.x3,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(
+                minHeight: ComposerSizes.fieldMinHeight,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(AppRadii.xl),
+              ),
+              child: ComposerField(
+                controller: controller,
+                focusNode: focusNode,
+                enabled: true,
+                length: length,
+                hintText: l10n.mediaPreviewCaptionHint,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.x2),
+          SizedBox.square(
+            dimension: ComposerSizes.fieldMinHeight,
+            child: FilledButton(
+              onPressed: onSend,
+              style: FilledButton.styleFrom(
+                shape: const CircleBorder(),
+                padding: EdgeInsets.zero,
+              ),
+              child: isWaiting
+                  ? SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    )
+                  : Tooltip(
+                      message: l10n.composerSendLabel,
+                      child: const Icon(Icons.send_rounded, size: 20),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
