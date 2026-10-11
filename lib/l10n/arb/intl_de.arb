@@ -1258,5 +1258,10 @@
   "emojiGroupObjects": "Objekte",
   "emojiGroupSymbols": "Symbole",
   "emojiGroupFlags": "Flaggen",
-  "mentionListLabel": "Jemanden erwähnen"
+  "mentionListLabel": "Jemanden erwähnen",
+  "mediaPreviewCompress": "Fotos komprimieren",
+  "mediaPreviewCompressHint": "Bis {size} px an der langen Seite, ohne Standort",
+  "mediaPreviewCompressOffHint": "Werden unverändert gesendet – mit Standort und weiteren Fotodaten",
+  "mediaPreviewSendAsFile": "Als Datei senden",
+  "mediaPreviewCompressing": "Wird komprimiert"
 }

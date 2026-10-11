@@ -3497,4 +3497,22 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mentionListLabel => 'Mentionner quelqu\'un';
+
+  @override
+  String get mediaPreviewCompress => 'Compresser les photos';
+
+  @override
+  String mediaPreviewCompressHint(int size) {
+    return 'Jusqu\'à $size px sur le grand côté, sans position';
+  }
+
+  @override
+  String get mediaPreviewCompressOffHint =>
+      'Envoyées telles quelles, avec la position et les autres données';
+
+  @override
+  String get mediaPreviewSendAsFile => 'Envoyer en tant que fichier';
+
+  @override
+  String get mediaPreviewCompressing => 'Compression';
 }

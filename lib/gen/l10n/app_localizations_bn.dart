@@ -3435,4 +3435,22 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get mentionListLabel => 'কাউকে উল্লেখ করুন';
+
+  @override
+  String get mediaPreviewCompress => 'ছবি সংকুচিত করুন';
+
+  @override
+  String mediaPreviewCompressHint(int size) {
+    return 'লম্বা দিকে সর্বোচ্চ $size px, অবস্থান ছাড়া';
+  }
+
+  @override
+  String get mediaPreviewCompressOffHint =>
+      'যেমন তোলা তেমনই যাবে — অবস্থান ও অন্যান্য তথ্যসহ';
+
+  @override
+  String get mediaPreviewSendAsFile => 'ফাইল হিসেবে পাঠান';
+
+  @override
+  String get mediaPreviewCompressing => 'সংকুচিত হচ্ছে';
 }

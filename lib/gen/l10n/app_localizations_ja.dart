@@ -3316,4 +3316,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mentionListLabel => 'メンバーをメンション';
+
+  @override
+  String get mediaPreviewCompress => '写真を圧縮';
+
+  @override
+  String mediaPreviewCompressHint(int size) {
+    return '長辺 $size px まで、位置情報なし';
+  }
+
+  @override
+  String get mediaPreviewCompressOffHint => '撮影したまま送信されます（位置情報などを含む）';
+
+  @override
+  String get mediaPreviewSendAsFile => 'ファイルとして送信';
+
+  @override
+  String get mediaPreviewCompressing => '圧縮中';
 }

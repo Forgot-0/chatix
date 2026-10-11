@@ -388,3 +388,23 @@ offered — letters, digits, `.`, `_`, `-`, not ending in a dot.
 `MessageDTO` — validated against the roster, with a push to the mentioned
 user and an `unread_mentions_count` on `ChatDTO`. The client would keep the
 same composer and swap its pattern for the entity list when drawing.
+
+---
+
+## 14. "Send as file" for a photo may not be a file the server takes 🟡
+
+The media preview offers "Send as file": every picked photo or video goes,
+untouched and with its metadata, as `attachment_type: "file"` — one per
+message, since `file` allows one (api-docs §5.5). But the documented MIME
+list for `file` is documents only (pdf, zip, doc/docx, xls/xlsx, txt, csv);
+`image/*` and `video/*` are not on it. Whether the server checks the
+declared `attachment_type` against that list, or only infers the type from
+the MIME when none is given, is not written down.
+
+**What the client does.** Sends it anyway and shows whatever the server
+answers in the attachment tray — a validation error there means the
+backend does not accept photos as files.
+
+**What the backend would need.** Either accept any allowed media MIME in the
+`file` bucket (the usual meaning of "send uncompressed"), or say in
+api-docs that it does not, and the item can go.

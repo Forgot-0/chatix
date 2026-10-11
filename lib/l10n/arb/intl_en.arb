@@ -4320,5 +4320,30 @@
   "mentionListLabel": "Mention someone",
   "@mentionListLabel": {
     "description": "Accessibility label of the list of chat members shown above the composer while an @mention is being typed"
+  },
+  "mediaPreviewCompress": "Compress photos",
+  "@mediaPreviewCompress": {
+    "description": "Switch on the media preview screen: photos are resized and re-encoded before they are sent"
+  },
+  "mediaPreviewCompressHint": "Up to {size} px on the long side, without location",
+  "@mediaPreviewCompressHint": {
+    "description": "Under the compress switch while it is on: what compression does",
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "mediaPreviewCompressOffHint": "Sent as taken — with location and other photo data",
+  "@mediaPreviewCompressOffHint": {
+    "description": "Under the compress switch while it is off: the photos go out as taken"
+  },
+  "mediaPreviewSendAsFile": "Send as file",
+  "@mediaPreviewSendAsFile": {
+    "description": "Menu item on the media preview screen: send the picked photos and videos as documents, uncompressed, one message each"
+  },
+  "mediaPreviewCompressing": "Compressing",
+  "@mediaPreviewCompressing": {
+    "description": "Accessibility label of the progress ring on a photo that is being compressed"
   }
 }

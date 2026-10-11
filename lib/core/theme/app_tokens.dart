@@ -401,6 +401,10 @@ abstract final class AppContentWidths {
   /// Past this a text field is a line drawn across a monitor, and a label
   /// sits a long way from the value it names.
   static const double form = 680;
+
+  /// The photo preview before sending: past this an album is a wall of
+  /// pixels and the caption a line across the monitor.
+  static const double mediaPreview = 640;
 }
 
 /// How wide dialogs grow.

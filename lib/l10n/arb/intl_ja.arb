@@ -1258,5 +1258,10 @@
   "emojiGroupObjects": "物",
   "emojiGroupSymbols": "記号",
   "emojiGroupFlags": "旗",
-  "mentionListLabel": "メンバーをメンション"
+  "mentionListLabel": "メンバーをメンション",
+  "mediaPreviewCompress": "写真を圧縮",
+  "mediaPreviewCompressHint": "長辺 {size} px まで、位置情報なし",
+  "mediaPreviewCompressOffHint": "撮影したまま送信されます（位置情報などを含む）",
+  "mediaPreviewSendAsFile": "ファイルとして送信",
+  "mediaPreviewCompressing": "圧縮中"
 }

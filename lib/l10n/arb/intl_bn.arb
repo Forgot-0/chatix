@@ -1258,5 +1258,10 @@
   "emojiGroupObjects": "বস্তু",
   "emojiGroupSymbols": "প্রতীক",
   "emojiGroupFlags": "পতাকা",
-  "mentionListLabel": "কাউকে উল্লেখ করুন"
+  "mentionListLabel": "কাউকে উল্লেখ করুন",
+  "mediaPreviewCompress": "ছবি সংকুচিত করুন",
+  "mediaPreviewCompressHint": "লম্বা দিকে সর্বোচ্চ {size} px, অবস্থান ছাড়া",
+  "mediaPreviewCompressOffHint": "যেমন তোলা তেমনই যাবে — অবস্থান ও অন্যান্য তথ্যসহ",
+  "mediaPreviewSendAsFile": "ফাইল হিসেবে পাঠান",
+  "mediaPreviewCompressing": "সংকুচিত হচ্ছে"
 }

@@ -6,24 +6,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
+import 'package:chatix/features/chat/data/datasources/photo_compressor.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
+import 'package:chatix/features/chat/domain/entities/photo_compression.dart';
 import 'package:chatix/features/chat/presentation/providers/local_media_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/album_layout.dart';
+import 'package:chatix/features/chat/presentation/utils/media_compression_queue.dart';
 import 'package:chatix/features/chat/presentation/widgets/album_mosaic.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What the preview screen hands back: what is actually being sent, and the
 /// caption that goes with it.
 class MediaPreviewResult {
-  const MediaPreviewResult({required this.uploads, this.caption});
+  const MediaPreviewResult({
+    required this.uploads,
+    this.caption,
+    this.asFiles = false,
+  });
 
   final List<AttachmentUploadRequestEntity> uploads;
 
   /// Becomes the message's `content` (api-docs §5.4) — an album's caption is
   /// the message text, there is no separate field for it.
   final String? caption;
+
+  /// "Send as file": every upload is a `file` attachment, untouched, and —
+  /// since a message carries at most one (api-docs §5.5) — each goes in a
+  /// message of its own.
+  final bool asFiles;
 }
 
 /// Everything the preview screen needs, as one object, because it travels
@@ -37,10 +50,14 @@ class MediaPreviewArgs {
 
 /// What was picked, laid out as it will arrive, before it is sent.
 ///
-/// Two things happen here that cannot happen in the composer: something
-/// picked by accident can be dropped, and the album gets a caption. The
-/// mosaic is the same [AlbumMosaic] the message will use, measured from the
-/// local files — so the preview is the message, not an approximation of it.
+/// Three things happen here that cannot happen in the composer: something
+/// picked by accident can be dropped, the album gets a caption, and the
+/// photos are compressed ([PhotoCompression]) — from the moment the screen
+/// opens, a ring on each tile saying how far it has got, so sending is
+/// usually instant. Compression can be switched off, and the whole pick can
+/// go as files instead. The mosaic is the same [AlbumMosaic] the message
+/// will use, measured from the local files — so the preview is the message,
+/// not an approximation of it.
 class MediaPreviewScreen extends ConsumerStatefulWidget {
   const MediaPreviewScreen({
     super.key,
@@ -60,140 +77,284 @@ class MediaPreviewScreen extends ConsumerStatefulWidget {
 class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
   late final TextEditingController _caption;
   late List<AttachmentUploadRequestEntity> _uploads;
+  late final MediaCompressionQueue _compression;
+
+  bool _compress = true;
+
+  /// Send was pressed while photos were still being compressed: the screen
+  /// waits for them, and says so on the button.
+  bool _waitingToSend = false;
 
   @override
   void initState() {
     super.initState();
     _uploads = List.of(widget.uploads);
     _caption = TextEditingController(text: widget.initialCaption ?? '');
+    _compression = MediaCompressionQueue(ref.read(photoCompressorProvider))
+      ..addAll(_uploads);
   }
 
   @override
   void dispose() {
     _caption.dispose();
+    _compression.dispose();
     super.dispose();
   }
 
+  /// What would go out right now, compressed or not.
+  List<AttachmentUploadRequestEntity> get _outgoing => _compress
+      ? [for (final upload in _uploads) _compression.resultFor(upload)]
+      : _uploads;
+
   void _remove(int index) {
+    _compression.remove(_uploads[index]);
     setState(() => _uploads = [..._uploads]..removeAt(index));
 
     // Nothing left to send: the screen has become an empty room.
     if (_uploads.isEmpty && mounted) Navigator.of(context).pop();
   }
 
-  void _send() {
-    if (_uploads.isEmpty) return;
-
+  String? get _captionToSend {
     final caption = _caption.text.trim();
-    if (MessageLimits.isOverLimit(caption.length)) return;
+    return caption.isEmpty ? null : caption;
+  }
+
+  Future<void> _send() async {
+    if (_uploads.isEmpty || _waitingToSend) return;
+    if (MessageLimits.isOverLimit(_caption.text.trim().length)) return;
+
+    if (_compress && _compression.isBusy) {
+      setState(() => _waitingToSend = true);
+      await _compression.whenDone();
+      if (!mounted) return;
+    }
+
+    Navigator.of(
+      context,
+    ).pop(MediaPreviewResult(uploads: _outgoing, caption: _captionToSend));
+  }
+
+  /// Every picked file as a document, as it was taken: no compression, the
+  /// metadata kept, and each in its own message.
+  void _sendAsFiles() {
+    if (_uploads.isEmpty) return;
+    if (MessageLimits.isOverLimit(_caption.text.trim().length)) return;
 
     Navigator.of(context).pop(
       MediaPreviewResult(
-        uploads: _uploads,
-        caption: caption.isEmpty ? null : caption,
+        uploads: [
+          for (final upload in _uploads)
+            AttachmentUploadRequestEntity(
+              filename: upload.filename,
+              mimeType: upload.mimeType,
+              fileSize: upload.fileSize,
+              filePath: upload.filePath,
+              bytes: upload.bytes,
+              attachmentType: AttachmentType.file,
+            ),
+        ],
+        caption: _captionToSend,
+        asFiles: true,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-
-    final totalBytes = _uploads.fold<int>(
-      0,
-      (sum, upload) => sum + upload.fileSize,
-    );
+    final canCompress = MediaCompressionQueue.anyApplies(_uploads);
 
     final length = _caption.text.characters.length;
     final isOverLimit = MessageLimits.isOverLimit(length);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.attachmentSelection(
-            _uploads.length,
-            formatFileSize(
-              totalBytes,
-              l10n,
-              locale: Localizations.localeOf(context).toLanguageTag(),
-            ),
-          ),
-        ),
-        leading: IconButton(
-          tooltip: l10n.cancel,
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.x4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PreviewAlbum(uploads: _uploads, onRemove: _remove),
-                    const SizedBox(height: AppSpacing.x3),
-                    Text(
-                      l10n.mediaPreviewHint,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+    return ListenableBuilder(
+      listenable: _compression,
+      builder: (context, _) {
+        final totalBytes = _outgoing.fold<int>(
+          0,
+          (sum, upload) => sum + upload.fileSize,
+        );
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              l10n.attachmentSelection(
+                _uploads.length,
+                formatFileSize(
+                  totalBytes,
+                  l10n,
+                  locale: Localizations.localeOf(context).toLanguageTag(),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x3,
-                0,
-                AppSpacing.x3,
-                AppSpacing.x3,
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _caption,
-                      minLines: 1,
-                      maxLines: 4,
-                      textCapitalization: TextCapitalization.sentences,
-                      onChanged: (_) => setState(() {}),
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(
-                          MessageLimits.maxContentLength,
+            leading: IconButton(
+              tooltip: l10n.cancel,
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            actions: [
+              PopupMenuButton<VoidCallback>(
+                icon: const Icon(Icons.more_vert_rounded),
+                onSelected: (action) => action(),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _sendAsFiles,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.insert_drive_file_outlined,
+                          size: AppMenuSizes.iconSize,
                         ),
+                        const SizedBox(width: AppMenuSizes.iconGap),
+                        Text(l10n.mediaPreviewSendAsFile),
                       ],
-                      decoration: InputDecoration(
-                        hintText: l10n.mediaPreviewCaptionHint,
-                        border: const OutlineInputBorder(),
-                        isDense: true,
-                        counterText: MessageLimits.showsCounter(length)
-                            ? '${MessageLimits.remaining(length)}'
-                            : '',
-                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.x2),
-                  FilledButton(
-                    onPressed: _uploads.isEmpty || isOverLimit ? null : _send,
-                    style: FilledButton.styleFrom(
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(AppSpacing.x3),
-                    ),
-                    child: const Icon(Icons.send_rounded, size: 20),
                   ),
                 ],
               ),
+            ],
+          ),
+          body: SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppContentWidths.mediaPreview,
+                ),
+                child: _buildBody(context, l10n, canCompress, isOverLimit),
+              ),
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool canCompress,
+    bool isOverLimit,
+  ) {
+    final theme = Theme.of(context);
+    final length = _caption.text.characters.length;
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.x4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _PreviewAlbum(
+                  uploads: _uploads,
+                  progressOf: (upload) =>
+                      _compress ? _compression.progressOf(upload) : null,
+                  onRemove: _remove,
+                ),
+                const SizedBox(height: AppSpacing.x3),
+                Text(
+                  l10n.mediaPreviewHint,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
         ),
+        if (canCompress)
+          _CompressSwitch(
+            value: _compress,
+            onChanged: (value) => setState(() => _compress = value),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.x3,
+            0,
+            AppSpacing.x3,
+            AppSpacing.x3,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _caption,
+                  minLines: 1,
+                  maxLines: 4,
+                  textCapitalization: TextCapitalization.sentences,
+                  onChanged: (_) => setState(() {}),
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(
+                      MessageLimits.maxContentLength,
+                    ),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: l10n.mediaPreviewCaptionHint,
+                    border: const OutlineInputBorder(),
+                    isDense: true,
+                    counterText: MessageLimits.showsCounter(length)
+                        ? '${MessageLimits.remaining(length)}'
+                        : '',
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.x2),
+              FilledButton(
+                onPressed: _uploads.isEmpty || isOverLimit ? null : _send,
+                style: FilledButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(AppSpacing.x3),
+                ),
+                child: _waitingToSend
+                    ? SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded, size: 20),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Compress photos", with what that means — or what not doing it means.
+class _CompressSwitch extends StatelessWidget {
+  const _CompressSwitch({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return MergeSemantics(
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+        leading: Icon(
+          Icons.photo_size_select_large_rounded,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+        title: Text(l10n.mediaPreviewCompress),
+        subtitle: Text(
+          value
+              ? l10n.mediaPreviewCompressHint(PhotoCompression.maxSide)
+              : l10n.mediaPreviewCompressOffHint,
+        ),
+        trailing: Switch(value: value, onChanged: onChanged),
+        onTap: () => onChanged(!value),
       ),
     );
   }
@@ -201,9 +362,14 @@ class _MediaPreviewScreenState extends ConsumerState<MediaPreviewScreen> {
 
 /// The mosaic, with a way off it for each tile.
 class _PreviewAlbum extends ConsumerWidget {
-  const _PreviewAlbum({required this.uploads, required this.onRemove});
+  const _PreviewAlbum({
+    required this.uploads,
+    required this.progressOf,
+    required this.onRemove,
+  });
 
   final List<AttachmentUploadRequestEntity> uploads;
+  final double? Function(AttachmentUploadRequestEntity upload) progressOf;
   final void Function(int index) onRemove;
 
   @override
@@ -225,6 +391,7 @@ class _PreviewAlbum extends ConsumerWidget {
           size: Size(width, width / AlbumLayout.of(ratios).aspectRatio),
           itemBuilder: (context, index) => _PreviewTile(
             upload: uploads[index],
+            progress: progressOf(uploads[index]),
             onRemove: () => onRemove(index),
           ),
         );
@@ -234,9 +401,18 @@ class _PreviewAlbum extends ConsumerWidget {
 }
 
 class _PreviewTile extends StatelessWidget {
-  const _PreviewTile({required this.upload, required this.onRemove});
+  const _PreviewTile({
+    required this.upload,
+    required this.progress,
+    required this.onRemove,
+  });
 
   final AttachmentUploadRequestEntity upload;
+
+  /// How far this photo's compression has got, or null when it is not being
+  /// compressed (any more).
+  final double? progress;
+
   final VoidCallback onRemove;
 
   @override
@@ -244,6 +420,7 @@ class _PreviewTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final isVideo =
         ChatAttachmentLimits.typeOf(upload.mimeType) == AttachmentType.video;
+    final progress = this.progress;
 
     return Stack(
       fit: StackFit.expand,
@@ -275,6 +452,17 @@ class _PreviewTile extends StatelessWidget {
           )
         else
           _LocalImage(upload: upload),
+        // The photo stays as bright as it will arrive; the ring carries its
+        // own ground. One still waiting its turn reads 0 %.
+        if (progress != null)
+          Center(
+            child: TransferProgressRing(
+              state: TransferRingState.running,
+              progress: progress,
+              size: 40,
+              semanticLabel: l10n.mediaPreviewCompressing,
+            ),
+          ),
         Positioned(
           top: 4,
           right: 4,

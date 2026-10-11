@@ -1200,7 +1200,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
 
     if (!mounted || result == null || result.uploads.isEmpty) return;
-    await _sendAlbum(result);
+    if (result.asFiles) {
+      await _sendFiles(result);
+    } else {
+      await _sendAlbum(result);
+    }
   }
 
   /// Stages files and starts their upload, leaving the send to the composer.
@@ -1263,6 +1267,59 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     ref.read(confirmedAttachmentTokensProvider.notifier).release(tokens);
     notifier.clear();
+  }
+
+  /// Sends a pick "as files": each one a `file` attachment in a message of
+  /// its own, since a message carries at most one file (api-docs §5.5). The
+  /// caption goes with the last, under the files it is about.
+  ///
+  /// One at a time, in order: a refusal stops the rest rather than leaving a
+  /// gap in the middle of what was sent, and the tray says what happened.
+  Future<void> _sendFiles(MediaPreviewResult result) async {
+    final notifier = ref.read(chatAttachmentProvider(widget.chatId).notifier);
+    final uploads = result.uploads;
+
+    // The caption has left the box for the last of these messages.
+    _setText('');
+    ref.read(chatDraftsProvider.notifier).clear(widget.chatId);
+
+    for (var index = 0; index < uploads.length; index++) {
+      final isLast = index == uploads.length - 1;
+
+      notifier.select([uploads[index]]);
+      if (ref.read(chatAttachmentProvider(widget.chatId)).value?.failure !=
+          null) {
+        return;
+      }
+
+      await notifier.upload();
+      if (!mounted) return;
+
+      final tokens =
+          ref.read(chatAttachmentProvider(widget.chatId)).value?.uploadTokens ??
+          const <String>[];
+      if (tokens.isEmpty) {
+        // Cancelled, or the upload gave up: the caption has not gone yet,
+        // so it goes back in the box.
+        final caption = result.caption;
+        if (caption != null) _setText(caption);
+        return;
+      }
+
+      AppHaptics.messageSent();
+      _composer.markSent();
+
+      await ref
+          .read(chatDetailProvider(widget.chatId).notifier)
+          .sendMessage(
+            content: isLast ? result.caption : null,
+            uploadTokens: tokens,
+          );
+      if (!mounted) return;
+
+      ref.read(confirmedAttachmentTokensProvider.notifier).release(tokens);
+      notifier.clear();
+    }
   }
 
   /// Records a video note and sends it.

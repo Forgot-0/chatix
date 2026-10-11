@@ -1258,5 +1258,10 @@
   "emojiGroupObjects": "Objets",
   "emojiGroupSymbols": "Symboles",
   "emojiGroupFlags": "Drapeaux",
-  "mentionListLabel": "Mentionner quelqu'un"
+  "mentionListLabel": "Mentionner quelqu'un",
+  "mediaPreviewCompress": "Compresser les photos",
+  "mediaPreviewCompressHint": "Jusqu'à {size} px sur le grand côté, sans position",
+  "mediaPreviewCompressOffHint": "Envoyées telles quelles, avec la position et les autres données",
+  "mediaPreviewSendAsFile": "Envoyer en tant que fichier",
+  "mediaPreviewCompressing": "Compression"
 }

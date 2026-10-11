@@ -5921,6 +5921,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mention someone'**
   String get mentionListLabel;
+
+  /// Switch on the media preview screen: photos are resized and re-encoded before they are sent
+  ///
+  /// In en, this message translates to:
+  /// **'Compress photos'**
+  String get mediaPreviewCompress;
+
+  /// Under the compress switch while it is on: what compression does
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {size} px on the long side, without location'**
+  String mediaPreviewCompressHint(int size);
+
+  /// Under the compress switch while it is off: the photos go out as taken
+  ///
+  /// In en, this message translates to:
+  /// **'Sent as taken — with location and other photo data'**
+  String get mediaPreviewCompressOffHint;
+
+  /// Menu item on the media preview screen: send the picked photos and videos as documents, uncompressed, one message each
+  ///
+  /// In en, this message translates to:
+  /// **'Send as file'**
+  String get mediaPreviewSendAsFile;
+
+  /// Accessibility label of the progress ring on a photo that is being compressed
+  ///
+  /// In en, this message translates to:
+  /// **'Compressing'**
+  String get mediaPreviewCompressing;
 }
 
 class _AppLocalizationsDelegate

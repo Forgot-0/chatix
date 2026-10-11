@@ -120,6 +120,12 @@ dependencies:
   # "Recent" row is the same history the reaction bar reads rather than the
   # package's own copy in shared preferences.
   emoji_picker_flutter: ^4.5.4
+  # Photos are re-encoded before they are sent (photo_compressor.dart): the
+  # long side brought down to 2560 px, EXIF orientation baked into the
+  # pixels, the location and every other EXIF field dropped, JPEG at ~85 %.
+  # Pure Dart, so it runs in a background isolate; already in the tree as a
+  # dependency of the launcher-icon tooling.
+  image: ^4.5.0
 
 dev_dependencies:
   flutter_test:

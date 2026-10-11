@@ -968,5 +968,10 @@
   "emojiGroupObjects": "Предметы",
   "emojiGroupSymbols": "Символы",
   "emojiGroupFlags": "Флаги",
-  "mentionListLabel": "Упомянуть участника"
+  "mentionListLabel": "Упомянуть участника",
+  "mediaPreviewCompress": "Сжать фото",
+  "mediaPreviewCompressHint": "До {size} px по длинной стороне, без геометки",
+  "mediaPreviewCompressOffHint": "Уйдут как есть — с геометкой и другими данными снимка",
+  "mediaPreviewSendAsFile": "Отправить как файл",
+  "mediaPreviewCompressing": "Сжатие"
 }

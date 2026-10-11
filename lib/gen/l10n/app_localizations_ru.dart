@@ -3494,4 +3494,22 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mentionListLabel => 'Упомянуть участника';
+
+  @override
+  String get mediaPreviewCompress => 'Сжать фото';
+
+  @override
+  String mediaPreviewCompressHint(int size) {
+    return 'До $size px по длинной стороне, без геометки';
+  }
+
+  @override
+  String get mediaPreviewCompressOffHint =>
+      'Уйдут как есть — с геометкой и другими данными снимка';
+
+  @override
+  String get mediaPreviewSendAsFile => 'Отправить как файл';
+
+  @override
+  String get mediaPreviewCompressing => 'Сжатие';
 }
