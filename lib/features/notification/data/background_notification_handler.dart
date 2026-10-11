@@ -21,6 +21,7 @@ import 'package:chatix/core/notifications/notification_service.dart';
 import 'package:chatix/core/storage/secure_storage_service.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/chat/data/datasources/chat_rest_data_source.dart';
+import 'package:chatix/features/notification/data/datasources/blocked_senders_store.dart';
 import 'package:chatix/features/notification/data/datasources/notification_avatar_cache.dart';
 import 'package:chatix/features/notification/data/datasources/notification_preferences_store.dart';
 import 'package:chatix/features/notification/data/notification_action_executor.dart';
@@ -77,6 +78,9 @@ Future<void> presentPushInBackground(Map<String, dynamic> payload) async {
     await presenter.present(
       PushMessage.fromPayload(payload),
       preferences: await NotificationPreferencesStore.loadStandalone(),
+      // Written by the running app; a block does not stop the push from
+      // being sent yet (api-docs §4.13), so it is dropped here.
+      blocked: await PrefsBlockedSendersStore.loadStandalone(),
       copy: copy,
     );
   } on Object catch (error, stackTrace) {

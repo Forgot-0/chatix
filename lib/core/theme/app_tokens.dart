@@ -573,6 +573,14 @@ abstract final class ComposerSizes {
   static const Size emojiButton = Size(40, fieldMinHeight);
 
   static const double emojiIconSize = 24;
+
+  /// The glyph before the sentence that stands where the composer would be
+  /// when the reader cannot write.
+  static const double lockedIconSize = 16;
+
+  /// From this width the locked bar's button sits on the sentence's line
+  /// ("You blocked this user · Unblock"); below it, under the sentence.
+  static const double lockedActionInlineFrom = 480;
 }
 
 /// The list of people an `@` being typed could mean, floating over the
@@ -599,6 +607,10 @@ abstract final class ContactsLayout {
 
   /// Space for one letter heading.
   static const double letterHeight = 32;
+
+  /// The glyph of a note above a list — the block list's "what blocking
+  /// does today".
+  static const double noteIcon = 20;
 }
 
 abstract final class MentionListSizes {

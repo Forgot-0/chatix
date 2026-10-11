@@ -4714,5 +4714,121 @@
   "contactsEditShort": "Edit",
   "@contactsEditShort": {
     "description": "Profile quick action, one short word: edit the local name of this contact"
+  },
+  "blockUserAction": "Block user",
+  "@blockUserAction": {
+    "description": "Action that blocks a person: profile, chat menu, contact sheet"
+  },
+  "unblockUserAction": "Unblock",
+  "@unblockUserAction": {
+    "description": "Action that lifts a block"
+  },
+  "blockUserTitle": "Block {name}?",
+  "@blockUserTitle": {
+    "description": "Confirmation title before blocking a person",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "blockUserMessage": "Notifications from them will stop and their chat will not count towards your unread badge. They can still message you for now: the server does not refuse their messages yet, so you will see them when you open the chat.",
+  "@blockUserMessage": {
+    "description": "Confirmation body before blocking: what a block does today, honestly (the server does not refuse their messages yet)"
+  },
+  "blockUserConfirm": "Block",
+  "@blockUserConfirm": {
+    "description": "Confirm button of the block dialog"
+  },
+  "blockUserDone": "Blocked {name}",
+  "@blockUserDone": {
+    "description": "Snackbar after a block went through",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unblockUserDone": "Unblocked {name}",
+  "@unblockUserDone": {
+    "description": "Snackbar after an unblock went through",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "blockUserFailed": "Could not block. Try again.",
+  "@blockUserFailed": {
+    "description": "Snackbar when a block could not be set"
+  },
+  "unblockUserFailed": "Could not unblock. Try again.",
+  "@unblockUserFailed": {
+    "description": "Snackbar when a block could not be lifted"
+  },
+  "blockErrorSelf": "You cannot block yourself",
+  "@blockErrorSelf": {
+    "description": "SELF_CONTACT_NOT_ALLOWED in answer to a block"
+  },
+  "blockedChatNotice": "You blocked this user",
+  "@blockedChatNotice": {
+    "description": "Bar in place of the composer in a direct chat with a blocked person"
+  },
+  "chatBlockedLabel": "User blocked",
+  "@chatBlockedLabel": {
+    "description": "Screen-reader label of the mark on a chat row whose person is blocked"
+  },
+  "privacySettingsTitle": "Privacy",
+  "@privacySettingsTitle": {
+    "description": "Settings → Privacy screen title and row"
+  },
+  "privacySettingsHint": "Blocked users, devices, app lock",
+  "@privacySettingsHint": {
+    "description": "Second line of the Privacy row in Settings"
+  },
+  "blockedUsersTitle": "Blocked users",
+  "@blockedUsersTitle": {
+    "description": "Blocked users screen title and its row in Privacy"
+  },
+  "blockedUsersCount": "{count, plural, =0{Nobody} =1{1 person} other{{count} people}}",
+  "@blockedUsersCount": {
+    "description": "How many people are blocked, under the row in Privacy",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyDevices": "Devices",
+  "@privacyDevices": {
+    "description": "Privacy: the row that opens the signed-in devices"
+  },
+  "privacyPasscodeSection": "Passcode & biometrics",
+  "@privacyPasscodeSection": {
+    "description": "Privacy: section heading over the app-lock switch"
+  },
+  "privacyPasscodeNote": "If a scan fails, the system offers this device’s passcode instead. ChatiX has no separate passcode of its own.",
+  "@privacyPasscodeNote": {
+    "description": "Privacy: note under the app-lock switch; the system prompt falls back to the device passcode, and the app has none of its own"
+  },
+  "blockedUsersEmptyTitle": "Nobody is blocked",
+  "@blockedUsersEmptyTitle": {
+    "description": "Blocked users screen with nobody on it"
+  },
+  "blockedUsersEmptyMessage": "Block someone from their profile, from the menu of your chat with them, or by long-pressing them in Contacts.",
+  "@blockedUsersEmptyMessage": {
+    "description": "Under the empty title: where a block is set"
+  },
+  "blockedUsersNote": "Blocking is not enforced by the server yet: blocked people can still message you. ChatiX hides their notifications and leaves their chats out of the unread badge.",
+  "@blockedUsersNote": {
+    "description": "Note over the block list: the server does not enforce blocks yet; what the client does instead"
+  },
+  "blockedUsersLoadFailed": "Could not load the block list",
+  "@blockedUsersLoadFailed": {
+    "description": "Blocked users screen: the first page failed"
+  },
+  "blockedUsersLoadMoreFailed": "Could not load more",
+  "@blockedUsersLoadMoreFailed": {
+    "description": "Blocked users screen: a later page failed"
   }
 }

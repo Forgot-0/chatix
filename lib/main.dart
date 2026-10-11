@@ -22,8 +22,11 @@ import 'package:chatix/features/chat/data/datasources/hive_chat_local_store.dart
 import 'package:chatix/features/chat/presentation/providers/chat_cache_lifecycle_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/call_mini_player.dart';
+import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
 import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/features/contacts/presentation/providers/contacts_lifecycle_provider.dart';
+import 'package:chatix/features/notification/data/datasources/blocked_senders_store.dart';
 import 'package:chatix/features/notification/presentation/providers/push_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
 import 'package:chatix/l10n/app_localizations_delegate.dart';
@@ -69,6 +72,17 @@ void main() async {
         chatLocalDataSourceProvider.overrideWithValue(chatStore),
         contactsLocalStoreProvider.overrideWithValue(contactsStore),
 
+        // Who is blocked, read on the first frame (a direct chat's composer
+        // depends on it), and the copy of it a push drawn with the app
+        // closed checks — both in the preferences file the background
+        // isolate can open.
+        blockListLocalStoreProvider.overrideWithValue(
+          PrefsBlockListLocalStore(sharedPreferences),
+        ),
+        blockedSendersStoreProvider.overrideWithValue(
+          PrefsBlockedSendersStore(sharedPreferences),
+        ),
+
         // Push needs to know about chats, about the reader's local
         // notification settings and about the ARB catalogue — none of which
         // `core` may reach for, so the feature's own wiring is handed down
@@ -102,6 +116,7 @@ class MyApp extends ConsumerWidget {
     ref.watch(chatSocketLifecycleProvider);
     ref.watch(chatCacheLifecycleProvider);
     ref.watch(contactsLifecycleProvider);
+    ref.watch(blockListLifecycleProvider);
     ref.watch(pushLifecycleProvider);
 
     return UpdateChecker(

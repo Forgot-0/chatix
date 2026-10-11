@@ -277,6 +277,28 @@ class ChatEntity extends Equatable {
 
   String? peerName(int? myUserId) => peerProfile(myUserId)?.bestName;
 
+  /// The other member's user id in a direct chat — from [peerProfile] when
+  /// there is one, otherwise from a roster member or a last message whose
+  /// profile did not come with it. What a block is matched against.
+  int? peerUserId(int? myUserId) {
+    if (type != ChatType.direct) return null;
+
+    final profile = peerProfile(myUserId);
+    if (profile != null) return profile.userId;
+
+    final mine = myUserId ?? me?.userId;
+    if (mine == null) return null;
+
+    for (final member in members ?? const <ChatMemberEntity>[]) {
+      if (member.userId != mine) return member.userId;
+    }
+
+    final author = lastMessage?.authorId;
+    if (author != null && author != mine) return author;
+
+    return null;
+  }
+
   ChatMemberEntity? membershipOf(int userId) {
     if (me != null && me!.userId == userId) return me;
     final list = members;

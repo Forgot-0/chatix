@@ -6389,6 +6389,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit'**
   String get contactsEditShort;
+
+  /// Action that blocks a person: profile, chat menu, contact sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Block user'**
+  String get blockUserAction;
+
+  /// Action that lifts a block
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock'**
+  String get unblockUserAction;
+
+  /// Confirmation title before blocking a person
+  ///
+  /// In en, this message translates to:
+  /// **'Block {name}?'**
+  String blockUserTitle(String name);
+
+  /// Confirmation body before blocking: what a block does today, honestly (the server does not refuse their messages yet)
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications from them will stop and their chat will not count towards your unread badge. They can still message you for now: the server does not refuse their messages yet, so you will see them when you open the chat.'**
+  String get blockUserMessage;
+
+  /// Confirm button of the block dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Block'**
+  String get blockUserConfirm;
+
+  /// Snackbar after a block went through
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked {name}'**
+  String blockUserDone(String name);
+
+  /// Snackbar after an unblock went through
+  ///
+  /// In en, this message translates to:
+  /// **'Unblocked {name}'**
+  String unblockUserDone(String name);
+
+  /// Snackbar when a block could not be set
+  ///
+  /// In en, this message translates to:
+  /// **'Could not block. Try again.'**
+  String get blockUserFailed;
+
+  /// Snackbar when a block could not be lifted
+  ///
+  /// In en, this message translates to:
+  /// **'Could not unblock. Try again.'**
+  String get unblockUserFailed;
+
+  /// SELF_CONTACT_NOT_ALLOWED in answer to a block
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot block yourself'**
+  String get blockErrorSelf;
+
+  /// Bar in place of the composer in a direct chat with a blocked person
+  ///
+  /// In en, this message translates to:
+  /// **'You blocked this user'**
+  String get blockedChatNotice;
+
+  /// Screen-reader label of the mark on a chat row whose person is blocked
+  ///
+  /// In en, this message translates to:
+  /// **'User blocked'**
+  String get chatBlockedLabel;
+
+  /// Settings → Privacy screen title and row
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacySettingsTitle;
+
+  /// Second line of the Privacy row in Settings
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked users, devices, app lock'**
+  String get privacySettingsHint;
+
+  /// Blocked users screen title and its row in Privacy
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked users'**
+  String get blockedUsersTitle;
+
+  /// How many people are blocked, under the row in Privacy
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nobody} =1{1 person} other{{count} people}}'**
+  String blockedUsersCount(int count);
+
+  /// Privacy: the row that opens the signed-in devices
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get privacyDevices;
+
+  /// Privacy: section heading over the app-lock switch
+  ///
+  /// In en, this message translates to:
+  /// **'Passcode & biometrics'**
+  String get privacyPasscodeSection;
+
+  /// Privacy: note under the app-lock switch; the system prompt falls back to the device passcode, and the app has none of its own
+  ///
+  /// In en, this message translates to:
+  /// **'If a scan fails, the system offers this device’s passcode instead. ChatiX has no separate passcode of its own.'**
+  String get privacyPasscodeNote;
+
+  /// Blocked users screen with nobody on it
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody is blocked'**
+  String get blockedUsersEmptyTitle;
+
+  /// Under the empty title: where a block is set
+  ///
+  /// In en, this message translates to:
+  /// **'Block someone from their profile, from the menu of your chat with them, or by long-pressing them in Contacts.'**
+  String get blockedUsersEmptyMessage;
+
+  /// Note over the block list: the server does not enforce blocks yet; what the client does instead
+  ///
+  /// In en, this message translates to:
+  /// **'Blocking is not enforced by the server yet: blocked people can still message you. ChatiX hides their notifications and leaves their chats out of the unread badge.'**
+  String get blockedUsersNote;
+
+  /// Blocked users screen: the first page failed
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the block list'**
+  String get blockedUsersLoadFailed;
+
+  /// Blocked users screen: a later page failed
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load more'**
+  String get blockedUsersLoadMoreFailed;
 }
 
 class _AppLocalizationsDelegate

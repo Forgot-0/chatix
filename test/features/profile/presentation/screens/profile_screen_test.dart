@@ -13,6 +13,8 @@ import 'package:chatix/features/auth/domain/entities/session_entity.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
+import 'package:chatix/features/contacts/data/repositories/blocked_users_repository_impl.dart';
 import 'package:chatix/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:chatix/features/profile/domain/entities/contact_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -20,6 +22,8 @@ import 'package:chatix/features/profile/domain/repositories/profile_repository.d
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
+
+import '../../../../helpers/blocked_users_fixtures.dart';
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
 
@@ -44,10 +48,14 @@ void main() {
 
   late MockProfileRepository profiles;
   late MockAuthRepository auth;
+  late FakeBlockedUsersRemote blocks;
+  late MemoryBlockListLocalStore blockList;
 
   setUp(() {
     profiles = MockProfileRepository();
     auth = MockAuthRepository();
+    blocks = FakeBlockedUsersRemote();
+    blockList = MemoryBlockListLocalStore();
 
     when(() => auth.getMySessions()).thenAnswer(
       (_) async => Right<Failure, List<SessionEntity>>(const [
@@ -112,6 +120,11 @@ void main() {
           authProvider.overrideWith(_FakeAuthController.new),
           profileRepositoryProvider.overrideWithValue(profiles),
           authRepositoryProvider.overrideWithValue(auth),
+          blockListLocalStoreProvider.overrideWithValue(blockList),
+          blockedUsersRepositoryProvider.overrideWith(
+            (ref) =>
+                BlockedUsersRepositoryImpl(remote: blocks, local: blockList),
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -150,6 +163,42 @@ void main() {
       expect(find.text(l10n.callTitle), findsOneWidget);
       expect(find.text(l10n.profileShareAction), findsOneWidget);
       expect(find.text(l10n.editProfile), findsNothing);
+    });
+
+    testWidgets('"Block user" asks, blocks, and turns into "Unblock"', (
+      tester,
+    ) async {
+      await pump(tester, profileId: other, source: profile());
+
+      await tester.ensureVisible(find.text(l10n.blockUserAction));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.blockUserAction));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.blockUserTitle('Ivan Petrov')), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, l10n.blockUserConfirm));
+      await tester.pumpAndSettle();
+
+      expect(blocks.blocks, [other]);
+      expect(find.text(l10n.unblockUserAction), findsOneWidget);
+      expect(find.text(l10n.blockUserDone('Ivan Petrov')), findsOneWidget);
+
+      await tester.ensureVisible(find.text(l10n.unblockUserAction));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.unblockUserAction));
+      await tester.pumpAndSettle();
+
+      expect(blocks.unblocks, [other]);
+      expect(find.text(l10n.blockUserAction), findsOneWidget);
+      // Let the snackbars run out.
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets("one's own profile offers no block", (tester) async {
+      await pump(tester, profileId: me, source: profile(id: me));
+
+      expect(find.text(l10n.blockUserAction), findsNothing);
     });
 
     testWidgets('has no account rows on it', (tester) async {

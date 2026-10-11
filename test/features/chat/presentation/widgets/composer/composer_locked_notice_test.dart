@@ -121,6 +121,51 @@ void main() {
       );
     });
 
+    test('a direct chat with a blocked person has no composer', () {
+      // The server would take the message (api-docs §4.13 — chats do not
+      // check blocks yet); the client is what keeps it from being written.
+      expect(
+        ComposerLockedNotice.reasonFor(
+          chat(type: ChatType.direct),
+          member(ChatRole.direct),
+          peerBlocked: true,
+        ),
+        ComposerLockReason.blockedPeer,
+      );
+    });
+
+    test('the block outranks every other reason', () {
+      expect(
+        ComposerLockedNotice.reasonFor(
+          chat(type: ChatType.direct),
+          member(ChatRole.direct, isBanned: true),
+          peerBlocked: true,
+        ),
+        ComposerLockReason.blockedPeer,
+      );
+    });
+
+    test('unblocked, the same chat gets its composer back', () {
+      expect(
+        ComposerLockedNotice.reasonFor(
+          chat(type: ChatType.direct),
+          member(ChatRole.direct),
+        ),
+        isNull,
+      );
+    });
+
+    test('"blocked" means nothing outside a direct chat', () {
+      expect(
+        ComposerLockedNotice.reasonFor(
+          chat(),
+          member(ChatRole.member),
+          peerBlocked: true,
+        ),
+        isNull,
+      );
+    });
+
     test('and a chat-level override can hand it back in admin_only', () {
       expect(
         ComposerLockedNotice.reasonFor(
@@ -155,6 +200,36 @@ void main() {
       await pump(tester, ComposerLockReason.adminsOnly);
 
       expect(find.text('Only admins can post in this chat'), findsOneWidget);
+    });
+
+    testWidgets('a blocked peer: the sentence, then the way back', (
+      tester,
+    ) async {
+      var tapped = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: ComposerLockedNotice(
+                reason: ComposerLockReason.blockedPeer,
+                action: TextButton(
+                  onPressed: () => tapped++,
+                  child: const Text('Unblock'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('You blocked this user'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+
+      await tester.tap(find.text('Unblock'));
+      expect(tapped, 1);
     });
 
     testWidgets('every reason has a line, and no text field anywhere', (

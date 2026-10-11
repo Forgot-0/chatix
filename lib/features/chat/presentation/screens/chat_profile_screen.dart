@@ -28,6 +28,7 @@ import 'package:chatix/features/chat/presentation/widgets/profile/chat_profile_h
 import 'package:chatix/features/chat/presentation/widgets/profile/chat_shared_content_view.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_preferences_provider.dart';
 import 'package:chatix/features/notification/presentation/widgets/chat_notification_profile_sheet.dart';
+import 'package:chatix/features/contacts/presentation/widgets/block_user_tile.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// Everything about one chat on one page: who it is, what it has shared,
@@ -134,6 +135,8 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
     final canUpdate = hasChatPermission(chat, me, ChatPermissions.chatUpdate);
 
     final description = chat.description?.trim();
+    final title = watchChatTitle(ref, chat, l10n, myUserId: myUserId);
+    final peerId = chat.peerUserId(myUserId);
 
     return CustomScrollView(
       controller: _scrollController,
@@ -143,7 +146,7 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
           delegate: ChatProfileHeader(
             chat: chat,
             myUserId: myUserId,
-            title: watchChatTitle(ref, chat, l10n, myUserId: myUserId),
+            title: title,
             subtitle: _subtitle(l10n, chat),
             topPadding: MediaQuery.paddingOf(context).top,
             onBack: _back,
@@ -182,6 +185,11 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
                 busy: _isLeaving,
                 onLeave: () => _exit(chat, ChatExit.leave),
                 onDelete: () => _exit(chat, ChatExit.delete),
+                // The person on the other side of a direct chat, as on
+                // their own profile.
+                block: peerId == null
+                    ? null
+                    : BlockUserTile(userId: peerId, name: title),
               ),
               const Divider(height: 1),
             ],
@@ -520,6 +528,7 @@ class _DangerZone extends StatelessWidget {
     required this.busy,
     required this.onLeave,
     required this.onDelete,
+    this.block,
   });
 
   final ChatEntity chat;
@@ -527,6 +536,9 @@ class _DangerZone extends StatelessWidget {
   final bool busy;
   final VoidCallback onLeave;
   final VoidCallback onDelete;
+
+  /// "Block user" for a direct chat, under the ways out of it.
+  final Widget? block;
 
   @override
   Widget build(BuildContext context) {
@@ -570,6 +582,7 @@ class _DangerZone extends StatelessWidget {
             enabled: !busy,
             onTap: onDelete,
           ),
+        ?block,
       ],
     );
   }

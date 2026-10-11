@@ -7,6 +7,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_state_failures.dart';
@@ -15,6 +16,9 @@ import 'package:chatix/features/chat/presentation/providers/chat_state_actions.d
 import 'package:chatix/features/chat/presentation/utils/chat_exit_flow.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_menu_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_mute_options.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
+import 'package:chatix/features/contacts/presentation/widgets/block_actions.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The "⋮" of an open chat.
@@ -46,6 +50,12 @@ class ChatHeaderMenuButton extends ConsumerWidget {
     // detail response this chat was loaded from does not carry them.
     final state = ref.watch(chatRowStateProvider(chat.id));
 
+    final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
+    final peerId = chat.peerUserId(myUserId);
+    final peerBlocked = peerId == null
+        ? null
+        : ref.watch(isUserBlockedProvider(peerId));
+
     return Builder(
       builder: (buttonContext) => IconButton(
         tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
@@ -53,7 +63,7 @@ class ChatHeaderMenuButton extends ConsumerWidget {
         onPressed: () => _open(
           buttonContext,
           ref,
-          chatMenuActionsFor(chat, me, state: state),
+          chatMenuActionsFor(chat, me, state: state, peerBlocked: peerBlocked),
         ),
       ),
     );
@@ -158,6 +168,22 @@ class ChatHeaderMenuButton extends ConsumerWidget {
         _report(context, failure, done: l10n.chatUnarchivedToast);
       case ChatMenuAction.manage:
         await context.push(ChatSettingsRoute.locationOf(chat.id));
+      case ChatMenuAction.block:
+      case ChatMenuAction.unblock:
+        final myUserId = ref.read(authProvider).value?.id;
+        final peerId = chat.peerUserId(myUserId);
+        if (peerId == null) return;
+        final name = chatTitleOf(
+          chat,
+          l10n,
+          myUserId: myUserId,
+          peerLocalName: readPeerLocalName(ref, chat, myUserId),
+        );
+        if (action == ChatMenuAction.block) {
+          await BlockActions.block(context, ref, userId: peerId, name: name);
+        } else {
+          await BlockActions.unblock(context, ref, userId: peerId, name: name);
+        }
       case ChatMenuAction.leave:
         await ChatExitFlow.run(context, ref, chat: chat, exit: ChatExit.leave);
       case ChatMenuAction.delete:
@@ -253,6 +279,8 @@ class ChatHeaderMenuButton extends ConsumerWidget {
     ChatMenuAction.unarchive => Icons.unarchive_outlined,
     ChatMenuAction.selectMessages => Icons.check_circle_outline,
     ChatMenuAction.manage => Icons.settings_outlined,
+    ChatMenuAction.block => Icons.block,
+    ChatMenuAction.unblock => Icons.lock_open_outlined,
     ChatMenuAction.leave => Icons.logout,
     ChatMenuAction.delete => Icons.delete_outline,
   };
@@ -269,6 +297,8 @@ class ChatHeaderMenuButton extends ConsumerWidget {
         ChatMenuAction.selectMessages => l10n.selectMessages,
         ChatMenuAction.manage =>
           chat.type == ChatType.channel ? l10n.manageChannel : l10n.manageGroup,
+        ChatMenuAction.block => l10n.blockUserAction,
+        ChatMenuAction.unblock => l10n.unblockUserAction,
         ChatMenuAction.leave => chatExitLabel(ChatExit.leave, chat.type, l10n),
         ChatMenuAction.delete => chatExitLabel(
           ChatExit.delete,

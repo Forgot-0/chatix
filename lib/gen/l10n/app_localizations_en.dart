@@ -3731,4 +3731,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactsEditShort => 'Edit';
+
+  @override
+  String get blockUserAction => 'Block user';
+
+  @override
+  String get unblockUserAction => 'Unblock';
+
+  @override
+  String blockUserTitle(String name) {
+    return 'Block $name?';
+  }
+
+  @override
+  String get blockUserMessage =>
+      'Notifications from them will stop and their chat will not count towards your unread badge. They can still message you for now: the server does not refuse their messages yet, so you will see them when you open the chat.';
+
+  @override
+  String get blockUserConfirm => 'Block';
+
+  @override
+  String blockUserDone(String name) {
+    return 'Blocked $name';
+  }
+
+  @override
+  String unblockUserDone(String name) {
+    return 'Unblocked $name';
+  }
+
+  @override
+  String get blockUserFailed => 'Could not block. Try again.';
+
+  @override
+  String get unblockUserFailed => 'Could not unblock. Try again.';
+
+  @override
+  String get blockErrorSelf => 'You cannot block yourself';
+
+  @override
+  String get blockedChatNotice => 'You blocked this user';
+
+  @override
+  String get chatBlockedLabel => 'User blocked';
+
+  @override
+  String get privacySettingsTitle => 'Privacy';
+
+  @override
+  String get privacySettingsHint => 'Blocked users, devices, app lock';
+
+  @override
+  String get blockedUsersTitle => 'Blocked users';
+
+  @override
+  String blockedUsersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+      zero: 'Nobody',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyDevices => 'Devices';
+
+  @override
+  String get privacyPasscodeSection => 'Passcode & biometrics';
+
+  @override
+  String get privacyPasscodeNote =>
+      'If a scan fails, the system offers this device’s passcode instead. ChatiX has no separate passcode of its own.';
+
+  @override
+  String get blockedUsersEmptyTitle => 'Nobody is blocked';
+
+  @override
+  String get blockedUsersEmptyMessage =>
+      'Block someone from their profile, from the menu of your chat with them, or by long-pressing them in Contacts.';
+
+  @override
+  String get blockedUsersNote =>
+      'Blocking is not enforced by the server yet: blocked people can still message you. ChatiX hides their notifications and leaves their chats out of the unread badge.';
+
+  @override
+  String get blockedUsersLoadFailed => 'Could not load the block list';
+
+  @override
+  String get blockedUsersLoadMoreFailed => 'Could not load more';
 }

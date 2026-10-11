@@ -68,11 +68,16 @@ OrganizedChats organizeChats({
 /// How much unread the archive is sitting on.
 ///
 /// A silenced chat does not add to it — the point of silencing one is that
-/// it stops asking for attention.
-int unreadInArchive(List<ChatEntity> archived) {
+/// it stops asking for attention — and neither do the chats in [quiet]: the
+/// direct chats with people the reader blocked.
+int unreadInArchive(
+  List<ChatEntity> archived, {
+  Set<String> quiet = const <String>{},
+}) {
   var total = 0;
   for (final chat in archived) {
     if (chat.isMutedByMe) continue;
+    if (quiet.contains(chat.id)) continue;
     total += chat.unreadCount ?? 0;
   }
   return total;
@@ -82,11 +87,13 @@ int unreadInArchive(List<ChatEntity> archived) {
 ///
 /// Archived and silenced chats do not count: neither is asking to be read,
 /// and a tab that lights up for them would be lying about what tapping it
-/// shows.
+/// shows. The chats in [quiet] — direct chats with blocked people — do not
+/// either.
 Map<String, int> folderUnreadCounts({
   required List<ChatEntity> chats,
   required List<ChatFolder> folders,
   required ChatRuleContext context,
+  Set<String> quiet = const <String>{},
 }) {
   final counts = <String, int>{};
 
@@ -98,6 +105,7 @@ Map<String, int> folderUnreadCounts({
       if (unread == 0) continue;
       if (chat.isArchived) continue;
       if (chat.isMutedByMe) continue;
+      if (quiet.contains(chat.id)) continue;
       if (!folder.matches(chat, context)) continue;
       total += unread;
     }

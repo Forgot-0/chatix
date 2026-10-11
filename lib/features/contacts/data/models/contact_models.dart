@@ -1,3 +1,4 @@
+import 'package:chatix/features/contacts/domain/entities/blocked_user.dart';
 import 'package:chatix/features/contacts/domain/entities/contact.dart';
 import 'package:chatix/features/contacts/domain/entities/contact_import.dart';
 import 'package:chatix/features/contacts/domain/entities/contact_search.dart';
@@ -105,6 +106,29 @@ abstract final class ContactJson {
                 : null,
           ),
     ];
+  }
+
+  /// `BlockedListDTO` (api-docs §4.13).
+  static BlockedPage blockedPage(Map<String, dynamic> json) {
+    final raw = json['blocked'];
+    return BlockedPage(
+      users: [
+        if (raw is List)
+          for (final item in raw)
+            if (item is Map) blockedUser(item.cast()),
+      ],
+      hasNext: json['has_next'] == true,
+      nextTargetId: _int(json['next_target_id']),
+    );
+  }
+
+  static BlockedUser blockedUser(Map<String, dynamic> json) {
+    final profile = json['profile'];
+    return BlockedUser(
+      userId: _int(json['target_id']) ?? 0,
+      since: _date(json['created_at']),
+      profile: profile is Map ? contactProfile(profile.cast()) : null,
+    );
   }
 
   static Map<String, dynamic> importRequest(List<ContactImportEntry> entries) =>

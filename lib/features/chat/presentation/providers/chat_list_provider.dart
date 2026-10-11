@@ -49,6 +49,16 @@ class ChatListState extends Equatable {
   int get totalUnread =>
       items.fold(0, (sum, chat) => sum + (chat.unreadCount ?? 0));
 
+  /// [totalUnread] without the chats in [quiet].
+  int totalUnreadExcept(Set<String> quiet) {
+    if (quiet.isEmpty) return totalUnread;
+    return items.fold(
+      0,
+      (sum, chat) =>
+          quiet.contains(chat.id) ? sum : sum + (chat.unreadCount ?? 0),
+    );
+  }
+
   ChatListState copyWith({
     List<ChatEntity>? items,
     bool? hasNext,

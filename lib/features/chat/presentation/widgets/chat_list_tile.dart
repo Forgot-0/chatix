@@ -25,6 +25,7 @@ import 'package:chatix/features/chat/presentation/utils/open_chat.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_type_glyph.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What a chat row can do to the chat it stands for.
@@ -113,6 +114,13 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final isArchived = chat.isArchived;
     final unread = chat.unreadCount ?? 0;
 
+    // A direct chat with somebody the reader blocked keeps its count, as a
+    // silenced one does, but stops asking for attention: their messages
+    // still arrive (api-docs §4.13 — chats do not check blocks yet).
+    final peerId = chat.peerUserId(myUserId);
+    final isBlocked =
+        peerId != null && ref.watch(isUserBlockedProvider(peerId));
+
     final preview = chatPreviewOf(chat, l10n, draft: draft, myUserId: myUserId);
 
     final row = Material(
@@ -139,7 +147,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
                       chat: chat,
                       myUserId: myUserId,
                       peerReadSeq: widget.peerReadSeq,
-                      isUnread: unread > 0 && !isMuted,
+                      isUnread: unread > 0 && !isMuted && !isBlocked,
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -151,6 +159,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
                           unread: unread,
                           isMuted: isMuted,
                           isPinned: isPinned,
+                          isBlocked: isBlocked,
                         ),
                       ],
                     ),
@@ -690,28 +699,46 @@ class _RowMarkers extends StatelessWidget {
     required this.unread,
     required this.isMuted,
     required this.isPinned,
+    this.isBlocked = false,
   });
 
   final int unread;
   final bool isMuted;
   final bool isPinned;
 
+  /// The other person of this direct chat is blocked.
+  final bool isBlocked;
+
+  static const double _glyphSize = 15;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
-    if (!isPinned && !isMuted && unread == 0) return const SizedBox.shrink();
+    if (!isPinned && !isMuted && !isBlocked && unread == 0) {
+      return const SizedBox.shrink();
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (isBlocked)
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.x1),
+            child: Icon(
+              Icons.block,
+              size: _glyphSize,
+              color: scheme.onSurfaceVariant,
+              semanticLabel: l10n.chatBlockedLabel,
+            ),
+          ),
         if (isMuted)
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.x1),
             child: Icon(
               Icons.notifications_off_outlined,
-              size: 15,
+              size: _glyphSize,
               color: scheme.onSurfaceVariant,
               semanticLabel: l10n.chatMutedLabel,
             ),
@@ -719,11 +746,12 @@ class _RowMarkers extends StatelessWidget {
         if (isPinned && unread == 0)
           Icon(
             Icons.push_pin,
-            size: 15,
+            size: _glyphSize,
             color: scheme.onSurfaceVariant,
             semanticLabel: l10n.chatPinnedLabel,
           ),
-        if (unread > 0) UnreadBadge(count: unread, isMuted: isMuted),
+        if (unread > 0)
+          UnreadBadge(count: unread, isMuted: isMuted || isBlocked),
       ],
     );
   }

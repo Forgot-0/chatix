@@ -44,6 +44,8 @@ abstract final class RouteNames {
   static const String appearanceSettings = 'appearanceSettings';
   static const String languageSettings = 'languageSettings';
   static const String notificationSettings = 'notificationSettings';
+  static const String privacySettings = 'privacySettings';
+  static const String blockedUsers = 'blockedUsers';
   static const String sessions = 'sessions';
   static const String componentShowcase = 'componentShowcase';
 }
@@ -378,9 +380,23 @@ abstract final class SettingsRoute {
   static const String location = '/settings';
 }
 
+/// `/settings/privacy` — blocked users, devices and the app lock.
+abstract final class PrivacySettingsRoute {
+  static const String path = 'privacy';
+  static const String location = '/settings/privacy';
+}
+
+/// `/settings/privacy/blocked` — the block list (api-docs §4.13).
+abstract final class BlockedUsersRoute {
+  static const String path = 'blocked';
+  static const String location = '${PrivacySettingsRoute.location}/$path';
+}
+
+/// `/settings/privacy/devices` — where the account is signed in. Under
+/// Privacy since the block list came in, as Telegram keeps it.
 abstract final class SessionsRoute {
   static const String path = 'devices';
-  static const String location = '/settings/devices';
+  static const String location = '${PrivacySettingsRoute.location}/$path';
 }
 
 /// `/settings/appearance` — theme, accent, wallpaper, bubbles and media.

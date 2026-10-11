@@ -9,7 +9,7 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/websocket/socket_protocol_log.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
-import 'package:chatix/features/settings/presentation/widgets/biometric_unlock_tile.dart';
+import 'package:chatix/features/settings/presentation/widgets/settings_section_header.dart';
 import 'package:chatix/features/settings/presentation/widgets/sign_out_tile.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -53,15 +53,14 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(NotificationSettingsRoute.location),
           ),
 
-          _SectionHeader(title: l10n.settingsSecuritySection),
-
+          // Blocked users, devices and the app lock live one level down,
+          // the way Telegram groups them.
           ListTile(
-            leading: const Icon(Icons.devices),
-            title: Text(l10n.myDevices),
-            onTap: () => context.push(SessionsRoute.location),
+            leading: const Icon(Icons.lock_outline),
+            title: Text(l10n.privacySettingsTitle),
+            subtitle: Text(l10n.privacySettingsHint),
+            onTap: () => context.push(PrivacySettingsRoute.location),
           ),
-
-          const BiometricUnlockTile(),
 
           if (kDebugMode)
             ListTile(
@@ -72,33 +71,10 @@ class SettingsScreen extends ConsumerWidget {
 
           const _WsDiagnosticsTile(),
 
-          _SectionHeader(title: l10n.settingsAccountSection),
+          SettingsSectionHeader(title: l10n.settingsAccountSection),
 
           const SignOutTile(),
         ],
-      ),
-    );
-  }
-}
-
-/// The label that turns a flat list of tiles into groups.
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        title,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

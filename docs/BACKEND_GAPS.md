@@ -435,3 +435,49 @@ into a dialog and does not read the device's own address book.
 `ContactProfileDTO`), tombstones in the delta (`deleted: [contact_id]` next
 to `contacts`), and a `contacts_updated` socket event carrying the changed
 `contact_id`s.
+
+---
+
+## 16. A block is a list, not a rule (blocks) 🔴
+
+`POST`/`DELETE /contacts/{user_id}/block/` and `GET /contacts/blocked/`
+exist (api-docs §4.13), but the same section says the chats do not check
+them yet ("этап 2"): a blocked person's message is accepted, delivered over
+the socket, counted in `unread_count` and pushed like anyone else's.
+
+**What the client does instead — all of it on this device only:**
+
+- **Notifications.** `PushNotificationPresenter` drops a push whose sender is
+  blocked (`ResolveNotificationDisplayUseCase(fromBlockedSender)`), both in
+  the running app and in the background isolate, which reads a copy of the
+  list from shared preferences (`notification_blocked_senders`, written by
+  `blockedSendersSnapshotProvider`).
+- **The unread badge.** The chats tab, the folder tabs and the archive
+  header leave out direct chats with blocked people
+  (`blockedDirectChatIdsProvider`); their row keeps its count in the quiet
+  fill with a block mark.
+- **The composer.** A direct chat with a blocked person has a bar instead
+  ("You blocked this user · Unblock").
+- **The archive.** A blocked person writing does not pull their chat back
+  out of the archive.
+
+**What the client cannot do.**
+
+- A push payload is untyped (api-docs §7.2). A blocked person is recognised
+  by `sender_id` (or `author_id`, `from_user_id`) when the payload has one,
+  and otherwise only in their direct chat, by its id. A group message from a
+  blocked person in a push without a sender id is shown.
+- `unread_count` is per chat. A blocked person writing in a group still
+  raises that group's count.
+- The in-app notification inbox and its badge (`GET /notifications/`,
+  `/unread_count/`) are the server's numbers and include whatever the
+  blocked person caused.
+- Messages from a blocked person still appear in the feed when the chat is
+  opened; the confirmation dialog and the block list both say so.
+
+**What the backend would need.** "Этап 2" itself: refuse `POST
+/chats/{id}/messages/` from a sender the recipient blocked in a direct chat
+(and say so with a code), skip the push and the unread increment for a
+blocked sender in groups, and either a `sender_id` in every chat push
+payload or a typed payload. With that in place the client-side filter can
+stay as a belt-and-braces check; nothing else changes.

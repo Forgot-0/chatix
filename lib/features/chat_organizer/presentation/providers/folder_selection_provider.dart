@@ -7,6 +7,7 @@ import 'package:chatix/features/chat_organizer/domain/entities/chat_organizer_da
 import 'package:chatix/features/chat_organizer/domain/entities/folder_rule.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organized_chats.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 
 /// Which tab of the strip is showing. Null is "all chats", the tab that is
 /// always there and is not a folder.
@@ -64,19 +65,23 @@ final folderUnreadCountsProvider = Provider<Map<String, int>>((ref) {
     chats: chats,
     folders: ref.watch(organizerDataProvider).folders,
     context: ref.watch(chatRuleContextProvider),
+    quiet: ref.watch(blockedDirectChatIdsProvider),
   );
 });
 
 /// Everything still unread in the list proper — what the "all chats" tab
-/// carries. Archived and silenced chats stay out of it for the same reason
-/// they stay out of the per-folder counts.
+/// carries. Archived and silenced chats, and direct chats with blocked
+/// people, stay out of it for the same reason they stay out of the
+/// per-folder counts.
 final visibleUnreadCountProvider = Provider<int>((ref) {
   final chats = ref.watch(chatListProvider).value?.items ?? const [];
+  final quiet = ref.watch(blockedDirectChatIdsProvider);
 
   var total = 0;
   for (final chat in chats) {
     if (chat.isArchived) continue;
     if (chat.isMutedByMe) continue;
+    if (quiet.contains(chat.id)) continue;
     total += chat.unreadCount ?? 0;
   }
   return total;

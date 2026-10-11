@@ -15,6 +15,7 @@ import 'package:chatix/features/chat_organizer/domain/entities/organized_chats.d
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/folder_selection_provider.dart';
 import 'package:chatix/features/chat_organizer/presentation/widgets/folder_tabs_bar.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The chats list: every conversation this account is in, most recent first.
@@ -202,7 +203,10 @@ class _ChatsList extends ConsumerWidget {
             SliverToBoxAdapter(
               child: _ArchiveHeader(
                 count: archived.length,
-                unread: unreadInArchive(archived),
+                unread: unreadInArchive(
+                  archived,
+                  quiet: ref.watch(blockedDirectChatIdsProvider),
+                ),
                 isOpen: archiveOpen,
                 onTap: onToggleArchive,
               ),

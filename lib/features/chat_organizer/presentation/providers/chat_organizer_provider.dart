@@ -14,6 +14,7 @@ import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart'
 import 'package:chatix/features/chat_organizer/domain/entities/chat_organizer_data.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organizer_settings.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_providers.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 
 /// The folders and the switches around them.
 ///
@@ -66,6 +67,15 @@ class ChatOrganizerController extends AsyncNotifier<ChatOrganizerData> {
 
             final myUserId = ref.read(authProvider).value?.id;
             if (myUserId != null && event.senderId == myUserId) return;
+
+            // Somebody the reader blocked can still write (api-docs §4.13
+            // — chats do not check blocks yet); that is no reason for the
+            // chat to come back.
+            final sender = event.senderId;
+            if (sender != null &&
+                ref.read(blockedUserIdsProvider).contains(sender)) {
+              return;
+            }
 
             unawaited(
               ref

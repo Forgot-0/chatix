@@ -18,13 +18,15 @@ import 'package:chatix/features/contacts/domain/entities/contact_failures.dart';
 import 'package:chatix/features/contacts/domain/entities/contact_import.dart';
 import 'package:chatix/features/contacts/presentation/providers/contacts_providers.dart';
 import 'package:chatix/features/contacts/presentation/utils/contact_labels.dart';
+import 'package:chatix/features/contacts/presentation/widgets/block_actions.dart';
 import 'package:chatix/features/contacts/presentation/widgets/contact_dialogs.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_share_link.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// What can be done to a contact from its row: swiped, long-pressed or
-/// right-clicked, the same five things.
-enum ContactAction { message, call, favorite, rename, delete }
+/// What can be done to a contact from its row. Swiped: the first five.
+/// Long-pressed or right-clicked: those and blocking, which is one of the
+/// two depending on whether the person is blocked already.
+enum ContactAction { message, call, favorite, rename, delete, block, unblock }
 
 /// The contact actions, written once for the list, the search and the
 /// profile.
@@ -45,6 +47,18 @@ abstract final class ContactActions {
       ContactAction.favorite => toggleFavorite(context, ref, contact),
       ContactAction.rename => rename(context, contact),
       ContactAction.delete => delete(context, ref, contact),
+      ContactAction.block => BlockActions.block(
+        context,
+        ref,
+        userId: contact.userId,
+        name: contactNameOf(contact, AppLocalizations.of(context)),
+      ),
+      ContactAction.unblock => BlockActions.unblock(
+        context,
+        ref,
+        userId: contact.userId,
+        name: contactNameOf(contact, AppLocalizations.of(context)),
+      ),
     };
   }
 
@@ -279,47 +293,57 @@ abstract final class ContactActions {
     return (leading, trailing);
   }
 
-  /// The long-press sheet: the person's name over the five actions.
+  /// The long-press sheet: the person's name over the actions.
   static Future<ContactAction?> showSheet(
     BuildContext context,
-    Contact contact,
-  ) {
+    Contact contact, {
+    required bool isBlocked,
+  }) {
     final l10n = AppLocalizations.of(context);
 
+    // Taller than the default 9/16 of the screen allows on a phone, so the
+    // sheet takes the height it needs — and scrolls where there is none.
     return showModalBottomSheet<ContactAction>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x4,
-                0,
-                AppSpacing.x4,
-                AppSpacing.x2,
-              ),
-              child: Text(
-                contactNameOf(contact, l10n),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(sheetContext).textTheme.titleMedium,
-              ),
-            ),
-            for (final entry in _entries(sheetContext, contact))
-              ListTile(
-                leading: Icon(entry.icon, color: entry.color),
-                title: Text(
-                  entry.label,
-                  style: entry.color == null
-                      ? null
-                      : TextStyle(color: entry.color),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.x4,
+                  0,
+                  AppSpacing.x4,
+                  AppSpacing.x2,
                 ),
-                onTap: () => Navigator.of(sheetContext).pop(entry.action),
+                child: Text(
+                  contactNameOf(contact, l10n),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(sheetContext).textTheme.titleMedium,
+                ),
               ),
-          ],
+              for (final entry in _entries(
+                sheetContext,
+                contact,
+                isBlocked: isBlocked,
+              ))
+                ListTile(
+                  leading: Icon(entry.icon, color: entry.color),
+                  title: Text(
+                    entry.label,
+                    style: entry.color == null
+                        ? null
+                        : TextStyle(color: entry.color),
+                  ),
+                  onTap: () => Navigator.of(sheetContext).pop(entry.action),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -329,8 +353,9 @@ abstract final class ContactActions {
   static Future<ContactAction?> showMenuAt(
     BuildContext context,
     Contact contact,
-    Offset globalPosition,
-  ) {
+    Offset globalPosition, {
+    required bool isBlocked,
+  }) {
     final overlay =
         Overlay.of(context).context.findRenderObject()! as RenderBox;
 
@@ -345,7 +370,7 @@ abstract final class ContactActions {
         maxWidth: AppMenuSizes.maxWidth,
       ),
       items: [
-        for (final entry in _entries(context, contact))
+        for (final entry in _entries(context, contact, isBlocked: isBlocked))
           PopupMenuItem<ContactAction>(
             value: entry.action,
             child: Row(
@@ -371,7 +396,11 @@ abstract final class ContactActions {
     );
   }
 
-  static List<_Entry> _entries(BuildContext context, Contact contact) {
+  static List<_Entry> _entries(
+    BuildContext context,
+    Contact contact, {
+    required bool isBlocked,
+  }) {
     final l10n = AppLocalizations.of(context);
     final danger = ChatixTheme.of(context).danger;
 
@@ -400,6 +429,19 @@ abstract final class ContactActions {
         l10n.contactsActionDelete,
         color: danger,
       ),
+      if (isBlocked)
+        _Entry(
+          ContactAction.unblock,
+          Icons.lock_open_outlined,
+          l10n.unblockUserAction,
+        )
+      else
+        _Entry(
+          ContactAction.block,
+          Icons.block,
+          l10n.blockUserAction,
+          color: danger,
+        ),
     ];
   }
 }

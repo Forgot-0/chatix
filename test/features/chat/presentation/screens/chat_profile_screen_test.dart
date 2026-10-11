@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_theme.dart';
@@ -10,13 +13,22 @@ import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
+import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
+import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/get_local_messages_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_profile_screen.dart';
+import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
+import 'package:chatix/features/contacts/data/repositories/blocked_users_repository_impl.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
+
+import '../../../../helpers/blocked_users_fixtures.dart';
+
+class _MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
 
 class _FakeAuthController extends AuthController {
   @override
@@ -58,12 +70,13 @@ void main() {
     bool isPublic = false,
     int createdBy = creator,
     Map<String, bool> permissions = const {},
+    ChatType type = ChatType.group,
   }) => ChatEntity(
     id: chatId,
     seqCounter: 4,
     lastActivityAt: DateTime.utc(2026, 5, 1),
-    type: ChatType.group,
-    name: 'Team',
+    type: type,
+    name: type == ChatType.direct ? null : 'Team',
     description: description,
     avatarS3Key: null,
     isPublic: isPublic,
@@ -87,11 +100,13 @@ void main() {
     ChatEntity source,
     ChatMemberEntity membership, {
     ThemeData? theme,
+    List<ChatMemberEntity> others = const [],
+    List<Override> overrides = const [],
   }) async {
     // `ChatDetailState.me` reads the roster, so the membership goes on the
     // chat rather than beside it.
     final state = ChatDetailState(
-      chat: source.copyWith(members: [membership]),
+      chat: source.copyWith(members: [membership, ...others]),
       myUserId: me,
     );
 
@@ -116,6 +131,7 @@ void main() {
           chatDetailProvider(
             chatId,
           ).overrideWith(() => _FakeChatDetailController(chatId, state)),
+          ...overrides,
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -182,6 +198,88 @@ void main() {
     await pumpProfile(tester, chat(), member(ChatRole.member));
 
     expect(find.byIcon(Icons.edit_outlined), findsNothing);
+  });
+
+  group('a direct chat', () {
+    const ada = ChatMemberEntity(
+      userId: 42,
+      roleId: 7,
+      isMuted: false,
+      isBanned: false,
+      permissionsOverrides: {},
+      profile: ChatProfileEntity(
+        userId: 42,
+        username: 'ada',
+        displayName: 'Ada Lovelace',
+        avatarUrl: null,
+        avatarS3Key: null,
+      ),
+    );
+
+    late FakeBlockedUsersRemote blocks;
+    late MemoryBlockListLocalStore blockList;
+    late _MockGetMembersUseCase getMembers;
+
+    setUp(() {
+      blocks = FakeBlockedUsersRemote();
+      blockList = MemoryBlockListLocalStore();
+      getMembers = _MockGetMembersUseCase();
+      when(
+        () => getMembers.execute(
+          any(),
+          limit: any(named: 'limit'),
+          includePresence: any(named: 'includePresence'),
+        ),
+      ).thenAnswer(
+        (_) async => const Right(
+          MembersPage(
+            members: [ada],
+            hasNext: false,
+            nextUserId: null,
+            presence: [],
+          ),
+        ),
+      );
+    });
+
+    Future<void> pumpDirect(WidgetTester tester) => pumpProfile(
+      tester,
+      chat(type: ChatType.direct),
+      member(ChatRole.direct),
+      others: const [ada],
+      overrides: [
+        getMembersUseCaseProvider.overrideWithValue(getMembers),
+        blockListLocalStoreProvider.overrideWithValue(blockList),
+        blockedUsersRepositoryProvider.overrideWith(
+          (ref) => BlockedUsersRepositoryImpl(remote: blocks, local: blockList),
+        ),
+      ],
+    );
+
+    testWidgets('offers to block the person, as their profile does', (
+      tester,
+    ) async {
+      await pumpDirect(tester);
+
+      await tester.ensureVisible(find.text(l10n.blockUserAction));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.blockUserAction));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, l10n.blockUserConfirm));
+      await tester.pumpAndSettle();
+
+      expect(blocks.blocks, [42]);
+      expect(find.text(l10n.unblockUserAction), findsOneWidget);
+      // Let the snackbar run out.
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('a group has nobody to block', (tester) async {
+      await pumpProfile(tester, chat(), member(ChatRole.member));
+
+      expect(find.text(l10n.blockUserAction), findsNothing);
+    });
   });
 
   testWidgets('draws in the dark theme too', (tester) async {

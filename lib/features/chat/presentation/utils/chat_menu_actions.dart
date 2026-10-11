@@ -18,12 +18,18 @@ enum ChatMenuAction {
 
   /// The chat's settings — name, description, who may do what.
   manage,
+
+  /// The other person of a direct chat (`POST /contacts/{user_id}/block/`).
+  block,
+  unblock,
   leave,
   delete;
 
   /// Drawn apart from the rest, in the error colour.
   bool get isDestructive =>
-      this == ChatMenuAction.leave || this == ChatMenuAction.delete;
+      this == ChatMenuAction.block ||
+      this == ChatMenuAction.leave ||
+      this == ChatMenuAction.delete;
 }
 
 /// The menu for [chat], as [me] may use it, in the order it is shown.
@@ -39,14 +45,15 @@ enum ChatMenuAction {
 ///   (§8.1) but a two-person chat has nothing to manage;
 /// - leaving and deleting follow [ChatExitOptions]: a creator cannot leave
 ///   (§5.2), and only `chat:delete` may delete — which no `direct` member
-///   has, so a direct chat is deleted for both sides only by an override.
-///
-/// Blocking the other person of a direct chat belongs here too, once the
-/// contacts feature can do it (`POST /contacts/{user_id}/block/`, §4.13).
+///   has, so a direct chat is deleted for both sides only by an override;
+/// - blocking is offered for the other person of a direct chat, as "Block"
+///   or "Unblock" by [peerBlocked] — null when that person is not known, and
+///   then neither (`POST`/`DELETE /contacts/{user_id}/block/`, §4.13).
 List<ChatMenuAction> chatMenuActionsFor(
   ChatEntity chat,
   ChatMemberEntity? me, {
   ChatStateEntity? state,
+  bool? peerBlocked,
 }) {
   final isMember = me != null;
   final exit = ChatExitOptions.of(chat, me);
@@ -63,6 +70,8 @@ List<ChatMenuAction> chatMenuActionsFor(
     if (chat.type != ChatType.direct &&
         hasChatPermission(chat, me, ChatPermissions.chatUpdate))
       ChatMenuAction.manage,
+    if (chat.type == ChatType.direct && peerBlocked != null)
+      peerBlocked ? ChatMenuAction.unblock : ChatMenuAction.block,
     if (exit.canLeave) ChatMenuAction.leave,
     if (exit.canDelete) ChatMenuAction.delete,
   ];

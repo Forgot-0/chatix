@@ -15,15 +15,32 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// `viewer` in a channel, a mute and a ban are four different situations and
 /// only one of them is the reader's own doing.
 class ComposerLockedNotice extends StatelessWidget {
-  const ComposerLockedNotice({super.key, required this.reason});
+  const ComposerLockedNotice({super.key, required this.reason, this.action});
 
   final ComposerLockReason reason;
+
+  /// The one thing that can be done about it, after the sentence — "Unblock"
+  /// when the reader blocked the person on the other side.
+  final Widget? action;
 
   /// Why this reader cannot post, or null when they can.
   ///
   /// Ordered by how specific the answer is: being banned outranks the chat
   /// being admin-only, because that is what the reader needs to hear first.
-  static ComposerLockReason? reasonFor(ChatEntity? chat, ChatMemberEntity? me) {
+  ///
+  /// [peerBlocked] — the reader blocked the other person of this direct
+  /// chat — comes before everything: the server would still take the
+  /// message (blocks are not checked by chats yet, api-docs §4.13), but
+  /// writing to somebody one has blocked is what Telegram does not allow
+  /// either, and the bar that says so is also the way back.
+  static ComposerLockReason? reasonFor(
+    ChatEntity? chat,
+    ChatMemberEntity? me, {
+    bool peerBlocked = false,
+  }) {
+    if (peerBlocked && chat?.type == ChatType.direct) {
+      return ComposerLockReason.blockedPeer;
+    }
     if (canSendMessage(chat, me)) return null;
 
     if (me == null) return ComposerLockReason.notAMember;
@@ -53,7 +70,32 @@ class ComposerLockedNotice extends StatelessWidget {
       ComposerLockReason.muted => l10n.composerMuted,
       ComposerLockReason.adminsOnly => l10n.composerAdminsOnly,
       ComposerLockReason.noPermission => l10n.composerNoPermission,
+      ComposerLockReason.blockedPeer => l10n.blockedChatNotice,
     };
+
+    final style = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.outline,
+    );
+
+    final sentence = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          switch (reason) {
+            ComposerLockReason.adminsOnly => Icons.campaign_outlined,
+            ComposerLockReason.blockedPeer => Icons.block,
+            _ => Icons.lock_outline,
+          },
+          size: ComposerSizes.lockedIconSize,
+          color: theme.colorScheme.outline,
+        ),
+        const SizedBox(width: AppSpacing.x2),
+        Flexible(
+          child: Text(text, textAlign: TextAlign.center, style: style),
+        ),
+      ],
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -65,32 +107,38 @@ class ComposerLockedNotice extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          // A button is taller than a line of text: the bar keeps its
+          // height by giving it the padding back.
+          padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.x4,
-            vertical: AppSpacing.x4,
+            vertical: action == null ? AppSpacing.x4 : AppSpacing.x2,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                reason == ComposerLockReason.adminsOnly
-                    ? Icons.campaign_outlined
-                    : Icons.lock_outline,
-                size: 16,
-                color: theme.colorScheme.outline,
-              ),
-              const SizedBox(width: AppSpacing.x2),
-              Flexible(
-                child: Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          child: switch (action) {
+            null => Center(child: sentence),
+            final action => LayoutBuilder(
+              // The pane's width, not the window's: one line where the
+              // sentence and the button fit side by side, the button under
+              // the sentence where they do not.
+              builder: (context, constraints) =>
+                  constraints.maxWidth >= ComposerSizes.lockedActionInlineFrom
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(child: sentence),
+                        const SizedBox(width: AppSpacing.x1),
+                        Text('·', style: style),
+                        const SizedBox(width: AppSpacing.x1),
+                        action,
+                      ],
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [sentence, action],
+                      ),
+                    ),
+            ),
+          },
         ),
       ),
     );
@@ -106,4 +154,7 @@ enum ComposerLockReason {
   adminsOnly,
 
   noPermission,
+
+  /// A direct chat whose other person the reader blocked.
+  blockedPeer,
 }

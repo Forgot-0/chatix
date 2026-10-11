@@ -30,6 +30,7 @@ import 'package:chatix/features/chat/presentation/screens/media_viewer_screen.da
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
+import 'package:chatix/features/contacts/presentation/screens/blocked_users_screen.dart';
 import 'package:chatix/features/contacts/presentation/screens/contacts_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
@@ -40,6 +41,7 @@ import 'package:chatix/features/profile/presentation/screens/profile_edit_screen
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/appearance_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/privacy_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/ui_showcase/ui_showcase.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -406,10 +408,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                         _push(state, const NotificationSettingsScreen()),
                   ),
                   GoRoute(
-                    path: SessionsRoute.path,
-                    name: RouteNames.sessions,
+                    path: PrivacySettingsRoute.path,
+                    name: RouteNames.privacySettings,
                     pageBuilder: (context, state) =>
-                        _push(state, const SessionsScreen()),
+                        _push(state, const PrivacySettingsScreen()),
+                    routes: [
+                      GoRoute(
+                        path: BlockedUsersRoute.path,
+                        name: RouteNames.blockedUsers,
+                        pageBuilder: (context, state) =>
+                            _push(state, const BlockedUsersScreen()),
+                      ),
+                      GoRoute(
+                        path: SessionsRoute.path,
+                        name: RouteNames.sessions,
+                        pageBuilder: (context, state) =>
+                            _push(state, const SessionsScreen()),
+                      ),
+                    ],
                   ),
                 ],
               ),

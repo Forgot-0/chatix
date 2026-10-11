@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:chatix/core/notifications/local_notification_presenter.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
 import 'package:chatix/features/notification/data/datasources/notification_avatar_cache.dart';
+import 'package:chatix/features/notification/domain/entities/blocked_senders.dart';
 import 'package:chatix/features/notification/domain/entities/notification_preferences.dart';
 import 'package:chatix/features/notification/domain/entities/push_message.dart';
 import 'package:chatix/features/notification/domain/usecases/resolve_notification_display_use_case.dart';
@@ -60,10 +61,14 @@ class PushNotificationPresenter {
 
   /// Draws [message] if the settings allow it. Returns whether anything was
   /// posted, which is what the caller needs to know before touching a badge.
+  ///
+  /// [blocked] is who the reader blocked: their messages are not drawn at
+  /// all (see [BlockedSenders] for why that is decided here).
   Future<bool> present(
     PushMessage message, {
     required NotificationPreferences preferences,
     required PushNotificationCopy copy,
+    BlockedSenders blocked = BlockedSenders.none,
     DateTime? now,
   }) async {
     if (!message.isActionable) return false;
@@ -74,6 +79,10 @@ class PushNotificationPresenter {
       chatId: message.chatId,
       isMention: message.isMention,
       isSystem: message.isSystem,
+      fromBlockedSender: blocked.covers(
+        senderId: message.senderId,
+        chatId: message.chatId,
+      ),
       now: now,
     );
     if (!decision.show) return false;

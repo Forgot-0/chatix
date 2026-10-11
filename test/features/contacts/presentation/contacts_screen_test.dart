@@ -291,7 +291,9 @@ void main() {
       expect(find.text(ru.contactsSyncFailed), findsNothing);
     });
 
-    testWidgets('a long press offers the five actions', (tester) async {
+    testWidgets('a long press offers the five actions and blocking', (
+      tester,
+    ) async {
       await pump(tester);
 
       await tester.longPress(tileOf(2));
@@ -303,6 +305,7 @@ void main() {
         ru.contactsActionFavorite,
         ru.contactsActionRename,
         ru.contactsActionDelete,
+        ru.blockUserAction,
       ]) {
         expect(find.text(label), findsOneWidget, reason: label);
       }
@@ -496,6 +499,19 @@ void main() {
           await screenMatchesGolden(
             tester,
             'contacts_list_${window.name}_${theme.key}',
+          );
+        });
+
+        testGoldens('contact actions, ${window.name}, ${theme.key}', (
+          tester,
+        ) async {
+          await pump(tester, window: window, dark: theme.value);
+          await tester.longPress(tileOf(2));
+          await tester.pumpAndSettle();
+
+          await screenMatchesGolden(
+            tester,
+            'contacts_actions_${window.name}_${theme.key}',
           );
         });
 

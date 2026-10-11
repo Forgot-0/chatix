@@ -22,7 +22,9 @@ import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
+import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
 import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
+import 'package:chatix/features/contacts/domain/entities/blocked_user.dart';
 import 'package:chatix/features/contacts/domain/entities/contact.dart';
 import 'package:chatix/features/contacts/domain/entities/contact_sync.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
@@ -34,6 +36,7 @@ import 'package:chatix/features/chat/presentation/widgets/chat_type_glyph.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
+import 'package:chatix/gen/l10n/app_localizations_ru.dart';
 
 import '../../../../helpers/pane_frame.dart';
 
@@ -608,6 +611,8 @@ void main() {
       WidgetTester tester, {
       required Size window,
       required bool dark,
+      List<ChatEntity>? items,
+      Set<int> blocked = const {},
     }) async {
       tester.view.physicalSize = window;
       tester.view.devicePixelRatio = 1;
@@ -622,6 +627,11 @@ void main() {
           getMembersUseCaseProvider.overrideWithValue(getMembers),
           updateChatStateUseCaseProvider.overrideWithValue(updateState),
           authProvider.overrideWith(() => FakeAuthController(me)),
+          blockListLocalStoreProvider.overrideWithValue(
+            MemoryBlockListLocalStore(
+              BlockList(ownerId: myUserId, userIds: blocked),
+            ),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -630,7 +640,8 @@ void main() {
 
       final list = Column(
         children: [
-          for (final row in rows()) ChatListTile(chat: row, peerReadSeq: 9),
+          for (final row in items ?? rows())
+            ChatListTile(chat: row, peerReadSeq: 9),
         ],
       );
 
@@ -701,6 +712,64 @@ void main() {
           await expectLater(
             find.byType(MaterialApp),
             matchesGoldenFile('goldens/chat_list_stamps_$name.png'),
+          );
+        });
+
+        // A blocked person's chat between two ordinary ones: its count
+        // stays, quietly, with the mark that says why.
+        testWidgets("a blocked peer's row, $name", (tester) async {
+          ChatEntity direct(String id, int peer, String who, int unread) =>
+              ChatEntity(
+                id: id,
+                seqCounter: 9,
+                lastActivityAt: DateTime(2026, 10, 10, 9, 2),
+                type: ChatType.direct,
+                name: null,
+                description: null,
+                avatarS3Key: null,
+                isPublic: false,
+                adminOnly: false,
+                slowModeSeconds: 0,
+                permissions: const {},
+                createdBy: myUserId,
+                memberCount: 2,
+                unreadCount: unread,
+                peer: ChatProfileEntity(
+                  userId: peer,
+                  username: who.toLowerCase(),
+                  displayName: who,
+                  avatarUrl: null,
+                  avatarS3Key: null,
+                ),
+              );
+
+          await pumpList(
+            tester,
+            window: window.size,
+            dark: dark,
+            blocked: const {13},
+            items: [
+              direct('d1', 11, 'Ада', 2),
+              direct('d2', 13, 'Спамер', 7),
+              direct('d3', 12, 'Грейс', 1),
+            ],
+          );
+
+          // Only the blocked person's row carries the mark, and its count
+          // drops to the quiet fill a silenced chat uses.
+          final mark = find.byIcon(Icons.block);
+          expect(mark, findsOneWidget);
+          expect(
+            tester.widget<Icon>(mark).semanticLabel,
+            AppLocalizationsRu().chatBlockedLabel,
+          );
+          final badges = tester
+              .widgetList<UnreadBadge>(find.byType(UnreadBadge))
+              .toList();
+          expect([for (final b in badges) b.isMuted], [false, true, false]);
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('goldens/chat_list_blocked_$name.png'),
           );
         });
       }

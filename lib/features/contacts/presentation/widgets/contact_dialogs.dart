@@ -59,6 +59,40 @@ Future<bool> showDeleteContactDialog(BuildContext context, String name) {
   ).then((confirmed) => confirmed ?? false);
 }
 
+/// Asks before [name] is blocked, and says plainly what a block does today:
+/// notifications stop and the badge stops counting them, but the server
+/// still delivers their messages (api-docs §4.13, "этап 2").
+Future<bool> showBlockUserDialog(BuildContext context, String name) {
+  final l10n = AppLocalizations.of(context);
+
+  return showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      final scheme = Theme.of(dialogContext).colorScheme;
+      return AlertDialog(
+        title: Text(l10n.blockUserTitle(name)),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDialogSizes.pickerMaxWidth,
+          ),
+          child: Text(l10n.blockUserMessage),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: scheme.error),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.blockUserConfirm),
+          ),
+        ],
+      );
+    },
+  ).then((confirmed) => confirmed ?? false);
+}
+
 /// "Import by email": paste addresses, see how many were recognised, send.
 /// Answers with what the server made of them.
 Future<ContactImportResult?> showImportContactsDialog(BuildContext context) {

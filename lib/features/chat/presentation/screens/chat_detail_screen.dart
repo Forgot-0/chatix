@@ -38,6 +38,7 @@ import 'package:chatix/features/chat/presentation/providers/video_note_record_pr
 import 'package:chatix/features/chat/presentation/providers/voice_recorder_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
+import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/utils/composer_text_edits.dart';
 import 'package:chatix/features/chat/presentation/utils/mention_syntax.dart';
 import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
@@ -58,6 +59,8 @@ import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
 import 'package:chatix/features/chat/presentation/widgets/forward_target_dialog.dart';
 import 'package:chatix/features/chat/presentation/widgets/in_chat_search_bar.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_delete_dialog.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
+import 'package:chatix/features/contacts/presentation/widgets/block_actions.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// One conversation.
@@ -309,7 +312,25 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Widget _buildBody(ChatDetailState state, int? myUserId) {
     final me = state.me;
-    final lockedBecause = ComposerLockedNotice.reasonFor(state.chat, me);
+
+    // A direct chat with somebody the reader blocked has no composer, only
+    // the bar that says so and lifts it (api-docs §4.13: the server would
+    // still take the message — this is the client's side of a block).
+    final peerId = state.chat?.peerUserId(myUserId);
+    final peerBlocked =
+        peerId != null && ref.watch(isUserBlockedProvider(peerId));
+    final lockedBecause = ComposerLockedNotice.reasonFor(
+      state.chat,
+      me,
+      peerBlocked: peerBlocked,
+    );
+
+    // The panel belongs to a composer that is no longer there.
+    if (lockedBecause != null && _input.isEmojiOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _input.isEmojiOpen) _closeEmojiPanel();
+      });
+    }
 
     // Slow mode is re-read from the chat on every build, so a `chat_updated`
     // that switches it on or off reaches the send button without a reload
@@ -376,7 +397,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 .returnToLatest(),
           ),
         if (lockedBecause != null)
-          ComposerLockedNotice(reason: lockedBecause)
+          ComposerLockedNotice(
+            reason: lockedBecause,
+            action:
+                lockedBecause == ComposerLockReason.blockedPeer &&
+                    peerId != null
+                ? _UnblockPeerButton(chat: state.chat!, peerId: peerId)
+                : null,
+          )
         else ...[
           ComposerAttachmentTray(chatId: widget.chatId),
           // Its own consumer, and deliberately so: the composer's length,
@@ -1342,6 +1370,46 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// button's hold.
   Future<void> _sendVideoNote(VideoNoteTake take) =>
       _sendExclusive(take.upload, MessageType.videoNote);
+}
+
+/// "Unblock", on the bar that stands in for the composer of a direct chat
+/// with somebody the reader blocked.
+class _UnblockPeerButton extends ConsumerWidget {
+  const _UnblockPeerButton({required this.chat, required this.peerId});
+
+  final ChatEntity chat;
+  final int peerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final busy = ref.watch(isBlockBusyProvider(peerId));
+
+    return TextButton(
+      style: TextButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
+      ),
+      onPressed: busy
+          ? null
+          : () {
+              final myUserId = ref.read(authProvider).value?.id;
+              BlockActions.unblock(
+                context,
+                ref,
+                userId: peerId,
+                name: chatTitleOf(
+                  chat,
+                  l10n,
+                  myUserId: myUserId,
+                  peerLocalName: readPeerLocalName(ref, chat, myUserId),
+                ),
+              );
+            },
+      child: Text(l10n.unblockUserAction),
+    );
+  }
 }
 
 /// The composer and everything that changes while somebody is typing.

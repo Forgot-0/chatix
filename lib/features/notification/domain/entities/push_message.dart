@@ -15,6 +15,7 @@ class PushMessage extends Equatable {
     this.chatName,
     this.messageId,
     this.messageSeq,
+    this.senderId,
     this.senderName,
     this.senderAvatarUrl,
     this.text,
@@ -30,6 +31,12 @@ class PushMessage extends Equatable {
   final String? chatName;
   final String? messageId;
   final int? messageSeq;
+
+  /// Who wrote it, when the payload says. Not documented (api-docs §7.2),
+  /// so it is looked for under the spellings senders tend to use; without it
+  /// a blocked person is only recognised in a direct chat, by its id.
+  final int? senderId;
+
   final String? senderName;
   final String? senderAvatarUrl;
   final String? text;
@@ -92,6 +99,14 @@ class PushMessage extends Equatable {
       chatName: _string(flat, const ['chat_name', 'chatname', 'chat_title']),
       messageId: _string(flat, const ['message_id', 'messageid', 'msg_id']),
       messageSeq: _int(flat, const ['message_seq', 'messageseq', 'seq']),
+      // Never `user_id`: in a NotificationDTO that is the recipient.
+      senderId: _int(flat, const [
+        'sender_id',
+        'senderid',
+        'author_id',
+        'authorid',
+        'from_user_id',
+      ]),
       senderName: _string(flat, const [
         'sender_name',
         'sendername',
@@ -225,6 +240,7 @@ class PushMessage extends Equatable {
     chatName,
     messageId,
     messageSeq,
+    senderId,
     senderName,
     senderAvatarUrl,
     text,

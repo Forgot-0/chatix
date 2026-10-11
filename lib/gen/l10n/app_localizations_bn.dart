@@ -3719,4 +3719,94 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get contactsEditShort => 'সম্পাদনা';
+
+  @override
+  String get blockUserAction => 'ব্লক করুন';
+
+  @override
+  String get unblockUserAction => 'আনব্লক করুন';
+
+  @override
+  String blockUserTitle(String name) {
+    return '$name-কে ব্লক করবেন?';
+  }
+
+  @override
+  String get blockUserMessage =>
+      'এই ব্যক্তির বিজ্ঞপ্তি আর আসবে না এবং তার চ্যাট অপঠিত গণনায় ধরা হবে না। তবে আপাতত তিনি আপনাকে লিখতে পারবেন: সার্ভার এখনও এমন বার্তা প্রত্যাখ্যান করে না, চ্যাট খুললে সেগুলো দেখতে পাবেন।';
+
+  @override
+  String get blockUserConfirm => 'ব্লক';
+
+  @override
+  String blockUserDone(String name) {
+    return '$name-কে ব্লক করা হয়েছে';
+  }
+
+  @override
+  String unblockUserDone(String name) {
+    return '$name-কে আনব্লক করা হয়েছে';
+  }
+
+  @override
+  String get blockUserFailed => 'ব্লক করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get unblockUserFailed => 'আনব্লক করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get blockErrorSelf => 'নিজেকে ব্লক করা যায় না';
+
+  @override
+  String get blockedChatNotice => 'আপনি এই ব্যবহারকারীকে ব্লক করেছেন';
+
+  @override
+  String get chatBlockedLabel => 'ব্যবহারকারী ব্লক করা';
+
+  @override
+  String get privacySettingsTitle => 'গোপনীয়তা';
+
+  @override
+  String get privacySettingsHint => 'ব্লক করা, ডিভাইস, অ্যাপ লক';
+
+  @override
+  String get blockedUsersTitle => 'ব্লক করা ব্যবহারকারী';
+
+  @override
+  String blockedUsersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count জন',
+      zero: 'কেউ নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyDevices => 'ডিভাইস';
+
+  @override
+  String get privacyPasscodeSection => 'পাসকোড ও বায়োমেট্রিক';
+
+  @override
+  String get privacyPasscodeNote =>
+      'স্ক্যান ব্যর্থ হলে সিস্টেম ডিভাইসের পাসকোড চাইবে। ChatiX-এর আলাদা কোনো পাসকোড নেই।';
+
+  @override
+  String get blockedUsersEmptyTitle => 'কাউকে ব্লক করা হয়নি';
+
+  @override
+  String get blockedUsersEmptyMessage =>
+      'প্রোফাইল, চ্যাটের মেনু বা কোনো পরিচিতিতে দীর্ঘ চাপ দিয়ে ব্লক করতে পারেন।';
+
+  @override
+  String get blockedUsersNote =>
+      'সার্ভার এখনও ব্লক কার্যকর করে না: ব্লক করা ব্যক্তিরা এখনও আপনাকে লিখতে পারেন। ChatiX তাদের বিজ্ঞপ্তি দেখায় না এবং তাদের চ্যাট অপঠিত গণনায় ধরে না।';
+
+  @override
+  String get blockedUsersLoadFailed => 'ব্লক তালিকা লোড করা যায়নি';
+
+  @override
+  String get blockedUsersLoadMoreFailed => 'আরও লোড করা যায়নি';
 }

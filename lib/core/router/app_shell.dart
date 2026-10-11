@@ -6,7 +6,8 @@ import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chats_badge_provider.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -55,11 +56,13 @@ class _AppShellScaffold extends ConsumerWidget {
     // the notifications badge below is a different number and stays separate.
     // Watching it here also keeps the chat list (and its socket subscription)
     // alive while the user is on another tab, which is what makes the count
-    // move in real time.
-    final unreadChats = ref.watch(
-      chatListProvider.select((state) => state.value?.totalUnread ?? 0),
-    );
+    // move in real time. Direct chats with blocked people do not count.
+    final unreadChats = ref.watch(chatsUnreadBadgeProvider);
     final unreadAlerts = ref.watch(notificationBadgeProvider);
+
+    // Up for as long as somebody is signed in, and the chat list with it:
+    // the place to keep the background isolate's copy of who is blocked.
+    ref.watch(blockedSendersSnapshotProvider);
 
     final destinations = _destinations(
       context,

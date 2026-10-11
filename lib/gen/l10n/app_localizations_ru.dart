@@ -3784,4 +3784,100 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get contactsEditShort => 'Изменить';
+
+  @override
+  String get blockUserAction => 'Заблокировать';
+
+  @override
+  String get unblockUserAction => 'Разблокировать';
+
+  @override
+  String blockUserTitle(String name) {
+    return 'Заблокировать $name?';
+  }
+
+  @override
+  String get blockUserMessage =>
+      'Уведомления от этого человека перестанут приходить, а чат с ним не попадёт в счётчик непрочитанных. Писать вам он пока сможет: сервер ещё не отклоняет такие сообщения, и вы увидите их, открыв чат.';
+
+  @override
+  String get blockUserConfirm => 'Заблокировать';
+
+  @override
+  String blockUserDone(String name) {
+    return 'Заблокировано: $name';
+  }
+
+  @override
+  String unblockUserDone(String name) {
+    return 'Разблокировано: $name';
+  }
+
+  @override
+  String get blockUserFailed => 'Не удалось заблокировать. Попробуйте ещё раз.';
+
+  @override
+  String get unblockUserFailed =>
+      'Не удалось разблокировать. Попробуйте ещё раз.';
+
+  @override
+  String get blockErrorSelf => 'Себя заблокировать нельзя';
+
+  @override
+  String get blockedChatNotice => 'Вы заблокировали этого пользователя';
+
+  @override
+  String get chatBlockedLabel => 'Пользователь заблокирован';
+
+  @override
+  String get privacySettingsTitle => 'Конфиденциальность';
+
+  @override
+  String get privacySettingsHint =>
+      'Заблокированные, устройства, блокировка приложения';
+
+  @override
+  String get blockedUsersTitle => 'Заблокированные';
+
+  @override
+  String blockedUsersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count человека',
+      many: '$count человек',
+      few: '$count человека',
+      one: '$count человек',
+      zero: 'Никого',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyDevices => 'Устройства';
+
+  @override
+  String get privacyPasscodeSection => 'Код-пароль и биометрия';
+
+  @override
+  String get privacyPasscodeNote =>
+      'Если биометрия не сработает, система предложит код-пароль устройства. Отдельного кода у ChatiX нет.';
+
+  @override
+  String get blockedUsersEmptyTitle => 'Вы никого не блокировали';
+
+  @override
+  String get blockedUsersEmptyMessage =>
+      'Заблокировать можно в профиле человека, в меню личного чата или долгим нажатием на контакт.';
+
+  @override
+  String get blockedUsersNote =>
+      'Сервер пока не запрещает заблокированным писать вам. ChatiX не показывает уведомления от них и не учитывает их чаты в счётчике непрочитанных.';
+
+  @override
+  String get blockedUsersLoadFailed =>
+      'Не удалось загрузить список заблокированных';
+
+  @override
+  String get blockedUsersLoadMoreFailed => 'Не удалось загрузить ещё';
 }

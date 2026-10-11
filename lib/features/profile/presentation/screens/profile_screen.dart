@@ -18,6 +18,7 @@ import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/direct_chat_opener.dart';
 import 'package:chatix/features/contacts/domain/entities/contact.dart';
 import 'package:chatix/features/contacts/presentation/providers/contacts_providers.dart';
+import 'package:chatix/features/contacts/presentation/widgets/block_user_tile.dart';
 import 'package:chatix/features/contacts/presentation/widgets/contact_actions.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
@@ -208,10 +209,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 8),
               ],
 
-              if (contact != null) ...[
+              if (!isMe) ...[
                 const Divider(height: 1),
-                _RemoveContactTile(
-                  onTap: () => ContactActions.delete(context, ref, contact),
+                if (contact != null)
+                  _RemoveContactTile(
+                    onTap: () => ContactActions.delete(context, ref, contact),
+                  ),
+                BlockUserTile(
+                  userId: profile.id,
+                  name: contact?.localName ?? _titleOf(profile),
                 ),
               ],
 

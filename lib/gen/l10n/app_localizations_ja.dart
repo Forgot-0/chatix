@@ -3591,4 +3591,94 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get contactsEditShort => '編集';
+
+  @override
+  String get blockUserAction => 'ブロック';
+
+  @override
+  String get unblockUserAction => 'ブロック解除';
+
+  @override
+  String blockUserTitle(String name) {
+    return '$nameさんをブロックしますか？';
+  }
+
+  @override
+  String get blockUserMessage =>
+      'この相手からの通知は届かなくなり、未読数にも含まれなくなります。ただしサーバーはまだメッセージを拒否しないため、相手は引き続きメッセージを送れます。チャットを開くと表示されます。';
+
+  @override
+  String get blockUserConfirm => 'ブロック';
+
+  @override
+  String blockUserDone(String name) {
+    return '$nameさんをブロックしました';
+  }
+
+  @override
+  String unblockUserDone(String name) {
+    return '$nameさんのブロックを解除しました';
+  }
+
+  @override
+  String get blockUserFailed => 'ブロックできませんでした。もう一度お試しください。';
+
+  @override
+  String get unblockUserFailed => 'ブロックを解除できませんでした。もう一度お試しください。';
+
+  @override
+  String get blockErrorSelf => '自分をブロックすることはできません';
+
+  @override
+  String get blockedChatNotice => 'このユーザーをブロックしています';
+
+  @override
+  String get chatBlockedLabel => 'ブロック中のユーザー';
+
+  @override
+  String get privacySettingsTitle => 'プライバシー';
+
+  @override
+  String get privacySettingsHint => 'ブロック、デバイス、アプリのロック';
+
+  @override
+  String get blockedUsersTitle => 'ブロック中のユーザー';
+
+  @override
+  String blockedUsersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count人',
+      zero: 'なし',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyDevices => 'デバイス';
+
+  @override
+  String get privacyPasscodeSection => 'パスコードと生体認証';
+
+  @override
+  String get privacyPasscodeNote =>
+      '生体認証に失敗した場合は、端末のパスコードで解除できます。ChatiX 専用のパスコードはありません。';
+
+  @override
+  String get blockedUsersEmptyTitle => 'ブロック中のユーザーはいません';
+
+  @override
+  String get blockedUsersEmptyMessage =>
+      'プロフィール、チャットのメニュー、または連絡先の長押しからブロックできます。';
+
+  @override
+  String get blockedUsersNote =>
+      'サーバーはまだブロックを適用していないため、ブロックした相手もメッセージを送れます。ChatiX は通知を表示せず、未読数にも含めません。';
+
+  @override
+  String get blockedUsersLoadFailed => 'ブロックリストを読み込めませんでした';
+
+  @override
+  String get blockedUsersLoadMoreFailed => '続きを読み込めませんでした';
 }

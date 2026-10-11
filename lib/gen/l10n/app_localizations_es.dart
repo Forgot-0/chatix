@@ -3756,4 +3756,97 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get contactsEditShort => 'Editar';
+
+  @override
+  String get blockUserAction => 'Bloquear';
+
+  @override
+  String get unblockUserAction => 'Desbloquear';
+
+  @override
+  String blockUserTitle(String name) {
+    return '¿Bloquear a $name?';
+  }
+
+  @override
+  String get blockUserMessage =>
+      'Dejarás de recibir sus notificaciones y su chat no contará en los no leídos. Por ahora aún podrá escribirte: el servidor todavía no rechaza sus mensajes, así que los verás al abrir el chat.';
+
+  @override
+  String get blockUserConfirm => 'Bloquear';
+
+  @override
+  String blockUserDone(String name) {
+    return 'Bloqueo activado: $name';
+  }
+
+  @override
+  String unblockUserDone(String name) {
+    return 'Bloqueo quitado: $name';
+  }
+
+  @override
+  String get blockUserFailed => 'No se pudo bloquear. Inténtalo de nuevo.';
+
+  @override
+  String get unblockUserFailed => 'No se pudo desbloquear. Inténtalo de nuevo.';
+
+  @override
+  String get blockErrorSelf => 'No es posible bloquear tu propia cuenta';
+
+  @override
+  String get blockedChatNotice => 'Has bloqueado a este usuario';
+
+  @override
+  String get chatBlockedLabel => 'Usuario bloqueado';
+
+  @override
+  String get privacySettingsTitle => 'Privacidad';
+
+  @override
+  String get privacySettingsHint =>
+      'Bloqueados, dispositivos, bloqueo de la app';
+
+  @override
+  String get blockedUsersTitle => 'Usuarios bloqueados';
+
+  @override
+  String blockedUsersCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count personas',
+      one: '1 persona',
+      zero: 'Nadie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyDevices => 'Dispositivos';
+
+  @override
+  String get privacyPasscodeSection => 'Código y biometría';
+
+  @override
+  String get privacyPasscodeNote =>
+      'Si el escaneo falla, el sistema ofrece el código del dispositivo. ChatiX no tiene un código propio.';
+
+  @override
+  String get blockedUsersEmptyTitle => 'No has bloqueado a nadie';
+
+  @override
+  String get blockedUsersEmptyMessage =>
+      'Puedes bloquear desde el perfil, desde el menú del chat o manteniendo pulsado un contacto.';
+
+  @override
+  String get blockedUsersNote =>
+      'El servidor aún no aplica el bloqueo: las personas bloqueadas todavía pueden escribirte. ChatiX oculta sus notificaciones y no cuenta sus chats en los no leídos.';
+
+  @override
+  String get blockedUsersLoadFailed =>
+      'No se pudo cargar la lista de bloqueados';
+
+  @override
+  String get blockedUsersLoadMoreFailed => 'No se pudieron cargar más';
 }

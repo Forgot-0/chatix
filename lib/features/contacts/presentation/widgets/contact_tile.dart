@@ -10,6 +10,7 @@ import 'package:chatix/core/ui/widgets/app_swipe_actions.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
 import 'package:chatix/features/contacts/domain/entities/contact.dart';
 import 'package:chatix/features/contacts/domain/entities/contact_search.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/features/contacts/presentation/providers/contacts_lifecycle_provider.dart';
 import 'package:chatix/features/contacts/presentation/utils/contact_labels.dart';
 import 'package:chatix/features/contacts/presentation/widgets/contact_actions.dart';
@@ -68,7 +69,11 @@ class _ContactTileState extends ConsumerState<ContactTile> {
       ContactActions.run(context, ref, widget.contact, action);
 
   Future<void> _openSheet() async {
-    final action = await ContactActions.showSheet(context, widget.contact);
+    final action = await ContactActions.showSheet(
+      context,
+      widget.contact,
+      isBlocked: ref.read(isUserBlockedProvider(widget.contact.userId)),
+    );
     if (action != null && mounted) _run(action);
   }
 
@@ -77,6 +82,7 @@ class _ContactTileState extends ConsumerState<ContactTile> {
       context,
       widget.contact,
       position,
+      isBlocked: ref.read(isUserBlockedProvider(widget.contact.userId)),
     );
     if (action != null && mounted) _run(action);
   }
@@ -88,7 +94,7 @@ class _ContactTileState extends ConsumerState<ContactTile> {
     final isOnline = ref.watch(contactOnlineProvider(contact.userId));
     final name = contactNameOf(contact, l10n);
 
-    final row = _PersonRow(
+    final row = PersonRow(
       avatar: contactAvatar(
         contact.profile,
         userId: contact.userId,
@@ -100,8 +106,8 @@ class _ContactTileState extends ConsumerState<ContactTile> {
       query: widget.query,
       isMutual: contact.isMutual,
       subtitle: isOnline == true
-          ? _Subtitle.online(l10n.contactsOnline)
-          : _Subtitle.handle(contact.username),
+          ? PersonRowSubtitle.online(l10n.contactsOnline)
+          : PersonRowSubtitle.handle(contact.username),
       onTap: () => context.push(ProfileDetailRoute(contact.userId).location),
       onLongPress: _openSheet,
       onSecondaryTap: _openMenu,
@@ -138,13 +144,13 @@ class PersonResultTile extends ConsumerWidget {
     final name = contactProfileNameOf(profile, l10n);
     final displayName = profile?.displayName?.trim() ?? '';
 
-    return _PersonRow(
+    return PersonRow(
       avatar: contactAvatar(profile, userId: hit.userId, name: name),
       name: name,
       query: ContactSearchQuery.stripAt(query),
       isMutual: false,
       // The handle is the title already when there is no name.
-      subtitle: _Subtitle.handle(
+      subtitle: PersonRowSubtitle.handle(
         displayName.isEmpty ? null : profile?.username,
       ),
       onTap: () => context.push(ProfileDetailRoute(hit.userId).location),
@@ -155,28 +161,34 @@ class PersonResultTile extends ConsumerWidget {
   }
 }
 
-/// The second line: "online" in the accent, or the handle, or nothing.
-class _Subtitle {
-  const _Subtitle._(this.text, {required this.isAccent});
+/// The second line of a [PersonRow]: "online" in the accent, or the
+/// handle, or nothing.
+class PersonRowSubtitle {
+  const PersonRowSubtitle._(this.text, {required this.isAccent});
 
-  factory _Subtitle.online(String label) => _Subtitle._(label, isAccent: true);
+  factory PersonRowSubtitle.online(String label) =>
+      PersonRowSubtitle._(label, isAccent: true);
 
-  static _Subtitle? handle(String? username) {
+  static PersonRowSubtitle? handle(String? username) {
     final value = username?.trim();
     if (value == null || value.isEmpty) return null;
-    return _Subtitle._('@$value', isAccent: false);
+    return PersonRowSubtitle._('@$value', isAccent: false);
   }
 
   final String text;
   final bool isAccent;
 }
 
-class _PersonRow extends StatelessWidget {
-  const _PersonRow({
+/// A person in a list of people: face, name, the line under it and a
+/// button at the end — the contacts tab's row, shared with the block list
+/// so the two look like the same app.
+class PersonRow extends StatelessWidget {
+  const PersonRow({
+    super.key,
     required this.avatar,
     required this.name,
-    required this.query,
-    required this.isMutual,
+    this.query = '',
+    this.isMutual = false,
     required this.subtitle,
     required this.onTap,
     this.onLongPress,
@@ -188,7 +200,7 @@ class _PersonRow extends StatelessWidget {
   final String name;
   final String query;
   final bool isMutual;
-  final _Subtitle? subtitle;
+  final PersonRowSubtitle? subtitle;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final ValueChanged<Offset>? onSecondaryTap;

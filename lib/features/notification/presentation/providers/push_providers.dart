@@ -10,6 +10,7 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/chat_rest_data_source.dart';
+import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/features/notification/data/background_notification_handler.dart';
 import 'package:chatix/features/notification/data/datasources/notification_avatar_cache.dart';
 import 'package:chatix/features/notification/data/notification_action_executor.dart';
@@ -151,6 +152,9 @@ final foregroundPushProvider = Provider<void>((ref) {
         .present(
           message,
           preferences: ref.read(notificationPreferencesProvider),
+          // The server still sends pushes from blocked people (api-docs
+          // §4.13, "этап 2"); they stop here.
+          blocked: ref.read(blockedSendersProvider),
           copy: await loadPushCopy(),
         );
 

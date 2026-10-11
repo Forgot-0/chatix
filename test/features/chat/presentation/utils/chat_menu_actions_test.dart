@@ -51,6 +51,37 @@ void main() {
   ];
 
   group('a direct chat', () {
+    test('offers to block the other person, above the ways out', () {
+      expect(
+        chatMenuActionsFor(
+          chat(ChatType.direct),
+          member(ChatRole.direct),
+          peerBlocked: false,
+        ),
+        [...everyday, ChatMenuAction.block, ChatMenuAction.leave],
+      );
+      expect(ChatMenuAction.block.isDestructive, isTrue);
+    });
+
+    test('offers to unblock them once they are', () {
+      expect(
+        chatMenuActionsFor(
+          chat(ChatType.direct),
+          member(ChatRole.direct),
+          peerBlocked: true,
+        ),
+        [...everyday, ChatMenuAction.unblock, ChatMenuAction.leave],
+      );
+      expect(ChatMenuAction.unblock.isDestructive, isFalse);
+    });
+
+    test('says nothing about blocking when the person is not known', () {
+      expect(
+        chatMenuActionsFor(chat(ChatType.direct), member(ChatRole.direct)),
+        isNot(contains(ChatMenuAction.block)),
+      );
+    });
+
     test('the side that did not create it can leave it', () {
       expect(
         chatMenuActionsFor(chat(ChatType.direct), member(ChatRole.direct)),
@@ -161,8 +192,9 @@ void main() {
     ]);
   });
 
-  test('only leaving and deleting count as destructive', () {
+  test('only blocking, leaving and deleting count as destructive', () {
     expect(ChatMenuAction.values.where((action) => action.isDestructive), [
+      ChatMenuAction.block,
       ChatMenuAction.leave,
       ChatMenuAction.delete,
     ]);
@@ -196,5 +228,16 @@ void main() {
         isFalse,
       );
     });
+  });
+
+  test('a group never offers blocking, whatever is passed', () {
+    expect(
+      chatMenuActionsFor(
+        chat(ChatType.group),
+        member(ChatRole.member),
+        peerBlocked: false,
+      ),
+      isNot(contains(ChatMenuAction.block)),
+    );
   });
 }

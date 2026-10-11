@@ -40,13 +40,21 @@ class NotificationDisplayDecision extends Equatable {
 class ResolveNotificationDisplayUseCase {
   const ResolveNotificationDisplayUseCase();
 
+  /// [fromBlockedSender] wins over everything, mentions included: the
+  /// reader blocked this person. Until chats refuse such messages on the
+  /// server ("этап 2", api-docs §4.13) this is where a block takes effect.
   NotificationDisplayDecision execute({
     required NotificationPreferences preferences,
     String? chatId,
     bool isMention = false,
     bool isSystem = false,
+    bool fromBlockedSender = false,
     DateTime? now,
   }) {
+    if (fromBlockedSender && !isSystem) {
+      return const NotificationDisplayDecision.suppressed();
+    }
+
     if (!isSystem) {
       switch (preferences.profileFor(chatId)) {
         case ChatNotificationProfile.off:
