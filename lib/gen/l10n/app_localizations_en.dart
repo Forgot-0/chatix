@@ -3463,4 +3463,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mediaPreviewCompressing => 'Compressing';
+
+  @override
+  String get mediaViewerShowInChat => 'Show in chat';
+
+  @override
+  String get mediaViewerCaptionMore => 'More';
+
+  @override
+  String get mediaViewerCaptionLess => 'Less';
+
+  @override
+  String get mediaViewerPrevious => 'Previous';
+
+  @override
+  String get mediaViewerNext => 'Next';
+
+  @override
+  String get mediaViewerVideoUnplayable => 'This video can’t be played here';
+
+  @override
+  String get mediaViewerOpenExternally => 'Open in another app';
+
+  @override
+  String mediaViewerDeleteAlbum(int count) {
+    return 'The whole message is deleted for everyone, with all $count attachments in it.';
+  }
+
+  @override
+  String get videoPlay => 'Play';
+
+  @override
+  String get videoPause => 'Pause';
+
+  @override
+  String get videoMute => 'Mute';
+
+  @override
+  String get videoUnmute => 'Unmute';
+
+  @override
+  String get videoVolume => 'Volume';
+
+  @override
+  String get videoSeek => 'Playback position';
 }

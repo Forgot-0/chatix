@@ -5,9 +5,12 @@ import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/video_poster_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/album_mosaic.dart';
 import 'package:chatix/features/chat/presentation/widgets/attachment_preview.dart';
+import 'package:chatix/features/chat/presentation/widgets/video_poster_view.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// The Hero tag shared by an attachment's tile in the feed and its page in
@@ -19,9 +22,17 @@ String attachmentHeroTag(String attachmentId) => 'attachment-$attachmentId';
 ///
 /// The fraction is the mosaic's own corner as a share of a tile's shortest
 /// side — small, because a tile is much bigger than its 4 px radius.
+///
+/// Cross-faded: the tile's picture is already decoded and the viewer's,
+/// drawn at screen size, usually is not yet. Without the tile underneath, the
+/// first frames of the flight would be the viewer's loading placeholder —
+/// a grey box where the photo was. Both ends fill their box the same way
+/// ([BoxFit.cover], the viewer's box having the picture's own shape), so
+/// the two line up for the whole flight.
 final HeroFlightShuttleBuilder attachmentHeroFlight = AppHeroFlight.corners(
   fromFactor: 0.03,
   toFactor: 0,
+  crossFade: true,
 );
 
 /// The photos and videos of one message, as a mosaic.
@@ -131,7 +142,7 @@ class _AlbumTile extends StatelessWidget {
     }
 
     final content = attachment.attachmentType == AttachmentType.video
-        ? _VideoTile(attachment: attachment)
+        ? _VideoTile(attachment: attachment, messageId: messageId)
         : DecoratedBox(
             // A ground under the photo, so a tile is a tile from the first
             // frame — a file still being decoded would otherwise leave a
@@ -180,57 +191,63 @@ class _AlbumTile extends StatelessWidget {
   }
 }
 
-/// A video in an album: no frame to show (the API stores no poster), so a
-/// dark tile with the play affordance and, when the server has measured it,
-/// how long it runs.
-class _VideoTile extends StatelessWidget {
-  const _VideoTile({required this.attachment});
+/// A video in an album: its poster — the first frame, made on this device,
+/// since the API keeps none (`VideoPoster`) — with a play badge and, when
+/// the server has measured it, how long it runs. Until there is a poster it
+/// is the dark tile it always was.
+class _VideoTile extends ConsumerWidget {
+  const _VideoTile({required this.attachment, required this.messageId});
 
   final AttachmentEntity attachment;
+  final String messageId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final seconds = attachment.durationSeconds;
-
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppPalette.videoGroundTop, AppPalette.videoGroundBottom],
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          const Center(
-            child: Icon(
-              Icons.play_circle_outline_rounded,
-              color: AppPalette.onMediaScrim,
-              size: 40,
-            ),
+    final hasPoster =
+        ref.watch(
+          videoPosterProvider(
+            attachmentFileKey(attachment, messageId: messageId),
           ),
-          if (seconds != null && seconds > 0)
-            Positioned(
-              left: 6,
-              bottom: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppPalette.mediaScrim,
-                  borderRadius: BorderRadius.circular(AppRadii.sm),
+        ) !=
+        null;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        VideoPosterView(attachment: attachment, messageId: messageId),
+        Center(
+          // The badge's plate is for a picture; the bare ground keeps the
+          // outline it always had.
+          child: hasPoster
+              ? const VideoPlayBadge()
+              : const Icon(
+                  Icons.play_circle_outline_rounded,
+                  color: AppPalette.onMediaScrim,
+                  size: 40,
                 ),
-                child: Text(
-                  formatMediaDuration(Duration(seconds: seconds)),
-                  style: const TextStyle(
-                    color: AppPalette.onMediaScrim,
-                    fontSize: 11,
-                  ),
+        ),
+        if (seconds != null && seconds > 0)
+          Positioned(
+            left: ChatLayout.mediaMetaInset,
+            bottom: ChatLayout.mediaMetaInset,
+            child: Container(
+              padding: ChatLayout.mediaMetaPadding,
+              decoration: BoxDecoration(
+                color: AppPalette.mediaScrim,
+                borderRadius: BorderRadius.circular(AppRadii.sm),
+              ),
+              child: Text(
+                formatMediaDuration(Duration(seconds: seconds)),
+                style: const TextStyle(
+                  color: AppPalette.onMediaScrim,
+                  fontSize: 11,
+                  fontFeatures: AppTypography.tabularFigures,
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:chatix/features/chat/data/datasources/photo_compressor.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/presentation/providers/local_media_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/video_poster_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -459,6 +460,78 @@ void main() {
           await screenMatchesGolden(
             tester,
             'media_preview_compressing_${window.name}_${theme.key}',
+            customPump: (tester) => tester.pump(),
+          );
+        });
+
+        testGoldens('a video with its poster, ${window.name}, ${theme.key}', (
+          tester,
+        ) async {
+          final clip = TestPhotos.write(
+            dir,
+            name: 'clip',
+            width: 160,
+            height: 90,
+            palette: 3,
+          );
+          final poster = TestPhotos.write(
+            dir,
+            name: 'clip-poster',
+            width: 160,
+            height: 90,
+            palette: 2,
+          );
+          final uploads = [
+            album.first,
+            AttachmentUploadRequestEntity(
+              filename: 'VID_0001.mp4',
+              mimeType: 'video/mp4',
+              fileSize: 8400000,
+              filePath: clip.path,
+            ),
+          ];
+          final ratios = {album.first.filePath: 1.5, clip.path: 16 / 9};
+
+          await tester.pumpWidgetBuilder(
+            ProviderScope(
+              overrides: [
+                localMediaRatioProvider.overrideWith(
+                  (ref, key) async => ratios[key.path],
+                ),
+                photoCompressorProvider.overrideWithValue(
+                  FakePhotoCompressor(),
+                ),
+                // Taken from the picked file before anything is uploaded.
+                localVideoPosterProvider.overrideWith(
+                  (ref, path) async => path == clip.path ? poster : null,
+                ),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: chatGoldenTheme(dark: theme.value),
+                locale: const Locale('ru'),
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: PaneFrame(
+                  window: window,
+                  child: MediaPreviewScreen(
+                    chatId: 'a3f1c2d4-0000-4000-8000-000000000001',
+                    uploads: uploads,
+                    initialCaption: 'Волны на закате',
+                  ),
+                ),
+              ),
+            ),
+            wrapper: (child) => child,
+            surfaceSize: window.size,
+          );
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          await tester.pumpAndSettle();
+          await loadPictures(tester);
+
+          await screenMatchesGolden(
+            tester,
+            'media_preview_video_${window.name}_${theme.key}',
             customPump: (tester) => tester.pump(),
           );
         });

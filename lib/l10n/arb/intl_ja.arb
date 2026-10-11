@@ -1263,5 +1263,19 @@
   "mediaPreviewCompressHint": "長辺 {size} px まで、位置情報なし",
   "mediaPreviewCompressOffHint": "撮影したまま送信されます（位置情報などを含む）",
   "mediaPreviewSendAsFile": "ファイルとして送信",
-  "mediaPreviewCompressing": "圧縮中"
+  "mediaPreviewCompressing": "圧縮中",
+  "mediaViewerShowInChat": "チャットで表示",
+  "mediaViewerCaptionMore": "もっと見る",
+  "mediaViewerCaptionLess": "閉じる",
+  "mediaViewerPrevious": "前へ",
+  "mediaViewerNext": "次へ",
+  "mediaViewerVideoUnplayable": "この動画はここでは再生できません",
+  "mediaViewerOpenExternally": "他のアプリで開く",
+  "mediaViewerDeleteAlbum": "メッセージ全体が添付ファイル（{count}件）ごと全員から削除されます。",
+  "videoPlay": "再生",
+  "videoPause": "一時停止",
+  "videoMute": "消音",
+  "videoUnmute": "消音を解除",
+  "videoVolume": "音量",
+  "videoSeek": "再生位置"
 }

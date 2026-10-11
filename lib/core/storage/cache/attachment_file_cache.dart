@@ -82,9 +82,26 @@ class AttachmentFileCache {
 
   /// The cached file for [s3Key], or null when it has never been downloaded
   /// or has since been evicted.
-  Future<File?> find(String s3Key) async {
+  Future<File?> find(String s3Key) => _find(fileNameFor(s3Key), s3Key);
+
+  /// Writes [bytes] under [s3Key] and answers with the file they landed in.
+  Future<File> store(String s3Key, List<int> bytes) =>
+      _store(fileNameFor(s3Key), bytes);
+
+  /// The poster made for the video under [key], or null when none has been
+  /// made yet or it has since been evicted.
+  ///
+  /// [key] is normally the video's `s3_key`; see [posterFileNameFor].
+  Future<File?> findPoster(String key) => _find(posterFileNameFor(key), key);
+
+  /// Writes a poster's JPEG [bytes] under [key], beside the video it was
+  /// taken from.
+  Future<File> storePoster(String key, List<int> bytes) =>
+      _store(posterFileNameFor(key), bytes);
+
+  Future<File?> _find(String name, String key) async {
     try {
-      final file = await _fileFor(s3Key);
+      final file = await _fileNamed(name);
       if (!file.existsSync()) return null;
 
       // Touch it so a file that is still being looked at outlives one that
@@ -92,14 +109,13 @@ class AttachmentFileCache {
       await _touch(file);
       return file;
     } on FileSystemException catch (error) {
-      Logger.warning('Attachment cache: could not read $s3Key ($error)');
+      Logger.warning('Attachment cache: could not read $key ($error)');
       return null;
     }
   }
 
-  /// Writes [bytes] under [s3Key] and answers with the file they landed in.
-  Future<File> store(String s3Key, List<int> bytes) async {
-    final file = await _fileFor(s3Key);
+  Future<File> _store(String name, List<int> bytes) async {
+    final file = await _fileNamed(name);
 
     // Written beside the target and renamed, so a download interrupted
     // halfway cannot leave a truncated file that later reads as a hit.
@@ -132,9 +148,9 @@ class AttachmentFileCache {
     }
   }
 
-  Future<File> _fileFor(String s3Key) async {
+  Future<File> _fileNamed(String name) async {
     final directory = await this.directory();
-    return File('${directory.path}/${fileNameFor(s3Key)}');
+    return File('${directory.path}/$name');
   }
 
   /// The on-disk name for an object key.
@@ -144,7 +160,7 @@ class AttachmentFileCache {
   /// The extension is carried over unhashed so the platform can still tell
   /// what the file is when it is handed to a viewer or saved.
   static String fileNameFor(String s3Key) {
-    final digest = _fnv1a64(s3Key).toRadixString(16).padLeft(16, '0');
+    final digest = _digestOf(s3Key);
 
     final name = s3Key.split('/').last;
     final dot = name.lastIndexOf('.');
@@ -158,6 +174,22 @@ class AttachmentFileCache {
 
     return '$digest.$extension';
   }
+
+  /// The on-disk name of the poster for the video under [key].
+  ///
+  /// The same hash as the video's own [fileNameFor], so the two sit side by
+  /// side and the poster is found from the `s3_key` alone, never from the
+  /// link it was downloaded through. The suffix is fixed: whatever the
+  /// video's container, a poster is always a JPEG — and the extra dot means
+  /// it can never be mistaken for a cached video, whose name has one.
+  static String posterFileNameFor(String key) =>
+      '${_digestOf(key)}$posterSuffix';
+
+  /// What every poster's file name ends in.
+  static const String posterSuffix = '.poster.jpg';
+
+  static String _digestOf(String key) =>
+      _fnv1a64(key).toRadixString(16).padLeft(16, '0');
 
   /// FNV-1a, 64-bit, over the key's UTF-16 code units.
   ///

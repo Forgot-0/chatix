@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/network/transfer_cancellation.dart';
+import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/features/chat/data/datasources/video_poster_store.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/video_poster.dart';
 import 'package:chatix/features/chat/domain/usecases/upload_chat_attachment_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 
@@ -74,6 +79,18 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
         .read(uploadChatAttachmentUseCaseProvider)
         .validate(uploads);
 
+    // A video's poster is taken from the file on this device while it is
+    // still here to take it from — the server never makes one.
+    if (failure == null) {
+      _withPosters((posters) {
+        for (final upload in uploads) {
+          if (VideoPoster.isFor(upload)) {
+            unawaited(posters.forLocal(upload.filePath!));
+          }
+        }
+      }, when: uploads.any(VideoPoster.isFor));
+    }
+
     state = AsyncValue.data(
       ChatAttachmentState(
         selected: failure == null ? uploads : const [],
@@ -139,10 +156,52 @@ class ChatAttachmentController extends AsyncNotifier<ChatAttachmentState> {
       );
       state = AsyncValue.data(next);
 
+      if (event.getRight().toNullable()?.stage ==
+          ChatAttachmentUploadStage.done) {
+        _fileVideoPosters(start.selected, next.uploadTokens);
+      }
+
       if (next.failure != null) break;
     }
 
     if (identical(_transfer, transfer)) _transfer = null;
+  }
+
+  /// Hands each uploaded video's poster on to the slot it went out in, so
+  /// the message's tile shows it as soon as the message arrives. Tokens come
+  /// back in selection order (api-docs §5.5).
+  void _fileVideoPosters(
+    List<AttachmentUploadRequestEntity> uploads,
+    List<String> tokens,
+  ) {
+    if (tokens.length != uploads.length) return;
+
+    _withPosters((posters) {
+      for (var i = 0; i < uploads.length; i++) {
+        final upload = uploads[i];
+        if (!VideoPoster.isFor(upload)) continue;
+
+        unawaited(
+          posters.adoptUpload(path: upload.filePath!, uploadToken: tokens[i]),
+        );
+      }
+    }, when: uploads.any(VideoPoster.isFor));
+  }
+
+  /// Runs [action] on the poster store — only [when] there is a video to
+  /// make a poster for, and never at the cost of the attachment itself: a
+  /// store that cannot be built is a missing poster, not a failed send.
+  void _withPosters(
+    void Function(VideoPosterStore posters) action, {
+    required bool when,
+  }) {
+    if (!when) return;
+
+    try {
+      action(ref.read(videoPosterStoreProvider));
+    } on Object catch (error) {
+      Logger.warning('Attachments: no video posters this time ($error)');
+    }
   }
 
   /// Stops an upload in flight and empties the tray.

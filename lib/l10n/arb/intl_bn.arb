@@ -1263,5 +1263,19 @@
   "mediaPreviewCompressHint": "লম্বা দিকে সর্বোচ্চ {size} px, অবস্থান ছাড়া",
   "mediaPreviewCompressOffHint": "যেমন তোলা তেমনই যাবে — অবস্থান ও অন্যান্য তথ্যসহ",
   "mediaPreviewSendAsFile": "ফাইল হিসেবে পাঠান",
-  "mediaPreviewCompressing": "সংকুচিত হচ্ছে"
+  "mediaPreviewCompressing": "সংকুচিত হচ্ছে",
+  "mediaViewerShowInChat": "চ্যাটে দেখান",
+  "mediaViewerCaptionMore": "আরও",
+  "mediaViewerCaptionLess": "কম দেখান",
+  "mediaViewerPrevious": "আগেরটি",
+  "mediaViewerNext": "পরেরটি",
+  "mediaViewerVideoUnplayable": "এই ভিডিওটি এখানে চালানো যাচ্ছে না",
+  "mediaViewerOpenExternally": "অন্য অ্যাপে খুলুন",
+  "mediaViewerDeleteAlbum": "পুরো বার্তাটি সবার জন্য মুছে যাবে — এর সব সংযুক্তিসহ ({count})।",
+  "videoPlay": "চালান",
+  "videoPause": "বিরতি",
+  "videoMute": "শব্দ বন্ধ করুন",
+  "videoUnmute": "শব্দ চালু করুন",
+  "videoVolume": "ভলিউম",
+  "videoSeek": "চালানোর অবস্থান"
 }

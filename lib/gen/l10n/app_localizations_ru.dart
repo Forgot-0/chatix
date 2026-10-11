@@ -3512,4 +3512,48 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mediaPreviewCompressing => 'Сжатие';
+
+  @override
+  String get mediaViewerShowInChat => 'Показать в чате';
+
+  @override
+  String get mediaViewerCaptionMore => 'Ещё';
+
+  @override
+  String get mediaViewerCaptionLess => 'Свернуть';
+
+  @override
+  String get mediaViewerPrevious => 'Предыдущее';
+
+  @override
+  String get mediaViewerNext => 'Следующее';
+
+  @override
+  String get mediaViewerVideoUnplayable => 'Это видео не воспроизводится здесь';
+
+  @override
+  String get mediaViewerOpenExternally => 'Открыть в другом приложении';
+
+  @override
+  String mediaViewerDeleteAlbum(int count) {
+    return 'Сообщение удалится у всех целиком — вместе со всеми вложениями ($count).';
+  }
+
+  @override
+  String get videoPlay => 'Воспроизвести';
+
+  @override
+  String get videoPause => 'Пауза';
+
+  @override
+  String get videoMute => 'Выключить звук';
+
+  @override
+  String get videoUnmute => 'Включить звук';
+
+  @override
+  String get videoVolume => 'Громкость';
+
+  @override
+  String get videoSeek => 'Позиция воспроизведения';
 }

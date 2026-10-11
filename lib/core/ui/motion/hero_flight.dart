@@ -24,6 +24,19 @@ abstract final class AppHeroFlight {
   /// A shuttle that lerps the corner radius from [fromFactor] at the source
   /// to [toFactor] at the destination.
   ///
+  /// "Source" and "destination" are the push's: on the way back the same
+  /// pair flies the other way, from [toFactor] to [fromFactor], so a photo
+  /// that unrounded as it opened rounds again as it lands.
+  ///
+  /// With [crossFade], the source's picture stays under the destination's
+  /// and the destination's fades in over the flight. A destination still
+  /// decoding its full-size frame — a photo opened into a viewer — would
+  /// otherwise fly as its loading placeholder and only then turn into the
+  /// picture it left from; with the source underneath, the picture is there
+  /// for the whole flight. Both children are drawn into the same box, so it
+  /// only suits a pair that fills it the same way ([BoxFit.cover] at both
+  /// ends).
+  ///
   /// Pass it to both [Hero]s of a pair: the framework prefers the
   /// destination's builder on a push and the source's on a pop, so a pair
   /// that only names it on one end flies differently in the two directions.
@@ -31,6 +44,7 @@ abstract final class AppHeroFlight {
     required double fromFactor,
     required double toFactor,
     Clip clipBehavior = Clip.antiAlias,
+    bool crossFade = false,
   }) {
     return (
       BuildContext flightContext,
@@ -39,26 +53,36 @@ abstract final class AppHeroFlight {
       BuildContext fromHeroContext,
       BuildContext toHeroContext,
     ) {
-      // The child that will be left on screen when the flight ends — the
-      // same choice the framework's own default shuttle makes.
-      final hero =
-          (direction == HeroFlightDirection.push
-                  ? toHeroContext.widget
-                  : fromHeroContext.widget)
-              as Hero;
+      final isPush = direction == HeroFlightDirection.push;
+
+      // The push's two ends, whichever way this flight is going: on a pop
+      // the framework calls the destination "from".
+      final source =
+          (isPush ? fromHeroContext.widget : toHeroContext.widget) as Hero;
+      final destination =
+          (isPush ? toHeroContext.widget : fromHeroContext.widget) as Hero;
 
       return AnimatedBuilder(
         animation: animation,
         builder: (context, _) {
-          // `animation` always runs 0 → 1 over the flight; on a pop the
-          // flight is going the other way, so the factors are read in
-          // reverse.
-          final t = AppMotion.curve.transform(
-            direction == HeroFlightDirection.push
-                ? animation.value
-                : 1 - animation.value,
-          );
+          // `animation` is the pushed route's own: 0 with the route away and
+          // 1 with it in place. It runs forward on a push and backward on a
+          // pop, so the same value means the same point on the way in either
+          // direction — reading it in reverse on a pop would hand a
+          // full-screen picture the source's corners the moment it starts
+          // back, and land it square.
+          final t = AppMotion.curve.transform(animation.value);
           final factor = fromFactor + (toFactor - fromFactor) * t;
+
+          final child = crossFade
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    source.child,
+                    Opacity(opacity: t, child: destination.child),
+                  ],
+                )
+              : destination.child;
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -68,7 +92,7 @@ abstract final class AppHeroFlight {
               return ClipRRect(
                 clipBehavior: clipBehavior,
                 borderRadius: BorderRadius.circular(radius),
-                child: hero.child,
+                child: child,
               );
             },
           );

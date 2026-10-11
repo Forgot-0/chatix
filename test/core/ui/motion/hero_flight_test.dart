@@ -106,6 +106,118 @@ void main() {
     // only way a circle stays round while it grows.
     expect(mid.radius.topLeft.x, closeTo(mid.box.shortestSide / 2, 0.01));
   });
+
+  /// Pushes, lets the flight land, then pops and reads the clip [at] into
+  /// the way back.
+  Future<({BorderRadius radius, Size box, ClipRRect clip})> clipDuringPop(
+    WidgetTester tester, {
+    required HeroFlightShuttleBuilder shuttle,
+    required Duration at,
+  }) async {
+    final navigator = GlobalKey<NavigatorState>();
+
+    Widget thing(double side, Color color) => SizedBox(
+      width: side,
+      height: side,
+      child: Hero(
+        tag: 'thing',
+        flightShuttleBuilder: shuttle,
+        child: ColoredBox(color: color),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigator,
+        home: Scaffold(body: Center(child: thing(40, const Color(0xFF112233)))),
+      ),
+    );
+
+    unawaited(
+      navigator.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) => Scaffold(body: thing(200, const Color(0xFF445566))),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    navigator.currentState!.pop();
+    await tester.pump();
+    await tester.pump(at);
+
+    final finder = find.byType(ClipRRect).first;
+    final clip = tester.widget<ClipRRect>(finder);
+
+    return (
+      radius: clip.borderRadius as BorderRadius,
+      box: tester.getSize(finder),
+      clip: clip,
+    );
+  }
+
+  testWidgets('on the way back the corners return the way they came: square '
+      'as it leaves the viewer, round as it lands', (tester) async {
+    final shuttle = AppHeroFlight.corners(fromFactor: 0.5, toFactor: 0);
+
+    final leaving = await clipDuringPop(
+      tester,
+      shuttle: shuttle,
+      at: const Duration(milliseconds: 16),
+    );
+    await tester.pumpAndSettle();
+
+    final landing = await clipDuringPop(
+      tester,
+      shuttle: shuttle,
+      at: const Duration(milliseconds: 290),
+    );
+    await tester.pumpAndSettle();
+
+    // Leaving the big end, it still has that end's square corners — not the
+    // small end's circle stuck onto a full-size box.
+    expect(leaving.radius.topLeft.x / leaving.box.shortestSide, lessThan(0.05));
+    expect(
+      landing.radius.topLeft.x / landing.box.shortestSide,
+      greaterThan(0.3),
+    );
+  });
+
+  testWidgets('a cross-fading flight keeps the source under the destination', (
+    tester,
+  ) async {
+    final shuttle = AppHeroFlight.corners(
+      fromFactor: 0.03,
+      toFactor: 0,
+      crossFade: true,
+    );
+
+    final mid = await clipDuringPop(
+      tester,
+      shuttle: shuttle,
+      at: const Duration(milliseconds: 150),
+    );
+
+    final colors = find
+        .descendant(
+          of: find.byWidget(mid.clip),
+          matching: find.byType(ColoredBox),
+        )
+        .evaluate()
+        .map((element) => (element.widget as ColoredBox).color)
+        .toList();
+
+    // The small end's picture underneath, the big end's fading over it.
+    expect(colors, [const Color(0xFF112233), const Color(0xFF445566)]);
+    expect(
+      find.descendant(
+        of: find.byWidget(mid.clip),
+        matching: find.byType(Opacity),
+      ),
+      findsOneWidget,
+    );
+    await tester.pumpAndSettle();
+  });
 }
 
 /// A push we deliberately do not await: the flight is what is under test.

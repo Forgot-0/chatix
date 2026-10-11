@@ -10,20 +10,26 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// So the dialog says what will happen rather than presenting a choice the
 /// server does not have.
 class MessageDeleteDialog extends StatelessWidget {
-  const MessageDeleteDialog({super.key, required this.count});
+  const MessageDeleteDialog({super.key, required this.count, this.detail});
 
   /// How many messages the answer applies to.
   final int count;
+
+  /// Said instead of the usual "for everyone" line, when there is more to
+  /// say — the media viewer deleting one photo of an album, which takes the
+  /// whole message with it.
+  final String? detail;
 
   /// Asks, and answers true only for an explicit yes — dismissing the dialog
   /// is a no.
   static Future<bool> confirm(
     BuildContext context, {
     required int count,
+    String? detail,
   }) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => MessageDeleteDialog(count: count),
+      builder: (_) => MessageDeleteDialog(count: count, detail: detail),
     );
     return confirmed ?? false;
   }
@@ -43,7 +49,10 @@ class MessageDeleteDialog extends StatelessWidget {
         single ? l10n.deleteMessageTitle : l10n.deleteMessagesTitle(count),
       ),
       content: Text(
-        single ? l10n.deleteMessageForEveryone : l10n.deleteMessagesForEveryone,
+        detail ??
+            (single
+                ? l10n.deleteMessageForEveryone
+                : l10n.deleteMessagesForEveryone),
       ),
       actions: [
         TextButton(

@@ -973,5 +973,19 @@
   "mediaPreviewCompressHint": "До {size} px по длинной стороне, без геометки",
   "mediaPreviewCompressOffHint": "Уйдут как есть — с геометкой и другими данными снимка",
   "mediaPreviewSendAsFile": "Отправить как файл",
-  "mediaPreviewCompressing": "Сжатие"
+  "mediaPreviewCompressing": "Сжатие",
+  "mediaViewerShowInChat": "Показать в чате",
+  "mediaViewerCaptionMore": "Ещё",
+  "mediaViewerCaptionLess": "Свернуть",
+  "mediaViewerPrevious": "Предыдущее",
+  "mediaViewerNext": "Следующее",
+  "mediaViewerVideoUnplayable": "Это видео не воспроизводится здесь",
+  "mediaViewerOpenExternally": "Открыть в другом приложении",
+  "mediaViewerDeleteAlbum": "Сообщение удалится у всех целиком — вместе со всеми вложениями ({count}).",
+  "videoPlay": "Воспроизвести",
+  "videoPause": "Пауза",
+  "videoMute": "Выключить звук",
+  "videoUnmute": "Включить звук",
+  "videoVolume": "Громкость",
+  "videoSeek": "Позиция воспроизведения"
 }

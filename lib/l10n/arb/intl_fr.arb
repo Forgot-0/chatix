@@ -1263,5 +1263,19 @@
   "mediaPreviewCompressHint": "Jusqu'à {size} px sur le grand côté, sans position",
   "mediaPreviewCompressOffHint": "Envoyées telles quelles, avec la position et les autres données",
   "mediaPreviewSendAsFile": "Envoyer en tant que fichier",
-  "mediaPreviewCompressing": "Compression"
+  "mediaPreviewCompressing": "Compression",
+  "mediaViewerShowInChat": "Afficher dans le chat",
+  "mediaViewerCaptionMore": "Plus",
+  "mediaViewerCaptionLess": "Moins",
+  "mediaViewerPrevious": "Précédent",
+  "mediaViewerNext": "Suivant",
+  "mediaViewerVideoUnplayable": "Cette vidéo ne peut pas être lue ici",
+  "mediaViewerOpenExternally": "Ouvrir dans une autre app",
+  "mediaViewerDeleteAlbum": "Le message entier sera supprimé pour tous, avec toutes ses pièces jointes ({count}).",
+  "videoPlay": "Lire",
+  "videoPause": "Pause",
+  "videoMute": "Couper le son",
+  "videoUnmute": "Activer le son",
+  "videoVolume": "Volume",
+  "videoSeek": "Position de lecture"
 }

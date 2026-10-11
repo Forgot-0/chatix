@@ -13,10 +13,12 @@ import 'package:chatix/features/chat/domain/entities/chat_attachment_limits.dart
 import 'package:chatix/features/chat/domain/entities/message_limits.dart';
 import 'package:chatix/features/chat/domain/entities/photo_compression.dart';
 import 'package:chatix/features/chat/presentation/providers/local_media_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/video_poster_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/album_layout.dart';
 import 'package:chatix/features/chat/presentation/utils/media_compression_queue.dart';
 import 'package:chatix/features/chat/presentation/widgets/album_mosaic.dart';
 import 'package:chatix/features/chat/presentation/widgets/composer/composer_field.dart';
+import 'package:chatix/features/chat/presentation/widgets/video_poster_view.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// What the preview screen hands back: what is actually being sent, and the
@@ -449,7 +451,7 @@ class _PreviewAlbum extends ConsumerWidget {
   }
 }
 
-class _PreviewTile extends StatelessWidget {
+class _PreviewTile extends ConsumerWidget {
   const _PreviewTile({
     required this.upload,
     required this.progress,
@@ -465,11 +467,18 @@ class _PreviewTile extends StatelessWidget {
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final isVideo =
         ChatAttachmentLimits.typeOf(upload.mimeType) == AttachmentType.video;
     final progress = this.progress;
+
+    // A video's first frame, taken from the file right here — the same
+    // poster its message will show once it is sent.
+    final path = upload.filePath;
+    final poster = isVideo && path != null
+        ? ref.watch(localVideoPosterProvider(path)).value
+        : null;
 
     return Stack(
       fit: StackFit.expand,
@@ -480,24 +489,20 @@ class _PreviewTile extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
         if (isVideo)
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppPalette.videoGroundTop,
-                  AppPalette.videoGroundBottom,
-                ],
+          Stack(
+            fit: StackFit.expand,
+            children: [
+              VideoPosterImage(file: poster),
+              Center(
+                child: poster == null
+                    ? const Icon(
+                        Icons.movie_creation_outlined,
+                        color: Colors.white70,
+                        size: 32,
+                      )
+                    : const VideoPlayBadge(),
               ),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.movie_creation_outlined,
-                color: Colors.white70,
-                size: 32,
-              ),
-            ),
+            ],
           )
         else
           _LocalImage(upload: upload),

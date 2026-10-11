@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/settings/media_settings.dart';
 import 'package:chatix/core/storage/cache/attachment_file_cache.dart';
+import 'package:chatix/features/chat/data/datasources/video_poster_store.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
+import 'package:chatix/features/chat/domain/entities/video_poster.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 
 /// Everything needed to fetch one attachment: which chat and message it
@@ -23,8 +26,14 @@ typedef AttachmentFileKey = ({
 /// Auto-disposed: the bytes live on disk, so a thumbnail scrolled out of the
 /// feed costs nothing to fetch again, and holding every future alive for the
 /// length of a session would be the only real cost.
+///
+/// A video that comes down here also gets its poster made, in the
+/// background: the file is on disk now, which is all a poster needs (see
+/// [VideoPoster]).
 final attachmentFileProvider = FutureProvider.autoDispose
     .family<File, AttachmentFileKey>((ref, key) async {
+      final posters = ref.read(videoPosterStoreProvider);
+
       final result = await ref
           .read(getAttachmentFileUseCaseProvider)
           .execute(
@@ -33,7 +42,12 @@ final attachmentFileProvider = FutureProvider.autoDispose
             attachment: key.attachment,
           );
 
-      return result.fold((failure) => throw failure, (file) => file);
+      return result.fold((failure) => throw failure, (file) {
+        if (key.attachment.attachmentType == AttachmentType.video) {
+          unawaited(posters.ensure(key.attachment, file));
+        }
+        return file;
+      });
     });
 
 /// The key for [attachmentFileProvider], for callers that only hold the

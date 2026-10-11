@@ -3453,4 +3453,48 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get mediaPreviewCompressing => 'সংকুচিত হচ্ছে';
+
+  @override
+  String get mediaViewerShowInChat => 'চ্যাটে দেখান';
+
+  @override
+  String get mediaViewerCaptionMore => 'আরও';
+
+  @override
+  String get mediaViewerCaptionLess => 'কম দেখান';
+
+  @override
+  String get mediaViewerPrevious => 'আগেরটি';
+
+  @override
+  String get mediaViewerNext => 'পরেরটি';
+
+  @override
+  String get mediaViewerVideoUnplayable => 'এই ভিডিওটি এখানে চালানো যাচ্ছে না';
+
+  @override
+  String get mediaViewerOpenExternally => 'অন্য অ্যাপে খুলুন';
+
+  @override
+  String mediaViewerDeleteAlbum(int count) {
+    return 'পুরো বার্তাটি সবার জন্য মুছে যাবে — এর সব সংযুক্তিসহ ($count)।';
+  }
+
+  @override
+  String get videoPlay => 'চালান';
+
+  @override
+  String get videoPause => 'বিরতি';
+
+  @override
+  String get videoMute => 'শব্দ বন্ধ করুন';
+
+  @override
+  String get videoUnmute => 'শব্দ চালু করুন';
+
+  @override
+  String get videoVolume => 'ভলিউম';
+
+  @override
+  String get videoSeek => 'চালানোর অবস্থান';
 }

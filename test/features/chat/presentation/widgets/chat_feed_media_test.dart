@@ -31,6 +31,7 @@ import 'package:chatix/features/chat/presentation/providers/attachment_file_prov
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/video_poster_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_pending_bubble.dart';
@@ -315,10 +316,14 @@ void main() {
 
   /// The chat screen in [device]'s window: a header, the feed, the
   /// composer — beside a rail and a chat list when the window has two panes.
+  ///
+  /// [posters] are the videos' posters as if already made on this device;
+  /// a video with none keeps its plain dark tile.
   Future<ProviderContainer> pumpScreen(
     WidgetTester tester, {
     required _Device device,
     bool dark = false,
+    Map<String, File> posters = const {},
   }) async {
     when(() => getChat.execute(chatId)).thenAnswer((_) async => Right(chat()));
     when(
@@ -347,6 +352,9 @@ void main() {
         ),
         attachmentFileProvider.overrideWith(
           (ref, key) async => photos[key.attachment.id]!,
+        ),
+        videoPosterProvider.overrideWith(
+          (ref, key) => posters[key.attachment.id],
         ),
       ],
     );
@@ -820,6 +828,43 @@ void main() {
 
         await screenMatchesGolden(tester, 'feed_media_wide_${theme.key}');
       });
+    }
+
+    for (final device in [_Device.phone, _Device.desktop]) {
+      for (final theme in {'light': false, 'dark': true}.entries) {
+        testGoldens('a video with its poster, ${device.name}, ${theme.key}', (
+          tester,
+        ) async {
+          final poster = TestPhotos.write(
+            photosDir,
+            name: 'a5-3-poster',
+            width: 160,
+            height: 90,
+            palette: 2,
+          );
+
+          await pumpScreen(
+            tester,
+            device: device,
+            dark: theme.value,
+            posters: {'a5-3': poster},
+          );
+          await tester.scrollUntilVisible(
+            albumOf('m5'),
+            200,
+            scrollable: find.descendant(
+              of: find.byType(ChatFeed),
+              matching: find.byType(Scrollable),
+            ),
+          );
+          await settle(tester);
+
+          await screenMatchesGolden(
+            tester,
+            'feed_media_video_poster_${device.name}_${theme.key}',
+          );
+        });
+      }
     }
 
     for (final device in [_Device.phone, _Device.desktop]) {

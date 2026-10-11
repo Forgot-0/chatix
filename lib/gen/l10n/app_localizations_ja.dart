@@ -3333,4 +3333,48 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mediaPreviewCompressing => '圧縮中';
+
+  @override
+  String get mediaViewerShowInChat => 'チャットで表示';
+
+  @override
+  String get mediaViewerCaptionMore => 'もっと見る';
+
+  @override
+  String get mediaViewerCaptionLess => '閉じる';
+
+  @override
+  String get mediaViewerPrevious => '前へ';
+
+  @override
+  String get mediaViewerNext => '次へ';
+
+  @override
+  String get mediaViewerVideoUnplayable => 'この動画はここでは再生できません';
+
+  @override
+  String get mediaViewerOpenExternally => '他のアプリで開く';
+
+  @override
+  String mediaViewerDeleteAlbum(int count) {
+    return 'メッセージ全体が添付ファイル（$count件）ごと全員から削除されます。';
+  }
+
+  @override
+  String get videoPlay => '再生';
+
+  @override
+  String get videoPause => '一時停止';
+
+  @override
+  String get videoMute => '消音';
+
+  @override
+  String get videoUnmute => '消音を解除';
+
+  @override
+  String get videoVolume => '音量';
+
+  @override
+  String get videoSeek => '再生位置';
 }

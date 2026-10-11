@@ -69,6 +69,26 @@ abstract final class AppPalette {
   static const Color videoGroundTop = Color(0xFF524B42);
   static const Color videoGroundBottom = Color(0xFF302B24);
 
+  /// The media viewer's ground. Black in both themes, like [mediaScrim]:
+  /// what it frames is a picture, and a picture looks its own colours only
+  /// against black.
+  static const Color viewerGround = Color(0xFF000000);
+
+  /// The shade the viewer's bars sit on, at the screen's edge; it fades to
+  /// [viewerShadeClear] towards the middle, so the bars read over a white
+  /// sky without boxing the picture in.
+  static const Color viewerShade = Color(0xCC000000);
+  static const Color viewerShadeClear = Color(0x00000000);
+
+  /// Secondary and tertiary text on the viewer: the date under the author,
+  /// a video's running time.
+  static const Color onViewerMuted = Color(0xB3FFFFFF);
+  static const Color onViewerFaint = Color(0x8AFFFFFF);
+
+  /// A video's seek track: the whole length, and what has come down so far.
+  static const Color viewerTrack = Color(0x3DFFFFFF);
+  static const Color viewerTrackBuffered = Color(0x66FFFFFF);
+
   /// The eight curated accents offered in appearance settings.
   ///
   /// Eight rather than a free colour wheel, and spaced roughly evenly around
@@ -335,6 +355,11 @@ abstract final class ChatLayout {
   static const double replyThumbnailRadius = AppRadii.xs;
   static const double replyThumbnailInset = 6;
 
+  /// The round badge with a play glyph over a video's poster in the feed,
+  /// and the glyph inside it.
+  static const double videoPlayBadgeSize = 44;
+  static const double videoPlayGlyphSize = 28;
+
   /// The round button a document in a bubble leads with — download, its
   /// progress, then the kind of file — and the glyph inside it.
   static const double documentButtonSize = 44;
@@ -393,6 +418,104 @@ abstract final class ChatLayout {
       _min(feedHeight * mediaHeightFactor, mediaMaxHeight);
 
   static double _min(double a, double b) => a < b ? a : b;
+}
+
+/// The full-screen photo and video viewer.
+abstract final class MediaViewerLayout {
+  /// A double tap zooms to this, centred on where it landed; a second one
+  /// goes back.
+  static const double doubleTapScale = 2.5;
+
+  /// How far a pinch may zoom.
+  static const double maxScale = 5;
+
+  /// Past this scale the picture counts as zoomed: it pans instead of paging
+  /// and cannot be dragged away.
+  static const double zoomedFrom = 1.01;
+
+  /// How far down the viewer has to be dragged before letting go closes
+  /// it…
+  static const double dismissDistance = 120;
+
+  /// …or how fast it has to be flung, from anywhere.
+  static const double dismissVelocity = 700;
+
+  /// The drag over which the conversation comes back into view.
+  static const double fadeDistance = 320;
+
+  /// The faintest the picture gets while dragged: still a picture being
+  /// carried, not a ghost.
+  static const double dragMinOpacity = 0.3;
+
+  /// The bars hide once the drag has gone this share of [fadeDistance].
+  static const double barsHideAt = 0.1;
+
+  /// From this width up the viewer has room for a strip of thumbnails and
+  /// for arrows at its sides — the same line the shell draws between a
+  /// phone and a tablet.
+  static const double wideFrom = 600;
+
+  /// A caption longer than this many lines is folded, with a way to open it.
+  static const int captionFoldedLines = 3;
+
+  /// Past this a caption is a line across a monitor.
+  static const double captionMaxWidth = 640;
+
+  /// The "More" / "Less" under a folded caption: a line's height, flush
+  /// with the caption's edge.
+  static const double captionToggleHeight = 32;
+
+  /// An opened caption scrolls rather than grow past this share of the
+  /// viewer's height: the picture is still what the screen is for.
+  static const double captionOpenMaxHeightFactor = 0.4;
+
+  /// One thumbnail in the strip, the gap between two, and their corners.
+  static const double thumbnailSize = 48;
+  static const double thumbnailGap = AppSpacing.x1;
+  static const double thumbnailRadius = AppRadii.xs;
+
+  /// The ring around the thumbnail of what is open…
+  static const double thumbnailRing = 2;
+
+  /// …and how far the others step back from it.
+  static const double thumbnailIdleOpacity = 0.6;
+
+  /// The strip's own height: a thumbnail and air above and below it.
+  static const double stripHeight = thumbnailSize + AppSpacing.x2 * 2;
+
+  /// The arrows at the sides of a wide viewer.
+  static const double arrowButtonSize = 48;
+  static const double arrowIconSize = 32;
+
+  /// How much mouse-wheel travel turns one page. A notch on most mice is
+  /// 100; a touchpad's trickle has to add up to a deliberate swipe first.
+  static const double wheelStep = 40;
+
+  /// The round play button over a paused video, and its glyph.
+  static const double playButtonSize = 64;
+  static const double playIconSize = 36;
+
+  /// The seek bar: its track, the knob, and the bubble that names the time
+  /// the knob is being dragged to.
+  static const double seekTrackHeight = 3;
+  static const double seekThumbRadius = 7;
+  static const double seekBarHeight = 32;
+  static const double seekBubbleGap = AppSpacing.x1;
+
+  /// The touch halo around the seek knob — and so how far the track is
+  /// inset from either end of the bar.
+  static const double seekOverlayRadius = 14;
+
+  /// A video's controls stop growing here: a seek bar across a whole
+  /// monitor is a long way for the eye from the play button to the time.
+  static const double controlsMaxWidth = 720;
+
+  /// The volume slider beside the mute button on a desktop.
+  static const double volumeSliderWidth = 96;
+
+  /// The spinner shown while a file is still coming down.
+  static const double spinnerSize = 28;
+  static const double spinnerStroke = 2;
 }
 
 /// How wide a page's content grows on a wide pane.

@@ -4345,5 +4345,66 @@
   "mediaPreviewCompressing": "Compressing",
   "@mediaPreviewCompressing": {
     "description": "Accessibility label of the progress ring on a photo that is being compressed"
+  },
+  "mediaViewerShowInChat": "Show in chat",
+  "@mediaViewerShowInChat": {
+    "description": "Media viewer action: close the viewer and scroll the conversation to the message the photo or video came in"
+  },
+  "mediaViewerCaptionMore": "More",
+  "@mediaViewerCaptionMore": {
+    "description": "Opens a long caption folded to a few lines at the bottom of the media viewer"
+  },
+  "mediaViewerCaptionLess": "Less",
+  "@mediaViewerCaptionLess": {
+    "description": "Folds an opened caption in the media viewer back to a few lines"
+  },
+  "mediaViewerPrevious": "Previous",
+  "@mediaViewerPrevious": {
+    "description": "Tooltip of the arrow on the left of a wide media viewer: the previous photo or video"
+  },
+  "mediaViewerNext": "Next",
+  "@mediaViewerNext": {
+    "description": "Tooltip of the arrow on the right of a wide media viewer: the next photo or video"
+  },
+  "mediaViewerVideoUnplayable": "This video can’t be played here",
+  "@mediaViewerVideoUnplayable": {
+    "description": "Shown in the media viewer over a video this device has no player for"
+  },
+  "mediaViewerOpenExternally": "Open in another app",
+  "@mediaViewerOpenExternally": {
+    "description": "Button under an unplayable video in the media viewer: hands the file to the system’s own player"
+  },
+  "mediaViewerDeleteAlbum": "The whole message is deleted for everyone, with all {count} attachments in it.",
+  "@mediaViewerDeleteAlbum": {
+    "description": "Body of the delete question asked from the media viewer when the photo is one of several in its message: the API deletes whole messages only",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoPlay": "Play",
+  "@videoPlay": {
+    "description": "Play button of a video in the media viewer"
+  },
+  "videoPause": "Pause",
+  "@videoPause": {
+    "description": "Pause button of a video in the media viewer"
+  },
+  "videoMute": "Mute",
+  "@videoMute": {
+    "description": "Turns a video’s sound off in the media viewer"
+  },
+  "videoUnmute": "Unmute",
+  "@videoUnmute": {
+    "description": "Turns a muted video’s sound back on in the media viewer"
+  },
+  "videoVolume": "Volume",
+  "@videoVolume": {
+    "description": "Accessibility label of the volume slider of a video in the media viewer"
+  },
+  "videoSeek": "Playback position",
+  "@videoSeek": {
+    "description": "Accessibility label of the seek bar of a video in the media viewer"
   }
 }

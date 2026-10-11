@@ -3515,4 +3515,49 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mediaPreviewCompressing => 'Compression';
+
+  @override
+  String get mediaViewerShowInChat => 'Afficher dans le chat';
+
+  @override
+  String get mediaViewerCaptionMore => 'Plus';
+
+  @override
+  String get mediaViewerCaptionLess => 'Moins';
+
+  @override
+  String get mediaViewerPrevious => 'Précédent';
+
+  @override
+  String get mediaViewerNext => 'Suivant';
+
+  @override
+  String get mediaViewerVideoUnplayable =>
+      'Cette vidéo ne peut pas être lue ici';
+
+  @override
+  String get mediaViewerOpenExternally => 'Ouvrir dans une autre app';
+
+  @override
+  String mediaViewerDeleteAlbum(int count) {
+    return 'Le message entier sera supprimé pour tous, avec toutes ses pièces jointes ($count).';
+  }
+
+  @override
+  String get videoPlay => 'Lire';
+
+  @override
+  String get videoPause => 'Pause';
+
+  @override
+  String get videoMute => 'Couper le son';
+
+  @override
+  String get videoUnmute => 'Activer le son';
+
+  @override
+  String get videoVolume => 'Volume';
+
+  @override
+  String get videoSeek => 'Position de lecture';
 }

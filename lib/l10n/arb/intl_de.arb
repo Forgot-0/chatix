@@ -1263,5 +1263,19 @@
   "mediaPreviewCompressHint": "Bis {size} px an der langen Seite, ohne Standort",
   "mediaPreviewCompressOffHint": "Werden unverändert gesendet – mit Standort und weiteren Fotodaten",
   "mediaPreviewSendAsFile": "Als Datei senden",
-  "mediaPreviewCompressing": "Wird komprimiert"
+  "mediaPreviewCompressing": "Wird komprimiert",
+  "mediaViewerShowInChat": "Im Chat anzeigen",
+  "mediaViewerCaptionMore": "Mehr",
+  "mediaViewerCaptionLess": "Weniger",
+  "mediaViewerPrevious": "Vorheriges",
+  "mediaViewerNext": "Nächstes",
+  "mediaViewerVideoUnplayable": "Dieses Video kann hier nicht abgespielt werden",
+  "mediaViewerOpenExternally": "In anderer App öffnen",
+  "mediaViewerDeleteAlbum": "Die ganze Nachricht wird für alle gelöscht – mit allen Anhängen ({count}).",
+  "videoPlay": "Abspielen",
+  "videoPause": "Pause",
+  "videoMute": "Ton aus",
+  "videoUnmute": "Ton an",
+  "videoVolume": "Lautstärke",
+  "videoSeek": "Wiedergabeposition"
 }

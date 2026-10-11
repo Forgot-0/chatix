@@ -5951,6 +5951,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Compressing'**
   String get mediaPreviewCompressing;
+
+  /// Media viewer action: close the viewer and scroll the conversation to the message the photo or video came in
+  ///
+  /// In en, this message translates to:
+  /// **'Show in chat'**
+  String get mediaViewerShowInChat;
+
+  /// Opens a long caption folded to a few lines at the bottom of the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get mediaViewerCaptionMore;
+
+  /// Folds an opened caption in the media viewer back to a few lines
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get mediaViewerCaptionLess;
+
+  /// Tooltip of the arrow on the left of a wide media viewer: the previous photo or video
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get mediaViewerPrevious;
+
+  /// Tooltip of the arrow on the right of a wide media viewer: the next photo or video
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get mediaViewerNext;
+
+  /// Shown in the media viewer over a video this device has no player for
+  ///
+  /// In en, this message translates to:
+  /// **'This video can’t be played here'**
+  String get mediaViewerVideoUnplayable;
+
+  /// Button under an unplayable video in the media viewer: hands the file to the system’s own player
+  ///
+  /// In en, this message translates to:
+  /// **'Open in another app'**
+  String get mediaViewerOpenExternally;
+
+  /// Body of the delete question asked from the media viewer when the photo is one of several in its message: the API deletes whole messages only
+  ///
+  /// In en, this message translates to:
+  /// **'The whole message is deleted for everyone, with all {count} attachments in it.'**
+  String mediaViewerDeleteAlbum(int count);
+
+  /// Play button of a video in the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get videoPlay;
+
+  /// Pause button of a video in the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get videoPause;
+
+  /// Turns a video’s sound off in the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get videoMute;
+
+  /// Turns a muted video’s sound back on in the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get videoUnmute;
+
+  /// Accessibility label of the volume slider of a video in the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get videoVolume;
+
+  /// Accessibility label of the seek bar of a video in the media viewer
+  ///
+  /// In en, this message translates to:
+  /// **'Playback position'**
+  String get videoSeek;
 }
 
 class _AppLocalizationsDelegate
