@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_upload_stage.dart';
 import 'package:chatix/features/profile/presentation/providers/avatar_upload_provider.dart';
@@ -14,7 +15,9 @@ import 'package:chatix/features/profile/presentation/utils/avatar_image.dart';
 import 'package:chatix/features/profile/presentation/widgets/avatar_cropper.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// The camera button on the corner of one's own avatar.
+/// The camera button on the corner of one's own avatar: a small accent
+/// circle, ringed in the page colour so it sits on the photo rather than
+/// melting into it.
 class AvatarPickerButton extends StatelessWidget {
   const AvatarPickerButton({super.key, required this.profileId});
 
@@ -23,20 +26,33 @@ class AvatarPickerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return AvatarPicker(
       profileId: profileId,
       builder: (context, pick, busy) => IconButton.filled(
         tooltip: l10n.changePhoto,
-        iconSize: 18,
+        iconSize: ProfileLayout.cameraIcon,
         onPressed: pick,
+        style: IconButton.styleFrom(
+          fixedSize: const Size.square(ProfileLayout.cameraBadge),
+          minimumSize: const Size.square(ProfileLayout.cameraBadge),
+          padding: EdgeInsets.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          side: BorderSide(
+            color: scheme.surface,
+            width: ProfileLayout.cameraRing,
+          ),
+        ),
         icon: busy
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
+            ? SizedBox.square(
+                dimension: ProfileLayout.cameraIcon,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: scheme.onPrimary,
+                ),
               )
-            : const Icon(Icons.camera_alt),
+            : const Icon(Icons.photo_camera_outlined),
       ),
     );
   }

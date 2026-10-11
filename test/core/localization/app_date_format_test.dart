@@ -148,10 +148,10 @@ void main() {
   });
 
   group('a birthday', () {
-    test('Russian: day, month and year, no weekday, the age in brackets', () {
+    test('Russian: day and month, no weekday, the age in brackets', () {
       expect(
         ru().birthday(day: 12, month: 4, year: 1990),
-        '12 апреля 1990 (36 лет)',
+        '12 апреля (36 лет)',
       );
     });
 
@@ -159,30 +159,30 @@ void main() {
       // 1, 2–4 and 5+ are three different words ("год", "года", "лет").
       expect(
         ru().birthday(day: 1, month: 1, year: 2025),
-        '1 января 2025 (1 год)',
+        '1 января (1 год)',
       );
       expect(
         ru().birthday(day: 1, month: 1, year: 2023),
-        '1 января 2023 (3 года)',
+        '1 января (3 года)',
       );
       expect(
         ru().birthday(day: 1, month: 1, year: 2005),
-        '1 января 2005 (21 год)',
+        '1 января (21 год)',
       );
       expect(
         ru().birthday(day: 1, month: 1, year: 2014),
-        '1 января 2014 (12 лет)',
+        '1 января (12 лет)',
       );
     });
 
     test('English keeps its own order and says "years old"', () {
       expect(
         en().birthday(day: 12, month: 4, year: 1990),
-        'April 12, 1990 (36 years old)',
+        'April 12 (36 years old)',
       );
       expect(
         en().birthday(day: 1, month: 1, year: 2025),
-        'January 1, 2025 (1 year old)',
+        'January 1 (1 year old)',
       );
     });
 
@@ -194,7 +194,7 @@ void main() {
     });
 
     test('a date in the future is shown, without a negative age', () {
-      expect(ru().birthday(day: 1, month: 1, year: 2030), '1 января 2030');
+      expect(ru().birthday(day: 1, month: 1, year: 2030), '1 января');
     });
 
     test('a year is not counted until its day comes round', () {

@@ -89,26 +89,21 @@ class AppDateFormat {
         : DateFormat(pattern, _tag).format(local);
   }
 
-  /// A birthday as a profile shows it: "April 12, 1990 (36 years old)",
-  /// "12 апреля 1990 (36 лет)".
+  /// A birthday as a profile shows it: "April 12 (36 years old)",
+  /// "12 апреля (36 лет)".
   ///
-  /// No weekday — the day it fell on decades ago tells nobody anything — and
-  /// the age it makes today, which is what a reader actually works out from
-  /// a birth year. Without [year] (not given, or kept private) it is the day
-  /// and month alone, "12 April", and no age.
+  /// The day and month, which is what a birthday is, and the age it makes
+  /// today, which is what a reader would otherwise work out from the year —
+  /// so the year itself is not repeated. No weekday: the day it fell on
+  /// decades ago tells nobody anything. Without [year] (not given, or kept
+  /// private) there is no age to give, and it is "12 April" alone.
   ///
   /// `date_birthday` is a plain `YYYY-MM-DD` (api-docs §4.3), a calendar day
   /// rather than an instant, so nothing here converts between time zones.
   String birthday({required int day, required int month, int? year}) {
-    if (year == null) {
-      return DateFormat.MMMMd(_tag).format(DateTime(2000, month, day));
-    }
-
-    final date = DateTime(year, month, day);
-    final pattern = _dateWithYearPatterns[_language];
-    final formatted = pattern == null
-        ? DateFormat.yMMMMd(_tag).format(date)
-        : DateFormat(pattern, _tag).format(date);
+    // 2000 is a leap year, so 29 February has a day to stand on.
+    final formatted = DateFormat.MMMMd(_tag).format(DateTime(2000, month, day));
+    if (year == null) return formatted;
 
     final age = ageOn(_today, day: day, month: month, year: year);
     // A date in the future is a typo, not a negative age.

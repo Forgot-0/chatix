@@ -1,7 +1,9 @@
+import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -35,6 +37,7 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
     required this.topPadding,
     required this.onBack,
     required this.onAvatarTap,
+    this.subtitleIsAccent = false,
     this.avatarAction,
     this.trailing,
   });
@@ -50,14 +53,21 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
   /// Where the back button ends and the collapsed avatar may start.
   static const double _leadingInset = 52;
 
+  static const double _badge = ProfileLayout.cameraBadge;
+
   final ProfileEntity profile;
 
-  /// The display name, or the best stand-in when there is none.
+  /// The name the reader saved this person under, their display name, or
+  /// the best stand-in when there is neither. The avatar's initial follows
+  /// it, so the face and the name never disagree.
   final String title;
 
-  /// `@username` when it is known, the specialization otherwise — whichever
-  /// identifies the person on one line.
+  /// Presence — "online", "last seen recently" — or nothing at all when
+  /// nothing true can be said.
   final String subtitle;
+
+  /// Draws [subtitle] in the accent: news that the person is here.
+  final bool subtitleIsAccent;
 
   final double topPadding;
   final VoidCallback onBack;
@@ -70,6 +80,9 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
   /// card, because there is no room for it on a toolbar.
   final Widget? avatarAction;
 
+  /// The bar's own action — "Edit" on one's own profile. A word rather than
+  /// a glyph, so the collapsed name stops [ProfileLayout.barTrailingInset]
+  /// short of the edge to leave it room.
   final Widget? trailing;
 
   @override
@@ -172,16 +185,25 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
                   // scaled down from there as the header collapses: shrinking
                   // costs no second decode and never looks soft.
                   fit: BoxFit.contain,
-                  child: ChatAvatar.person(profile, size: ChatAvatarSize.xxl),
+                  child: ChatAvatar.person(
+                    profile,
+                    size: ChatAvatarSize.xxl,
+                    name: title,
+                  ),
                 ),
               ),
             ),
           ),
 
+          // On the rim, down and to the right at 45°: far enough out to
+          // read as a button on the photo, never so low that it reaches the
+          // name.
           if (avatarAction != null && t < 1)
             Positioned(
-              left: avatarLeft + avatar - 18,
-              top: avatarTop + avatar - 18,
+              left: avatarLeft + avatar / 2 * (1 + math.sqrt1_2) - _badge / 2,
+              top: avatarTop + avatar / 2 * (1 + math.sqrt1_2) - _badge / 2,
+              width: _badge,
+              height: _badge,
               child: Opacity(
                 opacity: (1 - t * 2).clamp(0.0, 1.0),
                 child: IgnorePointer(ignoring: t > 0.4, child: avatarAction),
@@ -190,7 +212,11 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
 
           Positioned(
             left: textLeft,
-            right: lerpDouble(16, trailing == null ? 16 : _leadingInset, t)!,
+            right: lerpDouble(
+              16,
+              trailing == null ? 16 : ProfileLayout.barTrailingInset,
+              t,
+            )!,
             top: textTop,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -219,7 +245,9 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: lerpDouble(14, 12, t),
-                        color: scheme.onSurfaceVariant,
+                        color: subtitleIsAccent
+                            ? scheme.primary
+                            : scheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -247,6 +275,7 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
     return oldDelegate.profile != profile ||
         oldDelegate.title != title ||
         oldDelegate.subtitle != subtitle ||
+        oldDelegate.subtitleIsAccent != subtitleIsAccent ||
         oldDelegate.topPadding != topPadding ||
         oldDelegate.trailing != trailing ||
         oldDelegate.avatarAction != avatarAction ||

@@ -1360,5 +1360,17 @@
   "blockedUsersEmptyMessage": "Blockieren geht im Profil, im Menü des Chats oder per langem Tippen auf einen Kontakt.",
   "blockedUsersNote": "Der Server setzt Blockierungen noch nicht durch: Blockierte können dir weiter schreiben. ChatiX blendet ihre Benachrichtigungen aus und zählt ihre Chats nicht zu den ungelesenen.",
   "blockedUsersLoadFailed": "Blockierliste konnte nicht geladen werden",
-  "blockedUsersLoadMoreFailed": "Weitere konnten nicht geladen werden"
+  "blockedUsersLoadMoreFailed": "Weitere konnten nicht geladen werden",
+  "profileActionMute": "Stumm",
+  "profileActionUnmute": "Ton an",
+  "profileActionMore": "Mehr",
+  "profileActionQr": "QR-Code",
+  "profileEditAction": "Bearbeiten",
+  "profileStatusRecently": "kürzlich online",
+  "profileShareContact": "Kontakt teilen",
+  "profileAddToContacts": "Zu Kontakten hinzufügen",
+  "profileUsernameCopied": "Benutzername kopiert",
+  "profileQrHint": "Richte eine Kamera auf den Code, um dieses Profil in ChatiX zu öffnen",
+  "profileCopyLink": "Link kopieren",
+  "profileBlockedNotice": "Du hast diese Person blockiert"
 }

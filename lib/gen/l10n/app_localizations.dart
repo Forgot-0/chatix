@@ -5706,7 +5706,7 @@ abstract class AppLocalizations {
   /// **'Notifications, appearance, privacy'**
   String get settingsRowHint;
 
-  /// Birthday on a profile with the age it makes today. date is the formatted day, month and year
+  /// Birthday on a profile with the age it makes today. date is the formatted day and month: the age stands in for the year
   ///
   /// In en, this message translates to:
   /// **'{date} ({age, plural, one{{age} year old} other{{age} years old}})'**
@@ -6533,6 +6533,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load more'**
   String get blockedUsersLoadMoreFailed;
+
+  /// Round button on a person's profile: silence notifications from your direct chat with them. Short: it sits under an icon
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get profileActionMute;
+
+  /// Round button on a person's profile when their direct chat is silenced: turn notifications back on. Short: it sits under an icon
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get profileActionUnmute;
+
+  /// Round button on a person's profile that opens the rest of the actions: share, contacts, block
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get profileActionMore;
+
+  /// Round button on your own profile, and the tooltip next to a username: show the profile's QR code
+  ///
+  /// In en, this message translates to:
+  /// **'QR code'**
+  String get profileActionQr;
+
+  /// Button in the app bar of your own profile: opens the edit form
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get profileEditAction;
+
+  /// Under a person's name on their profile: they are offline right now. The API has no last-seen time, so it is never more precise than this. Lowercase, like a status line
+  ///
+  /// In en, this message translates to:
+  /// **'last seen recently'**
+  String get profileStatusRecently;
+
+  /// Item of the More menu on a person's profile: share a link to them
+  ///
+  /// In en, this message translates to:
+  /// **'Share contact'**
+  String get profileShareContact;
+
+  /// Item of the More menu on the profile of someone who is not in your contacts
+  ///
+  /// In en, this message translates to:
+  /// **'Add to contacts'**
+  String get profileAddToContacts;
+
+  /// Snackbar after tapping the @username row of a profile
+  ///
+  /// In en, this message translates to:
+  /// **'Username copied'**
+  String get profileUsernameCopied;
+
+  /// Under a profile's QR code: what scanning it does
+  ///
+  /// In en, this message translates to:
+  /// **'Point a camera at the code to open this profile in ChatiX'**
+  String get profileQrHint;
+
+  /// Button under a profile's QR code: copy the profile link
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get profileCopyLink;
+
+  /// Banner on the profile of someone you blocked, next to the Unblock button
+  ///
+  /// In en, this message translates to:
+  /// **'You blocked this user'**
+  String get profileBlockedNotice;
 }
 
 class _AppLocalizationsDelegate

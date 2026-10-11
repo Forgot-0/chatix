@@ -3809,4 +3809,41 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get blockedUsersLoadMoreFailed => 'আরও লোড করা যায়নি';
+
+  @override
+  String get profileActionMute => 'মিউট';
+
+  @override
+  String get profileActionUnmute => 'আনমিউট';
+
+  @override
+  String get profileActionMore => 'আরও';
+
+  @override
+  String get profileActionQr => 'QR কোড';
+
+  @override
+  String get profileEditAction => 'সম্পাদনা';
+
+  @override
+  String get profileStatusRecently => 'সম্প্রতি সক্রিয় ছিলেন';
+
+  @override
+  String get profileShareContact => 'কন্টাক্ট শেয়ার করুন';
+
+  @override
+  String get profileAddToContacts => 'কন্টাক্টে যোগ করুন';
+
+  @override
+  String get profileUsernameCopied => 'ইউজারনেম কপি হয়েছে';
+
+  @override
+  String get profileQrHint =>
+      'ChatiX-এ এই প্রোফাইল খুলতে কোডের দিকে ক্যামেরা ধরুন';
+
+  @override
+  String get profileCopyLink => 'লিংক কপি করুন';
+
+  @override
+  String get profileBlockedNotice => 'আপনি এই ব্যবহারকারীকে ব্লক করেছেন';
 }

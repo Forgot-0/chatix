@@ -175,6 +175,73 @@ class ChatSharedContentSliver extends StatelessWidget {
   }
 }
 
+/// What a shared-content tab is called: its name, and how many it holds
+/// when it holds any.
+String sharedContentTabLabel(
+  AppLocalizations l10n,
+  SharedContentTab tab,
+  int count,
+) {
+  final name = switch (tab) {
+    SharedContentTab.media => l10n.sharedMedia,
+    SharedContentTab.files => l10n.sharedFiles,
+    SharedContentTab.links => l10n.sharedLinks,
+    SharedContentTab.voice => l10n.sharedVoice,
+  };
+  return count == 0 ? name : '$name $count';
+}
+
+/// The four tabs, labelled with what each holds.
+///
+/// Scrollable and from the start edge: "Голосовые 12" does not fit a
+/// quarter of a phone, and four tabs squeezed into equal quarters cut the
+/// last one off rather than let it be reached.
+TabBar sharedContentTabBar(
+  AppLocalizations l10n, {
+  required TabController controller,
+  required ChatSharedContent content,
+}) {
+  return TabBar(
+    controller: controller,
+    isScrollable: true,
+    tabAlignment: TabAlignment.start,
+    tabs: [
+      for (final tab in SharedContentTab.values)
+        Tab(text: sharedContentTabLabel(l10n, tab, content.countOf(tab))),
+    ],
+  );
+}
+
+/// The strip of shared-content tabs, held under the collapsed header while
+/// the page scrolls — on a chat's profile and on a person's alike.
+class SharedContentTabsHeader extends SliverPersistentHeaderDelegate {
+  const SharedContentTabsHeader(this.tabBar);
+
+  final TabBar tabBar;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant SharedContentTabsHeader oldDelegate) =>
+      oldDelegate.tabBar != tabBar;
+}
+
 class _ScopeNote extends StatelessWidget {
   const _ScopeNote();
 

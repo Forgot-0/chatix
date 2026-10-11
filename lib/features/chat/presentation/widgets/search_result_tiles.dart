@@ -12,6 +12,7 @@ import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/presentation/utils/profile_view.dart';
 import 'package:chatix/features/profile/presentation/widgets/user_search_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -116,7 +117,10 @@ class PersonSearchResultTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final specialization = profile.specialization?.trim();
+    // Behind the same switch as on the profile itself.
+    final specialization = ProfileFieldVisibility.workFields
+        ? profile.specialization?.trim()
+        : null;
 
     return ListTile(
       onTap: onTap,

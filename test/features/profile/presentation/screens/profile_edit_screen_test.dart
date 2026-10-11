@@ -55,7 +55,11 @@ void main() {
     ).thenAnswer((_) async => const Right(null));
   });
 
-  Future<void> pump(WidgetTester tester, {ThemeData? theme}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    ThemeData? theme,
+    bool showWorkFields = false,
+  }) async {
     // Pushed onto a route of its own, so there is a back button to press and
     // something to go back to.
     final router = GoRouter(
@@ -65,7 +69,11 @@ void main() {
           path: '/profile',
           builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
           routes: [
-            GoRoute(path: 'edit', builder: (_, _) => const ProfileEditScreen()),
+            GoRoute(
+              path: 'edit',
+              builder: (_, _) =>
+                  ProfileEditScreen(showWorkFields: showWorkFields),
+            ),
           ],
         ),
       ],
@@ -108,9 +116,34 @@ void main() {
     await pump(tester);
 
     expect(find.text('Ivan Petrov'), findsOneWidget);
-    expect(find.text('Backend engineer'), findsOneWidget);
     expect(find.text('Builds unglamorous things.'), findsOneWidget);
+  });
+
+  testWidgets('does not offer the template specialization and skills', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    expect(find.text(l10n.specialization), findsNothing);
+    expect(find.text('Backend engineer'), findsNothing);
+    expect(find.text(l10n.profileSkillsHint), findsNothing);
+    expect(find.text('dart'), findsNothing);
+  });
+
+  testWidgets('one flag brings both back, editable', (tester) async {
+    await pump(tester, showWorkFields: true);
+
+    expect(find.text('Backend engineer'), findsOneWidget);
     expect(find.text('dart'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Backend engineer'),
+      'Platform engineer',
+    );
+    await tester.pumpAndSettle();
+    await save(tester);
+
+    expect(capturedUpdate().specialization, 'Platform engineer');
   });
 
   testWidgets('saving one edit still sends every other field (api-docs §4.4)', (
@@ -129,7 +162,8 @@ void main() {
     final update = capturedUpdate();
 
     // The PUT applies the body verbatim, so anything missing here would be
-    // wiped on the server even though the user never touched it.
+    // wiped on the server even though the user never touched it — the
+    // specialization and skills the form no longer shows included.
     expect(update.displayName, 'Ivan P.');
     expect(update.specialization, 'Backend engineer');
     expect(update.bio, 'Builds unglamorous things.');

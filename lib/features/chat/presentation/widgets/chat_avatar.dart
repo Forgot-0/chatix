@@ -170,10 +170,14 @@ class ChatAvatar extends StatelessWidget {
   /// Coloured by the same id as [ChatAvatar.profile] — `ProfileDTO.id` is
   /// the user id — and initialled by the same rule as `bestName`, so a
   /// person looks the same in their profile, the contacts and a chat.
+  ///
+  /// [name] overrides the initial: the name the reader saved this person
+  /// under, when the page is titled with it.
   factory ChatAvatar.person(
     ProfileEntity profile, {
     Key? key,
     ChatAvatarSize size = ChatAvatarSize.md,
+    String? name,
   }) {
     final displayName = profile.displayName?.trim();
     return ChatAvatar(
@@ -182,9 +186,11 @@ class ChatAvatar extends StatelessWidget {
           ? AvatarSource.variants(profile.avatars)
           : AvatarSource.none,
       userId: profile.id,
-      name: displayName == null || displayName.isEmpty
-          ? profile.username
-          : displayName,
+      name:
+          name ??
+          (displayName == null || displayName.isEmpty
+              ? profile.username
+              : displayName),
       size: size,
     );
   }

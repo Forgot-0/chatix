@@ -1360,5 +1360,17 @@
   "blockedUsersEmptyMessage": "Puedes bloquear desde el perfil, desde el menú del chat o manteniendo pulsado un contacto.",
   "blockedUsersNote": "El servidor aún no aplica el bloqueo: las personas bloqueadas todavía pueden escribirte. ChatiX oculta sus notificaciones y no cuenta sus chats en los no leídos.",
   "blockedUsersLoadFailed": "No se pudo cargar la lista de bloqueados",
-  "blockedUsersLoadMoreFailed": "No se pudieron cargar más"
+  "blockedUsersLoadMoreFailed": "No se pudieron cargar más",
+  "profileActionMute": "Silenciar",
+  "profileActionUnmute": "Activar sonido",
+  "profileActionMore": "Más",
+  "profileActionQr": "Código QR",
+  "profileEditAction": "Editar",
+  "profileStatusRecently": "visto recientemente",
+  "profileShareContact": "Compartir contacto",
+  "profileAddToContacts": "Añadir a contactos",
+  "profileUsernameCopied": "Nombre de usuario copiado",
+  "profileQrHint": "Apunta la cámara al código para abrir este perfil en ChatiX",
+  "profileCopyLink": "Copiar enlace",
+  "profileBlockedNotice": "Has bloqueado a este usuario"
 }

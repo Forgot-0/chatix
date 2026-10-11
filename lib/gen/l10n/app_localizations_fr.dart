@@ -3878,4 +3878,41 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get blockedUsersLoadMoreFailed => 'Impossible d’en charger plus';
+
+  @override
+  String get profileActionMute => 'Muet';
+
+  @override
+  String get profileActionUnmute => 'Réactiver';
+
+  @override
+  String get profileActionMore => 'Plus';
+
+  @override
+  String get profileActionQr => 'Code QR';
+
+  @override
+  String get profileEditAction => 'Modifier';
+
+  @override
+  String get profileStatusRecently => 'vu récemment';
+
+  @override
+  String get profileShareContact => 'Partager le contact';
+
+  @override
+  String get profileAddToContacts => 'Ajouter aux contacts';
+
+  @override
+  String get profileUsernameCopied => 'Nom d\'utilisateur copié';
+
+  @override
+  String get profileQrHint =>
+      'Pointez l\'appareil photo sur le code pour ouvrir ce profil dans ChatiX';
+
+  @override
+  String get profileCopyLink => 'Copier le lien';
+
+  @override
+  String get profileBlockedNotice => 'Vous avez bloqué cet utilisateur';
 }

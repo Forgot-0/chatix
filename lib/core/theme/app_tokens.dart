@@ -89,6 +89,13 @@ abstract final class AppPalette {
   static const Color viewerTrack = Color(0x3DFFFFFF);
   static const Color viewerTrackBuffered = Color(0x66FFFFFF);
 
+  /// A QR code's tile and its modules. The same in both themes: a scanner
+  /// wants dark modules on a light ground, and inverted codes are the ones
+  /// cheap readers miss. The ink is the brand's deep end, dark enough to
+  /// read as black to a camera.
+  static const Color qrGround = Color(0xFFFFFFFF);
+  static const Color qrInk = indigo;
+
   /// The eight curated accents offered in appearance settings.
   ///
   /// Eight rather than a free colour wheel, and spaced roughly evenly around
@@ -528,6 +535,55 @@ abstract final class AppContentWidths {
   /// The photo preview before sending: past this an album is a wall of
   /// pixels and the caption a line across the monitor.
   static const double mediaPreview = 640;
+
+  /// A person's profile: the actions, the facts and the shared media in one
+  /// column. As wide as the contacts list it is usually opened from.
+  static const double profile = 720;
+}
+
+/// The round buttons under a profile's header — write, call, mute, more.
+abstract final class QuickActionSizes {
+  /// The button itself, a circle.
+  static const double button = 52;
+  static const double icon = 24;
+
+  /// The column one action owns, button and word together. The row is
+  /// these columns side by side and centred, so two actions stay a pair
+  /// rather than drifting to the edges of a wide pane.
+  static const double slot = 84;
+
+  /// Between the button and the word under it.
+  static const double labelGap = 6;
+}
+
+/// A person's profile page.
+abstract final class ProfileLayout {
+  /// The camera on the corner of one's own face, and the ring of page
+  /// colour that keeps it from melting into the photo.
+  static const double cameraBadge = 36;
+  static const double cameraIcon = 18;
+  static const double cameraRing = 2;
+
+  /// How far from the right edge the collapsed name stops when the bar
+  /// carries a text button ("Edit", "Bearbeiten") on that side.
+  static const double barTrailingInset = 128;
+
+  /// A row of the facts card: the value, and the word for it under it.
+  static const double infoRowMinHeight = 60;
+  static const double infoLineGap = 2;
+
+  /// The card around the facts, rounded like the rest of the app's cards.
+  static const double cardRadius = AppRadii.lg;
+
+  /// The code a camera reads, and the white tile under it — white in both
+  /// themes, because a scanner wants dark modules on a light ground.
+  static const double qrSize = 220;
+  static const double qrPadding = AppSpacing.x4;
+  static const double qrTileRadius = AppRadii.xl;
+
+  /// How strongly the "you blocked them" note is washed with the danger
+  /// colour over the card it would otherwise be.
+  static const double blockedTint = 0.12;
 }
 
 /// How wide dialogs grow.

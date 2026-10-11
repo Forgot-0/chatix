@@ -3681,4 +3681,40 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get blockedUsersLoadMoreFailed => '続きを読み込めませんでした';
+
+  @override
+  String get profileActionMute => 'ミュート';
+
+  @override
+  String get profileActionUnmute => 'ミュート解除';
+
+  @override
+  String get profileActionMore => 'その他';
+
+  @override
+  String get profileActionQr => 'QRコード';
+
+  @override
+  String get profileEditAction => '編集';
+
+  @override
+  String get profileStatusRecently => '最近オンライン';
+
+  @override
+  String get profileShareContact => '連絡先を共有';
+
+  @override
+  String get profileAddToContacts => '連絡先に追加';
+
+  @override
+  String get profileUsernameCopied => 'ユーザー名をコピーしました';
+
+  @override
+  String get profileQrHint => 'コードにカメラを向けると ChatiX でこのプロフィールが開きます';
+
+  @override
+  String get profileCopyLink => 'リンクをコピー';
+
+  @override
+  String get profileBlockedNotice => 'このユーザーをブロックしています';
 }

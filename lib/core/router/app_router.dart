@@ -209,6 +209,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                               ),
                             ],
                           ),
+                          // A direct chat's info page is the other person's
+                          // profile — the same screen contacts, members and
+                          // mentions open; ChatProfileScreen hands it over.
                           GoRoute(
                             path: ChatInfoRoute.path,
                             name: RouteNames.chatInfo,
@@ -222,6 +225,27 @@ final routerProvider = Provider<GoRouter>((ref) {
                                 ChatProfileScreen(chatId: chatId),
                               );
                             },
+                            routes: [
+                              GoRoute(
+                                path: ChatInfoAvatarRoute.path,
+                                name: RouteNames.chatInfoAvatar,
+                                pageBuilder: (context, state) {
+                                  final profileId = ProfileDetailRoute.idFrom(
+                                    state,
+                                  );
+                                  if (profileId == null) {
+                                    return _push(
+                                      state,
+                                      const _UnknownProfileScreen(),
+                                    );
+                                  }
+                                  return _push(
+                                    state,
+                                    ProfileAvatarScreen(profileId: profileId),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                           GoRoute(
                             path: ChatSettingsRoute.path,

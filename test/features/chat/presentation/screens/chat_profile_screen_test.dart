@@ -23,12 +23,18 @@ import 'package:chatix/features/chat/presentation/providers/chat_providers.dart'
 import 'package:chatix/features/chat/presentation/screens/chat_profile_screen.dart';
 import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
 import 'package:chatix/features/contacts/data/repositories/blocked_users_repository_impl.dart';
+import 'package:chatix/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
 
 import '../../../../helpers/blocked_users_fixtures.dart';
 
 class _MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
+
+class _MockProfileRepository extends Mock implements ProfileRepository {}
 
 class _FakeAuthController extends AuthController {
   @override
@@ -219,11 +225,28 @@ void main() {
     late FakeBlockedUsersRemote blocks;
     late MemoryBlockListLocalStore blockList;
     late _MockGetMembersUseCase getMembers;
+    late _MockProfileRepository profiles;
 
     setUp(() {
       blocks = FakeBlockedUsersRemote();
       blockList = MemoryBlockListLocalStore();
       getMembers = _MockGetMembersUseCase();
+      profiles = _MockProfileRepository();
+      when(() => profiles.getProfile(42)).thenAnswer(
+        (_) async => const Right(
+          ProfileEntity(
+            id: 42,
+            username: 'ada',
+            avatars: {},
+            specialization: null,
+            displayName: 'Ada Lovelace',
+            bio: null,
+            dateBirthday: null,
+            skills: [],
+            contacts: [],
+          ),
+        ),
+      );
       when(
         () => getMembers.execute(
           any(),
@@ -249,6 +272,7 @@ void main() {
       others: const [ada],
       overrides: [
         getMembersUseCaseProvider.overrideWithValue(getMembers),
+        profileRepositoryProvider.overrideWithValue(profiles),
         blockListLocalStoreProvider.overrideWithValue(blockList),
         blockedUsersRepositoryProvider.overrideWith(
           (ref) => BlockedUsersRepositoryImpl(remote: blocks, local: blockList),
@@ -256,12 +280,26 @@ void main() {
       ],
     );
 
+    testWidgets("is the other person's profile, with this chat's media", (
+      tester,
+    ) async {
+      await pumpDirect(tester);
+
+      final profile = tester.widget<ProfileScreen>(find.byType(ProfileScreen));
+      expect(profile.profileId, 42);
+      expect(profile.chatId, chatId);
+      expect(find.text('Ada Lovelace'), findsOneWidget);
+      expect(find.text('@ada'), findsOneWidget);
+      // The group's own page has no business here.
+      expect(find.text(l10n.membersTitle), findsNothing);
+    });
+
     testWidgets('offers to block the person, as their profile does', (
       tester,
     ) async {
       await pumpDirect(tester);
 
-      await tester.ensureVisible(find.text(l10n.blockUserAction));
+      await tester.tap(find.text(l10n.profileActionMore));
       await tester.pumpAndSettle();
       await tester.tap(find.text(l10n.blockUserAction));
       await tester.pumpAndSettle();
@@ -269,7 +307,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(blocks.blocks, [42]);
-      expect(find.text(l10n.unblockUserAction), findsOneWidget);
+      expect(find.text(l10n.profileBlockedNotice), findsOneWidget);
       // Let the snackbar run out.
       await tester.pump(const Duration(seconds: 3));
       await tester.pumpAndSettle();

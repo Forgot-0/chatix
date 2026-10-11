@@ -317,7 +317,9 @@ the clipboard, with the name and handle above it when they are known. Inside
 the app the link routes correctly; outside it, it is a 404.
 
 **What the user loses.** "Share profile" reaches people who already have
-ChatiX and are signed in. Sending one to anybody else does nothing.
+ChatiX and are signed in. Sending one to anybody else does nothing. The
+same holds for the profile's QR code (long press on `@username`, П-11): it
+encodes this link, so a phone camera opens a 404 rather than the person.
 
 **What the backend would need.** The same landing-page work §8 asks for — a
 web page on the origin that renders a public sliver of a profile and deep
@@ -481,3 +483,30 @@ the socket, counted in `unread_count` and pushed like anyone else's.
 blocked sender in groups, and either a `sender_id` in every chat push
 payload or a typed payload. With that in place the client-side filter can
 stay as a belt-and-braces check; nothing else changes.
+
+---
+
+## 17. A person's profile: presence, last seen, shared media (П-11) 🟡
+
+One profile page now serves every way of reaching a person (contacts, a
+direct chat's header, a group's member list, a mention). Three things on it
+are only as good as the API allows.
+
+- **No "last seen".** Presence is a yes/no that ships only with a chat's
+  member list (`?include_presence=true`, §5.3); there is no
+  `last_seen_at` anywhere. The page says "online" when the direct chat's
+  roster says so, "last seen recently" when it says offline, and nothing at
+  all when there is no direct chat to ask — a stranger from a group has no
+  status line. `ProfilePresence` in
+  `features/profile/presentation/utils/profile_view.dart` is the rule.
+- **Shared media only through a direct chat, and only what is cached.**
+  The Media / Files / Links / Voice tabs appear when a 1:1 chat exists and
+  show what this device holds of it (§7 above: no shared-media index).
+  Media shared with the person in groups is not there.
+- **Mute is a setting of the chat.** "Mute" on the profile silences the
+  direct chat (`PATCH /chats/{id}/state/`); without a chat it is greyed out
+  — there is no per-person notification setting to write instead.
+
+**What the backend would need.** A presence read by user id with a
+`last_seen_at` (rounded, with a privacy setting, if wanted) — the same ask as
+§15 — and the shared-media index from §7, ideally filterable by peer.

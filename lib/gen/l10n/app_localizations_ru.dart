@@ -3880,4 +3880,41 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get blockedUsersLoadMoreFailed => 'Не удалось загрузить ещё';
+
+  @override
+  String get profileActionMute => 'Выкл. звук';
+
+  @override
+  String get profileActionUnmute => 'Вкл. звук';
+
+  @override
+  String get profileActionMore => 'Ещё';
+
+  @override
+  String get profileActionQr => 'QR-код';
+
+  @override
+  String get profileEditAction => 'Изменить';
+
+  @override
+  String get profileStatusRecently => 'был(а) недавно';
+
+  @override
+  String get profileShareContact => 'Поделиться контактом';
+
+  @override
+  String get profileAddToContacts => 'Добавить в контакты';
+
+  @override
+  String get profileUsernameCopied => 'Имя пользователя скопировано';
+
+  @override
+  String get profileQrHint =>
+      'Наведите камеру на код, чтобы открыть профиль в ChatiX';
+
+  @override
+  String get profileCopyLink => 'Скопировать ссылку';
+
+  @override
+  String get profileBlockedNotice => 'Вы заблокировали этого пользователя';
 }

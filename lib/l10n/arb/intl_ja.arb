@@ -1360,5 +1360,17 @@
   "blockedUsersEmptyMessage": "プロフィール、チャットのメニュー、または連絡先の長押しからブロックできます。",
   "blockedUsersNote": "サーバーはまだブロックを適用していないため、ブロックした相手もメッセージを送れます。ChatiX は通知を表示せず、未読数にも含めません。",
   "blockedUsersLoadFailed": "ブロックリストを読み込めませんでした",
-  "blockedUsersLoadMoreFailed": "続きを読み込めませんでした"
+  "blockedUsersLoadMoreFailed": "続きを読み込めませんでした",
+  "profileActionMute": "ミュート",
+  "profileActionUnmute": "ミュート解除",
+  "profileActionMore": "その他",
+  "profileActionQr": "QRコード",
+  "profileEditAction": "編集",
+  "profileStatusRecently": "最近オンライン",
+  "profileShareContact": "連絡先を共有",
+  "profileAddToContacts": "連絡先に追加",
+  "profileUsernameCopied": "ユーザー名をコピーしました",
+  "profileQrHint": "コードにカメラを向けると ChatiX でこのプロフィールが開きます",
+  "profileCopyLink": "リンクをコピー",
+  "profileBlockedNotice": "このユーザーをブロックしています"
 }

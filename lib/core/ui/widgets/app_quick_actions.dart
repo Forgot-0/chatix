@@ -1,32 +1,46 @@
 import 'package:flutter/material.dart';
 
-/// One square in a row of quick actions.
+import 'package:chatix/core/theme/app_tokens.dart';
+
+/// One button in a row of quick actions.
 class AppQuickAction {
   const AppQuickAction({
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.anchorKey,
   });
 
   final IconData icon;
   final String label;
 
-  /// Null greys the square out rather than hiding it, so the row keeps its
+  /// Null greys the button out rather than hiding it, so the row keeps its
   /// shape while, say, the thing it acts on is still loading.
   final VoidCallback? onPressed;
+
+  /// Put on the button, so a menu it opens can be anchored to it.
+  final GlobalKey? anchorKey;
 }
 
-/// A handful of equal squares — the two to four things worth doing to
-/// whatever is above them.
+/// A handful of round buttons with a word under each — the two to four
+/// things worth doing to whatever is above them.
 ///
-/// Equal widths rather than intrinsic ones: the row reads as a unit, and a
-/// short label next to a long one would otherwise make the whole thing look
-/// accidental.
+/// The buttons sit on a raised surface with the glyph in the accent, and the
+/// words stay in the text colour: an accent word on a tinted tile read as a
+/// label on a label. Every action gets a column of the same width and the
+/// row is centred, so the row reads as a unit whether it holds two actions
+/// or four, on a phone or across a desktop pane. A pane too narrow for the
+/// columns shares out what it has.
 class AppQuickActionsRow extends StatelessWidget {
   const AppQuickActionsRow({
     super.key,
     required this.actions,
-    this.padding = const EdgeInsets.fromLTRB(12, 4, 12, 12),
+    this.padding = const EdgeInsets.fromLTRB(
+      AppSpacing.x3,
+      AppSpacing.x1,
+      AppSpacing.x3,
+      AppSpacing.x4,
+    ),
   });
 
   final List<AppQuickAction> actions;
@@ -37,12 +51,16 @@ class AppQuickActionsRow extends StatelessWidget {
     return Padding(
       padding: padding,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final action in actions)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _ActionSquare(action: action),
+            // A full slot each, however short the word: the gaps between
+            // buttons stay equal. Flexible lets a narrow pane take some back.
+            Flexible(
+              child: SizedBox(
+                width: QuickActionSizes.slot,
+                child: _ActionButton(key: action.anchorKey, action: action),
               ),
             ),
         ],
@@ -51,48 +69,63 @@ class AppQuickActionsRow extends StatelessWidget {
   }
 }
 
-class _ActionSquare extends StatelessWidget {
-  const _ActionSquare({required this.action});
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({super.key, required this.action});
 
   final AppQuickAction action;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final enabled = action.onPressed != null;
 
-    final foreground = enabled
+    final glyph = enabled
         ? scheme.primary
         : scheme.onSurfaceVariant.withValues(alpha: 0.5);
+    final word = enabled
+        ? scheme.onSurface
+        : scheme.onSurfaceVariant.withValues(alpha: 0.7);
 
-    return Material(
-      color: scheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(14),
-      clipBehavior: Clip.antiAlias,
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: action.label,
+      excludeSemantics: true,
       child: InkWell(
         onTap: action.onPressed,
-        child: Semantics(
-          button: true,
-          enabled: enabled,
-          label: action.label,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(action.icon, size: 22, color: foreground),
-                const SizedBox(height: 6),
-                Text(
-                  action.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelSmall?.copyWith(color: foreground),
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.x1),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox.square(
+                dimension: QuickActionSizes.button,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHigh,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    action.icon,
+                    size: QuickActionSizes.icon,
+                    color: glyph,
+                  ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: QuickActionSizes.labelGap),
+              Text(
+                action.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: word,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),

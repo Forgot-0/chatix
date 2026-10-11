@@ -24,6 +24,7 @@ abstract final class RouteNames {
   static const String chatMembers = 'chatMembers';
   static const String chatInvite = 'chatInvite';
   static const String chatInfo = 'chatInfo';
+  static const String chatInfoAvatar = 'chatInfoAvatar';
   static const String chatSettings = 'chatSettings';
   static const String chatCall = 'chatCall';
   static const String chatMedia = 'chatMedia';
@@ -273,6 +274,19 @@ abstract final class ChatInviteRoute {
 abstract final class ChatInfoRoute {
   static const String path = 'info';
   static String locationOf(String chatId) => '/chats/$chatId/info';
+}
+
+/// `/chats/{chatId}/info/avatar/{profileId}` — the other person's picture,
+/// full screen, from a direct chat's info page.
+///
+/// Under the chat rather than under `/profiles`, so the photo opens and
+/// closes in the chat's own pane and stack: the face in the header flies into
+/// it, and closing it lands back on the profile it came from.
+abstract final class ChatInfoAvatarRoute {
+  static const String path = 'avatar/:${RouteParams.profileId}';
+
+  static String locationOf(String chatId, int profileId) =>
+      '${ChatInfoRoute.locationOf(chatId)}/avatar/$profileId';
 }
 
 /// `/chats/{chatId}/settings` — the form behind `PATCH /chats/{chat_id}/`.

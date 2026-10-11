@@ -4151,7 +4151,7 @@
   },
   "profileBirthdayWithAge": "{date} ({age, plural, one{{age} year old} other{{age} years old}})",
   "@profileBirthdayWithAge": {
-    "description": "Birthday on a profile with the age it makes today. date is the formatted day, month and year",
+    "description": "Birthday on a profile with the age it makes today. date is the formatted day and month: the age stands in for the year",
     "placeholders": {
       "date": {
         "type": "String"
@@ -4830,5 +4830,53 @@
   "blockedUsersLoadMoreFailed": "Could not load more",
   "@blockedUsersLoadMoreFailed": {
     "description": "Blocked users screen: a later page failed"
+  },
+  "profileActionMute": "Mute",
+  "@profileActionMute": {
+    "description": "Round button on a person's profile: silence notifications from your direct chat with them. Short: it sits under an icon"
+  },
+  "profileActionUnmute": "Unmute",
+  "@profileActionUnmute": {
+    "description": "Round button on a person's profile when their direct chat is silenced: turn notifications back on. Short: it sits under an icon"
+  },
+  "profileActionMore": "More",
+  "@profileActionMore": {
+    "description": "Round button on a person's profile that opens the rest of the actions: share, contacts, block"
+  },
+  "profileActionQr": "QR code",
+  "@profileActionQr": {
+    "description": "Round button on your own profile, and the tooltip next to a username: show the profile's QR code"
+  },
+  "profileEditAction": "Edit",
+  "@profileEditAction": {
+    "description": "Button in the app bar of your own profile: opens the edit form"
+  },
+  "profileStatusRecently": "last seen recently",
+  "@profileStatusRecently": {
+    "description": "Under a person's name on their profile: they are offline right now. The API has no last-seen time, so it is never more precise than this. Lowercase, like a status line"
+  },
+  "profileShareContact": "Share contact",
+  "@profileShareContact": {
+    "description": "Item of the More menu on a person's profile: share a link to them"
+  },
+  "profileAddToContacts": "Add to contacts",
+  "@profileAddToContacts": {
+    "description": "Item of the More menu on the profile of someone who is not in your contacts"
+  },
+  "profileUsernameCopied": "Username copied",
+  "@profileUsernameCopied": {
+    "description": "Snackbar after tapping the @username row of a profile"
+  },
+  "profileQrHint": "Point a camera at the code to open this profile in ChatiX",
+  "@profileQrHint": {
+    "description": "Under a profile's QR code: what scanning it does"
+  },
+  "profileCopyLink": "Copy link",
+  "@profileCopyLink": {
+    "description": "Button under a profile's QR code: copy the profile link"
+  },
+  "profileBlockedNotice": "You blocked this user",
+  "@profileBlockedNotice": {
+    "description": "Banner on the profile of someone you blocked, next to the Unblock button"
   }
 }

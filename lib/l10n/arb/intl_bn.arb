@@ -1360,5 +1360,17 @@
   "blockedUsersEmptyMessage": "প্রোফাইল, চ্যাটের মেনু বা কোনো পরিচিতিতে দীর্ঘ চাপ দিয়ে ব্লক করতে পারেন।",
   "blockedUsersNote": "সার্ভার এখনও ব্লক কার্যকর করে না: ব্লক করা ব্যক্তিরা এখনও আপনাকে লিখতে পারেন। ChatiX তাদের বিজ্ঞপ্তি দেখায় না এবং তাদের চ্যাট অপঠিত গণনায় ধরে না।",
   "blockedUsersLoadFailed": "ব্লক তালিকা লোড করা যায়নি",
-  "blockedUsersLoadMoreFailed": "আরও লোড করা যায়নি"
+  "blockedUsersLoadMoreFailed": "আরও লোড করা যায়নি",
+  "profileActionMute": "মিউট",
+  "profileActionUnmute": "আনমিউট",
+  "profileActionMore": "আরও",
+  "profileActionQr": "QR কোড",
+  "profileEditAction": "সম্পাদনা",
+  "profileStatusRecently": "সম্প্রতি সক্রিয় ছিলেন",
+  "profileShareContact": "কন্টাক্ট শেয়ার করুন",
+  "profileAddToContacts": "কন্টাক্টে যোগ করুন",
+  "profileUsernameCopied": "ইউজারনেম কপি হয়েছে",
+  "profileQrHint": "ChatiX-এ এই প্রোফাইল খুলতে কোডের দিকে ক্যামেরা ধরুন",
+  "profileCopyLink": "লিংক কপি করুন",
+  "profileBlockedNotice": "আপনি এই ব্যবহারকারীকে ব্লক করেছেন"
 }

@@ -8,6 +8,7 @@ import 'package:chatix/core/network/request_cancellation.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/presentation/utils/profile_view.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -283,11 +284,13 @@ String profileLabel(ProfileEntity profile) {
 }
 
 /// The handle, unless the row is already titled with it, in which case
-/// whatever else identifies the person.
+/// whatever else identifies the person — the specialization, while the
+/// profile shows one at all ([ProfileFieldVisibility.workFields]).
 String _secondLine(ProfileEntity profile) {
   final name = profile.displayName?.trim();
-  if (name == null || name.isEmpty) return profile.specialization?.trim() ?? '';
-  return '@${profile.username}';
+  if (name != null && name.isNotEmpty) return '@${profile.username}';
+  if (!ProfileFieldVisibility.workFields) return '';
+  return profile.specialization?.trim() ?? '';
 }
 
 class MultiUserSearchField extends StatelessWidget {

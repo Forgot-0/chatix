@@ -28,7 +28,7 @@ import 'package:chatix/features/chat/presentation/widgets/profile/chat_profile_h
 import 'package:chatix/features/chat/presentation/widgets/profile/chat_shared_content_view.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_preferences_provider.dart';
 import 'package:chatix/features/notification/presentation/widgets/chat_notification_profile_sheet.dart';
-import 'package:chatix/features/contacts/presentation/widgets/block_user_tile.dart';
+import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// Everything about one chat on one page: who it is, what it has shared,
@@ -64,15 +64,6 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
       vsync: this,
     );
     _tabController.addListener(_onTabChanged);
-
-    // Presence costs a request per chat, so it is asked for once, here,
-    // and only for the kind of chat that has a single other person in it.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final chat = ref.read(chatDetailProvider(widget.chatId)).value?.chat;
-      if (chat?.type != ChatType.direct) return;
-      ref.read(chatPresenceProvider.notifier).ensureFresh(widget.chatId);
-    });
   }
 
   @override
@@ -120,6 +111,19 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
             body: AppEmptyState(title: l10n.chatLoadFailed),
           );
         }
+
+        // A direct chat's info page is the other person's profile — the
+        // same page their contact, a group's member list and a mention
+        // open, with this chat's media at the foot of it.
+        final peerId = chat.type == ChatType.direct
+            ? chat.peerUserId(
+                ref.watch(authProvider.select((user) => user.value?.id)),
+              )
+            : null;
+        if (peerId != null) {
+          return ProfileScreen(profileId: peerId, chatId: chat.id);
+        }
+
         return Scaffold(body: _profile(l10n, chat, state.me));
       },
     );
@@ -136,7 +140,6 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
 
     final description = chat.description?.trim();
     final title = watchChatTitle(ref, chat, l10n, myUserId: myUserId);
-    final peerId = chat.peerUserId(myUserId);
 
     return CustomScrollView(
       controller: _scrollController,
@@ -185,11 +188,6 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
                 busy: _isLeaving,
                 onLeave: () => _exit(chat, ChatExit.leave),
                 onDelete: () => _exit(chat, ChatExit.delete),
-                // The person on the other side of a direct chat, as on
-                // their own profile.
-                block: peerId == null
-                    ? null
-                    : BlockUserTile(userId: peerId, name: title),
               ),
               const Divider(height: 1),
             ],
@@ -198,13 +196,11 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
 
         SliverPersistentHeader(
           pinned: true,
-          delegate: _TabsHeader(
-            TabBar(
+          delegate: SharedContentTabsHeader(
+            sharedContentTabBar(
+              l10n,
               controller: _tabController,
-              tabs: [
-                for (final tab in SharedContentTab.values)
-                  Tab(text: _tabLabel(l10n, tab, content.countOf(tab))),
-              ],
+              content: content,
             ),
           ),
         ),
@@ -217,16 +213,6 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
         ),
       ],
     );
-  }
-
-  String _tabLabel(AppLocalizations l10n, SharedContentTab tab, int count) {
-    final name = switch (tab) {
-      SharedContentTab.media => l10n.sharedMedia,
-      SharedContentTab.files => l10n.sharedFiles,
-      SharedContentTab.links => l10n.sharedLinks,
-      SharedContentTab.voice => l10n.sharedVoice,
-    };
-    return count == 0 ? name : '$name $count';
   }
 
   /// The line under the name: who is there, or whether they are here.
@@ -256,7 +242,10 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
       ),
       ChatProfileAction(
         icon: Icons.search,
-        label: l10n.searchInChat,
+        // The one word, as in the chat's own menu: the button already sits
+        // on this chat's page, and "Search in this chat" does not fit
+        // under it.
+        label: l10n.chatMenuSearch,
         onPressed: _openSearch,
       ),
       ChatProfileAction(
@@ -528,7 +517,6 @@ class _DangerZone extends StatelessWidget {
     required this.busy,
     required this.onLeave,
     required this.onDelete,
-    this.block,
   });
 
   final ChatEntity chat;
@@ -536,9 +524,6 @@ class _DangerZone extends StatelessWidget {
   final bool busy;
   final VoidCallback onLeave;
   final VoidCallback onDelete;
-
-  /// "Block user" for a direct chat, under the ways out of it.
-  final Widget? block;
 
   @override
   Widget build(BuildContext context) {
@@ -582,7 +567,6 @@ class _DangerZone extends StatelessWidget {
             enabled: !busy,
             onTap: onDelete,
           ),
-        ?block,
       ],
     );
   }
@@ -594,33 +578,4 @@ class _MuteChoice {
   const _MuteChoice(this.option);
 
   final ChatMuteOption? option;
-}
-
-/// Holds the tab strip under the collapsed header while the page scrolls.
-class _TabsHeader extends SliverPersistentHeaderDelegate {
-  const _TabsHeader(this.tabBar);
-
-  final TabBar tabBar;
-
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _TabsHeader oldDelegate) =>
-      oldDelegate.tabBar != tabBar;
 }

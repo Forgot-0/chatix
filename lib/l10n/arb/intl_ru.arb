@@ -1070,5 +1070,17 @@
   "blockedUsersEmptyMessage": "Заблокировать можно в профиле человека, в меню личного чата или долгим нажатием на контакт.",
   "blockedUsersNote": "Сервер пока не запрещает заблокированным писать вам. ChatiX не показывает уведомления от них и не учитывает их чаты в счётчике непрочитанных.",
   "blockedUsersLoadFailed": "Не удалось загрузить список заблокированных",
-  "blockedUsersLoadMoreFailed": "Не удалось загрузить ещё"
+  "blockedUsersLoadMoreFailed": "Не удалось загрузить ещё",
+  "profileActionMute": "Выкл. звук",
+  "profileActionUnmute": "Вкл. звук",
+  "profileActionMore": "Ещё",
+  "profileActionQr": "QR-код",
+  "profileEditAction": "Изменить",
+  "profileStatusRecently": "был(а) недавно",
+  "profileShareContact": "Поделиться контактом",
+  "profileAddToContacts": "Добавить в контакты",
+  "profileUsernameCopied": "Имя пользователя скопировано",
+  "profileQrHint": "Наведите камеру на код, чтобы открыть профиль в ChatiX",
+  "profileCopyLink": "Скопировать ссылку",
+  "profileBlockedNotice": "Вы заблокировали этого пользователя"
 }

@@ -17,6 +17,7 @@ import 'package:chatix/features/profile/presentation/providers/profile_detail_pr
 import 'package:chatix/features/profile/presentation/providers/profile_edit_provider.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_contact_link.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_field_validators.dart';
+import 'package:chatix/features/profile/presentation/utils/profile_view.dart';
 import 'package:chatix/features/profile/presentation/widgets/profile_photo_editor.dart';
 import 'package:chatix/features/profile/presentation/widgets/skills_chips_field.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -27,9 +28,17 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// `PUT /profiles/{id}/` assigns the request body onto the row as it stands,
 /// so a field left out of the request is set to `null` rather than kept
 /// (api-docs §4.4). That is why [_values] builds a complete [ProfileUpdate]
-/// out of the form rather than a diff.
+/// out of the form rather than a diff — and why fields the form does not
+/// show (see [ProfileFieldVisibility.workFields]) are sent back exactly as
+/// the profile held them.
 class ProfileEditScreen extends ConsumerStatefulWidget {
-  const ProfileEditScreen({super.key});
+  const ProfileEditScreen({
+    super.key,
+    this.showWorkFields = ProfileFieldVisibility.workFields,
+  });
+
+  /// Whether "Specialization" and "Skills" are on the form.
+  final bool showWorkFields;
 
   @override
   ConsumerState<ProfileEditScreen> createState() => _ProfileEditScreenState();
@@ -155,17 +164,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ),
               const SizedBox(height: 12),
 
-              FormBuilderTextField(
-                name: _specializationField,
-                initialValue: opened.specialization,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: l10n.specialization,
-                  helperText: l10n.specializationHint,
-                  border: const OutlineInputBorder(),
+              if (widget.showWorkFields) ...[
+                FormBuilderTextField(
+                  name: _specializationField,
+                  initialValue: opened.specialization,
+                  textInputAction: TextInputAction.next,
+                  decoration: InputDecoration(
+                    labelText: l10n.specialization,
+                    helperText: l10n.specializationHint,
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
+              ],
 
               FormBuilderTextField(
                 name: _bioField,
@@ -202,22 +213,24 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
 
-              SkillsChipsField(
-                name: _skillsField,
-                initialValue: opened.skills,
-                validator: ProfileFieldValidators.skills(l10n),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 6, left: 12),
-                child: Text(
-                  l10n.profileSkillsHint,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+              if (widget.showWorkFields) ...[
+                const SizedBox(height: 12),
+                SkillsChipsField(
+                  name: _skillsField,
+                  initialValue: opened.skills,
+                  validator: ProfileFieldValidators.skills(l10n),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 12),
+                  child: Text(
+                    l10n.profileSkillsHint,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
+              ],
 
               const SizedBox(height: 24),
               FilledButton(
@@ -284,16 +297,22 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   ///
   /// Blank text fields become `null` rather than `""`: the server stores
   /// whatever it is given, and an empty string would read as "has a bio" on
-  /// every screen that checks.
+  /// every screen that checks. A field the form does not show is not a
+  /// field the person cleared: it goes back as the profile held it.
   ProfileUpdate _values() {
     final state = _formKey.currentState;
     final values = state?.value ?? const <String, dynamic>{};
+    final opened = _opened ?? const ProfileUpdate();
 
     return ProfileUpdate(
-      specialization: _text(values[_specializationField]),
+      specialization: widget.showWorkFields
+          ? _text(values[_specializationField])
+          : opened.specialization,
       displayName: _text(values[_displayNameField]),
       bio: _text(values[_bioField]),
-      skills: (values[_skillsField] as List?)?.cast<String>() ?? const [],
+      skills: widget.showWorkFields
+          ? (values[_skillsField] as List?)?.cast<String>() ?? const []
+          : opened.skills,
       dateBirthday: values[_birthdayField] as DateTime?,
     );
   }

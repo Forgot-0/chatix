@@ -3822,4 +3822,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockedUsersLoadMoreFailed => 'Could not load more';
+
+  @override
+  String get profileActionMute => 'Mute';
+
+  @override
+  String get profileActionUnmute => 'Unmute';
+
+  @override
+  String get profileActionMore => 'More';
+
+  @override
+  String get profileActionQr => 'QR code';
+
+  @override
+  String get profileEditAction => 'Edit';
+
+  @override
+  String get profileStatusRecently => 'last seen recently';
+
+  @override
+  String get profileShareContact => 'Share contact';
+
+  @override
+  String get profileAddToContacts => 'Add to contacts';
+
+  @override
+  String get profileUsernameCopied => 'Username copied';
+
+  @override
+  String get profileQrHint =>
+      'Point a camera at the code to open this profile in ChatiX';
+
+  @override
+  String get profileCopyLink => 'Copy link';
+
+  @override
+  String get profileBlockedNotice => 'You blocked this user';
 }
