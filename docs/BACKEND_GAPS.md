@@ -408,3 +408,30 @@ backend does not accept photos as files.
 **What the backend would need.** Either accept any allowed media MIME in the
 `file` bucket (the usual meaning of "send uncompressed"), or say in
 api-docs that it does not, and the item can go.
+
+---
+
+## 15. The address book: presence, deletions and other devices (contacts) 🟡
+
+The contacts tab (`/contacts`, api-docs §4.7–4.13) is on the API now. Three
+things it would show cannot be had from it.
+
+- **Presence is per chat, not per person.** "online" ships only with a
+  chat's member list (`?include_presence=true`, §5.3). A contact row says
+  "online" only for someone this account has a direct chat with, and the
+  handle otherwise — never "last seen", which the API does not have.
+- **Deletions do not travel in a delta.** `GET /contacts/?updated_after=`
+  returns changed rows only (§4.8); a contact removed on another device
+  stays here until the next full read — on pull-to-refresh, on a new sign-in
+  and at least every 7 days (`ContactSyncPolicy.fullEvery`).
+- **Nothing pushes book changes.** A rename or a star set on another device
+  shows up at the next sync, not live; the only contacts event on the socket
+  is `contacts_import_completed`.
+
+Import takes email only (§4.11, §0.19); the client reads addresses pasted
+into a dialog and does not read the device's own address book.
+
+**What the backend would need.** A presence read by user id (or presence in
+`ContactProfileDTO`), tombstones in the delta (`deleted: [contact_id]` next
+to `contacts`), and a `contacts_updated` socket event carrying the changed
+`contact_id`s.

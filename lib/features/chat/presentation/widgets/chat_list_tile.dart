@@ -325,7 +325,12 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
                 children: [
                   Expanded(
                     child: Text(
-                      chatTitleOf(chat, l10n, myUserId: myUserId),
+                      chatTitleOf(
+                        chat,
+                        l10n,
+                        myUserId: myUserId,
+                        peerLocalName: readPeerLocalName(ref, chat, myUserId),
+                      ),
                       style: Theme.of(sheetContext).textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -487,7 +492,7 @@ class ChatRowAvatar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final title = chatTitleOf(chat, l10n, myUserId: myUserId);
+    final title = watchChatTitle(ref, chat, l10n, myUserId: myUserId);
 
     if (chat.type != ChatType.direct) {
       // A channel's members are its audience, not its face: the detail
@@ -516,9 +521,10 @@ class ChatRowAvatar extends ConsumerWidget {
           ? AvatarSource.none
           : AvatarSource.url(avatarUrl, cacheKey: peer?.avatarS3Key),
       userId: peer?.userId ?? chat.id.hashCode,
-      // The peer's own profile when the row carries one; the row's title
-      // otherwise, which for a direct chat is that same person's name.
-      name: peer?.bestName ?? title,
+      // The row's title: for a direct chat that is this same person — under
+      // the name the reader gave them, when they gave one, so the initial
+      // matches the name beside it.
+      name: title,
       size: size,
       isOnline: isOnline,
       onlineLabel: l10n.onlineNow,
@@ -548,7 +554,7 @@ class ChatRowAvatar extends ConsumerWidget {
   }
 }
 
-class _TitleLine extends StatelessWidget {
+class _TitleLine extends ConsumerWidget {
   const _TitleLine({
     required this.chat,
     required this.myUserId,
@@ -562,7 +568,7 @@ class _TitleLine extends StatelessWidget {
   final bool isUnread;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -581,7 +587,7 @@ class _TitleLine extends StatelessWidget {
         ],
         Expanded(
           child: Text(
-            chatTitleOf(chat, l10n, myUserId: myUserId),
+            watchChatTitle(ref, chat, l10n, myUserId: myUserId),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleSmall?.copyWith(

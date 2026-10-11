@@ -4406,5 +4406,313 @@
   "videoSeek": "Playback position",
   "@videoSeek": {
     "description": "Accessibility label of the seek bar of a video in the media viewer"
+  },
+  "contactsSearchHint": "Search contacts and people",
+  "@contactsSearchHint": {
+    "description": "Search field of the contacts tab: searches the address book and everybody"
+  },
+  "contactsAddAction": "Add contact",
+  "@contactsAddAction": {
+    "description": "Row and dialog title: add a contact by @username"
+  },
+  "contactsInviteAction": "Invite friends",
+  "@contactsInviteAction": {
+    "description": "Row: share an invitation link with friends"
+  },
+  "contactsImportAction": "Import by email",
+  "@contactsImportAction": {
+    "description": "Row and dialog title: import an address book by email addresses"
+  },
+  "contactsFavorites": "Favorites",
+  "@contactsFavorites": {
+    "description": "Section heading: favourite contacts"
+  },
+  "contactsSectionMine": "My contacts",
+  "@contactsSectionMine": {
+    "description": "Search section heading: matches in the address book"
+  },
+  "contactsSectionGlobal": "Global search",
+  "@contactsSectionGlobal": {
+    "description": "Search section heading: people outside the address book"
+  },
+  "contactsMutual": "Mutual contact",
+  "@contactsMutual": {
+    "description": "Badge next to a name: the contact has added you back"
+  },
+  "contactsOnline": "online",
+  "@contactsOnline": {
+    "description": "Second line of a contact row when the person is online"
+  },
+  "contactsUnknownPerson": "Unknown user",
+  "@contactsUnknownPerson": {
+    "description": "Name of a contact whose profile is gone and who has no local name"
+  },
+  "contactsActionCall": "Call",
+  "@contactsActionCall": {
+    "description": "Contact action: start a call"
+  },
+  "contactsActionFavorite": "Favorite",
+  "@contactsActionFavorite": {
+    "description": "Contact action: add to favourites"
+  },
+  "contactsActionUnfavorite": "Unfavorite",
+  "@contactsActionUnfavorite": {
+    "description": "Contact action: remove from favourites"
+  },
+  "contactsActionRename": "Rename",
+  "@contactsActionRename": {
+    "description": "Contact action: give the contact a local name"
+  },
+  "contactsActionDelete": "Delete",
+  "@contactsActionDelete": {
+    "description": "Contact action: remove from the address book"
+  },
+  "contactsDeleteTitle": "Delete {name} from contacts?",
+  "@contactsDeleteTitle": {
+    "description": "Confirmation title before removing a contact",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contactsDeleteMessage": "Only your address book changes: your chats with them stay.",
+  "@contactsDeleteMessage": {
+    "description": "Confirmation body before removing a contact"
+  },
+  "contactsDeleted": "{name} removed from contacts",
+  "@contactsDeleted": {
+    "description": "Snackbar after removing a contact",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contactsAdded": "{name} added to contacts",
+  "@contactsAdded": {
+    "description": "Snackbar after adding a contact",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "contactsRenameTitle": "Edit name",
+  "@contactsRenameTitle": {
+    "description": "Dialog title and profile action: edit the local name of a contact"
+  },
+  "contactsFirstName": "First name",
+  "@contactsFirstName": {
+    "description": "Field: local first name of a contact"
+  },
+  "contactsLastName": "Last name",
+  "@contactsLastName": {
+    "description": "Field: local last name of a contact"
+  },
+  "contactsRenameHint": "Only you see this name. Leave it empty to use theirs.",
+  "@contactsRenameHint": {
+    "description": "Helper under the local-name fields"
+  },
+  "contactsUsernameLabel": "Username",
+  "@contactsUsernameLabel": {
+    "description": "Field: the @username to add"
+  },
+  "contactsAddExplain": "Enter their exact @username. The name below is optional and only you see it.",
+  "@contactsAddExplain": {
+    "description": "Helper in the add-contact dialog"
+  },
+  "contactsAddSubmit": "Add",
+  "@contactsAddSubmit": {
+    "description": "Button: add the contact"
+  },
+  "contactsUsernameRequired": "Enter a username",
+  "@contactsUsernameRequired": {
+    "description": "Validation: the username field is empty"
+  },
+  "contactsEmptyTitle": "No contacts yet",
+  "@contactsEmptyTitle": {
+    "description": "Empty contacts tab: title"
+  },
+  "contactsEmptyMessage": "Add people by their @username — they will show up here under the names you give them.",
+  "@contactsEmptyMessage": {
+    "description": "Empty contacts tab: explanation"
+  },
+  "contactsEmptyAction": "Find by @username",
+  "@contactsEmptyAction": {
+    "description": "Empty contacts tab: button"
+  },
+  "contactsSearchNothingMine": "No matches among your contacts",
+  "@contactsSearchNothingMine": {
+    "description": "Search: no match in the address book"
+  },
+  "contactsSearchNothingGlobal": "Nobody else found",
+  "@contactsSearchNothingGlobal": {
+    "description": "Search: nobody found outside the address book"
+  },
+  "contactsSearchGlobalHint": "Type at least 2 characters, or @username for an exact handle",
+  "@contactsSearchGlobalHint": {
+    "description": "Search: what to type to search everybody"
+  },
+  "contactsInviteMessage": "I'm on ChatiX — find me as @{username}: {link}",
+  "@contactsInviteMessage": {
+    "description": "Text shared by Invite friends",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "contactsInviteCopied": "Invitation copied — paste it anywhere",
+  "@contactsInviteCopied": {
+    "description": "Snackbar when the invitation was copied instead of shared"
+  },
+  "contactsImportFieldLabel": "Email addresses",
+  "@contactsImportFieldLabel": {
+    "description": "Import dialog: the text field"
+  },
+  "contactsImportFieldHint": "One per line, e.g. Ivan Petrov <ivan@example.com>",
+  "@contactsImportFieldHint": {
+    "description": "Import dialog: placeholder of the text field"
+  },
+  "contactsImportExplain": "Addresses are only compared, never stored. People already here become contacts; the rest are added once they sign up.",
+  "@contactsImportExplain": {
+    "description": "Import dialog: what happens to the addresses"
+  },
+  "contactsImportFound": "{count, plural, =0{No addresses yet} =1{1 address} other{{count} addresses}}",
+  "@contactsImportFound": {
+    "description": "Import dialog: how many addresses were recognised",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsImportSkipped": "{count, plural, =1{1 line has no address} other{{count} lines have no address}}",
+  "@contactsImportSkipped": {
+    "description": "Import dialog: lines without an address",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsImportSubmit": "Import",
+  "@contactsImportSubmit": {
+    "description": "Import dialog: button"
+  },
+  "contactsImportResult": "Found: {matched} · Waiting for sign-up: {pending} · Invalid: {invalid}",
+  "@contactsImportResult": {
+    "description": "Snackbar after a synchronous import",
+    "placeholders": {
+      "matched": {
+        "type": "int"
+      },
+      "pending": {
+        "type": "int"
+      },
+      "invalid": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsImportQueued": "Import accepted ({accepted}). The result will come in shortly.",
+  "@contactsImportQueued": {
+    "description": "Snackbar after a large import was queued",
+    "placeholders": {
+      "accepted": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsImportFinished": "Import finished. Found: {matched} · Waiting for sign-up: {pending}",
+  "@contactsImportFinished": {
+    "description": "Snackbar when the server reports a queued import as finished",
+    "placeholders": {
+      "matched": {
+        "type": "int"
+      },
+      "pending": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsErrorSelf": "That's you — you can't add yourself",
+  "@contactsErrorSelf": {
+    "description": "Error SELF_CONTACT_NOT_ALLOWED"
+  },
+  "contactsErrorBlocked": "This person is blocked. Unblock them first.",
+  "@contactsErrorBlocked": {
+    "description": "Error CONTACT_BLOCKED"
+  },
+  "contactsErrorLimit": "Your contact list is full: {limit} is the most it holds",
+  "@contactsErrorLimit": {
+    "description": "Error CONTACT_LIMIT_EXCEEDED",
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsErrorNotFound": "Nobody has that username",
+  "@contactsErrorNotFound": {
+    "description": "Error NOT_FOUND_CONTACT_TARGET"
+  },
+  "contactsErrorGone": "This person is no longer in your contacts",
+  "@contactsErrorGone": {
+    "description": "Error NOT_FOUND_CONTACT"
+  },
+  "contactsErrorNameTooLong": "A name can be at most {max} characters",
+  "@contactsErrorNameTooLong": {
+    "description": "Error TOO_LONG_CONTACT_NAME",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsErrorQuota": "Today's import limit is used up — try again tomorrow",
+  "@contactsErrorQuota": {
+    "description": "Error IDENTIFIER_QUOTA_EXCEEDED"
+  },
+  "contactsErrorImportBusy": "This import is still in progress",
+  "@contactsErrorImportBusy": {
+    "description": "Error IDEMPOTENCY_CONFLICT on import"
+  },
+  "contactsErrorImportUnavailable": "Import is unavailable right now",
+  "@contactsErrorImportUnavailable": {
+    "description": "Error IDENTIFIER_PEPPER_NOT_CONFIGURED"
+  },
+  "contactsErrorBatch": "Too many addresses at once: up to {limit}",
+  "@contactsErrorBatch": {
+    "description": "Error IMPORT_BATCH_TOO_LARGE",
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "contactsSyncFailed": "Couldn't update contacts",
+  "@contactsSyncFailed": {
+    "description": "Banner when the contact list could not be refreshed"
+  },
+  "contactsRemoveFromContacts": "Remove from contacts",
+  "@contactsRemoveFromContacts": {
+    "description": "Profile action: remove this person from the address book"
+  },
+  "contactsMoreActions": "Contact actions",
+  "@contactsMoreActions": {
+    "description": "Accessibility hint of a contact row: long press for actions"
+  },
+  "contactsAddShort": "Add",
+  "@contactsAddShort": {
+    "description": "Profile quick action, one short word: add this person to contacts"
+  },
+  "contactsEditShort": "Edit",
+  "@contactsEditShort": {
+    "description": "Profile quick action, one short word: edit the local name of this contact"
   }
 }

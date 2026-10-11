@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/theme/app_theme.dart';
+import 'package:chatix/core/storage/key_value_table.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -21,6 +22,9 @@ import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
 import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
+import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
+import 'package:chatix/features/contacts/domain/entities/contact.dart';
+import 'package:chatix/features/contacts/domain/entities/contact_sync.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
@@ -184,9 +188,16 @@ void main() {
     int? peerReadSeq,
     String? draft,
     bool dark = false,
+    List<Contact> contacts = const [],
   }) async {
+    final book = KeyValueContactsLocalStore(MemoryKeyValueTable());
+    if (contacts.isNotEmpty) {
+      await book.save(ContactsSnapshot(ownerId: myUserId, contacts: contacts));
+    }
+
     final container = ProviderContainer(
       overrides: [
+        contactsLocalStoreProvider.overrideWithValue(book),
         chatLocalPrefsStoreProvider.overrideWithValue(store),
         chatOrganizerDataSourceProvider.overrideWithValue(
           InMemoryChatOrganizerDataSource(),
@@ -247,6 +258,74 @@ void main() {
       ),
     );
     expect(find.byType(ChatTypeGlyph), findsNothing);
+  });
+
+  group('the address book', () {
+    Contact ann({String? firstName}) => Contact(
+      ownerId: myUserId,
+      userId: peerId,
+      firstName: firstName,
+      createdAt: DateTime.utc(2026, 1, 1),
+      updatedAt: DateTime.utc(2026, 1, 1),
+      profile: const ContactProfile(
+        id: peerId,
+        username: 'ann',
+        displayName: 'Ann',
+      ),
+    );
+
+    testWidgets('a direct row goes by the name the reader gave the peer', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(
+          type: ChatType.direct,
+          name: null,
+          last: message(content: 'hi'),
+        ),
+        contacts: [ann(firstName: 'Аня с работы')],
+      );
+
+      expect(find.text('Аня с работы'), findsOneWidget);
+      expect(find.text('Ann'), findsNothing);
+      // The face is initialled to match the name beside it.
+      expect(
+        find.descendant(of: find.byType(ChatAvatar), matching: find.text('А')),
+        findsOneWidget,
+      );
+
+      await tester.longPress(find.byType(ChatListTile));
+      await tester.pumpAndSettle();
+      expect(find.text('Аня с работы'), findsNWidgets(2));
+    });
+
+    testWidgets('a contact with no local name keeps their own', (tester) async {
+      await pumpTile(
+        tester,
+        chat(
+          type: ChatType.direct,
+          name: null,
+          last: message(content: 'hi'),
+        ),
+        contacts: [ann()],
+      );
+
+      expect(find.text('Ann'), findsOneWidget);
+    });
+
+    testWidgets('a group keeps its own name whoever is in the book', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(last: message(content: 'hi')),
+        contacts: [ann(firstName: 'Аня')],
+      );
+
+      expect(find.text('Design team'), findsOneWidget);
+      expect(find.text('Аня'), findsNothing);
+    });
   });
 
   testWidgets('a draft replaces the preview and says so', (tester) async {

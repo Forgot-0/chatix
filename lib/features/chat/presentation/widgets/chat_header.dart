@@ -118,7 +118,7 @@ class _ChatHeaderTitleState extends ConsumerState<ChatHeaderTitle> {
       return Text(l10n.chatFallbackTitle, style: theme.textTheme.titleMedium);
     }
 
-    final title = chatTitleOf(current, l10n, myUserId: widget.myUserId);
+    final title = watchChatTitle(ref, current, l10n, myUserId: widget.myUserId);
     final status = ChatHeaderStatus.of(
       current,
       peerOnline: current.type == ChatType.direct

@@ -3507,4 +3507,228 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get videoSeek => 'Playback position';
+
+  @override
+  String get contactsSearchHint => 'Search contacts and people';
+
+  @override
+  String get contactsAddAction => 'Add contact';
+
+  @override
+  String get contactsInviteAction => 'Invite friends';
+
+  @override
+  String get contactsImportAction => 'Import by email';
+
+  @override
+  String get contactsFavorites => 'Favorites';
+
+  @override
+  String get contactsSectionMine => 'My contacts';
+
+  @override
+  String get contactsSectionGlobal => 'Global search';
+
+  @override
+  String get contactsMutual => 'Mutual contact';
+
+  @override
+  String get contactsOnline => 'online';
+
+  @override
+  String get contactsUnknownPerson => 'Unknown user';
+
+  @override
+  String get contactsActionCall => 'Call';
+
+  @override
+  String get contactsActionFavorite => 'Favorite';
+
+  @override
+  String get contactsActionUnfavorite => 'Unfavorite';
+
+  @override
+  String get contactsActionRename => 'Rename';
+
+  @override
+  String get contactsActionDelete => 'Delete';
+
+  @override
+  String contactsDeleteTitle(String name) {
+    return 'Delete $name from contacts?';
+  }
+
+  @override
+  String get contactsDeleteMessage =>
+      'Only your address book changes: your chats with them stay.';
+
+  @override
+  String contactsDeleted(String name) {
+    return '$name removed from contacts';
+  }
+
+  @override
+  String contactsAdded(String name) {
+    return '$name added to contacts';
+  }
+
+  @override
+  String get contactsRenameTitle => 'Edit name';
+
+  @override
+  String get contactsFirstName => 'First name';
+
+  @override
+  String get contactsLastName => 'Last name';
+
+  @override
+  String get contactsRenameHint =>
+      'Only you see this name. Leave it empty to use theirs.';
+
+  @override
+  String get contactsUsernameLabel => 'Username';
+
+  @override
+  String get contactsAddExplain =>
+      'Enter their exact @username. The name below is optional and only you see it.';
+
+  @override
+  String get contactsAddSubmit => 'Add';
+
+  @override
+  String get contactsUsernameRequired => 'Enter a username';
+
+  @override
+  String get contactsEmptyTitle => 'No contacts yet';
+
+  @override
+  String get contactsEmptyMessage =>
+      'Add people by their @username — they will show up here under the names you give them.';
+
+  @override
+  String get contactsEmptyAction => 'Find by @username';
+
+  @override
+  String get contactsSearchNothingMine => 'No matches among your contacts';
+
+  @override
+  String get contactsSearchNothingGlobal => 'Nobody else found';
+
+  @override
+  String get contactsSearchGlobalHint =>
+      'Type at least 2 characters, or @username for an exact handle';
+
+  @override
+  String contactsInviteMessage(String username, String link) {
+    return 'I\'m on ChatiX — find me as @$username: $link';
+  }
+
+  @override
+  String get contactsInviteCopied => 'Invitation copied — paste it anywhere';
+
+  @override
+  String get contactsImportFieldLabel => 'Email addresses';
+
+  @override
+  String get contactsImportFieldHint =>
+      'One per line, e.g. Ivan Petrov <ivan@example.com>';
+
+  @override
+  String get contactsImportExplain =>
+      'Addresses are only compared, never stored. People already here become contacts; the rest are added once they sign up.';
+
+  @override
+  String contactsImportFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count addresses',
+      one: '1 address',
+      zero: 'No addresses yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contactsImportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lines have no address',
+      one: '1 line has no address',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contactsImportSubmit => 'Import';
+
+  @override
+  String contactsImportResult(int matched, int pending, int invalid) {
+    return 'Found: $matched · Waiting for sign-up: $pending · Invalid: $invalid';
+  }
+
+  @override
+  String contactsImportQueued(int accepted) {
+    return 'Import accepted ($accepted). The result will come in shortly.';
+  }
+
+  @override
+  String contactsImportFinished(int matched, int pending) {
+    return 'Import finished. Found: $matched · Waiting for sign-up: $pending';
+  }
+
+  @override
+  String get contactsErrorSelf => 'That\'s you — you can\'t add yourself';
+
+  @override
+  String get contactsErrorBlocked =>
+      'This person is blocked. Unblock them first.';
+
+  @override
+  String contactsErrorLimit(int limit) {
+    return 'Your contact list is full: $limit is the most it holds';
+  }
+
+  @override
+  String get contactsErrorNotFound => 'Nobody has that username';
+
+  @override
+  String get contactsErrorGone => 'This person is no longer in your contacts';
+
+  @override
+  String contactsErrorNameTooLong(int max) {
+    return 'A name can be at most $max characters';
+  }
+
+  @override
+  String get contactsErrorQuota =>
+      'Today\'s import limit is used up — try again tomorrow';
+
+  @override
+  String get contactsErrorImportBusy => 'This import is still in progress';
+
+  @override
+  String get contactsErrorImportUnavailable =>
+      'Import is unavailable right now';
+
+  @override
+  String contactsErrorBatch(int limit) {
+    return 'Too many addresses at once: up to $limit';
+  }
+
+  @override
+  String get contactsSyncFailed => 'Couldn\'t update contacts';
+
+  @override
+  String get contactsRemoveFromContacts => 'Remove from contacts';
+
+  @override
+  String get contactsMoreActions => 'Contact actions';
+
+  @override
+  String get contactsAddShort => 'Add';
+
+  @override
+  String get contactsEditShort => 'Edit';
 }

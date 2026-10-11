@@ -108,7 +108,7 @@ class ForwardTargetDialogState extends ConsumerState<ForwardTargetDialog> {
                           size: ChatAvatarSize.md,
                         ),
                         title: Text(
-                          chatTitleOf(chat, l10n, myUserId: myUserId),
+                          watchChatTitle(ref, chat, l10n, myUserId: myUserId),
                         ),
                         onTap: () => setState(() => _selectedChatId = chat.id),
                       );

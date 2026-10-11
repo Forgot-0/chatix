@@ -3497,4 +3497,226 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get videoSeek => 'চালানোর অবস্থান';
+
+  @override
+  String get contactsSearchHint => 'পরিচিতি ও মানুষ খুঁজুন';
+
+  @override
+  String get contactsAddAction => 'পরিচিতি যোগ করুন';
+
+  @override
+  String get contactsInviteAction => 'বন্ধুদের আমন্ত্রণ জানান';
+
+  @override
+  String get contactsImportAction => 'ইমেইল দিয়ে ইমপোর্ট';
+
+  @override
+  String get contactsFavorites => 'প্রিয়';
+
+  @override
+  String get contactsSectionMine => 'আমার পরিচিতি';
+
+  @override
+  String get contactsSectionGlobal => 'সবার মধ্যে খোঁজ';
+
+  @override
+  String get contactsMutual => 'পারস্পরিক পরিচিতি';
+
+  @override
+  String get contactsOnline => 'অনলাইন';
+
+  @override
+  String get contactsUnknownPerson => 'অজানা ব্যবহারকারী';
+
+  @override
+  String get contactsActionCall => 'কল করুন';
+
+  @override
+  String get contactsActionFavorite => 'প্রিয়তে';
+
+  @override
+  String get contactsActionUnfavorite => 'প্রিয় থেকে সরান';
+
+  @override
+  String get contactsActionRename => 'নাম বদলান';
+
+  @override
+  String get contactsActionDelete => 'মুছুন';
+
+  @override
+  String contactsDeleteTitle(String name) {
+    return '$name-কে পরিচিতি থেকে মুছবেন?';
+  }
+
+  @override
+  String get contactsDeleteMessage =>
+      'শুধু আপনার ঠিকানা বই বদলাবে — চ্যাটগুলো থাকবে।';
+
+  @override
+  String contactsDeleted(String name) {
+    return '$name পরিচিতি থেকে সরানো হয়েছে';
+  }
+
+  @override
+  String contactsAdded(String name) {
+    return '$name পরিচিতিতে যোগ হয়েছে';
+  }
+
+  @override
+  String get contactsRenameTitle => 'নাম সম্পাদনা';
+
+  @override
+  String get contactsFirstName => 'প্রথম নাম';
+
+  @override
+  String get contactsLastName => 'শেষ নাম';
+
+  @override
+  String get contactsRenameHint =>
+      'এই নাম শুধু আপনি দেখবেন। ফাঁকা রাখলে তাঁর নিজের নাম দেখাবে।';
+
+  @override
+  String get contactsUsernameLabel => 'ইউজারনেম';
+
+  @override
+  String get contactsAddExplain =>
+      'সঠিক @ইউজারনেম লিখুন। নিচের নামটি ঐচ্ছিক, শুধু আপনি দেখবেন।';
+
+  @override
+  String get contactsAddSubmit => 'যোগ করুন';
+
+  @override
+  String get contactsUsernameRequired => 'ইউজারনেম লিখুন';
+
+  @override
+  String get contactsEmptyTitle => 'এখনও কোনো পরিচিতি নেই';
+
+  @override
+  String get contactsEmptyMessage =>
+      '@ইউজারনেম দিয়ে মানুষ যোগ করুন — আপনার দেওয়া নামে তাঁরা এখানে দেখাবেন।';
+
+  @override
+  String get contactsEmptyAction => '@ইউজারনেম দিয়ে খুঁজুন';
+
+  @override
+  String get contactsSearchNothingMine => 'আপনার পরিচিতিতে কিছু মেলেনি';
+
+  @override
+  String get contactsSearchNothingGlobal => 'আর কাউকে পাওয়া যায়নি';
+
+  @override
+  String get contactsSearchGlobalHint =>
+      'অন্তত ২টি অক্ষর লিখুন, বা হুবহু খুঁজতে @ইউজারনেম';
+
+  @override
+  String contactsInviteMessage(String username, String link) {
+    return 'আমি ChatiX-এ আছি — আমাকে খুঁজুন @$username: $link';
+  }
+
+  @override
+  String get contactsInviteCopied =>
+      'আমন্ত্রণ কপি হয়েছে — যেকোনো জায়গায় পেস্ট করুন';
+
+  @override
+  String get contactsImportFieldLabel => 'ইমেইল ঠিকানা';
+
+  @override
+  String get contactsImportFieldHint =>
+      'প্রতি লাইনে একটি, যেমন Ivan Petrov <ivan@example.com>';
+
+  @override
+  String get contactsImportExplain =>
+      'ঠিকানা শুধু মেলানো হয়, সংরক্ষণ করা হয় না। যাঁরা আছেন তাঁরা পরিচিতি হবেন; বাকিরা নিবন্ধনের পর যোগ হবেন।';
+
+  @override
+  String contactsImportFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি ঠিকানা',
+      zero: 'এখনও কোনো ঠিকানা নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contactsImportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ঠিকানা ছাড়া লাইন: $count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contactsImportSubmit => 'ইমপোর্ট';
+
+  @override
+  String contactsImportResult(int matched, int pending, int invalid) {
+    return 'পাওয়া গেছে: $matched · নিবন্ধনের অপেক্ষায়: $pending · অবৈধ: $invalid';
+  }
+
+  @override
+  String contactsImportQueued(int accepted) {
+    return 'ইমপোর্ট গৃহীত ($accepted)। ফলাফল শিগগিরই আসবে।';
+  }
+
+  @override
+  String contactsImportFinished(int matched, int pending) {
+    return 'ইমপোর্ট শেষ। পাওয়া গেছে: $matched · নিবন্ধনের অপেক্ষায়: $pending';
+  }
+
+  @override
+  String get contactsErrorSelf => 'এটি আপনি — নিজেকে যোগ করা যায় না';
+
+  @override
+  String get contactsErrorBlocked =>
+      'এই ব্যক্তি ব্লক করা আছেন। আগে আনব্লক করুন।';
+
+  @override
+  String contactsErrorLimit(int limit) {
+    return 'পরিচিতি তালিকা পূর্ণ: সর্বোচ্চ $limit';
+  }
+
+  @override
+  String get contactsErrorNotFound => 'এই ইউজারনেমে কেউ নেই';
+
+  @override
+  String get contactsErrorGone => 'এই ব্যক্তি আর আপনার পরিচিতিতে নেই';
+
+  @override
+  String contactsErrorNameTooLong(int max) {
+    return 'নাম সর্বোচ্চ $max অক্ষরের হতে পারে';
+  }
+
+  @override
+  String get contactsErrorQuota =>
+      'আজকের ইমপোর্ট সীমা শেষ — কাল আবার চেষ্টা করুন';
+
+  @override
+  String get contactsErrorImportBusy => 'এই ইমপোর্ট এখনও চলছে';
+
+  @override
+  String get contactsErrorImportUnavailable => 'এখন ইমপোর্ট করা যাচ্ছে না';
+
+  @override
+  String contactsErrorBatch(int limit) {
+    return 'একবারে অনেক বেশি ঠিকানা: সর্বোচ্চ $limit';
+  }
+
+  @override
+  String get contactsSyncFailed => 'পরিচিতি হালনাগাদ করা যায়নি';
+
+  @override
+  String get contactsRemoveFromContacts => 'পরিচিতি থেকে সরান';
+
+  @override
+  String get contactsMoreActions => 'পরিচিতির অপশন';
+
+  @override
+  String get contactsAddShort => 'যোগ করুন';
+
+  @override
+  String get contactsEditShort => 'সম্পাদনা';
 }

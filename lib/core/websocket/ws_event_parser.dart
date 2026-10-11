@@ -40,6 +40,8 @@ WSEvent parseWsEvent(Map<String, dynamic> raw) {
 
       'attachment_success' => _parseAttachmentSuccess(raw),
 
+      ContactsImportCompleted.wireType => _parseContactsImportCompleted(raw),
+
       _ when WsUnimplementedEvent.types.contains(type) => WsUnimplementedEvent(
         type,
         chatId: _chatIdOf(raw),
@@ -508,6 +510,24 @@ WSEvent _parseAttachmentSuccess(Map<String, dynamic> raw) {
         : const [],
     eventName: _asString(payload['event_name']) ?? _asString(raw['event_name']),
     eventId: _asString(payload['event_id']) ?? _asString(raw['event_id']),
+    ts: _asDate(raw['ts']),
+  );
+}
+
+WSEvent _parseContactsImportCompleted(Map<String, dynamic> raw) {
+  final payload = _payloadOf(raw);
+  final ownerId =
+      _asInt(payload['owner_id']) ?? _asInt(_asString(raw['channel']));
+  if (ownerId == null) {
+    return _unknown(ContactsImportCompleted.wireType, raw, 'no owner_id');
+  }
+
+  return ContactsImportCompleted(
+    ownerId: ownerId,
+    accepted: _asInt(payload['accepted']) ?? 0,
+    matched: _asInt(payload['matched']) ?? 0,
+    pending: _asInt(payload['pending']) ?? 0,
+    invalid: _asInt(payload['invalid']) ?? 0,
     ts: _asDate(raw['ts']),
   );
 }

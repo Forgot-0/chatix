@@ -253,6 +253,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
       case WsErrorNotChatMember():
       case WsAuthInvalid():
       case WsUnimplementedEvent():
+      case ContactsImportCompleted():
       case WsUnknown():
         break;
     }

@@ -3560,4 +3560,230 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get videoSeek => 'Position de lecture';
+
+  @override
+  String get contactsSearchHint => 'Rechercher des contacts et des personnes';
+
+  @override
+  String get contactsAddAction => 'Ajouter un contact';
+
+  @override
+  String get contactsInviteAction => 'Inviter des amis';
+
+  @override
+  String get contactsImportAction => 'Importer par e-mail';
+
+  @override
+  String get contactsFavorites => 'Favoris';
+
+  @override
+  String get contactsSectionMine => 'Mes contacts';
+
+  @override
+  String get contactsSectionGlobal => 'Recherche globale';
+
+  @override
+  String get contactsMutual => 'Contact mutuel';
+
+  @override
+  String get contactsOnline => 'en ligne';
+
+  @override
+  String get contactsUnknownPerson => 'Utilisateur inconnu';
+
+  @override
+  String get contactsActionCall => 'Appeler';
+
+  @override
+  String get contactsActionFavorite => 'Favori';
+
+  @override
+  String get contactsActionUnfavorite => 'Retirer des favoris';
+
+  @override
+  String get contactsActionRename => 'Renommer';
+
+  @override
+  String get contactsActionDelete => 'Supprimer';
+
+  @override
+  String contactsDeleteTitle(String name) {
+    return 'Supprimer $name des contacts ?';
+  }
+
+  @override
+  String get contactsDeleteMessage =>
+      'Seul votre carnet change : vos discussions restent.';
+
+  @override
+  String contactsDeleted(String name) {
+    return '$name retiré des contacts';
+  }
+
+  @override
+  String contactsAdded(String name) {
+    return '$name ajouté aux contacts';
+  }
+
+  @override
+  String get contactsRenameTitle => 'Modifier le nom';
+
+  @override
+  String get contactsFirstName => 'Prénom';
+
+  @override
+  String get contactsLastName => 'Nom';
+
+  @override
+  String get contactsRenameHint =>
+      'Vous seul voyez ce nom. Laissez vide pour garder le sien.';
+
+  @override
+  String get contactsUsernameLabel => 'Nom d\'utilisateur';
+
+  @override
+  String get contactsAddExplain =>
+      'Saisissez son @nom exact. Le nom ci-dessous est facultatif et visible par vous seul.';
+
+  @override
+  String get contactsAddSubmit => 'Ajouter';
+
+  @override
+  String get contactsUsernameRequired => 'Saisissez un nom d\'utilisateur';
+
+  @override
+  String get contactsEmptyTitle => 'Pas encore de contacts';
+
+  @override
+  String get contactsEmptyMessage =>
+      'Ajoutez des personnes par leur @nom : elles apparaîtront ici sous les noms que vous leur donnez.';
+
+  @override
+  String get contactsEmptyAction => 'Trouver par @nom';
+
+  @override
+  String get contactsSearchNothingMine => 'Aucun résultat dans vos contacts';
+
+  @override
+  String get contactsSearchNothingGlobal => 'Personne d\'autre trouvé';
+
+  @override
+  String get contactsSearchGlobalHint =>
+      'Saisissez au moins 2 caractères, ou @nom pour une recherche exacte';
+
+  @override
+  String contactsInviteMessage(String username, String link) {
+    return 'Je suis sur ChatiX — retrouvez-moi : @$username $link';
+  }
+
+  @override
+  String get contactsInviteCopied =>
+      'Invitation copiée — collez-la où vous voulez';
+
+  @override
+  String get contactsImportFieldLabel => 'Adresses e-mail';
+
+  @override
+  String get contactsImportFieldHint =>
+      'Une par ligne, ex. Ivan Petrov <ivan@example.com>';
+
+  @override
+  String get contactsImportExplain =>
+      'Les adresses sont seulement comparées, jamais enregistrées. Les personnes déjà inscrites deviennent des contacts, les autres dès leur inscription.';
+
+  @override
+  String contactsImportFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count adresses',
+      one: '1 adresse',
+      zero: 'Aucune adresse pour l’instant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contactsImportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count lignes sans adresse',
+      one: '1 ligne sans adresse',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contactsImportSubmit => 'Importer';
+
+  @override
+  String contactsImportResult(int matched, int pending, int invalid) {
+    return 'Trouvés : $matched · En attente d’inscription : $pending · Invalides : $invalid';
+  }
+
+  @override
+  String contactsImportQueued(int accepted) {
+    return 'Import accepté ($accepted). Le résultat arrive bientôt.';
+  }
+
+  @override
+  String contactsImportFinished(int matched, int pending) {
+    return 'Import terminé. Trouvés : $matched · En attente d’inscription : $pending';
+  }
+
+  @override
+  String get contactsErrorSelf => 'C\'est vous — impossible de vous ajouter';
+
+  @override
+  String get contactsErrorBlocked =>
+      'Cette personne est bloquée. Débloquez-la d\'abord.';
+
+  @override
+  String contactsErrorLimit(int limit) {
+    return 'Votre liste de contacts est pleine : $limit au maximum';
+  }
+
+  @override
+  String get contactsErrorNotFound => 'Personne n\'a ce nom d\'utilisateur';
+
+  @override
+  String get contactsErrorGone =>
+      'Cette personne n\'est plus dans vos contacts';
+
+  @override
+  String contactsErrorNameTooLong(int max) {
+    return 'Un nom fait au plus $max caractères';
+  }
+
+  @override
+  String get contactsErrorQuota =>
+      'La limite d\'import du jour est atteinte — réessayez demain';
+
+  @override
+  String get contactsErrorImportBusy => 'Cet import est encore en cours';
+
+  @override
+  String get contactsErrorImportUnavailable =>
+      'L\'import est indisponible pour le moment';
+
+  @override
+  String contactsErrorBatch(int limit) {
+    return 'Trop d\'adresses d\'un coup : $limit au maximum';
+  }
+
+  @override
+  String get contactsSyncFailed => 'Impossible de mettre à jour les contacts';
+
+  @override
+  String get contactsRemoveFromContacts => 'Retirer des contacts';
+
+  @override
+  String get contactsMoreActions => 'Actions du contact';
+
+  @override
+  String get contactsAddShort => 'Ajouter';
+
+  @override
+  String get contactsEditShort => 'Modifier';
 }

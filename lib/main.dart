@@ -22,6 +22,8 @@ import 'package:chatix/features/chat/data/datasources/hive_chat_local_store.dart
 import 'package:chatix/features/chat/presentation/providers/chat_cache_lifecycle_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/call_mini_player.dart';
+import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
+import 'package:chatix/features/contacts/presentation/providers/contacts_lifecycle_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/push_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
 import 'package:chatix/l10n/app_localizations_delegate.dart';
@@ -45,8 +47,9 @@ void main() async {
     PersistCookieJar(storage: FileStorage('${appDir.path}/.cookies/')),
   );
 
-  // Both the chat store and the offline sync queue are Hive boxes, and Hive
-  // has to be told where to put them before either can be opened.
+  // The chat store, the contact book and the offline sync queue are Hive
+  // boxes, and Hive has to be told where to put them before any can be
+  // opened.
   Hive.init('${appDir.path}/hive');
 
   // Opened here rather than lazily so that the first frame can already be
@@ -54,12 +57,17 @@ void main() async {
   // what makes reopening the app a frame instead of a request.
   final chatStore = await openHiveChatLocalStore();
 
+  // Same reason: the contacts tab and the local names on the chat list are
+  // drawn from it before any request has answered.
+  final contactsStore = await openHiveContactsLocalStore();
+
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
         cookieJarProvider.overrideWithValue(cookieJar),
         chatLocalDataSourceProvider.overrideWithValue(chatStore),
+        contactsLocalStoreProvider.overrideWithValue(contactsStore),
 
         // Push needs to know about chats, about the reader's local
         // notification settings and about the ARB catalogue — none of which
@@ -93,6 +101,7 @@ class MyApp extends ConsumerWidget {
 
     ref.watch(chatSocketLifecycleProvider);
     ref.watch(chatCacheLifecycleProvider);
+    ref.watch(contactsLifecycleProvider);
     ref.watch(pushLifecycleProvider);
 
     return UpdateChecker(

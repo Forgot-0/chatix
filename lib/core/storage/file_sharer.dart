@@ -39,6 +39,16 @@ class FileSharer {
       ),
     );
   }
+
+  /// Opens the share sheet on a piece of text — an invitation, a link.
+  ///
+  /// Throws when the platform cannot share at all; check [isSupported]
+  /// first and fall back to the clipboard.
+  Future<void> shareText(String text, {Rect? origin}) async {
+    await SharePlus.instance.share(
+      ShareParams(text: text, sharePositionOrigin: origin),
+    );
+  }
 }
 
 final fileSharerProvider = Provider<FileSharer>((ref) => const FileSharer());

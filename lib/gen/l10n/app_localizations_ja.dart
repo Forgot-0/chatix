@@ -3377,4 +3377,218 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get videoSeek => '再生位置';
+
+  @override
+  String get contactsSearchHint => '連絡先とユーザーを検索';
+
+  @override
+  String get contactsAddAction => '連絡先を追加';
+
+  @override
+  String get contactsInviteAction => '友だちを招待';
+
+  @override
+  String get contactsImportAction => 'メールで取り込む';
+
+  @override
+  String get contactsFavorites => 'お気に入り';
+
+  @override
+  String get contactsSectionMine => 'マイ連絡先';
+
+  @override
+  String get contactsSectionGlobal => 'グローバル検索';
+
+  @override
+  String get contactsMutual => '相互連絡先';
+
+  @override
+  String get contactsOnline => 'オンライン';
+
+  @override
+  String get contactsUnknownPerson => '不明なユーザー';
+
+  @override
+  String get contactsActionCall => '通話';
+
+  @override
+  String get contactsActionFavorite => 'お気に入り';
+
+  @override
+  String get contactsActionUnfavorite => 'お気に入り解除';
+
+  @override
+  String get contactsActionRename => '名前を変更';
+
+  @override
+  String get contactsActionDelete => '削除';
+
+  @override
+  String contactsDeleteTitle(String name) {
+    return '$nameを連絡先から削除しますか？';
+  }
+
+  @override
+  String get contactsDeleteMessage => '変わるのはアドレス帳だけで、チャットは残ります。';
+
+  @override
+  String contactsDeleted(String name) {
+    return '$nameを連絡先から削除しました';
+  }
+
+  @override
+  String contactsAdded(String name) {
+    return '$nameを連絡先に追加しました';
+  }
+
+  @override
+  String get contactsRenameTitle => '名前を編集';
+
+  @override
+  String get contactsFirstName => '名';
+
+  @override
+  String get contactsLastName => '姓';
+
+  @override
+  String get contactsRenameHint => 'この名前はあなたにだけ表示されます。空欄にすると相手の名前に戻ります。';
+
+  @override
+  String get contactsUsernameLabel => 'ユーザー名';
+
+  @override
+  String get contactsAddExplain => '正確な@ユーザー名を入力してください。下の名前は任意で、あなたにだけ表示されます。';
+
+  @override
+  String get contactsAddSubmit => '追加';
+
+  @override
+  String get contactsUsernameRequired => 'ユーザー名を入力してください';
+
+  @override
+  String get contactsEmptyTitle => '連絡先はまだありません';
+
+  @override
+  String get contactsEmptyMessage => '@ユーザー名で追加すると、あなたが付けた名前でここに表示されます。';
+
+  @override
+  String get contactsEmptyAction => '@ユーザー名で探す';
+
+  @override
+  String get contactsSearchNothingMine => '連絡先に一致する人はいません';
+
+  @override
+  String get contactsSearchNothingGlobal => '他には見つかりませんでした';
+
+  @override
+  String get contactsSearchGlobalHint => '2文字以上、または正確な@ユーザー名を入力してください';
+
+  @override
+  String contactsInviteMessage(String username, String link) {
+    return 'ChatiXを使っています。@$usernameで見つけてね：$link';
+  }
+
+  @override
+  String get contactsInviteCopied => '招待をコピーしました。好きな場所に貼り付けてください';
+
+  @override
+  String get contactsImportFieldLabel => 'メールアドレス';
+
+  @override
+  String get contactsImportFieldHint =>
+      '1行に1件。例：Ivan Petrov <ivan@example.com>';
+
+  @override
+  String get contactsImportExplain =>
+      'アドレスは照合のみで保存されません。登録済みの人は連絡先になり、それ以外の人は登録時に追加されます。';
+
+  @override
+  String contactsImportFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count件のアドレス',
+      zero: 'アドレスはまだありません',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contactsImportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'アドレスのない行：$count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contactsImportSubmit => '取り込む';
+
+  @override
+  String contactsImportResult(int matched, int pending, int invalid) {
+    return '見つかった：$matched・登録待ち：$pending・無効：$invalid';
+  }
+
+  @override
+  String contactsImportQueued(int accepted) {
+    return '取り込みを受け付けました（$accepted件）。結果はまもなく届きます。';
+  }
+
+  @override
+  String contactsImportFinished(int matched, int pending) {
+    return '取り込みが完了しました。見つかった：$matched・登録待ち：$pending';
+  }
+
+  @override
+  String get contactsErrorSelf => 'あなた自身は追加できません';
+
+  @override
+  String get contactsErrorBlocked => 'この人はブロックされています。先にブロックを解除してください。';
+
+  @override
+  String contactsErrorLimit(int limit) {
+    return '連絡先がいっぱいです（上限$limit件）';
+  }
+
+  @override
+  String get contactsErrorNotFound => 'そのユーザー名の人はいません';
+
+  @override
+  String get contactsErrorGone => 'この人はもう連絡先にいません';
+
+  @override
+  String contactsErrorNameTooLong(int max) {
+    return '名前は$max文字までです';
+  }
+
+  @override
+  String get contactsErrorQuota => '本日の取り込み上限に達しました。明日もう一度お試しください';
+
+  @override
+  String get contactsErrorImportBusy => 'この取り込みはまだ処理中です';
+
+  @override
+  String get contactsErrorImportUnavailable => '現在、取り込みは利用できません';
+
+  @override
+  String contactsErrorBatch(int limit) {
+    return '一度に取り込めるのは$limit件までです';
+  }
+
+  @override
+  String get contactsSyncFailed => '連絡先を更新できませんでした';
+
+  @override
+  String get contactsRemoveFromContacts => '連絡先から削除';
+
+  @override
+  String get contactsMoreActions => '連絡先の操作';
+
+  @override
+  String get contactsAddShort => '追加';
+
+  @override
+  String get contactsEditShort => '編集';
 }

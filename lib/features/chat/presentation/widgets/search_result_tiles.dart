@@ -38,7 +38,7 @@ class ChatSearchResultTile extends ConsumerWidget {
     final theme = Theme.of(context);
 
     final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
-    final title = chatTitleOf(hit.chat, l10n, myUserId: myUserId);
+    final title = watchChatTitle(ref, hit.chat, l10n, myUserId: myUserId);
 
     return ListTile(
       onTap: onTap,

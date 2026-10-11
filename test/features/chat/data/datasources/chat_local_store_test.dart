@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'package:chatix/core/storage/key_value_table.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_store.dart';
 import 'package:chatix/features/chat/data/datasources/hive_chat_local_store.dart';
-import 'package:chatix/features/chat/data/datasources/local_key_value_table.dart';
 
 /// The store itself: what it keeps, what it throws away first, and that a
 /// row written in one run reads back identically in the next.

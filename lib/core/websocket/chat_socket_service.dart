@@ -504,6 +504,7 @@ class ChatSocketService {
       case WsUnsubscribed():
       case WsPong():
       case WsAuthInvalid():
+      case ContactsImportCompleted():
       case WsUnknown():
         break;
     }

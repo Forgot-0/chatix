@@ -442,6 +442,55 @@ void main() {
     });
   });
 
+  group('contacts_import_completed (api-docs §4.13)', () {
+    test('reads the counts off the owner channel, no subscription needed', () {
+      final event = parseWsEvent({
+        'type': 'contacts_import_completed',
+        'channel': '7',
+        'ts': '2026-10-11T12:00:00Z',
+        'payload': {
+          'owner_id': 7,
+          'accepted': 250,
+          'matched': 31,
+          'pending': 210,
+          'invalid': 9,
+        },
+      });
+
+      expect(
+        event,
+        ContactsImportCompleted(
+          ownerId: 7,
+          accepted: 250,
+          matched: 31,
+          pending: 210,
+          invalid: 9,
+          ts: DateTime.utc(2026, 10, 11, 12),
+        ),
+      );
+    });
+
+    test('falls back to the channel for the owner', () {
+      final event = parseWsEvent({
+        'type': 'contacts_import_completed',
+        'channel': '7',
+        'payload': {'accepted': 1},
+      });
+
+      expect((event as ContactsImportCompleted).ownerId, 7);
+      expect(event.matched, 0);
+    });
+
+    test('without any owner it is not trusted', () {
+      final event = parseWsEvent({
+        'type': 'contacts_import_completed',
+        'payload': {'accepted': 1},
+      });
+
+      expect(event, isA<WsUnknown>());
+    });
+  });
+
   group('attachment_success', () {
     test('reads a FLAT payload — it has no event/message block', () {
       final event = parseWsEvent({

@@ -1,43 +1,9 @@
 import 'package:hive/hive.dart';
 
+import 'package:chatix/core/storage/key_value_table.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_store.dart';
-import 'package:chatix/features/chat/data/datasources/local_key_value_table.dart';
-
-/// One Hive box seen as a table.
-///
-/// Hive rather than a SQL engine because nothing here is a query: every read
-/// is "this key" or "the keys of this chat, newest first", which a key-value
-/// box answers directly and which the key layout in [ChatLocalStore] is
-/// designed around. Hive is also already a dependency and needs no native
-/// build step on any of the six platforms this app ships to.
-class HiveKeyValueTable implements LocalKeyValueTable {
-  const HiveKeyValueTable(this._box);
-
-  final Box<String> _box;
-
-  @override
-  List<String> keys() => [
-    for (final key in _box.keys)
-      if (key is String) key,
-  ];
-
-  @override
-  String? read(String key) => _box.get(key);
-
-  @override
-  Future<void> write(String key, String value) => _box.put(key, value);
-
-  @override
-  Future<void> delete(String key) => _box.delete(key);
-
-  @override
-  Future<void> deleteAll(Iterable<String> keys) => _box.deleteAll(keys);
-
-  @override
-  Future<void> clear() async => _box.clear();
-}
 
 /// Box names, versioned so a later schema change can open new boxes and
 /// leave the old ones to be deleted rather than migrated in place.
@@ -72,7 +38,10 @@ Future<ChatLocalStore> openHiveChatLocalStore({
   try {
     final boxes = <String, Box<String>>{};
     for (final name in ChatCacheBoxes.all) {
-      boxes[name] = await _openBox(name);
+      // Everything in these boxes is a copy of something the server still
+      // has, so a corrupt file costs a refetch — with the one exception of
+      // the outbox, which is why the recovery is logged loudly.
+      boxes[name] = await openRecoverableHiveBox(name, label: 'Chat cache');
     }
 
     return ChatLocalStore(
@@ -91,20 +60,5 @@ Future<ChatLocalStore> openHiveChatLocalStore({
       stackTrace,
     );
     return inMemoryChatLocalStore(limits: limits);
-  }
-}
-
-/// Opens one box, and on a corrupt file deletes it and opens a fresh one.
-///
-/// Everything in these boxes is a copy of something the server still has, so
-/// throwing the file away costs a refetch and nothing else — with the one
-/// exception of the outbox, which is why a failure there is logged loudly.
-Future<Box<String>> _openBox(String name) async {
-  try {
-    return await Hive.openBox<String>(name);
-  } catch (error) {
-    Logger.warning('Chat cache: box "$name" unreadable ($error), recreating');
-    await Hive.deleteBoxFromDisk(name);
-    return Hive.openBox<String>(name);
   }
 }

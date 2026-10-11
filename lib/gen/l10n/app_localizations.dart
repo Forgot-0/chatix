@@ -6035,6 +6035,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Playback position'**
   String get videoSeek;
+
+  /// Search field of the contacts tab: searches the address book and everybody
+  ///
+  /// In en, this message translates to:
+  /// **'Search contacts and people'**
+  String get contactsSearchHint;
+
+  /// Row and dialog title: add a contact by @username
+  ///
+  /// In en, this message translates to:
+  /// **'Add contact'**
+  String get contactsAddAction;
+
+  /// Row: share an invitation link with friends
+  ///
+  /// In en, this message translates to:
+  /// **'Invite friends'**
+  String get contactsInviteAction;
+
+  /// Row and dialog title: import an address book by email addresses
+  ///
+  /// In en, this message translates to:
+  /// **'Import by email'**
+  String get contactsImportAction;
+
+  /// Section heading: favourite contacts
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get contactsFavorites;
+
+  /// Search section heading: matches in the address book
+  ///
+  /// In en, this message translates to:
+  /// **'My contacts'**
+  String get contactsSectionMine;
+
+  /// Search section heading: people outside the address book
+  ///
+  /// In en, this message translates to:
+  /// **'Global search'**
+  String get contactsSectionGlobal;
+
+  /// Badge next to a name: the contact has added you back
+  ///
+  /// In en, this message translates to:
+  /// **'Mutual contact'**
+  String get contactsMutual;
+
+  /// Second line of a contact row when the person is online
+  ///
+  /// In en, this message translates to:
+  /// **'online'**
+  String get contactsOnline;
+
+  /// Name of a contact whose profile is gone and who has no local name
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown user'**
+  String get contactsUnknownPerson;
+
+  /// Contact action: start a call
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get contactsActionCall;
+
+  /// Contact action: add to favourites
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get contactsActionFavorite;
+
+  /// Contact action: remove from favourites
+  ///
+  /// In en, this message translates to:
+  /// **'Unfavorite'**
+  String get contactsActionUnfavorite;
+
+  /// Contact action: give the contact a local name
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get contactsActionRename;
+
+  /// Contact action: remove from the address book
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get contactsActionDelete;
+
+  /// Confirmation title before removing a contact
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} from contacts?'**
+  String contactsDeleteTitle(String name);
+
+  /// Confirmation body before removing a contact
+  ///
+  /// In en, this message translates to:
+  /// **'Only your address book changes: your chats with them stay.'**
+  String get contactsDeleteMessage;
+
+  /// Snackbar after removing a contact
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed from contacts'**
+  String contactsDeleted(String name);
+
+  /// Snackbar after adding a contact
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added to contacts'**
+  String contactsAdded(String name);
+
+  /// Dialog title and profile action: edit the local name of a contact
+  ///
+  /// In en, this message translates to:
+  /// **'Edit name'**
+  String get contactsRenameTitle;
+
+  /// Field: local first name of a contact
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get contactsFirstName;
+
+  /// Field: local last name of a contact
+  ///
+  /// In en, this message translates to:
+  /// **'Last name'**
+  String get contactsLastName;
+
+  /// Helper under the local-name fields
+  ///
+  /// In en, this message translates to:
+  /// **'Only you see this name. Leave it empty to use theirs.'**
+  String get contactsRenameHint;
+
+  /// Field: the @username to add
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get contactsUsernameLabel;
+
+  /// Helper in the add-contact dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Enter their exact @username. The name below is optional and only you see it.'**
+  String get contactsAddExplain;
+
+  /// Button: add the contact
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get contactsAddSubmit;
+
+  /// Validation: the username field is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a username'**
+  String get contactsUsernameRequired;
+
+  /// Empty contacts tab: title
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet'**
+  String get contactsEmptyTitle;
+
+  /// Empty contacts tab: explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Add people by their @username — they will show up here under the names you give them.'**
+  String get contactsEmptyMessage;
+
+  /// Empty contacts tab: button
+  ///
+  /// In en, this message translates to:
+  /// **'Find by @username'**
+  String get contactsEmptyAction;
+
+  /// Search: no match in the address book
+  ///
+  /// In en, this message translates to:
+  /// **'No matches among your contacts'**
+  String get contactsSearchNothingMine;
+
+  /// Search: nobody found outside the address book
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody else found'**
+  String get contactsSearchNothingGlobal;
+
+  /// Search: what to type to search everybody
+  ///
+  /// In en, this message translates to:
+  /// **'Type at least 2 characters, or @username for an exact handle'**
+  String get contactsSearchGlobalHint;
+
+  /// Text shared by Invite friends
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m on ChatiX — find me as @{username}: {link}'**
+  String contactsInviteMessage(String username, String link);
+
+  /// Snackbar when the invitation was copied instead of shared
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation copied — paste it anywhere'**
+  String get contactsInviteCopied;
+
+  /// Import dialog: the text field
+  ///
+  /// In en, this message translates to:
+  /// **'Email addresses'**
+  String get contactsImportFieldLabel;
+
+  /// Import dialog: placeholder of the text field
+  ///
+  /// In en, this message translates to:
+  /// **'One per line, e.g. Ivan Petrov <ivan@example.com>'**
+  String get contactsImportFieldHint;
+
+  /// Import dialog: what happens to the addresses
+  ///
+  /// In en, this message translates to:
+  /// **'Addresses are only compared, never stored. People already here become contacts; the rest are added once they sign up.'**
+  String get contactsImportExplain;
+
+  /// Import dialog: how many addresses were recognised
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No addresses yet} =1{1 address} other{{count} addresses}}'**
+  String contactsImportFound(int count);
+
+  /// Import dialog: lines without an address
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 line has no address} other{{count} lines have no address}}'**
+  String contactsImportSkipped(int count);
+
+  /// Import dialog: button
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get contactsImportSubmit;
+
+  /// Snackbar after a synchronous import
+  ///
+  /// In en, this message translates to:
+  /// **'Found: {matched} · Waiting for sign-up: {pending} · Invalid: {invalid}'**
+  String contactsImportResult(int matched, int pending, int invalid);
+
+  /// Snackbar after a large import was queued
+  ///
+  /// In en, this message translates to:
+  /// **'Import accepted ({accepted}). The result will come in shortly.'**
+  String contactsImportQueued(int accepted);
+
+  /// Snackbar when the server reports a queued import as finished
+  ///
+  /// In en, this message translates to:
+  /// **'Import finished. Found: {matched} · Waiting for sign-up: {pending}'**
+  String contactsImportFinished(int matched, int pending);
+
+  /// Error SELF_CONTACT_NOT_ALLOWED
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s you — you can\'t add yourself'**
+  String get contactsErrorSelf;
+
+  /// Error CONTACT_BLOCKED
+  ///
+  /// In en, this message translates to:
+  /// **'This person is blocked. Unblock them first.'**
+  String get contactsErrorBlocked;
+
+  /// Error CONTACT_LIMIT_EXCEEDED
+  ///
+  /// In en, this message translates to:
+  /// **'Your contact list is full: {limit} is the most it holds'**
+  String contactsErrorLimit(int limit);
+
+  /// Error NOT_FOUND_CONTACT_TARGET
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody has that username'**
+  String get contactsErrorNotFound;
+
+  /// Error NOT_FOUND_CONTACT
+  ///
+  /// In en, this message translates to:
+  /// **'This person is no longer in your contacts'**
+  String get contactsErrorGone;
+
+  /// Error TOO_LONG_CONTACT_NAME
+  ///
+  /// In en, this message translates to:
+  /// **'A name can be at most {max} characters'**
+  String contactsErrorNameTooLong(int max);
+
+  /// Error IDENTIFIER_QUOTA_EXCEEDED
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s import limit is used up — try again tomorrow'**
+  String get contactsErrorQuota;
+
+  /// Error IDEMPOTENCY_CONFLICT on import
+  ///
+  /// In en, this message translates to:
+  /// **'This import is still in progress'**
+  String get contactsErrorImportBusy;
+
+  /// Error IDENTIFIER_PEPPER_NOT_CONFIGURED
+  ///
+  /// In en, this message translates to:
+  /// **'Import is unavailable right now'**
+  String get contactsErrorImportUnavailable;
+
+  /// Error IMPORT_BATCH_TOO_LARGE
+  ///
+  /// In en, this message translates to:
+  /// **'Too many addresses at once: up to {limit}'**
+  String contactsErrorBatch(int limit);
+
+  /// Banner when the contact list could not be refreshed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update contacts'**
+  String get contactsSyncFailed;
+
+  /// Profile action: remove this person from the address book
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from contacts'**
+  String get contactsRemoveFromContacts;
+
+  /// Accessibility hint of a contact row: long press for actions
+  ///
+  /// In en, this message translates to:
+  /// **'Contact actions'**
+  String get contactsMoreActions;
+
+  /// Profile quick action, one short word: add this person to contacts
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get contactsAddShort;
+
+  /// Profile quick action, one short word: edit the local name of this contact
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get contactsEditShort;
 }
 
 class _AppLocalizationsDelegate

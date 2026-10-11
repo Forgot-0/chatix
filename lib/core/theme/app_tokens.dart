@@ -577,6 +577,30 @@ abstract final class ComposerSizes {
 
 /// The list of people an `@` being typed could mean, floating over the
 /// bottom of the conversation.
+/// The contacts tab.
+abstract final class ContactsLayout {
+  /// How wide the list grows on a wide pane before it centres: rows longer
+  /// than this put the name and its button too far apart to read as one.
+  static const double maxWidth = 720;
+
+  /// The pill search field at the top.
+  static const double searchHeight = 44;
+
+  /// The tinted circle behind an action row's icon — as wide as a person's
+  /// face below it, so actions and names start on the same line.
+  static const double actionBadge = 40;
+  static const double actionIcon = 22;
+
+  /// The mutual-contact mark after a name.
+  static const double mutualIcon = 15;
+
+  /// Between a row's name and the line under it.
+  static const double lineGap = 2;
+
+  /// Space for one letter heading.
+  static const double letterHeight = 32;
+}
+
 abstract final class MentionListSizes {
   /// One person: a face, the name and the handle on a line.
   static const double rowHeight = 48;

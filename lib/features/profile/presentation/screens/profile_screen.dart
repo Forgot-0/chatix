@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/core/ui/widgets/app_quick_actions.dart';
@@ -15,6 +16,9 @@ import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/direct_chat_opener.dart';
+import 'package:chatix/features/contacts/domain/entities/contact.dart';
+import 'package:chatix/features/contacts/presentation/providers/contacts_providers.dart';
+import 'package:chatix/features/contacts/presentation/widgets/contact_actions.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
 import 'package:chatix/features/profile/presentation/utils/profile_contact_link.dart';
@@ -42,6 +46,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// True while a direct chat is being found or created, so neither the
   /// message nor the call action can be asked for twice.
   bool _isOpeningChat = false;
+
+  /// True while "Add to contacts" is on the wire.
+  bool _isAddingContact = false;
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +101,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final specialization = profile.specialization?.trim();
     final bio = profile.bio?.trim();
 
+    // In the owner's book or not: decides between "add" and "edit name",
+    // and puts the name they gave this person at the top, as Telegram does.
+    final contact = isMe ? null : ref.watch(contactOfProvider(profile.id));
+
     // The header falls back to the specialization when the name is already
     // the handle, so the row below would otherwise say the same thing twice.
     final subtitle = _subtitleOf(profile);
@@ -105,7 +116,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           pinned: true,
           delegate: ProfileHeader(
             profile: profile,
-            title: _titleOf(profile),
+            title: contact?.localName ?? _titleOf(profile),
             subtitle: subtitle,
             topPadding: MediaQuery.paddingOf(context).top,
             onBack: _back,
@@ -136,7 +147,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               const SizedBox(height: 8),
 
-              AppQuickActionsRow(actions: _actions(l10n, profile, isMe: isMe)),
+              AppQuickActionsRow(
+                actions: _actions(l10n, profile, isMe: isMe, contact: contact),
+              ),
 
               if (specialization != null &&
                   specialization.isNotEmpty &&
@@ -195,6 +208,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 8),
               ],
 
+              if (contact != null) ...[
+                const Divider(height: 1),
+                _RemoveContactTile(
+                  onTap: () => ContactActions.delete(context, ref, contact),
+                ),
+              ],
+
               if (_isBlank(profile))
                 _EmptyProfileNote(
                   message: isMe
@@ -247,6 +267,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     AppLocalizations l10n,
     ProfileEntity profile, {
     required bool isMe,
+    required Contact? contact,
   }) {
     if (isMe) {
       return [
@@ -276,6 +297,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ? null
             : () => _openDirect(profile.id, call: true),
       ),
+      if (contact == null)
+        AppQuickAction(
+          icon: Icons.person_add_alt_1_outlined,
+          label: l10n.contactsAddShort,
+          onPressed: _isAddingContact ? null : () => _addContact(profile.id),
+        )
+      else
+        AppQuickAction(
+          icon: Icons.edit_outlined,
+          label: l10n.contactsEditShort,
+          onPressed: () => ContactActions.rename(context, contact),
+        ),
       AppQuickAction(
         icon: Icons.ios_share,
         label: l10n.profileShareAction,
@@ -311,6 +344,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             : ChatDetailRoute(chatId).location,
       ),
     );
+  }
+
+  Future<void> _addContact(int userId) async {
+    setState(() => _isAddingContact = true);
+    await ContactActions.addUser(context, ref, userId: userId);
+    if (mounted) setState(() => _isAddingContact = false);
   }
 
   /// Copies the link rather than opening a system share sheet: the app has
@@ -461,6 +500,28 @@ class _ContactTile extends StatelessWidget {
         icon: const Icon(Icons.copy_outlined, size: 18),
         onPressed: () => onCopy(link.value),
       ),
+    );
+  }
+}
+
+/// "Remove from contacts" — at the bottom, in the colour of things that
+/// cannot be taken back with a tap.
+class _RemoveContactTile extends StatelessWidget {
+  const _RemoveContactTile({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final danger = ChatixTheme.of(context).danger;
+
+    return ListTile(
+      leading: Icon(Icons.person_remove_outlined, color: danger),
+      title: Text(
+        AppLocalizations.of(context).contactsRemoveFromContacts,
+        style: TextStyle(color: danger),
+      ),
+      onTap: onTap,
     );
   }
 }

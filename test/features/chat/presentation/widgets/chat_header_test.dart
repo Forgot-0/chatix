@@ -27,6 +27,10 @@ import 'package:chatix/features/chat/presentation/providers/chat_socket_provider
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_header.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
+import 'package:chatix/core/storage/key_value_table.dart';
+import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
+import 'package:chatix/features/contacts/domain/entities/contact.dart';
+import 'package:chatix/features/contacts/domain/entities/contact_sync.dart';
 
 import '../../../../helpers/fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/fakes/fake_web_socket_channel.dart';
@@ -390,6 +394,47 @@ void main() {
     await tester.tap(inBar(chatId, find.byIcon(Icons.more_vert)));
     await tester.pumpAndSettle();
   }
+
+  group('the name', () {
+    Future<List<Override>> book(Map<int, String> localNames) async {
+      final store = KeyValueContactsLocalStore(MemoryKeyValueTable());
+      await store.save(
+        ContactsSnapshot(
+          ownerId: me,
+          contacts: [
+            for (final entry in localNames.entries)
+              Contact(
+                ownerId: me,
+                userId: entry.key,
+                firstName: entry.value,
+                createdAt: DateTime.utc(2026, 1, 1),
+                updatedAt: DateTime.utc(2026, 1, 1),
+              ),
+          ],
+        ),
+      );
+      return [contactsLocalStoreProvider.overrideWithValue(store)];
+    }
+
+    testWidgets('a direct chat goes by the name in the address book', (
+      tester,
+    ) async {
+      await pumpOne(
+        tester,
+        directOnline,
+        extra: await book({42: 'Ада Августа'}),
+      );
+
+      expect(inBar('direct-on', find.text('Ада Августа')), findsOneWidget);
+      expect(inBar('direct-on', find.text('Ada')), findsNothing);
+    });
+
+    testWidgets('a group keeps its own name', (tester) async {
+      await pumpOne(tester, groupChat, extra: await book({42: 'Ада'}));
+
+      expect(inBar('group', find.text('Design Team')), findsOneWidget);
+    });
+  });
 
   group('the face', () {
     testWidgets('every kind of chat has one, ready to fly', (tester) async {

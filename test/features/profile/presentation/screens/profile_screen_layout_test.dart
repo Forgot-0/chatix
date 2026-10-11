@@ -9,6 +9,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/localization/app_date_format.dart';
+import 'package:chatix/core/storage/key_value_table.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:chatix/features/auth/domain/entities/session_entity.dart';
@@ -16,6 +17,9 @@ import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
+import 'package:chatix/features/contacts/domain/entities/contact.dart';
+import 'package:chatix/features/contacts/domain/entities/contact_sync.dart';
 import 'package:chatix/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
@@ -92,8 +96,15 @@ void main() {
     int profileId = _other,
     ProfileEntity? profile,
     Locale? locale,
+    Contact? contact,
   }) async {
     final shown = profile ?? ada;
+    final book = KeyValueContactsLocalStore(MemoryKeyValueTable());
+    if (contact != null) {
+      await tester.runAsync(
+        () => book.save(ContactsSnapshot(ownerId: _me, contacts: [contact])),
+      );
+    }
     when(() => profiles.getMyProfile()).thenAnswer((_) async => right(shown));
     when(
       () => profiles.getProfile(any()),
@@ -116,6 +127,7 @@ void main() {
           authProvider.overrideWith(_FakeAuthController.new),
           profileRepositoryProvider.overrideWithValue(profiles),
           authRepositoryProvider.overrideWithValue(auth),
+          contactsLocalStoreProvider.overrideWithValue(book),
         ],
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
@@ -183,6 +195,73 @@ void main() {
           await screenMatchesGolden(
             tester,
             'profile_${window.name}_${theme.key}',
+          );
+        });
+      }
+    }
+  });
+
+  group('someone in the address book', () {
+    final adaInBook = Contact(
+      ownerId: _me,
+      userId: _other,
+      firstName: 'Ада',
+      lastName: 'из клуба',
+      isMutual: true,
+      createdAt: DateTime.utc(2026, 1, 1),
+      updatedAt: DateTime.utc(2026, 1, 1),
+      profile: const ContactProfile(
+        id: _other,
+        username: 'ada',
+        displayName: 'Ada Lovelace',
+      ),
+    );
+
+    testWidgets('goes by the local name, with edit and remove', (tester) async {
+      await pump(
+        tester,
+        window: PaneWindow.phone,
+        contact: adaInBook,
+        locale: const Locale('ru'),
+      );
+
+      expect(find.text('Ада из клуба'), findsOneWidget);
+      expect(find.text('Ada Lovelace'), findsNothing);
+      expect(find.text('Изменить'), findsOneWidget);
+      expect(find.text('Удалить из контактов'), findsOneWidget);
+      expect(find.text('Добавить'), findsNothing);
+    });
+
+    testWidgets(
+      'someone who is not offers to be added, and nothing to remove',
+      (tester) async {
+        await pump(
+          tester,
+          window: PaneWindow.phone,
+          locale: const Locale('ru'),
+        );
+
+        expect(find.text('Добавить'), findsOneWidget);
+        expect(find.text('Удалить из контактов'), findsNothing);
+      },
+    );
+
+    for (final window in [PaneWindow.phone, PaneWindow.desktop]) {
+      for (final theme in {'light': false, 'dark': true}.entries) {
+        testGoldens('contact profile, ${window.name}, ${theme.key}', (
+          tester,
+        ) async {
+          await pump(
+            tester,
+            window: window,
+            dark: theme.value,
+            contact: adaInBook,
+            locale: const Locale('ru'),
+          );
+
+          await screenMatchesGolden(
+            tester,
+            'profile_contact_${window.name}_${theme.key}',
           );
         });
       }

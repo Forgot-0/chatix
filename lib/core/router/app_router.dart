@@ -30,6 +30,7 @@ import 'package:chatix/features/chat/presentation/screens/media_viewer_screen.da
 import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
+import 'package:chatix/features/contacts/presentation/screens/contacts_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notification_settings_screen.dart';
 import 'package:chatix/features/notification/presentation/screens/notifications_screen.dart';
 import 'package:chatix/features/onboarding/presentation/providers/onboarding_providers.dart';
@@ -37,7 +38,6 @@ import 'package:chatix/features/onboarding/presentation/screens/welcome_screen.d
 import 'package:chatix/features/profile/presentation/screens/profile_avatar_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
-import 'package:chatix/features/profile/presentation/screens/profiles_list_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/appearance_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
@@ -328,7 +328,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: ProfilesRoute.path,
                 name: RouteNames.profiles,
                 pageBuilder: (context, state) =>
-                    _root(state, const ProfilesListScreen()),
+                    _root(state, const ContactsScreen()),
                 routes: [
                   GoRoute(
                     path: ProfileDetailRoute.path,

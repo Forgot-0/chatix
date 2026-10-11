@@ -3556,4 +3556,232 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get videoSeek => 'Позиция воспроизведения';
+
+  @override
+  String get contactsSearchHint => 'Поиск по контактам и людям';
+
+  @override
+  String get contactsAddAction => 'Добавить контакт';
+
+  @override
+  String get contactsInviteAction => 'Пригласить друзей';
+
+  @override
+  String get contactsImportAction => 'Импорт по email';
+
+  @override
+  String get contactsFavorites => 'Избранные';
+
+  @override
+  String get contactsSectionMine => 'Мои контакты';
+
+  @override
+  String get contactsSectionGlobal => 'Глобальный поиск';
+
+  @override
+  String get contactsMutual => 'Взаимный контакт';
+
+  @override
+  String get contactsOnline => 'в сети';
+
+  @override
+  String get contactsUnknownPerson => 'Неизвестный пользователь';
+
+  @override
+  String get contactsActionCall => 'Позвонить';
+
+  @override
+  String get contactsActionFavorite => 'В избранное';
+
+  @override
+  String get contactsActionUnfavorite => 'Из избранного';
+
+  @override
+  String get contactsActionRename => 'Переименовать';
+
+  @override
+  String get contactsActionDelete => 'Удалить';
+
+  @override
+  String contactsDeleteTitle(String name) {
+    return 'Удалить $name из контактов?';
+  }
+
+  @override
+  String get contactsDeleteMessage =>
+      'Изменится только ваша адресная книга — переписка останется.';
+
+  @override
+  String contactsDeleted(String name) {
+    return '$name — больше не в контактах';
+  }
+
+  @override
+  String contactsAdded(String name) {
+    return '$name — теперь в контактах';
+  }
+
+  @override
+  String get contactsRenameTitle => 'Изменить имя';
+
+  @override
+  String get contactsFirstName => 'Имя';
+
+  @override
+  String get contactsLastName => 'Фамилия';
+
+  @override
+  String get contactsRenameHint =>
+      'Это имя видите только вы. Оставьте пустым, чтобы вернуть имя из профиля.';
+
+  @override
+  String get contactsUsernameLabel => 'Имя пользователя';
+
+  @override
+  String get contactsAddExplain =>
+      'Введите точный @username. Имя ниже — по желанию, его видите только вы.';
+
+  @override
+  String get contactsAddSubmit => 'Добавить';
+
+  @override
+  String get contactsUsernameRequired => 'Введите имя пользователя';
+
+  @override
+  String get contactsEmptyTitle => 'Пока нет контактов';
+
+  @override
+  String get contactsEmptyMessage =>
+      'Добавляйте людей по @username — они появятся здесь под именами, которые вы им дадите.';
+
+  @override
+  String get contactsEmptyAction => 'Найти по @username';
+
+  @override
+  String get contactsSearchNothingMine => 'Среди контактов совпадений нет';
+
+  @override
+  String get contactsSearchNothingGlobal => 'Больше никого не нашлось';
+
+  @override
+  String get contactsSearchGlobalHint =>
+      'Введите хотя бы 2 символа или @username для точного поиска';
+
+  @override
+  String contactsInviteMessage(String username, String link) {
+    return 'Я в ChatiX — найди меня: @$username $link';
+  }
+
+  @override
+  String get contactsInviteCopied =>
+      'Приглашение скопировано — вставьте его куда угодно';
+
+  @override
+  String get contactsImportFieldLabel => 'Адреса email';
+
+  @override
+  String get contactsImportFieldHint =>
+      'По одному в строке, например: Иван Петров <ivan@example.com>';
+
+  @override
+  String get contactsImportExplain =>
+      'Адреса только сравниваются и не сохраняются. Кто уже здесь — станет контактом, остальные добавятся после регистрации.';
+
+  @override
+  String contactsImportFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count адреса',
+      many: '$count адресов',
+      few: '$count адреса',
+      one: '$count адрес',
+      zero: 'Адресов пока нет',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String contactsImportSkipped(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count строки без адреса',
+      many: '$count строк без адреса',
+      few: '$count строки без адреса',
+      one: '$count строка без адреса',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get contactsImportSubmit => 'Импортировать';
+
+  @override
+  String contactsImportResult(int matched, int pending, int invalid) {
+    return 'Найдено: $matched · Ждут регистрации: $pending · Неверных: $invalid';
+  }
+
+  @override
+  String contactsImportQueued(int accepted) {
+    return 'Импорт принят ($accepted). Результат придёт чуть позже.';
+  }
+
+  @override
+  String contactsImportFinished(int matched, int pending) {
+    return 'Импорт завершён. Найдено: $matched · Ждут регистрации: $pending';
+  }
+
+  @override
+  String get contactsErrorSelf => 'Это вы — себя добавить нельзя';
+
+  @override
+  String get contactsErrorBlocked =>
+      'Этот человек заблокирован. Сначала разблокируйте его.';
+
+  @override
+  String contactsErrorLimit(int limit) {
+    return 'Список контактов заполнен: в нём не больше $limit';
+  }
+
+  @override
+  String get contactsErrorNotFound => 'Пользователя с таким именем нет';
+
+  @override
+  String get contactsErrorGone => 'Этого человека уже нет в контактах';
+
+  @override
+  String contactsErrorNameTooLong(int max) {
+    return 'Имя может быть не длиннее $max символов';
+  }
+
+  @override
+  String get contactsErrorQuota =>
+      'Дневной лимит импорта исчерпан — попробуйте завтра';
+
+  @override
+  String get contactsErrorImportBusy => 'Этот импорт ещё выполняется';
+
+  @override
+  String get contactsErrorImportUnavailable => 'Импорт сейчас недоступен';
+
+  @override
+  String contactsErrorBatch(int limit) {
+    return 'Слишком много адресов за раз: не больше $limit';
+  }
+
+  @override
+  String get contactsSyncFailed => 'Не удалось обновить контакты';
+
+  @override
+  String get contactsRemoveFromContacts => 'Удалить из контактов';
+
+  @override
+  String get contactsMoreActions => 'Действия с контактом';
+
+  @override
+  String get contactsAddShort => 'Добавить';
+
+  @override
+  String get contactsEditShort => 'Изменить';
 }

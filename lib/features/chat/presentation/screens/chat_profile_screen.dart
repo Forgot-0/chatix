@@ -143,7 +143,7 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
           delegate: ChatProfileHeader(
             chat: chat,
             myUserId: myUserId,
-            title: chatTitleOf(chat, l10n, myUserId: myUserId),
+            title: watchChatTitle(ref, chat, l10n, myUserId: myUserId),
             subtitle: _subtitle(l10n, chat),
             topPadding: MediaQuery.paddingOf(context).top,
             onBack: _back,

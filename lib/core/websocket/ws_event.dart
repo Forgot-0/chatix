@@ -345,6 +345,41 @@ final class AttachmentSuccess extends WSDomainEvent {
   List<Object?> get props => [...super.props, userId, tokens];
 }
 
+/// `contacts_import_completed` — a queued address-book import has been
+/// matched (api-docs §4.13). Not a chat event: it arrives on the owner's own
+/// channel without any subscription, and carries counts rather than rows,
+/// so whoever cares reads the book again.
+final class ContactsImportCompleted extends WSEvent {
+  final int ownerId;
+  final int accepted;
+  final int matched;
+  final int pending;
+  final int invalid;
+  final DateTime? ts;
+
+  const ContactsImportCompleted({
+    required this.ownerId,
+    required this.accepted,
+    required this.matched,
+    required this.pending,
+    required this.invalid,
+    this.ts,
+  }) : super(wireType);
+
+  static const String wireType = 'contacts_import_completed';
+
+  @override
+  List<Object?> get props => [
+    type,
+    ownerId,
+    accepted,
+    matched,
+    pending,
+    invalid,
+    ts,
+  ];
+}
+
 final class WsUnimplementedEvent extends WSEvent {
   final String? chatId;
 

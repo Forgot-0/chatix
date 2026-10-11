@@ -682,6 +682,7 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
       case WsErrorBadCommand():
       case WsAuthInvalid():
       case WsUnimplementedEvent():
+      case ContactsImportCompleted():
       case WsUnknown():
         break;
     }
