@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_shared_content.dart';
@@ -273,36 +274,38 @@ class _MediaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push(
-        ChatMediaRoute(
-          chatId,
-          messageId: item.messageId,
-          attachmentId: item.attachmentId,
-        ).location,
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          AttachmentImage(
-            attachment: item.attachment,
+    return ClickCursor(
+      child: GestureDetector(
+        onTap: () => context.push(
+          ChatMediaRoute(
+            chatId,
             messageId: item.messageId,
-            borderRadius: BorderRadius.zero,
-          ),
-          if (_plays)
-            const Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: EdgeInsets.all(6),
-                child: Icon(
-                  Icons.play_circle_outline,
-                  size: 20,
-                  // On top of a photo, which has no theme of its own.
-                  color: Colors.white,
+            attachmentId: item.attachmentId,
+          ).location,
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            AttachmentImage(
+              attachment: item.attachment,
+              messageId: item.messageId,
+              borderRadius: BorderRadius.zero,
+            ),
+            if (_plays)
+              const Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.play_circle_outline,
+                    size: 20,
+                    // On top of a photo, which has no theme of its own.
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -54,6 +54,13 @@ static void my_application_activate(GApplication* application) {
 
   gtk_window_set_default_size(window, 1280, 720);
 
+  // A phone-sized window is the smallest the layout is drawn for (one pane,
+  // bottom bar) — DesktopSizes.minWindow on the Dart side.
+  GdkGeometry geometry;
+  geometry.min_width = 380;
+  geometry.min_height = 560;
+  gtk_window_set_geometry_hints(window, nullptr, &geometry, GDK_HINT_MIN_SIZE);
+
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);

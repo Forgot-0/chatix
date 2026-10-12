@@ -128,6 +128,10 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
       child: InkWell(
         onTap: () => openChat(context, ref, chat.id),
         onLongPress: widget.enableActions ? () => _openMenu(myUserId) : null,
+        // The same menu at the pointer, as a desktop opens one.
+        onSecondaryTapUp: widget.enableActions
+            ? (details) => _openMenuAt(details.globalPosition)
+            : null,
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: AppSpacing.x4,
@@ -305,17 +309,109 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
       );
   }
 
-  Future<void> _openMenu(int? myUserId) async {
+  /// What the row's menu offers, in order — the long press's sheet and the
+  /// right click's popup both list exactly these.
+  List<_MenuEntry> _menuEntries() {
     final chat = widget.chat;
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-
     final unread = chat.unreadCount ?? 0;
+
+    // `DELETE /chats/{id}/` needs `chat:delete`, which only an owner has
+    // (api-docs §8.1). Offering it to anyone else would be a button that
+    // always fails.
     final canDelete = hasChatPermission(
       chat,
       chat.me,
       ChatPermissions.chatDelete,
     );
+
+    return [
+      if (unread > 0)
+        _MenuEntry(
+          ChatRowAction.markRead,
+          Icons.mark_chat_read_outlined,
+          l10n.markAsRead,
+        ),
+      _MenuEntry(
+        ChatRowAction.pin,
+        chat.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+        chat.isPinned ? l10n.unpinChat : l10n.pinChat,
+      ),
+      _MenuEntry(
+        ChatRowAction.archive,
+        chat.isArchived ? Icons.unarchive_outlined : Icons.archive_outlined,
+        chat.isArchived ? l10n.unarchiveChat : l10n.archiveChat,
+      ),
+      _MenuEntry(
+        ChatRowAction.mute,
+        chat.isMutedByMe
+            ? Icons.notifications_active_outlined
+            : Icons.notifications_off_outlined,
+        chat.isMutedByMe ? l10n.unmuteChat : l10n.muteChat,
+      ),
+      if (canDelete)
+        _MenuEntry(
+          ChatRowAction.delete,
+          Icons.delete_outline,
+          l10n.deleteChat,
+          isDestructive: true,
+        ),
+    ];
+  }
+
+  /// The menu as a popup at [position], for a right click.
+  Future<void> _openMenuAt(Offset position) async {
+    final scheme = Theme.of(context).colorScheme;
+    final overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
+
+    final choice = await showMenu<ChatRowAction>(
+      context: context,
+      position: RelativeRect.fromRect(
+        position & Size.zero,
+        Offset.zero & overlay.size,
+      ),
+      constraints: const BoxConstraints(
+        minWidth: AppMenuSizes.minWidth,
+        maxWidth: AppMenuSizes.maxWidth,
+      ),
+      items: [
+        for (final entry in _menuEntries()) ...[
+          if (entry.isDestructive) const PopupMenuDivider(),
+          PopupMenuItem<ChatRowAction>(
+            value: entry.action,
+            child: Row(
+              children: [
+                Icon(
+                  entry.icon,
+                  size: AppMenuSizes.iconSize,
+                  color: entry.isDestructive ? scheme.error : null,
+                ),
+                const SizedBox(width: AppMenuSizes.iconGap),
+                Expanded(
+                  child: Text(
+                    entry.label,
+                    style: entry.isDestructive
+                        ? TextStyle(color: scheme.error)
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+
+    if (choice == null || !mounted) return;
+    await _run(choice);
+  }
+
+  Future<void> _openMenu(int? myUserId) async {
+    final chat = widget.chat;
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final entries = _menuEntries();
 
     final choice = await showModalBottomSheet<ChatRowAction>(
       context: context,
@@ -348,54 +444,20 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
                 ],
               ),
             ),
-            if (unread > 0)
+            for (final entry in entries) ...[
+              if (entry.isDestructive) const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.mark_chat_read_outlined),
-                title: Text(l10n.markAsRead),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(ChatRowAction.markRead),
-              ),
-            ListTile(
-              leading: Icon(
-                chat.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-              ),
-              title: Text(chat.isPinned ? l10n.unpinChat : l10n.pinChat),
-              onTap: () => Navigator.of(sheetContext).pop(ChatRowAction.pin),
-            ),
-            ListTile(
-              leading: Icon(
-                chat.isArchived
-                    ? Icons.unarchive_outlined
-                    : Icons.archive_outlined,
-              ),
-              title: Text(
-                chat.isArchived ? l10n.unarchiveChat : l10n.archiveChat,
-              ),
-              onTap: () =>
-                  Navigator.of(sheetContext).pop(ChatRowAction.archive),
-            ),
-            ListTile(
-              leading: Icon(
-                chat.isMutedByMe
-                    ? Icons.notifications_active_outlined
-                    : Icons.notifications_off_outlined,
-              ),
-              title: Text(chat.isMutedByMe ? l10n.unmuteChat : l10n.muteChat),
-              onTap: () => Navigator.of(sheetContext).pop(ChatRowAction.mute),
-            ),
-            // `DELETE /chats/{id}/` needs `chat:delete`, which only an owner
-            // has (api-docs §8.1). Offering it to anyone else would be a
-            // button that always fails.
-            if (canDelete) ...[
-              const Divider(height: 1),
-              ListTile(
-                leading: Icon(Icons.delete_outline, color: scheme.error),
-                title: Text(
-                  l10n.deleteChat,
-                  style: TextStyle(color: scheme.error),
+                leading: Icon(
+                  entry.icon,
+                  color: entry.isDestructive ? scheme.error : null,
                 ),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(ChatRowAction.delete),
+                title: Text(
+                  entry.label,
+                  style: entry.isDestructive
+                      ? TextStyle(color: scheme.error)
+                      : null,
+                ),
+                onTap: () => Navigator.of(sheetContext).pop(entry.action),
               ),
             ],
           ],
@@ -404,7 +466,10 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     );
 
     if (choice == null || !mounted) return;
+    await _run(choice);
+  }
 
+  Future<void> _run(ChatRowAction choice) async {
     switch (choice) {
       case ChatRowAction.markRead:
         await _markRead();
@@ -471,6 +536,23 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+/// One line of a chat row's menu.
+class _MenuEntry {
+  const _MenuEntry(
+    this.action,
+    this.icon,
+    this.label, {
+    this.isDestructive = false,
+  });
+
+  final ChatRowAction action;
+  final IconData icon;
+  final String label;
+
+  /// Drawn in the error colour, after a rule.
+  final bool isDestructive;
 }
 
 /// The face of a chat: the other person in a direct chat, a mosaic of

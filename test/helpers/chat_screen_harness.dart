@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:go_router/go_router.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -11,8 +12,10 @@ import 'package:chatix/core/constants/app_constants.dart';
 import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/notifications/notification_service.dart';
+import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/theme/theme_config.dart';
+import 'package:chatix/core/ui/desktop/desktop_scrolling.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -32,6 +35,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_pro
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/chat_detail_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -141,6 +145,12 @@ class ChatScreenHarness {
   /// The device-local odds and ends — recent emoji, the keyboard's height —
   /// in memory, so a test can seed them.
   final InMemoryChatLocalPrefsStore prefs = InMemoryChatLocalPrefsStore();
+
+  /// The router of the last [pump] with `routed: true`.
+  GoRouter? router;
+
+  /// What `/chats` shows in a routed pump — where closing the chat lands.
+  static const String chatsRootLabel = 'chats-root';
 
   static void setUpAll() {
     dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com');
@@ -255,12 +265,19 @@ class ChatScreenHarness {
     await channel.dispose();
   }
 
+  /// Mounts the screen.
+  ///
+  /// With [routed] it sits at `/chats/{id}` under a real [GoRouter], over a
+  /// `/chats` page that says [chatsRootLabel] and with an attachment preview
+  /// stand-in ([AttachPreviewProbe]) at `/chats/{id}/attach` — for what
+  /// needs a route to go to: closing the chat, opening the preview.
   Future<ProviderContainer> pump(
     WidgetTester tester, {
     PaneWindow window = PaneWindow.phone,
     bool dark = false,
     Locale locale = const Locale('ru'),
     List<Override> overrides = const [],
+    bool routed = false,
   }) async {
     final container = ProviderContainer(
       // Whatever has no backend here fails once and stays failed, rather
@@ -287,22 +304,69 @@ class ChatScreenHarness {
       wallpaperId: AppWallpaper.plain.id,
     );
 
+    final theme = dark ? AppTheme.dark(appearance) : AppTheme.light(appearance);
+    Widget clock(BuildContext context, Widget? child) =>
+        AppClock(now: DateTime(2026, 10, 10, 12), child: child!);
+    const screen = ChatDetailScreen(chatId: chatId);
+
+    final GoRouter? router;
+    if (routed) {
+      router = GoRouter(
+        initialLocation: const ChatDetailRoute(chatId).location,
+        routes: [
+          GoRoute(
+            path: ChatsRoute.path,
+            builder: (_, _) =>
+                const Scaffold(body: Center(child: Text(chatsRootLabel))),
+            routes: [
+              GoRoute(
+                path: ChatDetailRoute.path,
+                builder: (_, _) => PaneFrame(window: window, child: screen),
+                routes: [
+                  GoRoute(
+                    path: ChatAttachRoute.path,
+                    builder: (_, state) => AttachPreviewProbe(
+                      args: state.extra as MediaPreviewArgs?,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+    } else {
+      router = null;
+    }
+    this.router = router;
+
     await tester.pumpWidgetBuilder(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: dark ? AppTheme.dark(appearance) : AppTheme.light(appearance),
-          locale: locale,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) =>
-              AppClock(now: DateTime(2026, 10, 10, 12), child: child!),
-          home: PaneFrame(
-            window: window,
-            child: const ChatDetailScreen(chatId: chatId),
-          ),
-        ),
+        child: router != null
+            ? MaterialApp.router(
+                debugShowCheckedModeBanner: false,
+                theme: theme,
+                locale: locale,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                scrollBehavior: const AppScrollBehavior(),
+                builder: clock,
+                routerConfig: router,
+              )
+            : MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: theme,
+                locale: locale,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                // The app's own: a desktop pump gets the desktop scrollbars,
+                // a phone pump exactly Material's.
+                scrollBehavior: const AppScrollBehavior(),
+                builder: clock,
+                home: PaneFrame(window: window, child: screen),
+              ),
       ),
       wrapper: (child) => child,
       surfaceSize: window.size,
@@ -330,5 +394,23 @@ class ChatScreenHarness {
     await tester.pumpAndSettle();
     await tester.tap(find.text(action).last);
     await tester.pumpAndSettle();
+  }
+}
+
+/// Stands in for the attachment preview at `/chats/{id}/attach`: says what
+/// it was handed, so a test can tell the right files arrived.
+class AttachPreviewProbe extends StatelessWidget {
+  const AttachPreviewProbe({super.key, required this.args});
+
+  final MediaPreviewArgs? args;
+
+  static String labelFor(List<String> names) => 'preview: ${names.join(', ')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final names = <String>[
+      for (final upload in args?.uploads ?? const []) upload.filename,
+    ];
+    return Scaffold(body: Center(child: Text(labelFor(names))));
   }
 }

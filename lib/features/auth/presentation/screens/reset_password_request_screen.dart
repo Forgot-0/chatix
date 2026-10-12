@@ -71,6 +71,7 @@ class _ResetPasswordRequestScreenState
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.x6),
         child: AppContentWidth(
+          maxWidth: AppContentWidths.auth,
           child: FormBuilder(
             key: _formKey,
             child: Column(

@@ -3717,4 +3717,68 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get profileBlockedNotice => 'このユーザーをブロックしています';
+
+  @override
+  String get chatDropTitle => 'ドロップして送信';
+
+  @override
+  String get chatDropHint => '写真と動画は先にプレビューで開きます';
+
+  @override
+  String get chatJumpHint => 'チャットへ移動…';
+
+  @override
+  String get chatJumpNothingFound => 'その名前のチャットはありません';
+
+  @override
+  String get chatJumpFooter => '↑↓ 選択 · Enter 開く · Esc 閉じる';
+
+  @override
+  String get settingsKeyboardSection => 'キーボード';
+
+  @override
+  String settingsSendWithModifierEnter(String key) {
+    return '$key+Enter で送信';
+  }
+
+  @override
+  String settingsSendWithModifierEnterOn(String key) {
+    return 'Enter で改行、$key+Enter で送信';
+  }
+
+  @override
+  String get settingsSendWithModifierEnterOff => 'Enter で送信、Shift+Enter で改行';
+
+  @override
+  String get keyboardControlKey => 'Ctrl';
+
+  @override
+  String get keyboardCommandKey => '⌘';
+
+  @override
+  String get menuSettings => '設定…';
+
+  @override
+  String get menuEdit => '編集';
+
+  @override
+  String get menuUndo => '取り消す';
+
+  @override
+  String get menuRedo => 'やり直す';
+
+  @override
+  String get menuCut => 'カット';
+
+  @override
+  String get menuCopy => 'コピー';
+
+  @override
+  String get menuPaste => 'ペースト';
+
+  @override
+  String get menuSelectAll => 'すべてを選択';
+
+  @override
+  String get menuWindow => 'ウインドウ';
 }

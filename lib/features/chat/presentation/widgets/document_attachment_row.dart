@@ -6,6 +6,7 @@ import 'package:chatix/core/storage/file_revealer.dart';
 import 'package:chatix/core/storage/file_sharer.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/typography/middle_ellipsis_text.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_download_provider.dart';
@@ -188,14 +189,17 @@ class DocumentAttachmentRow extends ConsumerWidget {
     return Semantics(
       button: onTap != null,
       onTapHint: actionLabel,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: ChatLayout.attachmentRowPaddingY,
+      child: ClickCursor(
+        enabled: onTap != null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: ChatLayout.attachmentRowPaddingY,
+            ),
+            child: row,
           ),
-          child: row,
         ),
       ),
     );

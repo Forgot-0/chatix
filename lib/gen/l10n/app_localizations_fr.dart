@@ -3915,4 +3915,70 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profileBlockedNotice => 'Vous avez bloqué cet utilisateur';
+
+  @override
+  String get chatDropTitle => 'Relâchez pour envoyer';
+
+  @override
+  String get chatDropHint =>
+      'Les photos et vidéos s\'ouvrent d\'abord dans l\'aperçu';
+
+  @override
+  String get chatJumpHint => 'Aller à la discussion…';
+
+  @override
+  String get chatJumpNothingFound => 'Aucune discussion de ce nom';
+
+  @override
+  String get chatJumpFooter => '↑↓ choisir · Entrée ouvrir · Échap fermer';
+
+  @override
+  String get settingsKeyboardSection => 'Clavier';
+
+  @override
+  String settingsSendWithModifierEnter(String key) {
+    return 'Envoyer avec $key+Entrée';
+  }
+
+  @override
+  String settingsSendWithModifierEnterOn(String key) {
+    return 'Entrée passe à la ligne, $key+Entrée envoie';
+  }
+
+  @override
+  String get settingsSendWithModifierEnterOff =>
+      'Entrée envoie, Maj+Entrée passe à la ligne';
+
+  @override
+  String get keyboardControlKey => 'Ctrl';
+
+  @override
+  String get keyboardCommandKey => '⌘';
+
+  @override
+  String get menuSettings => 'Réglages…';
+
+  @override
+  String get menuEdit => 'Édition';
+
+  @override
+  String get menuUndo => 'Annuler';
+
+  @override
+  String get menuRedo => 'Rétablir';
+
+  @override
+  String get menuCut => 'Couper';
+
+  @override
+  String get menuCopy => 'Copier';
+
+  @override
+  String get menuPaste => 'Coller';
+
+  @override
+  String get menuSelectAll => 'Tout sélectionner';
+
+  @override
+  String get menuWindow => 'Fenêtre';
 }

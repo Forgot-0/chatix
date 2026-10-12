@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/desktop/desktop_scrolling.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
@@ -86,7 +87,9 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
   /// How long a jumped-to message stays lit before it fades back.
   static const Duration _flash = AppMotion.dwell;
 
-  final _scrollController = ScrollController();
+  /// A mouse wheel glides the conversation rather than jolting it a notch
+  /// at a time.
+  final _scrollController = SmoothWheelScrollController();
   final _listKey = GlobalKey();
 
   final _stickyDay = ValueNotifier<DateTime?>(null);
@@ -187,6 +190,7 @@ class _ChatFeedState extends ConsumerState<ChatFeed>
   @override
   Widget build(BuildContext context) {
     _reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _scrollController.smooth = !_reduceMotion;
 
     _rebuildItems();
 

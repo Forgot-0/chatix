@@ -44,6 +44,7 @@ class ChatComposer extends StatelessWidget {
     this.holdsKeyboard = false,
     this.onToggleEmoji,
     this.onFieldTap,
+    this.desktop = false,
   });
 
   final TextEditingController controller;
@@ -97,6 +98,10 @@ class ChatComposer extends StatelessWidget {
   /// A tap on the field itself: what takes a phone from the panel back to
   /// the keyboard.
   final VoidCallback? onFieldTap;
+
+  /// A physical keyboard and a pointer: the field takes the caret when the
+  /// chat opens and keeps it through clicks elsewhere in the chat.
+  final bool desktop;
 
   /// Which of its four shapes this is, most specific first.
   ///
@@ -230,6 +235,8 @@ class ChatComposer extends StatelessWidget {
                                       readOnly: holdsKeyboard,
                                       onTap: onFieldTap,
                                       length: length,
+                                      autofocus: desktop,
+                                      keepsFocusOnTapOutside: desktop,
                                     ),
                                   ),
                                 ],

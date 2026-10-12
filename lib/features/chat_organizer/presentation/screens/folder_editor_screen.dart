@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/folder_rule.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organizer_failures.dart';
@@ -69,73 +70,75 @@ class _FolderEditorScreenState extends ConsumerState<FolderEditorScreen> {
           const SizedBox(width: AppSpacing.x2),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: AppSpacing.x8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x2,
-            ),
-            child: TextField(
-              controller: _title,
-              maxLength: ChatFolder.maxTitleLength,
-              textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: l10n.folderName,
-                border: const OutlineInputBorder(),
+      body: AppContentWidth(
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x4,
+                AppSpacing.x4,
+                AppSpacing.x2,
+              ),
+              child: TextField(
+                controller: _title,
+                maxLength: ChatFolder.maxTitleLength,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: l10n.folderName,
+                  border: const OutlineInputBorder(),
+                ),
               ),
             ),
-          ),
 
-          _SectionLabel(label: l10n.folderIcon),
-          _IconPicker(
-            selected: _iconKey,
-            onSelected: (key) => setState(() => _iconKey = key),
-          ),
-
-          const Divider(height: AppSpacing.x6),
-
-          _SectionLabel(label: l10n.folderMatchModeTitle),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<FolderMatchMode>(
-              segments: [
-                ButtonSegment<FolderMatchMode>(
-                  value: FolderMatchMode.all,
-                  label: Text(l10n.folderMatchAll),
-                ),
-                ButtonSegment<FolderMatchMode>(
-                  value: FolderMatchMode.any,
-                  label: Text(l10n.folderMatchAny),
-                ),
-              ],
-              selected: {_matchMode},
-              onSelectionChanged: (selection) =>
-                  setState(() => _matchMode = selection.first),
+            _SectionLabel(label: l10n.folderIcon),
+            _IconPicker(
+              selected: _iconKey,
+              onSelected: (key) => setState(() => _iconKey = key),
             ),
-          ),
 
-          const Divider(height: AppSpacing.x6),
+            const Divider(height: AppSpacing.x6),
 
-          _SectionLabel(label: l10n.folderRules),
-          for (var index = 0; index < _rules.length; index++)
-            _RuleTile(
-              rule: _rules[index],
-              onEdit: () => _editRule(index),
-              onRemove: () => setState(() => _rules.removeAt(index)),
+            _SectionLabel(label: l10n.folderMatchModeTitle),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+              child: SegmentedButton<FolderMatchMode>(
+                segments: [
+                  ButtonSegment<FolderMatchMode>(
+                    value: FolderMatchMode.all,
+                    label: Text(l10n.folderMatchAll),
+                  ),
+                  ButtonSegment<FolderMatchMode>(
+                    value: FolderMatchMode.any,
+                    label: Text(l10n.folderMatchAny),
+                  ),
+                ],
+                selected: {_matchMode},
+                onSelectionChanged: (selection) =>
+                    setState(() => _matchMode = selection.first),
+              ),
             ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.x4),
-            child: OutlinedButton.icon(
-              onPressed: _addRule,
-              icon: const Icon(Icons.add),
-              label: Text(l10n.addFolderRule),
+
+            const Divider(height: AppSpacing.x6),
+
+            _SectionLabel(label: l10n.folderRules),
+            for (var index = 0; index < _rules.length; index++)
+              _RuleTile(
+                rule: _rules[index],
+                onEdit: () => _editRule(index),
+                onRemove: () => setState(() => _rules.removeAt(index)),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.x4),
+              child: OutlinedButton.icon(
+                onPressed: _addRule,
+                icon: const Icon(Icons.add),
+                label: Text(l10n.addFolderRule),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

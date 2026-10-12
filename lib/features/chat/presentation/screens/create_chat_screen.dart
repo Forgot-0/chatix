@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -73,124 +74,126 @@ class _CreateChatScreenState extends ConsumerState<CreateChatScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.newChat)),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          SegmentedButton<ChatType>(
-            // The fill already says which is chosen; the tick only takes
-            // room, and four Russian labels in a phone's width need it
-            // ("Группа" broke in two).
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: ChatType.direct,
-                label: Text(l10n.chatTypeDirect),
-              ),
-              ButtonSegment(
-                value: ChatType.group,
-                label: Text(l10n.chatTypeGroup),
-              ),
-              ButtonSegment(
-                value: ChatType.supergroup,
-                label: Text(l10n.chatTypeSuper),
-              ),
-              ButtonSegment(
-                value: ChatType.channel,
-                label: Text(l10n.chatTypeChannel),
-              ),
-            ],
-            selected: {_chatType},
-            onSelectionChanged: (selection) =>
-                setState(() => _chatType = selection.first),
-          ),
-          const SizedBox(height: 16),
-
-          if (!isDirect) ...[
-            TextField(
-              controller: _nameController,
-              maxLength: CreateChatUseCase.maxNameLength,
-              decoration: InputDecoration(
-                labelText: l10n.chatName,
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _descriptionController,
-              maxLength: CreateChatUseCase.maxDescriptionLength,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: l10n.chatDescription,
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          MultiUserSearchField(
-            selected: _selectedMembers,
-            onAdd: _addMember,
-            onRemove: _removeMember,
-            labelText: isDirect
-                ? l10n.createChatDirectSearchLabel
-                : l10n.addPeopleSearchLabel,
-            helperText: isDirect
-                ? l10n.createChatDirectHelper
-                : l10n.createChatMembersHelper(
-                    CreateChatUseCase.maxInitialMembers,
-                  ),
-          ),
-          const SizedBox(height: 12),
-
-          if (!isDirect) ...[
-            SwitchListTile(
-              value: _isPublic,
-              onChanged: (value) => setState(() => _isPublic = value),
-              title: Text(l10n.chatPublic),
-              subtitle: Text(l10n.chatPublicHintCreate),
-            ),
-            SwitchListTile(
-              value: _adminOnly,
-              onChanged: (value) => setState(() => _adminOnly = value),
-              title: Text(l10n.chatAdminOnly),
-              // The same words as the chat's own settings: who may post,
-              // not the name of the right that decides it.
-              subtitle: Text(l10n.chatAdminOnlyHint),
-            ),
-            TextField(
-              controller: _slowModeController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: l10n.chatSlowModeSecondsField,
-                helperText: l10n.chatSlowModeRange(
-                  CreateChatUseCase.maxSlowModeSeconds,
+      body: AppContentWidth(
+        child: ListView(
+          padding: EdgeInsets.all(16),
+          children: [
+            SegmentedButton<ChatType>(
+              // The fill already says which is chosen; the tick only takes
+              // room, and four Russian labels in a phone's width need it
+              // ("Группа" broke in two).
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(
+                  value: ChatType.direct,
+                  label: Text(l10n.chatTypeDirect),
                 ),
-                border: const OutlineInputBorder(),
+                ButtonSegment(
+                  value: ChatType.group,
+                  label: Text(l10n.chatTypeGroup),
+                ),
+                ButtonSegment(
+                  value: ChatType.supergroup,
+                  label: Text(l10n.chatTypeSuper),
+                ),
+                ButtonSegment(
+                  value: ChatType.channel,
+                  label: Text(l10n.chatTypeChannel),
+                ),
+              ],
+              selected: {_chatType},
+              onSelectionChanged: (selection) =>
+                  setState(() => _chatType = selection.first),
+            ),
+            const SizedBox(height: 16),
+
+            if (!isDirect) ...[
+              TextField(
+                controller: _nameController,
+                maxLength: CreateChatUseCase.maxNameLength,
+                decoration: InputDecoration(
+                  labelText: l10n.chatName,
+                  border: OutlineInputBorder(),
+                ),
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _descriptionController,
+                maxLength: CreateChatUseCase.maxDescriptionLength,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: l10n.chatDescription,
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            MultiUserSearchField(
+              selected: _selectedMembers,
+              onAdd: _addMember,
+              onRemove: _removeMember,
+              labelText: isDirect
+                  ? l10n.createChatDirectSearchLabel
+                  : l10n.addPeopleSearchLabel,
+              helperText: isDirect
+                  ? l10n.createChatDirectHelper
+                  : l10n.createChatMembersHelper(
+                      CreateChatUseCase.maxInitialMembers,
+                    ),
             ),
             const SizedBox(height: 12),
-          ],
 
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            if (!isDirect) ...[
+              SwitchListTile(
+                value: _isPublic,
+                onChanged: (value) => setState(() => _isPublic = value),
+                title: Text(l10n.chatPublic),
+                subtitle: Text(l10n.chatPublicHintCreate),
               ),
-            ),
+              SwitchListTile(
+                value: _adminOnly,
+                onChanged: (value) => setState(() => _adminOnly = value),
+                title: Text(l10n.chatAdminOnly),
+                // The same words as the chat's own settings: who may post,
+                // not the name of the right that decides it.
+                subtitle: Text(l10n.chatAdminOnlyHint),
+              ),
+              TextField(
+                controller: _slowModeController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.chatSlowModeSecondsField,
+                  helperText: l10n.chatSlowModeRange(
+                    CreateChatUseCase.maxSlowModeSeconds,
+                  ),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
 
-          FilledButton(
-            onPressed: _isSubmitting ? null : _submit,
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(l10n.createChat),
-          ),
-        ],
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+
+            FilledButton(
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(l10n.createChat),
+            ),
+          ],
+        ),
       ),
     );
   }

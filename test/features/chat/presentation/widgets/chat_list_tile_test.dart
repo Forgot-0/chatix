@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/storage/key_value_table.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
@@ -561,6 +563,106 @@ void main() {
     });
   });
 
+  group('the right-click menu', () {
+    Future<void> rightClick(WidgetTester tester, Offset at) async {
+      await tester.tapAt(
+        at,
+        buttons: kSecondaryMouseButton,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('offers what the long press does, at the pointer', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(
+          unread: 2,
+          last: message(content: 'hi'),
+          membership: membership(ChatRole.owner),
+        ),
+      );
+      final at = tester.getCenter(find.text('Design team'));
+
+      await rightClick(tester, at);
+
+      final items = tester
+          .widgetList<PopupMenuItem<ChatRowAction>>(
+            find.byType(PopupMenuItem<ChatRowAction>),
+          )
+          .map((item) => item.value)
+          .toList();
+      expect(items, [
+        ChatRowAction.markRead,
+        ChatRowAction.pin,
+        ChatRowAction.archive,
+        ChatRowAction.mute,
+        ChatRowAction.delete,
+      ]);
+      // A popup by the pointer, not a sheet from the bottom of the window.
+      expect(find.byType(BottomSheet), findsNothing);
+      final menu = tester.getRect(
+        find.byType(PopupMenuItem<ChatRowAction>).first,
+      );
+      // Growing right of the pointer, or left of it in the window's right
+      // half, as Material's menus do.
+      expect(
+        [menu.left, menu.right].any((edge) => (edge - at.dx).abs() < 1),
+        isTrue,
+      );
+      expect((menu.top - at.dy).abs(), lessThan(AppSpacing.x6));
+    });
+
+    testWidgets('does what it says', (tester) async {
+      await pumpTile(tester, chat(last: message(content: 'hi')));
+
+      await rightClick(tester, tester.getCenter(find.text('Design team')));
+      await tester.tap(find.text(l10n.archiveChat));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.chatArchivedToast), findsOneWidget);
+    });
+
+    testWidgets('is not on a row that is only a search result', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          chatLocalPrefsStoreProvider.overrideWithValue(store),
+          chatOrganizerDataSourceProvider.overrideWithValue(
+            InMemoryChatOrganizerDataSource(),
+          ),
+          getMembersUseCaseProvider.overrideWithValue(getMembers),
+          updateChatStateUseCaseProvider.overrideWithValue(updateState),
+          authProvider.overrideWith(() => FakeAuthController(me)),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(authProvider.future);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: ChatListTile(
+                chat: chat(last: message(content: 'hi')),
+                enableActions: false,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await rightClick(tester, tester.getCenter(find.text('Design team')));
+
+      expect(find.byType(PopupMenuItem<ChatRowAction>), findsNothing);
+    });
+  });
+
   testWidgets('the row is drawn on both grounds', (tester) async {
     await pumpTile(tester, chat(unread: 2, last: message(content: 'hi')));
     expect(tester.takeException(), isNull);
@@ -712,6 +814,25 @@ void main() {
           await expectLater(
             find.byType(MaterialApp),
             matchesGoldenFile('goldens/chat_list_stamps_$name.png'),
+          );
+        });
+
+        // Right-clicked on a desktop: the row lit under the pointer, the
+        // menu beside it.
+        testWidgets('the right-click menu, $name', (tester) async {
+          await pumpList(tester, window: window.size, dark: dark);
+
+          await tester.tapAt(
+            tester.getCenter(find.text('Поход на Кавказ')),
+            buttons: kSecondaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.byType(PopupMenuItem<ChatRowAction>), findsWidgets);
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile('goldens/chat_list_context_menu_$name.png'),
           );
         });
 

@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
+  desktop_drop
   emoji_picker_flutter
   file_selector_windows
   firebase_core
@@ -12,6 +13,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_webrtc
   livekit_client
   local_auth_windows
+  pasteboard
   permission_handler_windows
   record_windows
   share_plus

@@ -4878,5 +4878,95 @@
   "profileBlockedNotice": "You blocked this user",
   "@profileBlockedNotice": {
     "description": "Banner on the profile of someone you blocked, next to the Unblock button"
+  },
+  "chatDropTitle": "Drop to send",
+  "@chatDropTitle": {
+    "description": "Large title over a chat while files are dragged onto it from the desktop"
+  },
+  "chatDropHint": "Photos and videos open in a preview first",
+  "@chatDropHint": {
+    "description": "Line under \"Drop to send\": what happens to photos and videos that are dropped"
+  },
+  "chatJumpHint": "Go to chat…",
+  "@chatJumpHint": {
+    "description": "Hint in the search box of the Ctrl+K palette that jumps to a chat by its name"
+  },
+  "chatJumpNothingFound": "No chats by that name",
+  "@chatJumpNothingFound": {
+    "description": "Ctrl+K palette: no loaded chat has a name matching what was typed"
+  },
+  "chatJumpFooter": "↑↓ to choose · Enter to open · Esc to close",
+  "@chatJumpFooter": {
+    "description": "Small line at the bottom of the Ctrl+K palette naming its keys. Keep the key names (arrows, Enter, Esc) as they are printed on keyboards in this language"
+  },
+  "settingsKeyboardSection": "Keyboard",
+  "@settingsKeyboardSection": {
+    "description": "Settings section header on desktop: options for the physical keyboard"
+  },
+  "settingsSendWithModifierEnter": "Send with {key}+Enter",
+  "@settingsSendWithModifierEnter": {
+    "description": "Switch in Settings (desktop): send messages with Ctrl+Enter (Cmd+Enter on a Mac) instead of Enter",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSendWithModifierEnterOn": "Enter starts a new line, {key}+Enter sends",
+  "@settingsSendWithModifierEnterOn": {
+    "description": "Under the switch when it is on: what Enter and Ctrl+Enter do now",
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSendWithModifierEnterOff": "Enter sends, Shift+Enter starts a new line",
+  "@settingsSendWithModifierEnterOff": {
+    "description": "Under the switch when it is off: what Enter and Shift+Enter do now"
+  },
+  "keyboardControlKey": "Ctrl",
+  "@keyboardControlKey": {
+    "description": "The Control key as printed on keyboards in this language (German: Strg). Used inside \"Send with {key}+Enter\""
+  },
+  "keyboardCommandKey": "⌘",
+  "@keyboardCommandKey": {
+    "description": "The Command key of a Mac keyboard, as its symbol. Used inside \"Send with {key}+Enter\""
+  },
+  "menuSettings": "Settings…",
+  "@menuSettings": {
+    "description": "macOS menu bar, app menu: open the settings. Ends with an ellipsis, as menu items that open a window do"
+  },
+  "menuEdit": "Edit",
+  "@menuEdit": {
+    "description": "macOS menu bar: the Edit menu"
+  },
+  "menuUndo": "Undo",
+  "@menuUndo": {
+    "description": "macOS menu bar, Edit menu item"
+  },
+  "menuRedo": "Redo",
+  "@menuRedo": {
+    "description": "macOS menu bar, Edit menu item"
+  },
+  "menuCut": "Cut",
+  "@menuCut": {
+    "description": "macOS menu bar, Edit menu item"
+  },
+  "menuCopy": "Copy",
+  "@menuCopy": {
+    "description": "macOS menu bar, Edit menu item"
+  },
+  "menuPaste": "Paste",
+  "@menuPaste": {
+    "description": "macOS menu bar, Edit menu item"
+  },
+  "menuSelectAll": "Select All",
+  "@menuSelectAll": {
+    "description": "macOS menu bar, Edit menu item"
+  },
+  "menuWindow": "Window",
+  "@menuWindow": {
+    "description": "macOS menu bar: the Window menu"
   }
 }

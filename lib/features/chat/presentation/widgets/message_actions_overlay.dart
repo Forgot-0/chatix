@@ -37,6 +37,13 @@ abstract final class MessageActionsOverlay {
   /// covers the whole window, but the panels belong to the conversation and
   /// are held to its width — in a two-pane layout the window is the chat
   /// list as well.
+  ///
+  /// With [cursor] — a right click, or the react button a pointer brings up
+  /// — it is the same two panels, opened where the pointer is, the way a
+  /// desktop opens a context menu: no blur and no lifted bubble, since the
+  /// message is right there under the pointer and the window behind it is
+  /// still the reader's to look at. Empty [actions] leaves only the
+  /// reactions.
   static Future<MessageActionsResult?> show(
     BuildContext context, {
     required Rect anchor,
@@ -48,6 +55,7 @@ abstract final class MessageActionsOverlay {
     required Set<String> blockedReactions,
     required bool canOpenCatalog,
     required bool isMine,
+    Offset? cursor,
   }) {
     return Navigator.of(
       context,
@@ -57,23 +65,228 @@ abstract final class MessageActionsOverlay {
         opaque: false,
         barrierDismissible: true,
         barrierLabel: AppLocalizations.of(context).close,
-        transitionDuration: AppMotion.base,
+        transitionDuration: cursor == null ? AppMotion.base : AppMotion.fast,
         reverseTransitionDuration: AppMotion.fast,
-        pageBuilder: (routeContext, animation, _) => _MessageActionsLayer(
-          animation: animation,
-          anchor: anchor,
-          bubble: bubble,
-          feedWidth: feedWidth,
-          actions: actions,
-          reactions: reactions,
-          myReactions: myReactions,
-          blockedReactions: blockedReactions,
-          canOpenCatalog: canOpenCatalog,
-          isMine: isMine,
-        ),
+        pageBuilder: (routeContext, animation, _) => cursor == null
+            ? _MessageActionsLayer(
+                animation: animation,
+                anchor: anchor,
+                bubble: bubble,
+                feedWidth: feedWidth,
+                actions: actions,
+                reactions: reactions,
+                myReactions: myReactions,
+                blockedReactions: blockedReactions,
+                canOpenCatalog: canOpenCatalog,
+                isMine: isMine,
+              )
+            : _CursorMenuLayer(
+                animation: animation,
+                cursor: cursor,
+                feedWidth: feedWidth,
+                actions: actions,
+                reactions: reactions,
+                myReactions: myReactions,
+                blockedReactions: blockedReactions,
+                canOpenCatalog: canOpenCatalog,
+              ),
       ),
     );
   }
+}
+
+/// The menu at the pointer: the reactions over the actions, as one block,
+/// opening down and to the right of where the click was — or up, or left,
+/// wherever the window has the room.
+class _CursorMenuLayer extends StatelessWidget {
+  const _CursorMenuLayer({
+    required this.animation,
+    required this.cursor,
+    required this.feedWidth,
+    required this.actions,
+    required this.reactions,
+    required this.myReactions,
+    required this.blockedReactions,
+    required this.canOpenCatalog,
+  });
+
+  final Animation<double> animation;
+  final Offset cursor;
+  final double feedWidth;
+  final List<MessageAction> actions;
+  final List<String> reactions;
+  final Set<String> myReactions;
+  final Set<String> blockedReactions;
+  final bool canOpenCatalog;
+
+  @override
+  Widget build(BuildContext context) {
+    final curve = CurvedAnimation(
+      parent: animation,
+      curve: AppMotion.curve,
+      reverseCurve: AppMotion.reverseCurve,
+    );
+
+    void dismiss() => Navigator.of(context).pop();
+
+    final menu = CustomMultiChildLayout(
+      delegate: _CursorMenuPosition(
+        cursor: cursor,
+        margin: AppSpacing.x2,
+        gap: AppSpacing.x2,
+        safe: MediaQuery.paddingOf(context),
+      ),
+      children: [
+        if (reactions.isNotEmpty)
+          LayoutId(
+            id: _CursorMenuPart.reactions,
+            child: _QuickReactionBar(
+              maxWidth: feedWidth - AppSpacing.x3 * 2,
+              reactions: reactions,
+              mine: myReactions,
+              blocked: blockedReactions,
+              canOpenCatalog: canOpenCatalog,
+              onSelected: (emoji) => Navigator.of(
+                context,
+              ).pop(MessageActionsResult.reaction(emoji)),
+              onMore: () => Navigator.of(
+                context,
+              ).pop(const MessageActionsResult.action(MessageAction.react)),
+            ),
+          ),
+        if (actions.isNotEmpty)
+          LayoutId(
+            id: _CursorMenuPart.actions,
+            child: _ActionList(
+              actions: actions,
+              onSelected: (action) => Navigator.of(
+                context,
+              ).pop(MessageActionsResult.action(action)),
+            ),
+          ),
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // A click anywhere else closes the menu, as on every desktop —
+          // a right click included.
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: dismiss,
+              onSecondaryTap: dismiss,
+            ),
+          ),
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: curve,
+              builder: (context, child) {
+                final t = curve.value;
+                final opacity = t.clamp(0.0, 1.0);
+                if (context.prefersReducedMotion) {
+                  return Opacity(opacity: opacity, child: child);
+                }
+                // Grows out of the pointer, whichever way it opens.
+                return Opacity(
+                  opacity: opacity,
+                  child: Transform.scale(
+                    scale: 0.94 + 0.06 * t,
+                    alignment: Alignment.topLeft,
+                    origin: cursor,
+                    child: child,
+                  ),
+                );
+              },
+              child: menu,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _CursorMenuPart { reactions, actions }
+
+/// Puts the menu's corner at the pointer, flipping to whichever side the
+/// window has room on, and keeps it inside the window when neither has.
+///
+/// The two panels are placed apart rather than as one column so that both
+/// hug the pointer's side: opening leftwards, the narrow list of actions
+/// ends under the pointer instead of a reaction bar's width away from it.
+class _CursorMenuPosition extends MultiChildLayoutDelegate {
+  _CursorMenuPosition({
+    required this.cursor,
+    required this.margin,
+    required this.gap,
+    required this.safe,
+  });
+
+  final Offset cursor;
+  final double margin;
+  final double gap;
+  final EdgeInsets safe;
+
+  @override
+  void performLayout(Size size) {
+    final room = BoxConstraints.loose(size).deflate(
+      EdgeInsets.fromLTRB(
+        margin + safe.left,
+        margin + safe.top,
+        margin + safe.right,
+        margin + safe.bottom,
+      ),
+    );
+
+    final bar = hasChild(_CursorMenuPart.reactions)
+        ? layoutChild(_CursorMenuPart.reactions, room)
+        : Size.zero;
+    final list = hasChild(_CursorMenuPart.actions)
+        ? layoutChild(_CursorMenuPart.actions, room)
+        : Size.zero;
+    final between = bar.isEmpty || list.isEmpty ? 0.0 : gap;
+    final block = Size(
+      math.max(bar.width, list.width),
+      bar.height + between + list.height,
+    );
+
+    final left = margin + safe.left;
+    final top = margin + safe.top;
+    final right = size.width - margin - safe.right;
+    final bottom = size.height - margin - safe.bottom;
+
+    final opensLeft = cursor.dx + block.width > right;
+    final opensUp = cursor.dy + block.height > bottom;
+
+    final x = (opensLeft ? cursor.dx - block.width : cursor.dx)
+        .clamp(left, math.max(left, right - block.width))
+        .toDouble();
+    final y = (opensUp ? cursor.dy - block.height : cursor.dy)
+        .clamp(top, math.max(top, bottom - block.height))
+        .toDouble();
+
+    double edge(Size part) => opensLeft ? x + block.width - part.width : x;
+
+    if (!bar.isEmpty) {
+      positionChild(_CursorMenuPart.reactions, Offset(edge(bar), y));
+    }
+    if (!list.isEmpty) {
+      positionChild(
+        _CursorMenuPart.actions,
+        Offset(edge(list), y + bar.height + between),
+      );
+    }
+  }
+
+  @override
+  bool shouldRelayout(_CursorMenuPosition oldDelegate) =>
+      cursor != oldDelegate.cursor ||
+      margin != oldDelegate.margin ||
+      gap != oldDelegate.gap ||
+      safe != oldDelegate.safe;
 }
 
 class _MessageActionsLayer extends StatelessWidget {

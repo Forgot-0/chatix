@@ -136,6 +136,15 @@ dependencies:
   # (profile_qr_sheet.dart): the profile link, drawn in pure Dart, so it
   # renders the same on every platform and in goldens.
   qr_flutter: ^4.1.0
+  # Ctrl+V with a picture or copied files in the composer, on macOS, Windows
+  # and Linux (clipboard_attachments.dart): plain platform channels, where
+  # super_clipboard would bring a Rust toolchain into every desktop build.
+  # Windows hands the picture over as a bitmap; it is re-encoded to PNG
+  # before it goes anywhere near the server's MIME list.
+  pasteboard: ^0.5.0
+  # Files dragged onto a chat from the desktop (chat_drop_zone.dart), into
+  # the same preview a pick from the paperclip opens.
+  desktop_drop: ^0.8.4
 
 dev_dependencies:
   flutter_test:

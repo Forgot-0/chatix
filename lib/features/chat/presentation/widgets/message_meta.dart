@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -126,46 +127,49 @@ class MessageMeta extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       label: spoken.isEmpty ? null : spoken.join(', '),
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: ExcludeSemantics(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // "edited 09:02", as the clock is what the ticks belong to.
-              if (isEdited) ...[
+      child: ClickCursor(
+        enabled: onTap != null,
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: ExcludeSemantics(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // "edited 09:02", as the clock is what the ticks belong to.
+                if (isEdited) ...[
+                  Text(
+                    l10n.messageEdited,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: styles.edited,
+                    textHeightBehavior: styles.heightBehavior,
+                  ),
+                  const SizedBox(width: ChatLayout.metaItemGap),
+                ],
                 Text(
-                  l10n.messageEdited,
+                  label,
                   maxLines: 1,
                   softWrap: false,
-                  style: styles.edited,
+                  style: styles.label,
                   textHeightBehavior: styles.heightBehavior,
                 ),
-                const SizedBox(width: ChatLayout.metaItemGap),
+                if (deliveryStatus != null) ...[
+                  // A message still going out has no time yet; the clock
+                  // tick stands alone.
+                  if (label.isNotEmpty)
+                    const SizedBox(width: ChatLayout.metaItemGap),
+                  StatusTicks(
+                    status: deliveryStatus!,
+                    color: color,
+                    // Mint on an outgoing accent is 1–2.7:1. The second tick
+                    // says "read" by its shape; the colour has to say "meta".
+                    readColor: color,
+                    size: ChatLayout.metaTickSize,
+                  ),
+                ],
               ],
-              Text(
-                label,
-                maxLines: 1,
-                softWrap: false,
-                style: styles.label,
-                textHeightBehavior: styles.heightBehavior,
-              ),
-              if (deliveryStatus != null) ...[
-                // A message still going out has no time yet; the clock
-                // tick stands alone.
-                if (label.isNotEmpty)
-                  const SizedBox(width: ChatLayout.metaItemGap),
-                StatusTicks(
-                  status: deliveryStatus!,
-                  color: color,
-                  // Mint on an outgoing accent is 1–2.7:1. The second tick
-                  // says "read" by its shape; the colour has to say "meta".
-                  readColor: color,
-                  size: ChatLayout.metaTickSize,
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),

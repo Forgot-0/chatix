@@ -129,6 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // A form column, not the window's width: outside the shell
                 // there is no pane to hold it in, and a 1400 px field reads
                 // as broken.
+                maxWidth: AppContentWidths.auth,
                 child: AutofillGroup(
                   child: FormBuilder(
                     key: _formKey,

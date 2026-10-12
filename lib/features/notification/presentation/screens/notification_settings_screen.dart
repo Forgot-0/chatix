@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/permissions/media_permissions.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
@@ -35,62 +36,64 @@ class NotificationSettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.notificationSettingsTitle)),
-      body: ListView(
-        key: const PageStorageKey<String>('notification-settings'),
-        padding: const EdgeInsets.only(bottom: AppSpacing.x8),
-        children: [
-          if (!granted) const _PermissionBanner(),
+      body: AppContentWidth(
+        child: ListView(
+          key: const PageStorageKey<String>('notification-settings'),
+          padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+          children: [
+            if (!granted) const _PermissionBanner(),
 
-          SwitchListTile(
-            secondary: const Icon(Icons.volume_up_outlined),
-            title: Text(l10n.notificationSoundTitle),
-            subtitle: Text(l10n.notificationSoundSubtitle),
-            value: preferences.sound,
-            onChanged: controller.setSound,
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.vibration),
-            title: Text(l10n.notificationVibrationTitle),
-            subtitle: Text(l10n.notificationVibrationSubtitle),
-            value: preferences.vibration,
-            onChanged: controller.setVibration,
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.chat_bubble_outline),
-            title: Text(l10n.notificationPreviewTitle),
-            subtitle: Text(l10n.notificationPreviewSubtitle),
-            value: preferences.showPreview,
-            onChanged: controller.setShowPreview,
-          ),
+            SwitchListTile(
+              secondary: const Icon(Icons.volume_up_outlined),
+              title: Text(l10n.notificationSoundTitle),
+              subtitle: Text(l10n.notificationSoundSubtitle),
+              value: preferences.sound,
+              onChanged: controller.setSound,
+            ),
+            SwitchListTile(
+              secondary: const Icon(Icons.vibration),
+              title: Text(l10n.notificationVibrationTitle),
+              subtitle: Text(l10n.notificationVibrationSubtitle),
+              value: preferences.vibration,
+              onChanged: controller.setVibration,
+            ),
+            SwitchListTile(
+              secondary: const Icon(Icons.chat_bubble_outline),
+              title: Text(l10n.notificationPreviewTitle),
+              subtitle: Text(l10n.notificationPreviewSubtitle),
+              value: preferences.showPreview,
+              onChanged: controller.setShowPreview,
+            ),
 
-          const Divider(),
+            const Divider(),
 
-          _SectionLabel(label: l10n.quietHoursTitle),
-          SwitchListTile(
-            secondary: const Icon(Icons.bedtime_outlined),
-            title: Text(l10n.quietHoursTitle),
-            subtitle: Text(l10n.quietHoursSubtitle),
-            value: preferences.quietHours.enabled,
-            onChanged: controller.setQuietHoursEnabled,
-          ),
-          _QuietHourTile(
-            label: l10n.quietHoursFrom,
-            minute: preferences.quietHours.startMinute,
-            enabled: preferences.quietHours.enabled,
-            onChanged: (minute) => controller.setQuietHours(startMinute: minute),
-          ),
-          _QuietHourTile(
-            label: l10n.quietHoursTo,
-            minute: preferences.quietHours.endMinute,
-            enabled: preferences.quietHours.enabled,
-            onChanged: (minute) => controller.setQuietHours(endMinute: minute),
-          ),
+            _SectionLabel(label: l10n.quietHoursTitle),
+            SwitchListTile(
+              secondary: const Icon(Icons.bedtime_outlined),
+              title: Text(l10n.quietHoursTitle),
+              subtitle: Text(l10n.quietHoursSubtitle),
+              value: preferences.quietHours.enabled,
+              onChanged: controller.setQuietHoursEnabled,
+            ),
+            _QuietHourTile(
+              label: l10n.quietHoursFrom,
+              minute: preferences.quietHours.startMinute,
+              enabled: preferences.quietHours.enabled,
+              onChanged: (minute) => controller.setQuietHours(startMinute: minute),
+            ),
+            _QuietHourTile(
+              label: l10n.quietHoursTo,
+              minute: preferences.quietHours.endMinute,
+              enabled: preferences.quietHours.enabled,
+              onChanged: (minute) => controller.setQuietHours(endMinute: minute),
+            ),
 
-          const Divider(),
+            const Divider(),
 
-          _SectionLabel(label: l10n.chatNotificationsTitle),
-          _ChatExceptions(preferences: preferences),
-        ],
+            _SectionLabel(label: l10n.chatNotificationsTitle),
+            _ChatExceptions(preferences: preferences),
+          ],
+        ),
       ),
     );
   }

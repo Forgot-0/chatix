@@ -6605,6 +6605,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You blocked this user'**
   String get profileBlockedNotice;
+
+  /// Large title over a chat while files are dragged onto it from the desktop
+  ///
+  /// In en, this message translates to:
+  /// **'Drop to send'**
+  String get chatDropTitle;
+
+  /// Line under "Drop to send": what happens to photos and videos that are dropped
+  ///
+  /// In en, this message translates to:
+  /// **'Photos and videos open in a preview first'**
+  String get chatDropHint;
+
+  /// Hint in the search box of the Ctrl+K palette that jumps to a chat by its name
+  ///
+  /// In en, this message translates to:
+  /// **'Go to chat…'**
+  String get chatJumpHint;
+
+  /// Ctrl+K palette: no loaded chat has a name matching what was typed
+  ///
+  /// In en, this message translates to:
+  /// **'No chats by that name'**
+  String get chatJumpNothingFound;
+
+  /// Small line at the bottom of the Ctrl+K palette naming its keys. Keep the key names (arrows, Enter, Esc) as they are printed on keyboards in this language
+  ///
+  /// In en, this message translates to:
+  /// **'↑↓ to choose · Enter to open · Esc to close'**
+  String get chatJumpFooter;
+
+  /// Settings section header on desktop: options for the physical keyboard
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard'**
+  String get settingsKeyboardSection;
+
+  /// Switch in Settings (desktop): send messages with Ctrl+Enter (Cmd+Enter on a Mac) instead of Enter
+  ///
+  /// In en, this message translates to:
+  /// **'Send with {key}+Enter'**
+  String settingsSendWithModifierEnter(String key);
+
+  /// Under the switch when it is on: what Enter and Ctrl+Enter do now
+  ///
+  /// In en, this message translates to:
+  /// **'Enter starts a new line, {key}+Enter sends'**
+  String settingsSendWithModifierEnterOn(String key);
+
+  /// Under the switch when it is off: what Enter and Shift+Enter do now
+  ///
+  /// In en, this message translates to:
+  /// **'Enter sends, Shift+Enter starts a new line'**
+  String get settingsSendWithModifierEnterOff;
+
+  /// The Control key as printed on keyboards in this language (German: Strg). Used inside "Send with {key}+Enter"
+  ///
+  /// In en, this message translates to:
+  /// **'Ctrl'**
+  String get keyboardControlKey;
+
+  /// The Command key of a Mac keyboard, as its symbol. Used inside "Send with {key}+Enter"
+  ///
+  /// In en, this message translates to:
+  /// **'⌘'**
+  String get keyboardCommandKey;
+
+  /// macOS menu bar, app menu: open the settings. Ends with an ellipsis, as menu items that open a window do
+  ///
+  /// In en, this message translates to:
+  /// **'Settings…'**
+  String get menuSettings;
+
+  /// macOS menu bar: the Edit menu
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get menuEdit;
+
+  /// macOS menu bar, Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get menuUndo;
+
+  /// macOS menu bar, Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
+  String get menuRedo;
+
+  /// macOS menu bar, Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Cut'**
+  String get menuCut;
+
+  /// macOS menu bar, Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get menuCopy;
+
+  /// macOS menu bar, Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get menuPaste;
+
+  /// macOS menu bar, Edit menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get menuSelectAll;
+
+  /// macOS menu bar: the Window menu
+  ///
+  /// In en, this message translates to:
+  /// **'Window'**
+  String get menuWindow;
 }
 
 class _AppLocalizationsDelegate

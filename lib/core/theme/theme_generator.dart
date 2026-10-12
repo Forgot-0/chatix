@@ -57,6 +57,28 @@ abstract final class ThemeGenerator {
         ),
       ],
       textTheme: _textTheme(base.textTheme),
+      // What a pointer resting on a row or a button washes it with. Material's
+      // own 4 % disappears on the tinted surfaces the lists sit on; this is
+      // still well short of the selected row's fill.
+      hoverColor: scheme.onSurface.withValues(alpha: DesktopSizes.hoverOverlay),
+      scrollbarTheme: ScrollbarThemeData(
+        thickness: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.hovered)
+              ? DesktopSizes.scrollbarHoverThickness
+              : DesktopSizes.scrollbarThickness,
+        ),
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => scheme.onSurfaceVariant.withValues(
+            alpha:
+                states.contains(WidgetState.dragged) ||
+                    states.contains(WidgetState.hovered)
+                ? DesktopSizes.scrollbarActiveAlpha
+                : DesktopSizes.scrollbarAlpha,
+          ),
+        ),
+        radius: const Radius.circular(AppRadii.full),
+        crossAxisMargin: DesktopSizes.scrollbarMargin,
+      ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: _SharedAxisTransitionBuilder(),

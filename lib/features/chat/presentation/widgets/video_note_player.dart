@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 
 import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/feedback/progress_ring.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/widgets/viewport_visibility.dart';
@@ -278,60 +279,62 @@ class _RoundState extends ConsumerState<_Round> {
         ),
         hint: hasSound ? l10n.videoNoteTapToMute : l10n.videoNoteTapForSound,
         child: ExcludeSemantics(
-          child: GestureDetector(
-            onTap: _toggleSound,
-            onLongPress: () => unawaited(_openFullScreen()),
-            child: ValueListenableBuilder<VideoPlayerValue>(
-              valueListenable: controller,
-              builder: (context, value, child) => ProgressRing(
-                progress: _progressOf(value),
-                stroke: 3,
-                color: hasSound ? scheme.primary : chatix.success,
-                trackColor: scheme.outlineVariant.withValues(alpha: 0.5),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    child!,
-                    // Silence is the default, so it is the state that has to
-                    // say so: a muted note carries the crossed-out speaker,
-                    // one with sound carries the plain one.
-                    Positioned(
-                      right: 10,
-                      bottom: 10,
-                      child: _Pill(
-                        icon: hasSound
-                            ? Icons.volume_up_rounded
-                            : Icons.volume_off_rounded,
-                        label: formatMediaDuration(
-                          _remainingOf(value, controller),
-                        ),
-                      ),
-                    ),
-                    // Nothing is playing and nothing will start on its own:
-                    // the note says what a tap would do rather than sitting
-                    // on a still frame looking broken.
-                    if (!value.isPlaying && !_handedOver)
-                      Center(
+          child: ClickCursor(
+            child: GestureDetector(
+              onTap: _toggleSound,
+              onLongPress: () => unawaited(_openFullScreen()),
+              child: ValueListenableBuilder<VideoPlayerValue>(
+                valueListenable: controller,
+                builder: (context, value, child) => ProgressRing(
+                  progress: _progressOf(value),
+                  stroke: 3,
+                  color: hasSound ? scheme.primary : chatix.success,
+                  trackColor: scheme.outlineVariant.withValues(alpha: 0.5),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      child!,
+                      // Silence is the default, so it is the state that has to
+                      // say so: a muted note carries the crossed-out speaker,
+                      // one with sound carries the plain one.
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
                         child: _Pill(
-                          icon: Icons.play_arrow_rounded,
-                          label: l10n.videoNoteAutoplayOff,
+                          icon: hasSound
+                              ? Icons.volume_up_rounded
+                              : Icons.volume_off_rounded,
+                          label: formatMediaDuration(
+                            _remainingOf(value, controller),
+                          ),
                         ),
                       ),
-                  ],
+                      // Nothing is playing and nothing will start on its own:
+                      // the note says what a tap would do rather than sitting
+                      // on a still frame looking broken.
+                      if (!value.isPlaying && !_handedOver)
+                        Center(
+                          child: _Pill(
+                            icon: Icons.play_arrow_rounded,
+                            label: l10n.videoNoteAutoplayOff,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              child: ClipOval(
-                child: ColoredBox(
-                  color: scheme.surfaceContainerHighest,
-                  // The circle takes the middle of whatever shape the frame
-                  // is, rather than squashing a face to fit it.
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    clipBehavior: Clip.hardEdge,
-                    child: SizedBox(
-                      width: controller.value.size.width,
-                      height: controller.value.size.height,
-                      child: VideoPlayer(controller),
+                child: ClipOval(
+                  child: ColoredBox(
+                    color: scheme.surfaceContainerHighest,
+                    // The circle takes the middle of whatever shape the frame
+                    // is, rather than squashing a face to fit it.
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      clipBehavior: Clip.hardEdge,
+                      child: SizedBox(
+                        width: controller.value.size.width,
+                        height: controller.value.size.height,
+                        child: VideoPlayer(controller),
+                      ),
                     ),
                   ),
                 ),

@@ -6,7 +6,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/settings/send_shortcut.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/core/websocket/socket_protocol_log.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/settings/presentation/widgets/settings_section_header.dart';
@@ -22,60 +25,102 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
-      body: ListView(
-        key: const PageStorageKey<String>('settings-list'),
-        children: [
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: Text(l10n.profile),
-            subtitle: Text(l10n.profileSettingsHint),
-            onTap: () => context.push(ProfileRoute.location),
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(l10n.language),
-            subtitle: Text(l10n.change_language),
-            onTap: () => context.push(LanguageSettingsRoute.location),
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.palette_outlined),
-            title: Text(l10n.appearanceTitle),
-            subtitle: Text(l10n.appearanceHint),
-            onTap: () => context.push(AppearanceSettingsRoute.location),
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.notifications_none),
-            title: Text(l10n.notificationSettingsTitle),
-            subtitle: Text(l10n.notification_settings),
-            onTap: () => context.push(NotificationSettingsRoute.location),
-          ),
-
-          // Blocked users, devices and the app lock live one level down,
-          // the way Telegram groups them.
-          ListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: Text(l10n.privacySettingsTitle),
-            subtitle: Text(l10n.privacySettingsHint),
-            onTap: () => context.push(PrivacySettingsRoute.location),
-          ),
-
-          if (kDebugMode)
+      body: AppContentWidth(
+        child: ListView(
+          key: const PageStorageKey<String>('settings-list'),
+          children: [
             ListTile(
-              leading: const Icon(Icons.widgets_outlined),
-              title: Text(l10n.designSystem),
-              onTap: () => context.push(ComponentShowcaseRoute.location),
+              leading: const Icon(Icons.person_outline),
+              title: Text(l10n.profile),
+              subtitle: Text(l10n.profileSettingsHint),
+              onTap: () => context.push(ProfileRoute.location),
             ),
 
-          const _WsDiagnosticsTile(),
+            ListTile(
+              leading: const Icon(Icons.language),
+              title: Text(l10n.language),
+              subtitle: Text(l10n.change_language),
+              onTap: () => context.push(LanguageSettingsRoute.location),
+            ),
 
-          SettingsSectionHeader(title: l10n.settingsAccountSection),
+            ListTile(
+              leading: const Icon(Icons.palette_outlined),
+              title: Text(l10n.appearanceTitle),
+              subtitle: Text(l10n.appearanceHint),
+              onTap: () => context.push(AppearanceSettingsRoute.location),
+            ),
 
-          const SignOutTile(),
-        ],
+            ListTile(
+              leading: const Icon(Icons.notifications_none),
+              title: Text(l10n.notificationSettingsTitle),
+              subtitle: Text(l10n.notification_settings),
+              onTap: () => context.push(NotificationSettingsRoute.location),
+            ),
+
+            // Blocked users, devices and the app lock live one level down,
+            // the way Telegram groups them.
+            ListTile(
+              leading: const Icon(Icons.lock_outline),
+              title: Text(l10n.privacySettingsTitle),
+              subtitle: Text(l10n.privacySettingsHint),
+              onTap: () => context.push(PrivacySettingsRoute.location),
+            ),
+
+            if (kDebugMode)
+              ListTile(
+                leading: const Icon(Icons.widgets_outlined),
+                title: Text(l10n.designSystem),
+                onTap: () => context.push(ComponentShowcaseRoute.location),
+              ),
+
+            const _WsDiagnosticsTile(),
+
+            // A physical keyboard's own question; a phone has no Enter to
+            // send with.
+            if (DesktopInput.isDesktop) ...[
+              SettingsSectionHeader(title: l10n.settingsKeyboardSection),
+              const _SendShortcutTile(),
+            ],
+
+            SettingsSectionHeader(title: l10n.settingsAccountSection),
+
+            const SignOutTile(),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// Enter or Ctrl+Enter (Cmd+Enter on a Mac) to send.
+///
+/// Worded as the switch's "on": sending with the modifier is the choice
+/// somebody makes on purpose, and the line under it says what each key
+/// does now, so nobody has to remember which way round the default was.
+class _SendShortcutTile extends ConsumerWidget {
+  const _SendShortcutTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final modifier = DesktopInput.usesCommandKey
+        ? l10n.keyboardCommandKey
+        : l10n.keyboardControlKey;
+    final withModifier =
+        ref.watch(sendShortcutProvider) == SendShortcut.modifierEnter;
+
+    return SwitchListTile(
+      secondary: const Icon(Icons.keyboard_return_rounded),
+      title: Text(l10n.settingsSendWithModifierEnter(modifier)),
+      subtitle: Text(
+        withModifier
+            ? l10n.settingsSendWithModifierEnterOn(modifier)
+            : l10n.settingsSendWithModifierEnterOff,
+      ),
+      value: withModifier,
+      onChanged: (value) => ref
+          .read(sendShortcutProvider.notifier)
+          .set(value ? SendShortcut.modifierEnter : SendShortcut.enter),
     );
   }
 }

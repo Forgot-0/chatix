@@ -4,6 +4,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
@@ -172,23 +173,26 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
             top: avatarTop,
             width: avatar,
             height: avatar,
-            child: GestureDetector(
-              onTap: onAvatarTap,
-              child: Hero(
-                tag: profileAvatarHeroTag(profile.id),
-                flightShuttleBuilder: profileAvatarHeroFlight,
-                // The fit sits inside the Hero, not outside it: a flight
-                // resizes the box it carries, and a child with a hard-coded
-                // diameter would overflow it the whole way across.
-                child: FittedBox(
-                  // Resolved once at the largest size it will be drawn at and
-                  // scaled down from there as the header collapses: shrinking
-                  // costs no second decode and never looks soft.
-                  fit: BoxFit.contain,
-                  child: ChatAvatar.person(
-                    profile,
-                    size: ChatAvatarSize.xxl,
-                    name: title,
+            child: ClickCursor(
+              enabled: onAvatarTap != null,
+              child: GestureDetector(
+                onTap: onAvatarTap,
+                child: Hero(
+                  tag: profileAvatarHeroTag(profile.id),
+                  flightShuttleBuilder: profileAvatarHeroFlight,
+                  // The fit sits inside the Hero, not outside it: a flight
+                  // resizes the box it carries, and a child with a hard-coded
+                  // diameter would overflow it the whole way across.
+                  child: FittedBox(
+                    // Resolved once at the largest size it will be drawn at and
+                    // scaled down from there as the header collapses: shrinking
+                    // costs no second decode and never looks soft.
+                    fit: BoxFit.contain,
+                    child: ChatAvatar.person(
+                      profile,
+                      size: ChatAvatarSize.xxl,
+                      name: title,
+                    ),
                   ),
                 ),
               ),

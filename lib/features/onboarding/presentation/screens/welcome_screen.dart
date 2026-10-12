@@ -126,6 +126,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               child: AppContentWidth(
                 // The same column as the sign-in form it leads to: a button the
                 // width of a monitor is not a button.
+                maxWidth: AppContentWidths.auth,
                 child: Column(
                   children: [
                     Semantics(

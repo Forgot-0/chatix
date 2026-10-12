@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
@@ -143,31 +144,33 @@ class AttachmentTapToDownload extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        color: scheme.surfaceContainerHighest,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.download_rounded,
-              size: 22,
-              color: scheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.attachmentTapToDownload,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-          ],
+    return ClickCursor(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          color: scheme.surfaceContainerHighest,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.download_rounded,
+                size: 22,
+                color: scheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.attachmentTapToDownload,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -197,6 +197,33 @@ Win32Window::MessageHandler(HWND hwnd,
 
       return 0;
     }
+    case WM_GETMINMAXINFO: {
+      if (minimum_size_.width == 0 || minimum_size_.height == 0) {
+        break;
+      }
+      // The minimum is for the content, in logical pixels; Windows wants the
+      // whole window, frame included, in physical pixels at its current DPI.
+      HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+      double scale_factor = FlutterDesktopGetDpiForMonitor(monitor) / 96.0;
+      RECT window_rect;
+      RECT client_rect;
+      LONG frame_width = 0;
+      LONG frame_height = 0;
+      if (GetWindowRect(hwnd, &window_rect) &&
+          GetClientRect(hwnd, &client_rect)) {
+        frame_width = (window_rect.right - window_rect.left) -
+                      (client_rect.right - client_rect.left);
+        frame_height = (window_rect.bottom - window_rect.top) -
+                       (client_rect.bottom - client_rect.top);
+      }
+      auto info = reinterpret_cast<MINMAXINFO*>(lparam);
+      info->ptMinTrackSize.x =
+          Scale(minimum_size_.width, scale_factor) + frame_width;
+      info->ptMinTrackSize.y =
+          Scale(minimum_size_.height, scale_factor) + frame_height;
+      return 0;
+    }
+
     case WM_SIZE: {
       RECT rect = GetClientArea();
       if (child_content_ != nullptr) {
@@ -247,6 +274,10 @@ void Win32Window::SetChildContent(HWND content) {
              frame.bottom - frame.top, true);
 
   SetFocus(child_content_);
+}
+
+void Win32Window::SetMinimumSize(const Size& size) {
+  minimum_size_ = size;
 }
 
 RECT Win32Window::GetClientArea() {

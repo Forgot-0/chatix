@@ -55,6 +55,10 @@ class Win32Window {
   // Return a RECT representing the bounds of the current client area.
   RECT GetClientArea();
 
+  // The smallest the content area may be dragged to, in logical pixels like
+  // the |size| given to |Create|. Scaled to the window's DPI as it is used.
+  void SetMinimumSize(const Size& size);
+
  protected:
   // Processes and route salient window messages for mouse handling,
   // size change and DPI. Delegates handling of these to member overloads that
@@ -97,6 +101,9 @@ class Win32Window {
 
   // window handle for hosted content.
   HWND child_content_ = nullptr;
+
+  // See |SetMinimumSize|; zero means no minimum.
+  Size minimum_size_ = Size(0, 0);
 };
 
 #endif  // RUNNER_WIN32_WINDOW_H_

@@ -13,6 +13,10 @@ import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/router/app_router.dart';
+import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/settings/send_shortcut.dart';
+import 'package:chatix/core/ui/desktop/app_platform_menus.dart';
+import 'package:chatix/core/ui/desktop/desktop_scrolling.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/core/ui/widgets/app_text_scale.dart';
@@ -83,6 +87,12 @@ void main() async {
           PrefsBlockedSendersStore(sharedPreferences),
         ),
 
+        // Enter or Ctrl+Enter, read before the first chat opens: the first
+        // keystroke in it already has to follow the choice.
+        sendShortcutStoreProvider.overrideWithValue(
+          PrefsSendShortcutStore(sharedPreferences),
+        ),
+
         // Push needs to know about chats, about the reader's local
         // notification settings and about the ARB catalogue — none of which
         // `core` may reach for, so the feature's own wiring is handed down
@@ -134,21 +144,28 @@ class MyApp extends ConsumerWidget {
             themeMode: themeMode,
             routerConfig: router,
             debugShowCheckedModeBanner: false,
+            // Scrollbars a desktop reader can see; Material's own elsewhere.
+            scrollBehavior: const AppScrollBehavior(),
             // The mini player is mounted above the router, not inside a route,
             // so a live call keeps a window on itself through every navigation.
             // The lock sits above the router and below the call overlay: no
             // navigation can land behind it, and a call in progress is still
             // drawn on top of it.
-            builder: (context, child) => AppTextScale(
-              scale: textScale,
-              // Heroes are the one transition a route builder cannot reach:
-              // they fly from the navigator's overlay, above every page. With
-              // reduced motion on they are switched off here rather than
-              // shortened, so a tapped photo simply opens.
-              child: HeroMode(
-                enabled: !context.prefersReducedMotion,
-                child: CallOverlay(
-                  child: AppLockGate(child: child ?? const SizedBox.shrink()),
+            builder: (context, child) => AppPlatformMenus(
+              // The Mac's menu bar: About, Settings… (⌘,), Edit, Window and
+              // Quit. Nothing on any other platform.
+              onOpenSettings: () => router.go(SettingsRoute.location),
+              child: AppTextScale(
+                scale: textScale,
+                // Heroes are the one transition a route builder cannot
+                // reach: they fly from the navigator's overlay, above every
+                // page. With reduced motion on they are switched off here
+                // rather than shortened, so a tapped photo simply opens.
+                child: HeroMode(
+                  enabled: !context.prefersReducedMotion,
+                  child: CallOverlay(
+                    child: AppLockGate(child: child ?? const SizedBox.shrink()),
+                  ),
                 ),
               ),
             ),

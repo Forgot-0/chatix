@@ -27,6 +27,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
+  // A phone-sized window is the smallest the layout is drawn for (one pane,
+  // bottom bar) — DesktopSizes.minWindow on the Dart side.
+  window.SetMinimumSize(Win32Window::Size(380, 560));
   if (!window.Create(L"ChatiX", origin, size)) {
     return EXIT_FAILURE;
   }

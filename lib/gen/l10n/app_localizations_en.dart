@@ -3859,4 +3859,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileBlockedNotice => 'You blocked this user';
+
+  @override
+  String get chatDropTitle => 'Drop to send';
+
+  @override
+  String get chatDropHint => 'Photos and videos open in a preview first';
+
+  @override
+  String get chatJumpHint => 'Go to chat…';
+
+  @override
+  String get chatJumpNothingFound => 'No chats by that name';
+
+  @override
+  String get chatJumpFooter => '↑↓ to choose · Enter to open · Esc to close';
+
+  @override
+  String get settingsKeyboardSection => 'Keyboard';
+
+  @override
+  String settingsSendWithModifierEnter(String key) {
+    return 'Send with $key+Enter';
+  }
+
+  @override
+  String settingsSendWithModifierEnterOn(String key) {
+    return 'Enter starts a new line, $key+Enter sends';
+  }
+
+  @override
+  String get settingsSendWithModifierEnterOff =>
+      'Enter sends, Shift+Enter starts a new line';
+
+  @override
+  String get keyboardControlKey => 'Ctrl';
+
+  @override
+  String get keyboardCommandKey => '⌘';
+
+  @override
+  String get menuSettings => 'Settings…';
+
+  @override
+  String get menuEdit => 'Edit';
+
+  @override
+  String get menuUndo => 'Undo';
+
+  @override
+  String get menuRedo => 'Redo';
+
+  @override
+  String get menuCut => 'Cut';
+
+  @override
+  String get menuCopy => 'Copy';
+
+  @override
+  String get menuPaste => 'Paste';
+
+  @override
+  String get menuSelectAll => 'Select All';
+
+  @override
+  String get menuWindow => 'Window';
 }

@@ -7,6 +7,7 @@ import 'package:chatix/core/settings/media_settings.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
 import 'package:chatix/core/ui/wallpaper/mesh_wallpaper.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/settings/presentation/widgets/accent_picker.dart';
 import 'package:chatix/features/settings/presentation/widgets/appearance_preview.dart';
 import 'package:chatix/features/settings/presentation/widgets/cache_settings.dart';
@@ -44,291 +45,299 @@ class AppearanceSettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.appearanceTitle)),
-      body: ListView(
-        key: const PageStorageKey<String>('appearance-list'),
-        padding: const EdgeInsets.only(bottom: AppSpacing.x8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x2,
-            ),
-            child: const AppearancePreview(),
-          ),
-
-          if (reduceMotion)
-            _Notice(
-              icon: Icons.motion_photos_off_outlined,
-              text: l10n.appearanceReduceMotionNotice,
-            ),
-          if (highContrast)
-            _Notice(
-              icon: Icons.contrast,
-              text: l10n.appearanceHighContrastNotice,
+      body: AppContentWidth(
+        child: ListView(
+          key: const PageStorageKey<String>('appearance-list'),
+          padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x4,
+                AppSpacing.x4,
+                AppSpacing.x2,
+              ),
+              child: const AppearancePreview(),
             ),
 
-          // ── Theme ──────────────────────────────────────────────────────
-          _SectionLabel(label: l10n.theme),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<AppThemeMode>(
-              segments: [
-                ButtonSegment(
-                  value: AppThemeMode.system,
-                  label: Text(l10n.systemMode),
-                  icon: const Icon(Icons.brightness_auto_outlined),
-                ),
-                ButtonSegment(
-                  value: AppThemeMode.light,
-                  label: Text(l10n.lightMode),
-                  icon: const Icon(Icons.light_mode_outlined),
-                ),
-                ButtonSegment(
-                  value: AppThemeMode.dark,
-                  label: Text(l10n.darkMode),
-                  icon: const Icon(Icons.dark_mode_outlined),
-                ),
-              ],
-              selected: {settings.themeMode},
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) =>
-                  controller.setThemeMode(selection.first),
+            if (reduceMotion)
+              _Notice(
+                icon: Icons.motion_photos_off_outlined,
+                text: l10n.appearanceReduceMotionNotice,
+              ),
+            if (highContrast)
+              _Notice(
+                icon: Icons.contrast,
+                text: l10n.appearanceHighContrastNotice,
+              ),
+
+            // ── Theme ──────────────────────────────────────────────────────
+            _SectionLabel(label: l10n.theme),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+              child: SegmentedButton<AppThemeMode>(
+                segments: [
+                  ButtonSegment(
+                    value: AppThemeMode.system,
+                    label: Text(l10n.systemMode),
+                    icon: const Icon(Icons.brightness_auto_outlined),
+                  ),
+                  ButtonSegment(
+                    value: AppThemeMode.light,
+                    label: Text(l10n.lightMode),
+                    icon: const Icon(Icons.light_mode_outlined),
+                  ),
+                  ButtonSegment(
+                    value: AppThemeMode.dark,
+                    label: Text(l10n.darkMode),
+                    icon: const Icon(Icons.dark_mode_outlined),
+                  ),
+                ],
+                selected: {settings.themeMode},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) =>
+                    controller.setThemeMode(selection.first),
+              ),
             ),
-          ),
-          SwitchListTile(
-            value: settings.amoled,
-            onChanged: controller.setAmoled,
-            title: Text(l10n.amoledTitle),
-            subtitle: Text(l10n.amoledHint),
-            secondary: const Icon(Icons.contrast_outlined),
-          ),
-
-          const Divider(height: AppSpacing.x6),
-
-          // ── Accent ─────────────────────────────────────────────────────
-          _SectionLabel(label: l10n.accentColor),
-          AccentPicker(
-            selected: settings.accentSeed,
-            onSelected: controller.setAccentSeed,
-          ),
-          const AccentEyedropperButton(),
-
-          const Divider(height: AppSpacing.x6),
-
-          // ── Wallpaper ──────────────────────────────────────────────────
-          _SectionLabel(label: l10n.chatWallpaper),
-          WallpaperGallery(
-            spec: wallpaperSpec,
-            selected: settings.wallpaper,
-            onSelected: controller.setWallpaper,
-          ),
-          _SliderRow(
-            label: l10n.wallpaperIntensity,
-            value: settings.wallpaperIntensity,
-            enabled: patternable,
-            onChanged: controller.previewWallpaperIntensity,
-            onChangeEnd: controller.commit,
-          ),
-          _SliderRow(
-            label: l10n.wallpaperPattern,
-            value: settings.wallpaperPattern,
-            enabled: patternable,
-            onChanged: controller.previewWallpaperPattern,
-            onChangeEnd: controller.commit,
-          ),
-
-          const Divider(height: AppSpacing.x6),
-
-          // ── Density and text ───────────────────────────────────────────
-          _SectionLabel(label: l10n.appearanceDensity),
-          _Hint(text: l10n.appearanceDensityHint),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<AppDensity>(
-              segments: [
-                ButtonSegment(
-                  value: AppDensity.compact,
-                  label: Text(l10n.densityCompact),
-                ),
-                ButtonSegment(
-                  value: AppDensity.cozy,
-                  label: Text(l10n.densityCozy),
-                ),
-                ButtonSegment(
-                  value: AppDensity.comfortable,
-                  label: Text(l10n.densityComfortable),
-                ),
-              ],
-              selected: {settings.density},
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) =>
-                  controller.setDensity(selection.first),
+            SwitchListTile(
+              value: settings.amoled,
+              onChanged: controller.setAmoled,
+              title: Text(l10n.amoledTitle),
+              subtitle: Text(l10n.amoledHint),
+              secondary: const Icon(Icons.contrast_outlined),
             ),
-          ),
 
-          _SectionLabel(label: l10n.textSize),
-          _Hint(text: l10n.textSizeHint),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<double>(
-              segments: [
-                ButtonSegment(value: 0.85, label: Text(l10n.textSizeSmall)),
-                ButtonSegment(value: 1, label: Text(l10n.textSizeDefault)),
-                ButtonSegment(value: 1.15, label: Text(l10n.textSizeLarge)),
-                ButtonSegment(value: 1.3, label: Text(l10n.textSizeExtraLarge)),
-              ],
-              selected: {settings.textScale},
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) =>
-                  controller.setTextScale(selection.first),
+            const Divider(height: AppSpacing.x6),
+
+            // ── Accent ─────────────────────────────────────────────────────
+            _SectionLabel(label: l10n.accentColor),
+            AccentPicker(
+              selected: settings.accentSeed,
+              onSelected: controller.setAccentSeed,
             ),
-          ),
+            const AccentEyedropperButton(),
 
-          const Divider(height: AppSpacing.x6),
+            const Divider(height: AppSpacing.x6),
 
-          // ── Bubbles ────────────────────────────────────────────────────
-          _SectionLabel(label: l10n.bubbleShape),
-          _SliderRow(
-            label: l10n.bubbleCorners,
-            value: settings.bubbleRadius,
-            min: AppearanceSettings.minBubbleRadius,
-            max: AppearanceSettings.maxBubbleRadius,
-            divisions:
-                (AppearanceSettings.maxBubbleRadius -
-                        AppearanceSettings.minBubbleRadius)
-                    .round(),
-            valueLabel: settings.bubbleRadius.round().toString(),
-            onChanged: controller.previewBubbleRadius,
-            onChangeEnd: controller.commit,
-          ),
-          SwitchListTile(
-            value: settings.bubbleAnchored,
-            onChanged: controller.setBubbleAnchored,
-            title: Text(l10n.bubbleAnchor),
-            subtitle: Text(l10n.bubbleAnchorHint),
-            secondary: const Icon(Icons.chat_bubble_outline),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x2,
-              AppSpacing.x4,
-              AppSpacing.x2,
+            // ── Wallpaper ──────────────────────────────────────────────────
+            _SectionLabel(label: l10n.chatWallpaper),
+            WallpaperGallery(
+              spec: wallpaperSpec,
+              selected: settings.wallpaper,
+              onSelected: controller.setWallpaper,
             ),
-            child: Text(l10n.bubbleFill, style: theme.textTheme.titleSmall),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(
-                  value: true,
-                  icon: const Icon(Icons.gradient_rounded),
-                  label: Text(l10n.bubbleFillGradient),
-                ),
-                ButtonSegment(
-                  value: false,
-                  icon: const Icon(Icons.square_rounded),
-                  label: Text(l10n.bubbleFillSolid),
-                ),
-              ],
-              selected: {settings.bubbleGradient},
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) =>
-                  controller.setBubbleGradient(selection.first),
+            _SliderRow(
+              label: l10n.wallpaperIntensity,
+              value: settings.wallpaperIntensity,
+              enabled: patternable,
+              onChanged: controller.previewWallpaperIntensity,
+              onChangeEnd: controller.commit,
             ),
-          ),
-
-          const Divider(height: AppSpacing.x6),
-
-          // ── Feel ───────────────────────────────────────────────────────
-          _SectionLabel(label: l10n.appearanceFeel),
-          SwitchListTile(
-            value: settings.haptics,
-            onChanged: controller.setHaptics,
-            title: Text(l10n.appearanceHaptics),
-            subtitle: Text(l10n.appearanceHapticsHint),
-            secondary: const Icon(Icons.vibration_outlined),
-          ),
-
-          const Divider(height: AppSpacing.x6),
-
-          // ── Media ──────────────────────────────────────────────────────
-          _SectionLabel(label: l10n.mediaSectionTitle),
-          _Hint(text: l10n.autoDownloadHint),
-          for (final kind in MediaKind.values) _AutoDownloadRow(kind: kind),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x4,
-              AppSpacing.x2,
+            _SliderRow(
+              label: l10n.wallpaperPattern,
+              value: settings.wallpaperPattern,
+              enabled: patternable,
+              onChanged: controller.previewWallpaperPattern,
+              onChangeEnd: controller.commit,
             ),
-            child: Text(l10n.mediaAutoplay, style: theme.textTheme.titleSmall),
-          ),
-          _Hint(text: l10n.mediaAutoplayHint),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-            child: SegmentedButton<MediaAutoplay>(
-              segments: [
-                ButtonSegment(
-                  value: MediaAutoplay.always,
-                  label: Text(l10n.mediaAutoplayAlways),
-                ),
-                ButtonSegment(
-                  value: MediaAutoplay.wifiOnly,
-                  label: Text(l10n.mediaAutoplayWifi),
-                ),
-                ButtonSegment(
-                  value: MediaAutoplay.never,
-                  label: Text(l10n.mediaAutoplayNever),
-                ),
-              ],
-              selected: {
-                ref.watch(
-                  mediaSettingsProvider.select((s) => s.videoNoteAutoplay),
-                ),
-              },
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) => ref
-                  .read(mediaSettingsProvider.notifier)
-                  .setVideoNoteAutoplay(selection.first),
-            ),
-          ),
 
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x5,
-              AppSpacing.x4,
-              AppSpacing.x2,
-            ),
-            child: Text(l10n.cacheLimit, style: theme.textTheme.titleSmall),
-          ),
-          const CacheSettingsSection(),
+            const Divider(height: AppSpacing.x6),
 
-          const Divider(height: AppSpacing.x6),
+            // ── Density and text ───────────────────────────────────────────
+            _SectionLabel(label: l10n.appearanceDensity),
+            _Hint(text: l10n.appearanceDensityHint),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+              child: SegmentedButton<AppDensity>(
+                segments: [
+                  ButtonSegment(
+                    value: AppDensity.compact,
+                    label: Text(l10n.densityCompact),
+                  ),
+                  ButtonSegment(
+                    value: AppDensity.cozy,
+                    label: Text(l10n.densityCozy),
+                  ),
+                  ButtonSegment(
+                    value: AppDensity.comfortable,
+                    label: Text(l10n.densityComfortable),
+                  ),
+                ],
+                selected: {settings.density},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) =>
+                    controller.setDensity(selection.first),
+              ),
+            ),
 
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.x4,
-              AppSpacing.x2,
-              AppSpacing.x4,
-              AppSpacing.x4,
+            _SectionLabel(label: l10n.textSize),
+            _Hint(text: l10n.textSizeHint),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+              child: SegmentedButton<double>(
+                segments: [
+                  ButtonSegment(value: 0.85, label: Text(l10n.textSizeSmall)),
+                  ButtonSegment(value: 1, label: Text(l10n.textSizeDefault)),
+                  ButtonSegment(value: 1.15, label: Text(l10n.textSizeLarge)),
+                  ButtonSegment(
+                    value: 1.3,
+                    label: Text(l10n.textSizeExtraLarge),
+                  ),
+                ],
+                selected: {settings.textScale},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) =>
+                    controller.setTextScale(selection.first),
+              ),
             ),
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                await controller.reset();
-                await ref.read(mediaSettingsProvider.notifier).reset();
-              },
-              icon: const Icon(Icons.restart_alt),
-              label: Text(l10n.resetAppearance),
+
+            const Divider(height: AppSpacing.x6),
+
+            // ── Bubbles ────────────────────────────────────────────────────
+            _SectionLabel(label: l10n.bubbleShape),
+            _SliderRow(
+              label: l10n.bubbleCorners,
+              value: settings.bubbleRadius,
+              min: AppearanceSettings.minBubbleRadius,
+              max: AppearanceSettings.maxBubbleRadius,
+              divisions:
+                  (AppearanceSettings.maxBubbleRadius -
+                          AppearanceSettings.minBubbleRadius)
+                      .round(),
+              valueLabel: settings.bubbleRadius.round().toString(),
+              onChanged: controller.previewBubbleRadius,
+              onChangeEnd: controller.commit,
             ),
-          ),
-        ],
+            SwitchListTile(
+              value: settings.bubbleAnchored,
+              onChanged: controller.setBubbleAnchored,
+              title: Text(l10n.bubbleAnchor),
+              subtitle: Text(l10n.bubbleAnchorHint),
+              secondary: const Icon(Icons.chat_bubble_outline),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x2,
+                AppSpacing.x4,
+                AppSpacing.x2,
+              ),
+              child: Text(l10n.bubbleFill, style: theme.textTheme.titleSmall),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+              child: SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: true,
+                    icon: const Icon(Icons.gradient_rounded),
+                    label: Text(l10n.bubbleFillGradient),
+                  ),
+                  ButtonSegment(
+                    value: false,
+                    icon: const Icon(Icons.square_rounded),
+                    label: Text(l10n.bubbleFillSolid),
+                  ),
+                ],
+                selected: {settings.bubbleGradient},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) =>
+                    controller.setBubbleGradient(selection.first),
+              ),
+            ),
+
+            const Divider(height: AppSpacing.x6),
+
+            // ── Feel ───────────────────────────────────────────────────────
+            _SectionLabel(label: l10n.appearanceFeel),
+            SwitchListTile(
+              value: settings.haptics,
+              onChanged: controller.setHaptics,
+              title: Text(l10n.appearanceHaptics),
+              subtitle: Text(l10n.appearanceHapticsHint),
+              secondary: const Icon(Icons.vibration_outlined),
+            ),
+
+            const Divider(height: AppSpacing.x6),
+
+            // ── Media ──────────────────────────────────────────────────────
+            _SectionLabel(label: l10n.mediaSectionTitle),
+            _Hint(text: l10n.autoDownloadHint),
+            for (final kind in MediaKind.values) _AutoDownloadRow(kind: kind),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x4,
+                AppSpacing.x4,
+                AppSpacing.x2,
+              ),
+              child: Text(
+                l10n.mediaAutoplay,
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            _Hint(text: l10n.mediaAutoplayHint),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+              child: SegmentedButton<MediaAutoplay>(
+                segments: [
+                  ButtonSegment(
+                    value: MediaAutoplay.always,
+                    label: Text(l10n.mediaAutoplayAlways),
+                  ),
+                  ButtonSegment(
+                    value: MediaAutoplay.wifiOnly,
+                    label: Text(l10n.mediaAutoplayWifi),
+                  ),
+                  ButtonSegment(
+                    value: MediaAutoplay.never,
+                    label: Text(l10n.mediaAutoplayNever),
+                  ),
+                ],
+                selected: {
+                  ref.watch(
+                    mediaSettingsProvider.select((s) => s.videoNoteAutoplay),
+                  ),
+                },
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) => ref
+                    .read(mediaSettingsProvider.notifier)
+                    .setVideoNoteAutoplay(selection.first),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x5,
+                AppSpacing.x4,
+                AppSpacing.x2,
+              ),
+              child: Text(l10n.cacheLimit, style: theme.textTheme.titleSmall),
+            ),
+            const CacheSettingsSection(),
+
+            const Divider(height: AppSpacing.x6),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4,
+                AppSpacing.x2,
+                AppSpacing.x4,
+                AppSpacing.x4,
+              ),
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await controller.reset();
+                  await ref.read(mediaSettingsProvider.notifier).reset();
+                },
+                icon: const Icon(Icons.restart_alt),
+                label: Text(l10n.resetAppearance),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

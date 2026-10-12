@@ -9,12 +9,15 @@ import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/settings/send_shortcut.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/data/datasources/clipboard_attachments.dart';
 import 'package:chatix/features/chat/data/datasources/video_note_recorder.dart';
 import 'package:chatix/features/chat/data/datasources/voice_recorder.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -41,8 +44,10 @@ import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/utils/composer_text_edits.dart';
 import 'package:chatix/features/chat/presentation/utils/mention_syntax.dart';
+import 'package:chatix/features/chat/presentation/utils/message_editing.dart';
 import 'package:chatix/features/chat/presentation/utils/reaction_notice_text.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_banners.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_drop_zone.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_skeleton.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_wallpaper.dart';
@@ -267,7 +272,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           },
           child: CallbackShortcuts(
             bindings: {
-              if (panelOpen)
+              // On a desktop Esc always means something here — with nothing
+              // else open it closes the chat — so it is always bound. On a
+              // phone it only ever steps out of a mode, as back does.
+              if (DesktopInput.isDesktop)
+                const SingleActivator(LogicalKeyboardKey.escape): _onEscape
+              else if (panelOpen)
                 const SingleActivator(LogicalKeyboardKey.escape):
                     _closeEmojiPanel
               else if (inMode)
@@ -331,6 +341,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         if (mounted && _input.isEmojiOpen) _closeEmojiPanel();
       });
     }
+
+    // Files may be dropped wherever the paperclip would take them: not on a
+    // locked chat, and not into an edit, which carries text only (api-docs
+    // §5.4).
+    final isEditing = ref.watch(
+      composerProvider(widget.chatId).select((it) => it.isEditing),
+    );
 
     // Slow mode is re-read from the chat on every build, so a `chat_updated`
     // that switches it on or off reaches the send button without a reload
@@ -407,35 +424,52 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           )
         else ...[
           ComposerAttachmentTray(chatId: widget.chatId),
-          // Its own consumer, and deliberately so: the composer's length,
-          // its send state and the two recorders change on every keystroke,
-          // and watching them up here would put the whole feed — every
-          // visible bubble — in the rebuild scope of typing a character.
-          ValueListenableBuilder<MentionQuery?>(
-            valueListenable: _mention,
-            builder: (context, query, child) => CallbackShortcuts(
-              bindings: _mentionShortcuts(state, myUserId, query),
-              child: child!,
-            ),
-            child: _ComposerSection(
-              chatId: widget.chatId,
-              controller: _textController,
-              focusNode: _composerFocus,
-              input: _input,
-              replyTo: state.replyTo,
-              onCancelContext: _cancelComposerContext,
-              onAttach: _openAttachmentSheet,
-              onSend: _send,
-              onVoiceRecorded: _sendVoice,
-              onVideoNoteRecorded: _sendVideoNote,
-              onToggleEmoji: _toggleEmojiPanel,
-              onFieldTap: _onComposerFieldTap,
+          // The physical keyboard's half of the composer — Enter, ↑, and a
+          // paste that brings files — around the mention list's own keys
+          // rather than inside them, so that while the list is up its Enter
+          // picks a person instead of sending.
+          _DesktopComposerKeys(
+            onKey: _onComposerKey,
+            onPaste: _pasteAttachments,
+            // Its own consumer, and deliberately so: the composer's length,
+            // its send state and the two recorders change on every
+            // keystroke, and watching them up here would put the whole feed
+            // — every visible bubble — in the rebuild scope of typing a
+            // character.
+            child: ValueListenableBuilder<MentionQuery?>(
+              valueListenable: _mention,
+              builder: (context, query, child) => CallbackShortcuts(
+                bindings: _mentionShortcuts(state, myUserId, query),
+                child: child!,
+              ),
+              child: _ComposerSection(
+                chatId: widget.chatId,
+                controller: _textController,
+                focusNode: _composerFocus,
+                input: _input,
+                replyTo: state.replyTo,
+                onCancelContext: _cancelComposerContext,
+                onAttach: _openAttachmentSheet,
+                onSend: _send,
+                onVoiceRecorded: _sendVoice,
+                onVideoNoteRecorded: _sendVideoNote,
+                onToggleEmoji: _toggleEmojiPanel,
+                onFieldTap: _onComposerFieldTap,
+              ),
             ),
           ),
         ],
       ],
     );
 
+    return ChatDropZone(
+      enabled: lockedBecause == null && !isEditing,
+      onDropped: _onFilesDropped,
+      child: _buildPanelHost(body),
+    );
+  }
+
+  Widget _buildPanelHost(Widget body) {
     return ComposerPanelHost(
       controller: _input,
       panelBuilder: (context, height, compact) => TextFieldTapRegion(
@@ -493,9 +527,48 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void _leaveMode() {
     if (_selectionMode) {
       _clearSelection();
+    } else if (_searchMode) {
+      _setSearchMode(on: false);
+    }
+
+    // Typing goes back where it was: on a desktop the field is the chat's
+    // home for the keyboard.
+    if (DesktopInput.isDesktop) _composerFocus.requestFocus();
+  }
+
+  /// Esc on a desktop, innermost first: the emoji panel, a selection or a
+  /// search, the reply or the edit in the composer — and with none of
+  /// those left, the chat itself. (The mention list, when it is up, has
+  /// already taken its own Esc by the time this runs.)
+  void _onEscape() {
+    if (_input.showsPanel) {
+      _closeEmojiPanel();
       return;
     }
-    if (_searchMode) _setSearchMode(on: false);
+    if (_selectionMode || _searchMode) {
+      _leaveMode();
+      return;
+    }
+
+    final replying =
+        ref.read(chatDetailProvider(widget.chatId)).value?.replyTo != null;
+    if (replying || ref.read(composerProvider(widget.chatId)).isEditing) {
+      _cancelComposerContext();
+      return;
+    }
+
+    _closeChat();
+  }
+
+  /// Leaves the conversation: back to the list on one pane, and on two the
+  /// selection goes — the list stays where it is and the right pane goes
+  /// back to its placeholder.
+  void _closeChat() {
+    if (AppLayoutScope.of(context).isTwoPane) {
+      context.go(ChatsRoute.location);
+      return;
+    }
+    unawaited(Navigator.of(context).maybePop());
   }
 
   /// Turns the header into a search field, and back.
@@ -842,6 +915,83 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _composer.startEditing(message);
     _setText(message.content ?? '');
     _composerFocus.requestFocus();
+  }
+
+  // --------------------------------------------------------- physical keys
+
+  /// Enter and ↑ in the composer, on a desktop.
+  ///
+  /// Enter sends or starts a new line by the reader's choice in Settings
+  /// ([SendShortcut]); ↑ in an empty field opens the newest message of
+  /// theirs for editing, as in every desktop messenger. Anything else, and
+  /// every key with a modifier this does not know, is the field's.
+  KeyEventResult _onComposerKey(FocusNode node, KeyEvent event) {
+    if (event is KeyUpEvent) return KeyEventResult.ignored;
+
+    final key = event.logicalKey;
+    final keyboard = HardwareKeyboard.instance;
+
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      // An input method is still putting a word together, and the Enter
+      // that finishes it is its own.
+      if (_textController.value.composing.isValid) {
+        return KeyEventResult.ignored;
+      }
+
+      final action = ComposerEnterRule.actionFor(
+        ref.read(sendShortcutProvider),
+        shift: keyboard.isShiftPressed,
+        primary: DesktopInput.isPrimaryPressed,
+        alt: keyboard.isAltPressed,
+      );
+      if (action == ComposerEnterAction.newline) return KeyEventResult.ignored;
+
+      // Held down, Enter sends once rather than once per repeat.
+      if (event is KeyDownEvent) unawaited(_send());
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.arrowUp &&
+        event is KeyDownEvent &&
+        !keyboard.isShiftPressed &&
+        !keyboard.isAltPressed &&
+        !keyboard.isControlPressed &&
+        !keyboard.isMetaPressed &&
+        _textController.text.isEmpty &&
+        !ref.read(composerProvider(widget.chatId)).isEditing) {
+      final state = ref.read(chatDetailProvider(widget.chatId)).value;
+      final last = state == null
+          ? null
+          : lastEditableMessage(state.messages, state.me);
+      if (last == null) return KeyEventResult.ignored;
+
+      _startEditing(last);
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  /// Ctrl+V in the composer with files or a picture on the clipboard: the
+  /// same preview a pick from the paperclip opens. False leaves the paste to
+  /// the field — there was only text, or nothing this chat can take.
+  Future<bool> _pasteAttachments() async {
+    if (ref.read(composerProvider(widget.chatId)).isEditing) return false;
+
+    final uploads = await ref.read(clipboardAttachmentReaderProvider).read();
+    if (uploads.isEmpty || !mounted) return false;
+
+    unawaited(_stageUploads(uploads));
+    return true;
+  }
+
+  /// Files let go of over the chat: whatever of them is a file this device
+  /// can read goes where a pick from the paperclip would.
+  Future<void> _onFilesDropped(List<String> paths) async {
+    final uploads = await LocalFileUploads.ofAll(paths);
+    if (uploads.isEmpty || !mounted) return;
+    await _stageUploads(uploads);
   }
 
   // ------------------------------------------------------------ emoji panel
@@ -1465,6 +1615,7 @@ class _ComposerSection extends ConsumerWidget {
     return ListenableBuilder(
       listenable: input,
       builder: (context, _) => ChatComposer(
+        desktop: DesktopInput.isDesktop,
         controller: controller,
         focusNode: focusNode,
         length: composer.length,
@@ -1487,5 +1638,66 @@ class _ComposerSection extends ConsumerWidget {
         onFieldTap: onFieldTap,
       ),
     );
+  }
+}
+
+/// Where the composer meets a physical keyboard: a key handler for Enter and
+/// ↑, and Ctrl+V taught to bring files and pictures as well as text.
+///
+/// Only on a desktop — on a phone the soft keyboard's return key starts a
+/// new line and the paste menu is the system's, so there this is only
+/// [child].
+class _DesktopComposerKeys extends StatelessWidget {
+  const _DesktopComposerKeys({
+    required this.onKey,
+    required this.onPaste,
+    required this.child,
+  });
+
+  final FocusOnKeyEventCallback onKey;
+
+  /// True when it took the paste; false hands it back to the field.
+  final Future<bool> Function() onPaste;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!DesktopInput.isDesktop) return child;
+
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: onKey,
+      child: Actions(
+        actions: {PasteTextIntent: _PasteAttachmentsAction(onPaste)},
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Ctrl+V for the composer: files or a picture first, and the field's own
+/// paste — text — when there are none.
+///
+/// Overrides the text field's action rather than racing its shortcut: the
+/// field asks its ancestors before pasting, and the action it would have
+/// run arrives here as [callingAction], to be run once the clipboard turns
+/// out to hold only text.
+class _PasteAttachmentsAction extends ContextAction<PasteTextIntent> {
+  _PasteAttachmentsAction(this.onPaste);
+
+  final Future<bool> Function() onPaste;
+
+  @override
+  Object? invoke(PasteTextIntent intent, [BuildContext? context]) {
+    // Only set for the duration of this call: kept for after the await.
+    final fallback = callingAction;
+
+    unawaited(() async {
+      if (await onPaste()) return;
+      fallback?.invoke(intent);
+    }());
+    return null;
   }
 }

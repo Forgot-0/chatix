@@ -3917,4 +3917,69 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileBlockedNotice => 'Вы заблокировали этого пользователя';
+
+  @override
+  String get chatDropTitle => 'Отпустите, чтобы отправить';
+
+  @override
+  String get chatDropHint => 'Фото и видео сначала откроются в предпросмотре';
+
+  @override
+  String get chatJumpHint => 'Перейти к чату…';
+
+  @override
+  String get chatJumpNothingFound => 'Нет чатов с таким названием';
+
+  @override
+  String get chatJumpFooter => '↑↓ — выбрать · Enter — открыть · Esc — закрыть';
+
+  @override
+  String get settingsKeyboardSection => 'Клавиатура';
+
+  @override
+  String settingsSendWithModifierEnter(String key) {
+    return 'Отправка по $key+Enter';
+  }
+
+  @override
+  String settingsSendWithModifierEnterOn(String key) {
+    return 'Enter переносит строку, $key+Enter отправляет';
+  }
+
+  @override
+  String get settingsSendWithModifierEnterOff =>
+      'Enter отправляет, Shift+Enter переносит строку';
+
+  @override
+  String get keyboardControlKey => 'Ctrl';
+
+  @override
+  String get keyboardCommandKey => '⌘';
+
+  @override
+  String get menuSettings => 'Настройки…';
+
+  @override
+  String get menuEdit => 'Правка';
+
+  @override
+  String get menuUndo => 'Отменить';
+
+  @override
+  String get menuRedo => 'Повторить';
+
+  @override
+  String get menuCut => 'Вырезать';
+
+  @override
+  String get menuCopy => 'Копировать';
+
+  @override
+  String get menuPaste => 'Вставить';
+
+  @override
+  String get menuSelectAll => 'Выбрать все';
+
+  @override
+  String get menuWindow => 'Окно';
 }

@@ -3886,4 +3886,70 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get profileBlockedNotice => 'Has bloqueado a este usuario';
+
+  @override
+  String get chatDropTitle => 'Suelta para enviar';
+
+  @override
+  String get chatDropHint =>
+      'Las fotos y los vídeos se abren primero en la vista previa';
+
+  @override
+  String get chatJumpHint => 'Ir al chat…';
+
+  @override
+  String get chatJumpNothingFound => 'No hay chats con ese nombre';
+
+  @override
+  String get chatJumpFooter => '↑↓ elegir · Intro abrir · Esc cerrar';
+
+  @override
+  String get settingsKeyboardSection => 'Teclado';
+
+  @override
+  String settingsSendWithModifierEnter(String key) {
+    return 'Enviar con $key+Intro';
+  }
+
+  @override
+  String settingsSendWithModifierEnterOn(String key) {
+    return 'Intro añade una línea, $key+Intro envía';
+  }
+
+  @override
+  String get settingsSendWithModifierEnterOff =>
+      'Intro envía, Mayús+Intro añade una línea';
+
+  @override
+  String get keyboardControlKey => 'Ctrl';
+
+  @override
+  String get keyboardCommandKey => '⌘';
+
+  @override
+  String get menuSettings => 'Ajustes…';
+
+  @override
+  String get menuEdit => 'Edición';
+
+  @override
+  String get menuUndo => 'Deshacer';
+
+  @override
+  String get menuRedo => 'Rehacer';
+
+  @override
+  String get menuCut => 'Cortar';
+
+  @override
+  String get menuCopy => 'Copiar';
+
+  @override
+  String get menuPaste => 'Pegar';
+
+  @override
+  String get menuSelectAll => 'Seleccionar todo';
+
+  @override
+  String get menuWindow => 'Ventana';
 }

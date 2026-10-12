@@ -3846,4 +3846,69 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get profileBlockedNotice => 'আপনি এই ব্যবহারকারীকে ব্লক করেছেন';
+
+  @override
+  String get chatDropTitle => 'পাঠাতে ছেড়ে দিন';
+
+  @override
+  String get chatDropHint => 'ছবি ও ভিডিও প্রথমে প্রিভিউতে খুলবে';
+
+  @override
+  String get chatJumpHint => 'চ্যাটে যান…';
+
+  @override
+  String get chatJumpNothingFound => 'এই নামে কোনো চ্যাট নেই';
+
+  @override
+  String get chatJumpFooter => '↑↓ বাছাই · Enter খুলুন · Esc বন্ধ';
+
+  @override
+  String get settingsKeyboardSection => 'কীবোর্ড';
+
+  @override
+  String settingsSendWithModifierEnter(String key) {
+    return '$key+Enter দিয়ে পাঠান';
+  }
+
+  @override
+  String settingsSendWithModifierEnterOn(String key) {
+    return 'Enter নতুন লাইন, $key+Enter পাঠায়';
+  }
+
+  @override
+  String get settingsSendWithModifierEnterOff =>
+      'Enter পাঠায়, Shift+Enter নতুন লাইন';
+
+  @override
+  String get keyboardControlKey => 'Ctrl';
+
+  @override
+  String get keyboardCommandKey => '⌘';
+
+  @override
+  String get menuSettings => 'সেটিংস…';
+
+  @override
+  String get menuEdit => 'সম্পাদনা';
+
+  @override
+  String get menuUndo => 'পূর্বাবস্থায় ফেরান';
+
+  @override
+  String get menuRedo => 'আবার করুন';
+
+  @override
+  String get menuCut => 'কাটুন';
+
+  @override
+  String get menuCopy => 'কপি করুন';
+
+  @override
+  String get menuPaste => 'পেস্ট করুন';
+
+  @override
+  String get menuSelectAll => 'সব নির্বাচন করুন';
+
+  @override
+  String get menuWindow => 'উইন্ডো';
 }

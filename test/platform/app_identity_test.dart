@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:chatix/core/theme/app_tokens.dart';
+
 /// The app is ChatiX, `com.forgot.chatix`, on every platform, and the
 /// template it was started from is not named anywhere that ships.
 ///
@@ -107,6 +109,43 @@ void main() {
       read('linux/CMakeLists.txt'),
       contains('set(APPLICATION_ID "$appId")'),
     );
+  });
+
+  test('macOS titles the window $name, not the template placeholder', () {
+    final xib = read('macos/Runner/Base.lproj/MainMenu.xib');
+    expect(xib, contains('<window title="$name"'));
+    expect(xib, isNot(contains('APP_NAME')));
+  });
+
+  group('a desktop window cannot be dragged smaller than one pane', () {
+    final width = DesktopSizes.minWindow.width.toInt();
+    final height = DesktopSizes.minWindow.height.toInt();
+
+    test('Windows', () {
+      expect(
+        read('windows/runner/main.cpp'),
+        contains('SetMinimumSize(Win32Window::Size($width, $height))'),
+      );
+      // …and the window actually answers the question Windows asks.
+      expect(
+        read('windows/runner/win32_window.cpp'),
+        contains('WM_GETMINMAXINFO'),
+      );
+    });
+
+    test('Linux', () {
+      final runner = read('linux/runner/my_application.cc');
+      expect(runner, contains('geometry.min_width = $width;'));
+      expect(runner, contains('geometry.min_height = $height;'));
+      expect(runner, contains('GDK_HINT_MIN_SIZE'));
+    });
+
+    test('macOS', () {
+      expect(
+        read('macos/Runner/MainFlutterWindow.swift'),
+        contains('contentMinSize = NSSize(width: $width, height: $height)'),
+      );
+    });
   });
 
   test('the web app installs as $name', () {

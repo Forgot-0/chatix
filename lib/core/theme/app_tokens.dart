@@ -539,6 +539,58 @@ abstract final class AppContentWidths {
   /// A person's profile: the actions, the facts and the shared media in one
   /// column. As wide as the contacts list it is usually opened from.
   static const double profile = 720;
+
+  /// Signing in, signing up and resetting a password: one short column of
+  /// fields, as wide as a phone held upright. Wider, and the fields read as
+  /// a form somebody forgot to finish laying out.
+  static const double auth = 420;
+}
+
+/// What a desktop draws that a phone has no use for: hover chrome, the
+/// Ctrl+K palette, the drop zone, scrollbars.
+abstract final class DesktopSizes {
+  /// The narrowest and shortest the window may be dragged to on macOS,
+  /// Windows and Linux — a phone-sized window, still one usable pane. The
+  /// native runners carry the same two numbers.
+  static const Size minWindow = Size(380, 560);
+
+  /// The round buttons that come up beside a hovered bubble — reply and
+  /// react — and the glyphs inside them…
+  static const double hoverButton = 30;
+  static const double hoverIcon = 17;
+
+  /// …the air between them and the bubble's edge, and the inset of the
+  /// pill they sit in.
+  static const double hoverGap = AppSpacing.x1 + 2;
+  static const double hoverPadding = 2;
+
+  /// The Ctrl+K palette: how wide it grows, how far below the top of the
+  /// window it opens, how tall its list may get, and one row of it.
+  static const double paletteMaxWidth = 560;
+  static const double paletteTopInset = 72;
+  static const double paletteMaxListHeight = 392;
+  static const double paletteRowHeight = 56;
+
+  /// The "drop to send" plate over a chat while files are dragged in: how
+  /// far it keeps from the pane's edges, its outline, and its glyph.
+  static const double dropInset = AppSpacing.x3;
+  static const double dropBorder = 2;
+  static const double dropIcon = 44;
+
+  /// Scrollbars: a hairline while the pointer is elsewhere, a grip once it
+  /// is over the track.
+  static const double scrollbarThickness = 6;
+  static const double scrollbarHoverThickness = 10;
+
+  /// The thumb at rest, washed into the page, and under the pointer or a
+  /// drag, firm enough to aim at.
+  static const double scrollbarAlpha = 0.3;
+  static const double scrollbarActiveAlpha = 0.55;
+  static const double scrollbarMargin = 2;
+
+  /// How strongly a hovered row is washed with the text colour: enough to
+  /// say "this is what a click lands on", not enough to read as selected.
+  static const double hoverOverlay = 0.06;
 }
 
 /// The round buttons under a profile's header — write, call, mute, more.
@@ -799,6 +851,11 @@ abstract final class AppMotion {
   /// One turn of an ambient loop: typing dots, a shimmer sweep, a connection
   /// banner. Slow on purpose; a loop faster than this reads as a flicker.
   static const Duration loop = Duration(milliseconds: 1200);
+
+  /// One notch of a mouse wheel gliding the feed to where it points —
+  /// shorter than [fast] keeps up with a quick spin, and anything at all is
+  /// what stops a notch from reading as a jump.
+  static const Duration wheel = Duration(milliseconds: 110);
 
   /// How long a one-shot stays put before it lets go — a jumped-to message
   /// staying lit, a toast holding still.

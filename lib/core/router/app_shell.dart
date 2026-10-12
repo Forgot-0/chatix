@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/router/app_shell_shortcuts.dart';
 import 'package:chatix/core/ui/haptics.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/presentation/providers/chats_badge_provider.dart';
@@ -49,6 +50,7 @@ class _AppShellScaffold extends ConsumerWidget {
   final AppLayoutMode mode;
 
   static const int _chatsBranch = 0;
+  static const int _settingsBranch = 3;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,6 +77,16 @@ class _AppShellScaffold extends ConsumerWidget {
       child: navigationShell,
     );
 
+    return AppShellShortcuts(
+      // The settings page itself, not wherever in settings the tab was
+      // left: the shortcut means "settings", like the menu item.
+      onOpenSettings: () =>
+          navigationShell.goBranch(_settingsBranch, initialLocation: true),
+      child: _scaffold(destinations, body),
+    );
+  }
+
+  Widget _scaffold(List<_ShellDestination> destinations, Widget body) {
     if (mode.usesBottomBar) {
       return Scaffold(
         body: body,

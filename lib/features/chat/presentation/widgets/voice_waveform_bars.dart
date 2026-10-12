@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
+
 /// A voice message drawn as bars, with the part already played filled in.
 ///
 /// One painter for both places a waveform appears: the bubble, where the
@@ -67,14 +69,16 @@ class VoiceWaveformBars extends StatelessWidget {
     return Semantics(
       label: semanticsLabel,
       slider: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        // Both, so a tap scrubs and a drag keeps scrubbing — a thumb that
-        // moves a pixel while tapping is still a tap as far as intent goes.
-        onTapDown: (details) => _seek(context, details.localPosition.dx),
-        onHorizontalDragUpdate: (details) =>
-            _seek(context, details.localPosition.dx),
-        child: painter,
+      child: ClickCursor(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          // Both, so a tap scrubs and a drag keeps scrubbing — a thumb that
+          // moves a pixel while tapping is still a tap as far as intent goes.
+          onTapDown: (details) => _seek(context, details.localPosition.dx),
+          onHorizontalDragUpdate: (details) =>
+              _seek(context, details.localPosition.dx),
+          child: painter,
+        ),
       ),
     );
   }

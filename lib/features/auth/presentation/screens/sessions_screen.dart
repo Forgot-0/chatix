@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/auth/domain/entities/session_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -23,29 +24,31 @@ class SessionsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.myDevices)),
-      body: sessions.when(
-        loading: () => const AppListSkeleton(),
-        error: (error, _) => AppErrorState(
-          error: error,
-          fallbackMessage: l10n.devicesLoadFailed,
-          onRetry: () => ref.invalidate(mySessionsProvider),
-        ),
-        data: (items) {
-          if (items.isEmpty) {
-            return Center(child: Text(l10n.noDevices));
-          }
+      body: AppContentWidth(
+        child: sessions.when(
+          loading: () => const AppListSkeleton(),
+          error: (error, _) => AppErrorState(
+            error: error,
+            fallbackMessage: l10n.devicesLoadFailed,
+            onRetry: () => ref.invalidate(mySessionsProvider),
+          ),
+          data: (items) {
+            if (items.isEmpty) {
+              return Center(child: Text(l10n.noDevices));
+            }
 
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(mySessionsProvider),
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) =>
-                  _SessionTile(session: items[index]),
-            ),
-          );
-        },
+            return RefreshIndicator(
+              onRefresh: () async => ref.invalidate(mySessionsProvider),
+              child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (context, index) =>
+                    _SessionTile(session: items[index]),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

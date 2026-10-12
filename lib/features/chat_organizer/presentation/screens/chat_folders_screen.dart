@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/chat_folder.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/folder_preset.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organizer_failures.dart';
@@ -36,78 +37,80 @@ class ChatFoldersScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
-        key: const PageStorageKey<String>('chat-folders'),
-        padding: const EdgeInsets.only(bottom: AppSpacing.x8),
-        children: [
-          const _DeviceOnlyNotice(),
+      body: AppContentWidth(
+        child: ListView(
+          key: const PageStorageKey<String>('chat-folders'),
+          padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+          children: [
+            const _DeviceOnlyNotice(),
 
-          if (data.folders.isEmpty)
-            _EmptyFolders(l10n: l10n)
-          else ...[
-            _SectionLabel(label: l10n.folderYours),
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: data.folders.length,
-              onReorderItem: (oldIndex, newIndex) => ref
+            if (data.folders.isEmpty)
+              _EmptyFolders(l10n: l10n)
+            else ...[
+              _SectionLabel(label: l10n.folderYours),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: data.folders.length,
+                onReorderItem: (oldIndex, newIndex) => ref
+                    .read(chatOrganizerProvider.notifier)
+                    .reorderFolders(oldIndex: oldIndex, newIndex: newIndex),
+                itemBuilder: (context, index) {
+                  final folder = data.folders[index];
+
+                  return _FolderRow(
+                    key: ValueKey<String>(folder.id),
+                    folder: folder,
+                    index: index,
+                  );
+                },
+              ),
+            ],
+
+            if (missingPresets.isNotEmpty) ...[
+              _SectionLabel(label: l10n.folderReadyMade),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.x4,
+                  vertical: AppSpacing.x1,
+                ),
+                child: Wrap(
+                  spacing: AppSpacing.x2,
+                  runSpacing: AppSpacing.x2,
+                  children: [
+                    for (final preset in missingPresets)
+                      ActionChip(
+                        avatar: Icon(FolderIcons.resolve(preset.iconKey)),
+                        label: Text(folderPresetTitle(preset, l10n)),
+                        onPressed: () => _addPreset(context, ref, preset),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+
+            const Divider(height: AppSpacing.x6),
+
+            SwitchListTile(
+              value: data.settings.foldersHidden,
+              onChanged: (hidden) => ref
                   .read(chatOrganizerProvider.notifier)
-                  .reorderFolders(oldIndex: oldIndex, newIndex: newIndex),
-              itemBuilder: (context, index) {
-                final folder = data.folders[index];
-
-                return _FolderRow(
-                  key: ValueKey<String>(folder.id),
-                  folder: folder,
-                  index: index,
-                );
-              },
+                  .setFoldersHidden(hidden: hidden),
+              title: Text(l10n.hideFolderTabs),
+              subtitle: Text(l10n.hideFolderTabsHint),
+              secondary: const Icon(Icons.visibility_off_outlined),
+            ),
+            SwitchListTile(
+              value: data.settings.unarchiveOnNewMessage,
+              onChanged: (enabled) => ref
+                  .read(chatOrganizerProvider.notifier)
+                  .setUnarchiveOnNewMessage(enabled: enabled),
+              title: Text(l10n.unarchiveOnNewMessage),
+              subtitle: Text(l10n.unarchiveOnNewMessageHint),
+              secondary: const Icon(Icons.unarchive_outlined),
             ),
           ],
-
-          if (missingPresets.isNotEmpty) ...[
-            _SectionLabel(label: l10n.folderReadyMade),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.x4,
-                vertical: AppSpacing.x1,
-              ),
-              child: Wrap(
-                spacing: AppSpacing.x2,
-                runSpacing: AppSpacing.x2,
-                children: [
-                  for (final preset in missingPresets)
-                    ActionChip(
-                      avatar: Icon(FolderIcons.resolve(preset.iconKey)),
-                      label: Text(folderPresetTitle(preset, l10n)),
-                      onPressed: () => _addPreset(context, ref, preset),
-                    ),
-                ],
-              ),
-            ),
-          ],
-
-          const Divider(height: AppSpacing.x6),
-
-          SwitchListTile(
-            value: data.settings.foldersHidden,
-            onChanged: (hidden) => ref
-                .read(chatOrganizerProvider.notifier)
-                .setFoldersHidden(hidden: hidden),
-            title: Text(l10n.hideFolderTabs),
-            subtitle: Text(l10n.hideFolderTabsHint),
-            secondary: const Icon(Icons.visibility_off_outlined),
-          ),
-          SwitchListTile(
-            value: data.settings.unarchiveOnNewMessage,
-            onChanged: (enabled) => ref
-                .read(chatOrganizerProvider.notifier)
-                .setUnarchiveOnNewMessage(enabled: enabled),
-            title: Text(l10n.unarchiveOnNewMessage),
-            subtitle: Text(l10n.unarchiveOnNewMessageHint),
-            secondary: const Icon(Icons.unarchive_outlined),
-          ),
-        ],
+        ),
       ),
     );
   }

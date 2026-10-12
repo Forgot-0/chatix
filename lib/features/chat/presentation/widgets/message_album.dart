@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/feedback/transfer_progress_ring.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -177,15 +178,17 @@ class _AlbumTile extends StatelessWidget {
     // exists in both would fly the photo into the menu on a long press.
     if (onOpen == null) return content;
 
-    return GestureDetector(
-      onTap: () => onOpen!(attachment),
-      child: Hero(
-        tag: attachmentHeroTag(attachment.id),
-        // The mosaic's rounding lives in an ancestor clip, which the flight
-        // leaves behind: without this the tile squares off the instant it is
-        // tapped. Named on both ends of the pair so the pop rounds it back.
-        flightShuttleBuilder: attachmentHeroFlight,
-        child: content,
+    return ClickCursor(
+      child: GestureDetector(
+        onTap: () => onOpen!(attachment),
+        child: Hero(
+          tag: attachmentHeroTag(attachment.id),
+          // The mosaic's rounding lives in an ancestor clip, which the flight
+          // leaves behind: without this the tile squares off the instant it is
+          // tapped. Named on both ends of the pair so the pop rounds it back.
+          flightShuttleBuilder: attachmentHeroFlight,
+          child: content,
+        ),
       ),
     );
   }

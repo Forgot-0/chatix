@@ -22,6 +22,8 @@ class ComposerField extends StatelessWidget {
     this.hintText,
     this.onSubmitted,
     this.onTap,
+    this.autofocus = false,
+    this.keepsFocusOnTapOutside = false,
   });
 
   /// One line to start, six at most — past that the text scrolls.
@@ -46,6 +48,16 @@ class ComposerField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final VoidCallback? onTap;
 
+  /// Takes the caret as soon as it is built — a desktop chat opens ready to
+  /// be typed into.
+  final bool autofocus;
+
+  /// A click elsewhere — on a message, on the wallpaper — leaves the caret
+  /// here. On a desktop the field is where typing goes, and having to click
+  /// back into it after every glance at a bubble is the stretched-phone
+  /// feeling this is meant to remove.
+  final bool keepsFocusOnTapOutside;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -65,7 +77,9 @@ class ComposerField extends StatelessWidget {
             enabled: enabled,
             readOnly: readOnly,
             showCursor: readOnly ? true : null,
+            autofocus: autofocus,
             onTap: onTap,
+            onTapOutside: keepsFocusOnTapOutside ? (_) {} : null,
             minLines: minLines,
             maxLines: maxLines,
             // Deliberately no maxLength: the cap is enforced on send

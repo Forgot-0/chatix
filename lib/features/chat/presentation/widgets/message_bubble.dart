@@ -9,6 +9,7 @@ import 'package:chatix/features/chat/domain/entities/message_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_entity.dart';
 import 'package:chatix/features/chat/presentation/utils/message_actions.dart';
 import 'package:chatix/features/chat/presentation/utils/message_linkifier.dart';
+import 'package:chatix/features/chat/presentation/widgets/bubble_hover_actions.dart';
 import 'package:chatix/features/chat/presentation/widgets/bubble_shape.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_feed_metrics.dart';
 import 'package:chatix/features/chat/presentation/widgets/message_actions_overlay.dart';
@@ -149,6 +150,11 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   bool _menuOpen = false;
 
+  /// A pointer is over the row: the reply and react buttons are up beside
+  /// the bubble. Only a mouse or a trackpad ever sets it — a finger does not
+  /// hover — so a phone never sees them.
+  bool _hovered = false;
+
   /// The feed this bubble was last laid out in, kept for the context menu:
   /// its copy of the bubble is drawn on a route where the feed is not an
   /// ancestor, and has to be sized by the same numbers to come out the same.
@@ -164,6 +170,9 @@ class _MessageBubbleState extends State<MessageBubble> {
       return _SystemMessage(
         message: _message,
         onLongPress: widget.actions.isEmpty ? null : _openMenu,
+        onSecondaryTap: widget.actions.isEmpty
+            ? null
+            : (position) => _openMenu(cursor: position),
       );
     }
 
@@ -219,9 +228,40 @@ class _MessageBubbleState extends State<MessageBubble> {
     // the rest.
     final canOpenMenu = !widget.selectionMode && widget.actions.isNotEmpty;
 
-    final aligned = Align(
-      alignment: widget.isMine ? Alignment.centerRight : Alignment.centerLeft,
+    final canReact = widget.onToggleReaction != null;
+    final hoverActions = BubbleHoverActions(
+      onReply: widget.onReply,
+      onReact: canReact
+          ? (position) => _openMenu(cursor: position, reactionsOnly: true)
+          : null,
+    );
+    final showsHoverActions =
+        _hovered && canOpenMenu && !_menuOpen && !hoverActions.isEmpty;
+
+    // The bubble declares the long press itself, as a semantics action
+    // sitting on its own label node; this detector is only the pointer half
+    // of the same gesture — and of the right click that opens the same menu
+    // at the pointer on a desktop.
+    final gestures = GestureDetector(
+      behavior: HitTestBehavior.deferToChild,
+      excludeFromSemantics: true,
+      onTap: widget.selectionMode ? widget.onSelectionToggled : null,
+      onDoubleTap: widget.selectionMode ? null : _quickReact,
+      onLongPress: canOpenMenu ? _openMenu : null,
+      onSecondaryTapUp: canOpenMenu
+          ? (details) => _openMenu(cursor: details.globalPosition)
+          : null,
       child: KeyedSubtree(key: _bubbleKey, child: content),
+    );
+
+    // Laid out as an `Align` to the bubble's side would be, with the hover
+    // buttons beside it taking no room of their own — and outside the
+    // bubble's detector: under its double tap, a click on them would wait
+    // out the double-tap timeout before it counted.
+    final aligned = BubbleHoverLayout(
+      isMine: widget.isMine,
+      bubble: gestures,
+      actions: showsHoverActions ? hoverActions : null,
     );
 
     return AnimatedContainer(
@@ -242,19 +282,20 @@ class _MessageBubbleState extends State<MessageBubble> {
       child: SwipeToReply(
         enabled: !widget.selectionMode && !_menuOpen,
         onReply: widget.onReply,
-        // The bubble declares the long press itself, as a semantics action
-        // sitting on its own label node; this detector is only the pointer
-        // half of the same gesture.
-        child: GestureDetector(
-          behavior: HitTestBehavior.deferToChild,
-          excludeFromSemantics: true,
-          onTap: widget.selectionMode ? widget.onSelectionToggled : null,
-          onDoubleTap: widget.selectionMode ? null : _quickReact,
-          onLongPress: canOpenMenu ? _openMenu : null,
+        // The whole row, not just the bubble: the buttons sit beside it,
+        // and reaching for them must not make them go away.
+        child: MouseRegion(
+          onEnter: (_) => _setHovered(true),
+          onExit: (_) => _setHovered(false),
           child: aligned,
         ),
       ),
     );
+  }
+
+  void _setHovered(bool value) {
+    if (_hovered == value || !mounted) return;
+    setState(() => _hovered = value);
   }
 
   /// Double tap sends the reaction this person reaches for most.
@@ -269,11 +310,14 @@ class _MessageBubbleState extends State<MessageBubble> {
     toggle(emoji);
   }
 
-  Future<void> _openMenu() async {
+  /// The menu, lifted over the conversation on a long press — or, with
+  /// [cursor], opened at the pointer by a right click. [reactionsOnly] is
+  /// the hover button's version: just the reactions, under the button.
+  Future<void> _openMenu({Offset? cursor, bool reactionsOnly = false}) async {
     final anchor = _anchorRect();
     if (anchor == null || !mounted) return;
 
-    AppHaptics.longPress();
+    if (cursor == null) AppHaptics.longPress();
     setState(() => _menuOpen = true);
 
     final reactions = widget.reactions;
@@ -284,7 +328,8 @@ class _MessageBubbleState extends State<MessageBubble> {
       anchor: anchor,
       bubble: _metrics.wrap(_buildBubble(context, forOverlay: true)),
       feedWidth: _metrics.width,
-      actions: widget.actions,
+      cursor: cursor,
+      actions: reactionsOnly ? const [] : widget.actions,
       reactions: canReact ? widget.quickReactions : const [],
       myReactions: reactions?.myEmojis.toSet() ?? const {},
       // Worked out before the tap rather than after the 400: past either cap
@@ -787,10 +832,17 @@ String semanticHeaderOf(
 
 /// What the server says about the conversation, not what anyone said in it.
 class _SystemMessage extends StatelessWidget {
-  const _SystemMessage({required this.message, required this.onLongPress});
+  const _SystemMessage({
+    required this.message,
+    required this.onLongPress,
+    required this.onSecondaryTap,
+  });
 
   final MessageEntity message;
   final VoidCallback? onLongPress;
+
+  /// A right click, with where it landed on screen.
+  final ValueChanged<Offset>? onSecondaryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -808,6 +860,9 @@ class _SystemMessage extends StatelessWidget {
         child: Center(
           child: GestureDetector(
             onLongPress: onLongPress,
+            onSecondaryTapUp: onSecondaryTap == null
+                ? null
+                : (details) => onSecondaryTap!(details.globalPosition),
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.x3,
