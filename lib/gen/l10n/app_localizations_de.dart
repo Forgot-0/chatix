@@ -768,9 +768,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get callTokenUnavailable => 'Anruf konnte nicht gestartet werden';
 
   @override
-  String get loginTitle => 'Anmelden';
-
-  @override
   String get emailOrUsername => 'E-Mail oder Benutzername';
 
   @override
@@ -790,10 +787,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get emailHint => 'E-Mail eingeben';
-
-  @override
-  String get passwordRule =>
-      '8+ Zeichen, Groß-/Kleinbuchstabe/Ziffer/Sonderzeichen';
 
   @override
   String get confirmPassword => 'Passwort bestätigen';
@@ -821,6 +814,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get resetPassword => 'Passwort zurücksetzen';
+
+  @override
+  String get resetPasswordSave => 'Passwort speichern';
 
   @override
   String get passwordUpdated => 'Passwort aktualisiert — bitte anmelden.';
@@ -867,6 +863,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String continueWith(String provider) {
     return 'Weiter mit $provider';
   }
+
+  @override
+  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'Personensuche fehlgeschlagen';
@@ -2676,9 +2675,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onboardingNext => 'Weiter';
 
   @override
-  String get onboardingDone => 'Konto erstellen';
-
-  @override
   String get onboardingRealtimeTitle => 'Alles in Echtzeit';
 
   @override
@@ -2717,13 +2713,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get registerSubtitle => 'Dauert etwa eine Minute.';
 
   @override
-  String get authOrContinueWith => 'oder weiter mit';
+  String get registerSubmit => 'Konto erstellen';
 
   @override
   String get authNoAccount => 'Noch kein Konto?';
 
   @override
   String get authHaveAccount => 'Schon ein Konto?';
+
+  @override
+  String get authDividerOr => 'oder';
 
   @override
   String get authErrorWrongLoginData =>
@@ -2798,6 +2797,34 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get passwordHide => 'Passwort verbergen';
+
+  @override
+  String get passwordRulesTitle => 'Passwortanforderungen';
+
+  @override
+  String passwordRuleLength(int min, int max) {
+    return '$min–$max Zeichen';
+  }
+
+  @override
+  String get passwordRuleUppercase => 'Ein Großbuchstabe';
+
+  @override
+  String get passwordRuleLowercase => 'Ein Kleinbuchstabe';
+
+  @override
+  String get passwordRuleDigit => 'Eine Ziffer';
+
+  @override
+  String passwordRuleSpecial(String characters) {
+    return 'Ein Sonderzeichen: $characters';
+  }
+
+  @override
+  String get passwordRuleMet => 'erfüllt';
+
+  @override
+  String get passwordRuleUnmet => 'noch nicht';
 
   @override
   String get verifyEmailHeadline => 'Sieh in deine Mails';

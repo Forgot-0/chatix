@@ -2,21 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/brand/chatix_logo.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
+import 'package:chatix/core/ui/wallpaper/mesh_wallpaper.dart';
 import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/onboarding/presentation/providers/onboarding_providers.dart';
 import 'package:chatix/features/onboarding/presentation/widgets/onboarding_page_view.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// The first thing a new install shows: a short welcome, then three pages
-/// saying what ChatiX is for, with a way out of all of it at the top right.
+/// The first thing a new install shows: what ChatiX is for, and the way in.
 ///
-/// One route rather than four so "Skip" means the same thing everywhere and
-/// the back gesture walks the pages instead of the navigator. Every
-/// animation here is implicit and every one of them collapses to nothing
-/// under `MediaQuery.disableAnimations` — the screen has to be as readable
+/// Two shapes, picked by the room the screen is given (measured here, not
+/// read off the window):
+///
+///  * a phone or a tablet gets the tour — three slides, page dots, "Skip" in
+///    the corner, "Next" and then "Get started" under them;
+///  * a desktop window has room for all of it at once, so it gets one page:
+///    the picture on the left, the three reasons and the buttons on the
+///    right. Nothing to page through, so nothing to skip.
+///
+/// One route either way, so "Skip" means the same thing everywhere. Every
+/// animation here is implicit and collapses to nothing under
+/// `MediaQuery.disableAnimations` — the screen has to be as readable
 /// standing still as it is moving.
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -33,6 +44,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   bool _entered = false;
   int _index = 0;
 
+  static final int _pageCount = OnboardingReason.values.length;
+
+  bool get _isLastPage => _index == _pageCount - 1;
+
   @override
   void initState() {
     super.initState();
@@ -48,134 +63,157 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     super.dispose();
   }
 
-  static const int _pageCount = 4;
-
-  bool get _isLastPage => _index == _pageCount - 1;
-
+  /// Seen once is seen for good, whichever way out was taken: the splash
+  /// redirect reads this flag.
   Future<void> _leave(String location) async {
     await ref.read(onboardingSeenProvider.notifier).markSeen();
     if (!mounted) return;
     context.go(location);
   }
 
+  void _startUsing() => _leave(RegisterRoute.location);
+
+  void _signIn() => _leave(LoginRoute.location);
+
   void _advance() {
     if (_isLastPage) {
-      _leave(RegisterRoute.location);
+      _startUsing();
       return;
     }
 
-    final still = MediaQuery.disableAnimationsOf(context);
-    if (still) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       _pages.jumpToPage(_index + 1);
       return;
     }
-
     _pages.nextPage(duration: AppMotion.slow, curve: AppMotion.curve);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2),
-                child: TextButton(
-                  onPressed: () => _leave(LoginRoute.location),
-                  child: Text(l10n.onboardingSkip),
-                ),
-              ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= AppBreakpoints.expanded) {
+            return _WelcomePage(
+              entered: _entered,
+              onStart: _startUsing,
+              onSignIn: _signIn,
+            );
+          }
+          return _tour(context);
+        },
+      ),
+    );
+  }
+
+  Widget _tour(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x5,
+              AppSpacing.x2,
+              AppSpacing.x2,
+              0,
             ),
-            Expanded(
-              child: PageView(
-                controller: _pages,
-                onPageChanged: (index) => setState(() => _index = index),
+            child: Row(
+              children: [
+                const ChatixLogo(size: OnboardingLayout.markSize),
+                const Spacer(),
+                // Held in place on the last slide, where there is nothing
+                // left to skip, so the row does not jump.
+                Visibility(
+                  visible: !_isLastPage,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: TextButton(
+                    onPressed: _signIn,
+                    child: Text(l10n.onboardingSkip),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PageView(
+              controller: _pages,
+              onPageChanged: (index) => setState(() => _index = index),
+              children: [
+                for (final reason in OnboardingReason.values)
+                  OnboardingSlide(
+                    reason: reason,
+                    // Only the first slide makes an entrance: the others
+                    // are reached by paging, which is motion enough.
+                    entered: _entered || reason.index > 0,
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.x6,
+              AppSpacing.x4,
+              AppSpacing.x6,
+              AppSpacing.x6,
+            ),
+            child: AppContentWidth(
+              // The same column as the sign-in form it leads to: a button
+              // the width of a tablet is not a button.
+              maxWidth: AppContentWidths.auth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _WelcomeIntro(entered: _entered),
-                  OnboardingPage(
-                    icon: Icons.bolt_outlined,
-                    title: l10n.onboardingRealtimeTitle,
-                    body: l10n.onboardingRealtimeBody,
+                  Semantics(
+                    label: l10n.onboardingPageOf(_index + 1, _pageCount),
+                    child: OnboardingDots(count: _pageCount, current: _index),
                   ),
-                  OnboardingPage(
-                    icon: Icons.groups_outlined,
-                    title: l10n.onboardingTogetherTitle,
-                    body: l10n.onboardingTogetherBody,
+                  const SizedBox(height: AppSpacing.x6),
+                  FilledButton(
+                    onPressed: _advance,
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.x4,
+                      ),
+                    ),
+                    child: Text(
+                      _isLastPage
+                          ? l10n.welcomeGetStarted
+                          : l10n.onboardingNext,
+                    ),
                   ),
-                  OnboardingPage(
-                    icon: Icons.lock_outline,
-                    title: l10n.onboardingPrivacyTitle,
-                    body: l10n.onboardingPrivacyBody,
+                  const SizedBox(height: AppSpacing.x2),
+                  Center(
+                    child: TextButton(
+                      onPressed: _signIn,
+                      child: Text(l10n.welcomeSignIn),
+                    ),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x6,
-                AppSpacing.x4,
-                AppSpacing.x6,
-                AppSpacing.x6,
-              ),
-              child: AppContentWidth(
-                // The same column as the sign-in form it leads to: a button the
-                // width of a monitor is not a button.
-                maxWidth: AppContentWidths.auth,
-                child: Column(
-                  children: [
-                    Semantics(
-                      label: l10n.onboardingPageOf(_index + 1, _pageCount),
-                      child: OnboardingDots(count: _pageCount, current: _index),
-                    ),
-                    const SizedBox(height: AppSpacing.x6),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _advance,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.x4,
-                          ),
-                        ),
-                        child: Text(switch (_index) {
-                          0 => l10n.welcomeGetStarted,
-                          _ when _isLastPage => l10n.onboardingDone,
-                          _ => l10n.onboardingNext,
-                        }),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.x2),
-                    TextButton(
-                      onPressed: () => _leave(LoginRoute.location),
-                      child: Text(
-                        l10n.welcomeSignIn,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// The animated half of the welcome: the mark grows in, the words follow.
-class _WelcomeIntro extends StatelessWidget {
-  const _WelcomeIntro({required this.entered});
+/// The desktop's single page: the picture on the reader's own wallpaper to
+/// the left, the welcome, the three reasons and the way in to the right.
+class _WelcomePage extends StatelessWidget {
+  const _WelcomePage({
+    required this.entered,
+    required this.onStart,
+    required this.onSignIn,
+  });
 
   final bool entered;
+  final VoidCallback onStart;
+  final VoidCallback onSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -188,50 +226,104 @@ class _WelcomeIntro extends StatelessWidget {
     // step is one of the motion tokens, and the delays are tokens too.
     Duration at(Duration duration) => still ? Duration.zero : duration;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x6),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AnimatedScale(
-            scale: entered ? 1 : 0.82,
-            duration: at(AppMotion.expressive),
-            curve: AppMotion.arrive,
-            child: AnimatedOpacity(
-              opacity: entered ? 1 : 0,
-              duration: at(AppMotion.slow),
-              child: const ChatixLogo(size: AppBrandMark.welcomeSize),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.x8),
-          _FadeUp(
-            entered: entered,
-            duration: at(AppMotion.slow),
-            delay: at(AppMotion.fast),
-            child: Text(
-              l10n.welcomeHeadline,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: scheme.onSurface,
+    Widget fadeUp(Duration delay, Widget child) => _FadeUp(
+      entered: entered,
+      duration: at(AppMotion.slow),
+      delay: at(delay),
+      child: child,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: MeshWallpaperView(
+            spec: wallpaperSpecOf(context),
+            ground: ChatixTheme.of(context).chatBackground,
+            child: Center(
+              child: OnboardingPicture(
+                kind: AppIllustrationKind.conversations,
+                entered: entered,
+                plateSize: OnboardingLayout.widePlateSize,
+                size: OnboardingLayout.wideIllustrationSize,
+                plate: scheme.surface,
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.x3),
-          _FadeUp(
-            entered: entered,
-            duration: at(AppMotion.slow),
-            delay: at(AppMotion.base),
-            child: Text(
-              l10n.welcomeTagline,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
+        ),
+        Expanded(
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.x8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: OnboardingLayout.textMaxWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: ChatixLogo(size: OnboardingLayout.wideMarkSize),
+                      ),
+                      const SizedBox(height: AppSpacing.x6),
+                      fadeUp(
+                        AppMotion.fast,
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            l10n.welcomeHeadline,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.x2),
+                      fadeUp(
+                        AppMotion.base,
+                        Text(
+                          l10n.welcomeTagline,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.x8),
+                      for (final reason in OnboardingReason.values) ...[
+                        fadeUp(
+                          AppMotion.slow,
+                          OnboardingReasonRow(reason: reason),
+                        ),
+                        const SizedBox(height: AppSpacing.x5),
+                      ],
+                      const SizedBox(height: AppSpacing.x3),
+                      FilledButton(
+                        onPressed: onStart,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.x4,
+                          ),
+                        ),
+                        child: Text(l10n.welcomeGetStarted),
+                      ),
+                      const SizedBox(height: AppSpacing.x2),
+                      Center(
+                        child: TextButton(
+                          onPressed: onSignIn,
+                          child: Text(l10n.welcomeSignIn),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

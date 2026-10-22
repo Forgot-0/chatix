@@ -771,9 +771,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get callTokenUnavailable => 'Impossible de démarrer l’appel';
 
   @override
-  String get loginTitle => 'Connexion';
-
-  @override
   String get emailOrUsername => 'E-mail ou identifiant';
 
   @override
@@ -793,10 +790,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get emailHint => 'Saisissez votre e-mail';
-
-  @override
-  String get passwordRule =>
-      '8+ caractères, majuscule/minuscule/chiffre/spécial';
 
   @override
   String get confirmPassword => 'Confirmer le mot de passe';
@@ -824,6 +817,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get resetPassword => 'Réinitialiser le mot de passe';
+
+  @override
+  String get resetPasswordSave => 'Enregistrer le mot de passe';
 
   @override
   String get passwordUpdated => 'Mot de passe mis à jour — connectez-vous.';
@@ -870,6 +866,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String continueWith(String provider) {
     return 'Continuer avec $provider';
   }
+
+  @override
+  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'Impossible de rechercher des personnes';
@@ -2685,9 +2684,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get onboardingNext => 'Suivant';
 
   @override
-  String get onboardingDone => 'Créer un compte';
-
-  @override
   String get onboardingRealtimeTitle => 'Tout en temps réel';
 
   @override
@@ -2726,13 +2722,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get registerSubtitle => 'Cela prend environ une minute.';
 
   @override
-  String get authOrContinueWith => 'ou continuer avec';
+  String get registerSubmit => 'Créer un compte';
 
   @override
   String get authNoAccount => 'Pas encore de compte ?';
 
   @override
   String get authHaveAccount => 'Vous avez déjà un compte ?';
+
+  @override
+  String get authDividerOr => 'ou';
 
   @override
   String get authErrorWrongLoginData =>
@@ -2806,6 +2805,34 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get passwordHide => 'Masquer le mot de passe';
+
+  @override
+  String get passwordRulesTitle => 'Exigences du mot de passe';
+
+  @override
+  String passwordRuleLength(int min, int max) {
+    return 'De $min à $max caractères';
+  }
+
+  @override
+  String get passwordRuleUppercase => 'Une lettre majuscule';
+
+  @override
+  String get passwordRuleLowercase => 'Une lettre minuscule';
+
+  @override
+  String get passwordRuleDigit => 'Un chiffre';
+
+  @override
+  String passwordRuleSpecial(String characters) {
+    return 'Un caractère spécial : $characters';
+  }
+
+  @override
+  String get passwordRuleMet => 'respecté';
+
+  @override
+  String get passwordRuleUnmet => 'pas encore';
 
   @override
   String get verifyEmailHeadline => 'Regardez vos e-mails';

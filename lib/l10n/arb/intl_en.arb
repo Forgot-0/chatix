@@ -100,11 +100,11 @@
   "@signIn": {
     "description": "Label for the sign in button"
   },
-  "register": "Register",
+  "register": "Sign up",
   "@register": {
-    "description": "Label for the register button"
+    "description": "Link from sign-in to registration."
   },
-  "forgotPassword": "Forgot Password?",
+  "forgotPassword": "Forgot password?",
   "@forgotPassword": {
     "description": "Label for the forgot password button"
   },
@@ -999,10 +999,6 @@
   "@callTokenUnavailable": {
     "description": "Join call failure"
   },
-  "loginTitle": "Login",
-  "@loginTitle": {
-    "description": "Login screen title"
-  },
   "emailOrUsername": "Email or username",
   "@emailOrUsername": {
     "description": "Login identifier field"
@@ -1015,9 +1011,9 @@
   "@passwordHint": {
     "description": "Password field hint"
   },
-  "logIn": "Log In",
+  "logIn": "Log in",
   "@logIn": {
-    "description": "Login submit"
+    "description": "The sign-in button, and the link to sign in from registration."
   },
   "username": "Username",
   "@username": {
@@ -1030,10 +1026,6 @@
   "emailHint": "Enter your email",
   "@emailHint": {
     "description": "Email field hint"
-  },
-  "passwordRule": "8+ chars, upper/lower/digit/special",
-  "@passwordRule": {
-    "description": "Password complexity rule"
   },
   "confirmPassword": "Confirm password",
   "@confirmPassword": {
@@ -1070,6 +1062,10 @@
   "resetPassword": "Reset password",
   "@resetPassword": {
     "description": "Reset submit / title"
+  },
+  "resetPasswordSave": "Save password",
+  "@resetPasswordSave": {
+    "description": "The button that sends the reset code and the new password."
   },
   "passwordUpdated": "Password updated — please log in.",
   "@passwordUpdated": {
@@ -1131,6 +1127,10 @@
         "type": "String"
       }
     }
+  },
+  "oauthProviderYandex": "Yandex",
+  "@oauthProviderYandex": {
+    "description": "Yandex as an OAuth provider name, as the brand is written in this language."
   },
   "peopleSearchFailed": "Could not search for people",
   "@peopleSearchFailed": {
@@ -3324,10 +3324,6 @@
   "@onboardingNext": {
     "description": "Advances to the next onboarding page."
   },
-  "onboardingDone": "Create an account",
-  "@onboardingDone": {
-    "description": "Last onboarding button; opens registration."
-  },
   "onboardingRealtimeTitle": "Everything in real time",
   "@onboardingRealtimeTitle": {
     "description": "Title of the first onboarding page."
@@ -3380,9 +3376,9 @@
   "@registerSubtitle": {
     "description": "Subtitle of the registration screen."
   },
-  "authOrContinueWith": "or continue with",
-  "@authOrContinueWith": {
-    "description": "Divider above the OAuth provider buttons."
+  "registerSubmit": "Create account",
+  "@registerSubmit": {
+    "description": "The button that sends the registration form."
   },
   "authNoAccount": "Don't have an account?",
   "@authNoAccount": {
@@ -3391,6 +3387,10 @@
   "authHaveAccount": "Already have an account?",
   "@authHaveAccount": {
     "description": "Precedes the link to sign in."
+  },
+  "authDividerOr": "or",
+  "@authDividerOr": {
+    "description": "The word on the divider between the form and the OAuth provider buttons."
   },
   "authErrorWrongLoginData": "Wrong username or password.",
   "@authErrorWrongLoginData": {
@@ -3481,6 +3481,51 @@
   "passwordHide": "Hide password",
   "@passwordHide": {
     "description": "Tooltip on the hide-password button."
+  },
+  "passwordRulesTitle": "Password requirements",
+  "@passwordRulesTitle": {
+    "description": "Read by screen readers before the checklist of password rules under a new-password field."
+  },
+  "passwordRuleLength": "{min}–{max} characters",
+  "@passwordRuleLength": {
+    "description": "Password checklist: the allowed length.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "passwordRuleUppercase": "An uppercase letter",
+  "@passwordRuleUppercase": {
+    "description": "Password checklist: needs an uppercase letter."
+  },
+  "passwordRuleLowercase": "A lowercase letter",
+  "@passwordRuleLowercase": {
+    "description": "Password checklist: needs a lowercase letter."
+  },
+  "passwordRuleDigit": "A digit",
+  "@passwordRuleDigit": {
+    "description": "Password checklist: needs a digit."
+  },
+  "passwordRuleSpecial": "A special character: {characters}",
+  "@passwordRuleSpecial": {
+    "description": "Password checklist: needs one of the listed special characters, which are passed in as-is.",
+    "placeholders": {
+      "characters": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordRuleMet": "done",
+  "@passwordRuleMet": {
+    "description": "Screen-reader value of a password rule the typed password already meets."
+  },
+  "passwordRuleUnmet": "not yet",
+  "@passwordRuleUnmet": {
+    "description": "Screen-reader value of a password rule the typed password does not meet yet."
   },
   "verifyEmailHeadline": "Check your mail",
   "@verifyEmailHeadline": {

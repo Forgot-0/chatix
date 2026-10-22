@@ -51,7 +51,7 @@ void main() {
     await tester.enterText(fields.at(2), 'Str0ng!pass');
     await tester.enterText(fields.at(3), 'Str0ng!pass');
 
-    await tester.tap(find.widgetWithText(FilledButton, l10n.register));
+    await tester.tap(find.widgetWithText(FilledButton, l10n.registerSubmit));
     await tester.pumpAndSettle();
   }
 
@@ -157,5 +157,117 @@ void main() {
     await tester.enterText(find.byType(TextField).at(2), 'Str0ng!password');
     await tester.pumpAndSettle();
     expect(find.text(l10n.passwordStrengthGood), findsOneWidget);
+  });
+
+  testWidgets('the rules tick off as the password is typed', (tester) async {
+    await pumpRegister(tester);
+
+    int ticks() => find.byIcon(Icons.check_circle).evaluate().length;
+    expect(find.text(l10n.passwordRuleUppercase), findsOneWidget);
+    expect(ticks(), 0);
+
+    await tester.enterText(find.byType(TextField).at(2), 'chatix');
+    await tester.pumpAndSettle();
+    expect(ticks(), 1);
+
+    await tester.enterText(find.byType(TextField).at(2), 'Chatix2026!');
+    await tester.pumpAndSettle();
+    expect(ticks(), 5);
+  });
+
+  testWidgets('typing the password does not nag about the empty repeat', (
+    tester,
+  ) async {
+    await pumpRegister(tester);
+
+    await tester.enterText(find.byType(TextField).at(2), 'Str0ng!pass');
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.validationPasswordRepeatRequired), findsNothing);
+
+    // Once there is a repeat, it follows the password.
+    await tester.enterText(find.byType(TextField).at(3), 'Str0ng!pass');
+    await tester.enterText(find.byType(TextField).at(2), 'Str0ng!pas');
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.validationPasswordsDoNotMatch), findsOneWidget);
+  });
+
+  testWidgets('PASSWORD_MISMATCH from the server lands on the repeat', (
+    tester,
+  ) async {
+    failRegisterWith(
+      const ApiFailure(
+        code: 'PASSWORD_MISMATCH',
+        message: 'Passwords do not match',
+        detail: {},
+        status: 400,
+      ),
+    );
+
+    await pumpRegister(tester);
+    await fillAndSubmit(tester);
+
+    final repeat = tester.widget<TextField>(find.byType(TextField).at(3));
+    expect(repeat.decoration?.errorText, l10n.authErrorPasswordMismatch);
+  });
+
+  testWidgets('Enter walks the form top to bottom and then submits', (
+    tester,
+  ) async {
+    failRegisterWith(const NetworkFailure());
+    await pumpRegister(tester);
+
+    final fields = find.byType(TextField);
+    final values = [
+      'adalovelace',
+      'ada@example.com',
+      'Str0ng!pass',
+      'Str0ng!pass',
+    ];
+    for (var i = 0; i < 4; i++) {
+      final field = tester.widget<TextField>(fields.at(i));
+      expect(
+        field.textInputAction,
+        i < 3 ? TextInputAction.next : TextInputAction.done,
+        reason: 'field $i',
+      );
+      await tester.showKeyboard(fields.at(i));
+      await tester.enterText(fields.at(i), values[i]);
+      await tester.testTextInput.receiveAction(field.textInputAction!);
+      await tester.pumpAndSettle();
+      if (i < 3) {
+        expect(
+          tester.widget<TextField>(fields.at(i + 1)).focusNode?.hasFocus,
+          isTrue,
+          reason: 'Enter on field $i moves on',
+        );
+      }
+    }
+
+    verify(
+      () => repository.register(
+        username: 'adalovelace',
+        email: 'ada@example.com',
+        password: 'Str0ng!pass',
+        passwordRepeat: 'Str0ng!pass',
+      ),
+    ).called(1);
+  });
+
+  testWidgets('the fields tell the password manager what they hold', (
+    tester,
+  ) async {
+    await pumpRegister(tester);
+
+    final hints = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((field) => field.autofillHints)
+        .toList();
+    expect(hints, [
+      [AutofillHints.newUsername],
+      [AutofillHints.email],
+      [AutofillHints.newPassword],
+      [AutofillHints.newPassword],
+    ]);
   });
 }

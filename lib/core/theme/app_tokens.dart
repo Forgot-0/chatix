@@ -546,6 +546,74 @@ abstract final class AppContentWidths {
   static const double auth = 420;
 }
 
+/// Sign-in, sign-up and the password-reset screens.
+abstract final class AuthLayout {
+  /// Space around the form on a phone, and above and below it everywhere.
+  static const double gutter = AppSpacing.x6;
+
+  /// On a wide window the form sits on a card over the wallpaper: inside it,
+  /// this much room on every side.
+  static const double cardPadding = AppSpacing.x8;
+  static const double cardRadius = AppRadii.xxl;
+
+  /// The picture over a reset form: the lock, as tall as the logo is on the
+  /// other screens plus the plate it does not have.
+  static const double illustrationSize = 88;
+
+  /// Under the headline, before the first field.
+  static const double headerGap = AppSpacing.x7;
+
+  /// The provider glyph at the start of an OAuth button.
+  static const double providerIcon = 20;
+
+  /// One line of the password checklist: the tick and the gap after it.
+  static const double ruleIcon = 16;
+  static const double ruleIconGap = AppSpacing.x2;
+  static const double ruleRowGap = AppSpacing.x1 + 2;
+
+  /// Past this width the checklist splits into two columns.
+  static const double ruleColumnsFrom = 320;
+
+  /// The least room the strength meter keeps for its verdict.
+  static const double strengthLabelMinWidth = 72;
+}
+
+/// The welcome tour.
+abstract final class OnboardingLayout {
+  /// The tinted disc a slide's picture stands on, and the picture itself.
+  static const double plateSize = 216;
+  static const double illustrationSize = 152;
+
+  /// The same pair on the desktop's single page, where the picture has half
+  /// the window to itself — and on a slide with room for it, a tablet's.
+  static const double widePlateSize = 340;
+  static const double wideIllustrationSize = 240;
+
+  /// How tall a slide must be to take the wide picture and still fit its
+  /// words without scrolling.
+  static const double widePictureFromHeight = 680;
+
+  /// The mark in the corner above the slides.
+  static const double markSize = 32;
+
+  /// The mark over the welcome on the desktop page.
+  static const double wideMarkSize = 56;
+
+  /// The picture beside each reason on the desktop page, and its plate.
+  static const double reasonPlateSize = 56;
+  static const double reasonIllustrationSize = 46;
+
+  /// The text column under a slide's picture.
+  static const double textMaxWidth = AppContentWidths.auth;
+
+  /// Page dots: an idle dot, and how far the current one stretches.
+  static const double dotSize = 6;
+  static const double dotActiveWidth = 22;
+
+  /// How far the picture grows from as the tour opens.
+  static const double entranceScale = 0.82;
+}
+
 /// What a desktop draws that a phone has no use for: hover chrome, the
 /// Ctrl+K palette, the drop zone, scrollbars.
 abstract final class DesktopSizes {

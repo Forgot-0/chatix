@@ -13,7 +13,9 @@ import 'package:chatix/features/auth/domain/usecases/request_password_reset_use_
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_confirm_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_request_screen.dart';
+import 'package:chatix/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
+import 'package:chatix/gen/l10n/app_localizations_ru.dart';
 
 class _MockRequestReset extends Mock implements RequestPasswordResetUseCase {}
 
@@ -22,15 +24,15 @@ class _MockConfirmReset extends Mock implements ConfirmPasswordResetUseCase {}
 /// The two password-reset screens speak the reader's language: what they
 /// ask for, what a field is missing, and why the server said no.
 ///
-/// Both live outside the app shell — nobody is signed in yet — so the
-/// desktop goldens are the whole window, not a pane beside a rail.
+/// Their goldens are in `auth_screens_golden_test.dart`, with the other
+/// signed-out forms.
 void main() {
   setUpAll(
     () => dotenv.testLoad(fileInput: 'BASE_URL=https://api.example.com'),
   );
 
   const phone = Size(390, 844);
-  const desktop = Size(1440, 900);
+  final AppLocalizations ru = AppLocalizationsRu();
 
   late _MockRequestReset requestReset;
   late _MockConfirmReset confirmReset;
@@ -44,7 +46,6 @@ void main() {
     WidgetTester tester,
     Widget screen, {
     Size size = phone,
-    bool dark = false,
   }) async {
     await tester.pumpWidgetBuilder(
       ProviderScope(
@@ -55,7 +56,7 @@ void main() {
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: dark ? AppTheme.dark() : AppTheme.light(),
+          theme: AppTheme.light(),
           locale: const Locale('ru'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -121,8 +122,63 @@ void main() {
       await tester.tap(find.text('Отправить код'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(SnackBar), findsOneWidget);
+      // Above the form, where it stays until the next attempt — not in a
+      // snackbar that leaves before it is read.
+      expect(find.byType(SnackBar), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(AuthErrorBanner),
+          matching: find.byType(Text),
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('Internal error'), findsNothing);
+    });
+
+    testWidgets('an address with no account is said under the address', (
+      tester,
+    ) async {
+      when(() => requestReset.execute(email: any(named: 'email'))).thenAnswer(
+        (_) async => const Left(
+          ApiFailure(
+            code: 'NOT_FOUND_USER',
+            message: 'User not found',
+            detail: {},
+            status: 404,
+          ),
+        ),
+      );
+      await pumpScreen(tester, const ResetPasswordRequestScreen());
+
+      await tester.enterText(find.byType(TextField), 'nobody@example.com');
+      await tester.tap(find.text('Отправить код'));
+      await tester.pumpAndSettle();
+
+      final email = tester.widget<TextField>(find.byType(TextField));
+      expect(email.decoration?.errorText, ru.authErrorUserNotFound);
+
+      // A different address is a different question.
+      await tester.enterText(find.byType(TextField), 'ada@example.com');
+      await tester.pumpAndSettle();
+      expect(find.text(ru.authErrorUserNotFound), findsNothing);
+    });
+
+    testWidgets('Enter in the address sends it', (tester) async {
+      when(
+        () => requestReset.execute(email: any(named: 'email')),
+      ).thenAnswer((_) async => const Left(RateLimitFailure()));
+      await pumpScreen(tester, const ResetPasswordRequestScreen());
+
+      final email = find.byType(TextField);
+      expect(tester.widget<TextField>(email).autofillHints, [
+        AutofillHints.email,
+      ]);
+      await tester.showKeyboard(email);
+      await tester.enterText(email, 'ada@example.com');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      verify(() => requestReset.execute(email: 'ada@example.com')).called(1);
     });
   });
 
@@ -178,44 +234,27 @@ void main() {
       await tester.tap(submit);
       await tester.pumpAndSettle();
 
-      expect(find.byType(SnackBar), findsOneWidget);
+      // On the code, which is what was wrong.
+      final code = tester.widget<TextField>(find.byType(TextField).at(0));
+      expect(code.decoration?.errorText, ru.authErrorInvalidCode);
       expect(find.textContaining('Invalid token'), findsNothing);
     });
-  });
 
-  group('goldens', () {
-    final windows = {'phone': phone, 'desktop': desktop};
-    final screens = <String, Widget>{
-      'reset_request': const ResetPasswordRequestScreen(),
-      'reset_confirm': const ResetPasswordConfirmScreen(),
-    };
+    testWidgets('the new password gets the checklist and a manager hint', (
+      tester,
+    ) async {
+      await pumpScreen(tester, const ResetPasswordConfirmScreen());
 
-    for (final screen in screens.entries) {
-      for (final window in windows.entries) {
-        for (final theme in {'light': false, 'dark': true}.entries) {
-          testGoldens('${screen.key}, ${window.key}, ${theme.key}', (
-            tester,
-          ) async {
-            await pumpScreen(
-              tester,
-              screen.value,
-              size: window.value,
-              dark: theme.value,
-            );
-
-            // Submitted empty: the field errors are part of what changed.
-            final submit = find.byType(FilledButton);
-            await tester.ensureVisible(submit);
-            await tester.tap(submit);
-            await tester.pumpAndSettle();
-
-            await screenMatchesGolden(
-              tester,
-              '${screen.key}_${window.key}_${theme.key}',
-            );
-          });
-        }
-      }
-    }
+      expect(find.text(ru.passwordRuleDigit), findsOneWidget);
+      final hints = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .map((field) => field.autofillHints)
+          .toList();
+      expect(hints, [
+        [AutofillHints.oneTimeCode],
+        [AutofillHints.newPassword],
+        [AutofillHints.newPassword],
+      ]);
+    });
   });
 }

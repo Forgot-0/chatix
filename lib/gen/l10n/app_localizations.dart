@@ -258,16 +258,16 @@ abstract class AppLocalizations {
   /// **'Sign In'**
   String get signIn;
 
-  /// Label for the register button
+  /// Link from sign-in to registration.
   ///
   /// In en, this message translates to:
-  /// **'Register'**
+  /// **'Sign up'**
   String get register;
 
   /// Label for the forgot password button
   ///
   /// In en, this message translates to:
-  /// **'Forgot Password?'**
+  /// **'Forgot password?'**
   String get forgotPassword;
 
   /// Generic error message
@@ -1440,12 +1440,6 @@ abstract class AppLocalizations {
   /// **'Could not start the call'**
   String get callTokenUnavailable;
 
-  /// Login screen title
-  ///
-  /// In en, this message translates to:
-  /// **'Login'**
-  String get loginTitle;
-
   /// Login identifier field
   ///
   /// In en, this message translates to:
@@ -1464,10 +1458,10 @@ abstract class AppLocalizations {
   /// **'Enter your password'**
   String get passwordHint;
 
-  /// Login submit
+  /// The sign-in button, and the link to sign in from registration.
   ///
   /// In en, this message translates to:
-  /// **'Log In'**
+  /// **'Log in'**
   String get logIn;
 
   /// Register field
@@ -1487,12 +1481,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter your email'**
   String get emailHint;
-
-  /// Password complexity rule
-  ///
-  /// In en, this message translates to:
-  /// **'8+ chars, upper/lower/digit/special'**
-  String get passwordRule;
 
   /// Register field
   ///
@@ -1547,6 +1535,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset password'**
   String get resetPassword;
+
+  /// The button that sends the reset code and the new password.
+  ///
+  /// In en, this message translates to:
+  /// **'Save password'**
+  String get resetPasswordSave;
 
   /// Reset success
   ///
@@ -1631,6 +1625,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue with {provider}'**
   String continueWith(String provider);
+
+  /// Yandex as an OAuth provider name, as the brand is written in this language.
+  ///
+  /// In en, this message translates to:
+  /// **'Yandex'**
+  String get oauthProviderYandex;
 
   /// Profile search failure
   ///
@@ -4620,12 +4620,6 @@ abstract class AppLocalizations {
   /// **'Next'**
   String get onboardingNext;
 
-  /// Last onboarding button; opens registration.
-  ///
-  /// In en, this message translates to:
-  /// **'Create an account'**
-  String get onboardingDone;
-
   /// Title of the first onboarding page.
   ///
   /// In en, this message translates to:
@@ -4692,11 +4686,11 @@ abstract class AppLocalizations {
   /// **'It takes about a minute.'**
   String get registerSubtitle;
 
-  /// Divider above the OAuth provider buttons.
+  /// The button that sends the registration form.
   ///
   /// In en, this message translates to:
-  /// **'or continue with'**
-  String get authOrContinueWith;
+  /// **'Create account'**
+  String get registerSubmit;
 
   /// Precedes the link to registration.
   ///
@@ -4709,6 +4703,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already have an account?'**
   String get authHaveAccount;
+
+  /// The word on the divider between the form and the OAuth provider buttons.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get authDividerOr;
 
   /// Shown for WRONG_LOGIN_DATA.
   ///
@@ -4829,6 +4829,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide password'**
   String get passwordHide;
+
+  /// Read by screen readers before the checklist of password rules under a new-password field.
+  ///
+  /// In en, this message translates to:
+  /// **'Password requirements'**
+  String get passwordRulesTitle;
+
+  /// Password checklist: the allowed length.
+  ///
+  /// In en, this message translates to:
+  /// **'{min}–{max} characters'**
+  String passwordRuleLength(int min, int max);
+
+  /// Password checklist: needs an uppercase letter.
+  ///
+  /// In en, this message translates to:
+  /// **'An uppercase letter'**
+  String get passwordRuleUppercase;
+
+  /// Password checklist: needs a lowercase letter.
+  ///
+  /// In en, this message translates to:
+  /// **'A lowercase letter'**
+  String get passwordRuleLowercase;
+
+  /// Password checklist: needs a digit.
+  ///
+  /// In en, this message translates to:
+  /// **'A digit'**
+  String get passwordRuleDigit;
+
+  /// Password checklist: needs one of the listed special characters, which are passed in as-is.
+  ///
+  /// In en, this message translates to:
+  /// **'A special character: {characters}'**
+  String passwordRuleSpecial(String characters);
+
+  /// Screen-reader value of a password rule the typed password already meets.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get passwordRuleMet;
+
+  /// Screen-reader value of a password rule the typed password does not meet yet.
+  ///
+  /// In en, this message translates to:
+  /// **'not yet'**
+  String get passwordRuleUnmet;
 
   /// Headline of the email confirmation screen.
   ///

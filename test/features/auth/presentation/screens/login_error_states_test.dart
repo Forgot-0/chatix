@@ -7,6 +7,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:chatix/features/auth/domain/repositories/auth_repository.dart';
 import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
+import 'package:chatix/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_en.dart';
 
@@ -138,5 +139,116 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byTooltip(l10n.passwordHide), findsOneWidget);
+  });
+
+  testWidgets('WRONG_LOGIN_DATA sits under the password, not in a banner', (
+    tester,
+  ) async {
+    failLoginWith(
+      const ApiFailure(
+        code: 'WRONG_LOGIN_DATA',
+        message: 'Incorrect username or password',
+        detail: {'username': 'ada@example.com'},
+        status: 400,
+      ),
+    );
+
+    await pumpLogin(tester);
+    await signIn(tester);
+
+    final password = tester.widget<TextField>(find.byType(TextField).last);
+    expect(password.decoration?.errorText, l10n.authErrorWrongLoginData);
+    expect(find.byType(AuthErrorBanner), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AuthErrorBanner),
+        matching: find.text(l10n.authErrorWrongLoginData),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('retyping either half retires "wrong username or password"', (
+    tester,
+  ) async {
+    failLoginWith(
+      const ApiFailure(
+        code: 'WRONG_LOGIN_DATA',
+        message: 'Incorrect username or password',
+        detail: {},
+        status: 400,
+      ),
+    );
+
+    await pumpLogin(tester);
+    await signIn(tester);
+    expect(find.text(l10n.authErrorWrongLoginData), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).first, 'ada');
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.authErrorWrongLoginData), findsNothing);
+  });
+
+  testWidgets(
+    'Enter walks from the identifier to the password, then signs in',
+    (tester) async {
+      failLoginWith(const NetworkFailure());
+      await pumpLogin(tester);
+
+      final identifier = find.byType(TextField).first;
+      final password = find.byType(TextField).last;
+      expect(
+        tester.widget<TextField>(identifier).textInputAction,
+        TextInputAction.next,
+      );
+      expect(
+        tester.widget<TextField>(password).textInputAction,
+        TextInputAction.done,
+      );
+
+      await tester.enterText(identifier, 'ada@example.com');
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(password).focusNode?.hasFocus, isTrue);
+
+      await tester.enterText(password, 'Str0ng!pass');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.login(
+          username: 'ada@example.com',
+          password: 'Str0ng!pass',
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets('the fields tell the password manager what they hold', (
+    tester,
+  ) async {
+    await pumpLogin(tester);
+
+    final fields = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .toList();
+    expect(fields.first.autofillHints, [
+      AutofillHints.username,
+      AutofillHints.email,
+    ]);
+    expect(fields.last.autofillHints, [AutofillHints.password]);
+  });
+
+  testWidgets('sign-in has no app bar and no way back to nowhere', (
+    tester,
+  ) async {
+    await pumpLogin(tester);
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(BackButton), findsNothing);
+    expect(find.text(l10n.loginHeadline), findsOneWidget);
+    expect(find.text(l10n.forgotPassword), findsOneWidget);
+    expect(l10n.forgotPassword, 'Forgot password?');
   });
 }

@@ -6,15 +6,15 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
-import 'package:chatix/core/ui/brand/chatix_logo.dart';
-import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_failure_presentation.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/features/auth/presentation/utils/auth_form_errors.dart';
 import 'package:chatix/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:chatix/features/auth/presentation/widgets/auth_password_field.dart';
+import 'package:chatix/features/auth/presentation/widgets/auth_scaffold.dart';
 import 'package:chatix/features/auth/presentation/widgets/oauth_buttons.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -36,6 +36,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   final _passwordFocus = FocusNode();
+  final _errors = AuthFormErrors(const {'username', 'password'});
 
   /// The failure the last attempt came back with, recomputed in `build` from
   /// the auth state rather than pushed in from a listener — a listener would
@@ -49,9 +50,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  String _identifier() =>
-      (_formKey.currentState?.fields['username']?.value as String?)?.trim() ??
-      '';
+  String _valueOf(String field) =>
+      (_formKey.currentState?.fields[field]?.value as String?) ?? '';
+
+  String _identifier() => _valueOf('username').trim();
 
   void _login() {
     final isValid = _formKey.currentState?.saveAndValidate() ?? false;
@@ -60,12 +62,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     FocusScope.of(context).unfocus();
 
     final values = _formKey.currentState!.value;
+    final username = values['username'] as String;
+    final password = values['password'] as String;
+    _errors.remember({'username': username, 'password': password});
+
     ref
         .read(authProvider.notifier)
-        .login(
-          username: (values['username'] as String).trim(),
-          password: values['password'] as String,
-        );
+        .login(username: username.trim(), password: password);
   }
 
   /// `EMAIL_NOT_CONFIRMED` is the one failure with a way out of it: the
@@ -101,7 +104,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
 
     ref.listen(authProvider, (previous, next) {
@@ -118,150 +120,82 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ? describeAuthFailure(authState.error, l10n)
         : null;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.loginTitle)),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.x6),
-          child: Center(
-            child: SingleChildScrollView(
-              child: AppContentWidth(
-                // A form column, not the window's width: outside the shell
-                // there is no pane to hold it in, and a 1400 px field reads
-                // as broken.
-                maxWidth: AppContentWidths.auth,
-                child: AutofillGroup(
-                  child: FormBuilder(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Center(child: ChatixLogo()),
-                        const SizedBox(height: AppSpacing.x6),
-                        Text(
-                          l10n.loginHeadline,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.x2),
-                        Text(
-                          l10n.loginSubtitle,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.x6),
-                        AuthErrorBanner(
-                          error: _error,
-                          actionLabel: l10n.authResendEmail,
-                          isActionBusy: _isResending,
-                          onAction: _resendVerification,
-                        ),
-                        FormBuilderTextField(
-                          name: 'username',
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [
-                            AutofillHints.username,
-                            AutofillHints.email,
-                          ],
-                          onSubmitted: (_) => _passwordFocus.requestFocus(),
-                          decoration: InputDecoration(
-                            labelText: l10n.emailOrUsername,
-                            hintText: l10n.emailOrUsernameHint,
-                            prefixIcon: const Icon(Icons.person_outline),
-                          ),
-                          validator: AuthFieldValidators.loginIdentifier(l10n),
-                        ),
-                        const SizedBox(height: AppSpacing.x4),
-                        AuthPasswordField(
-                          name: 'password',
-                          focusNode: _passwordFocus,
-                          labelText: l10n.password,
-                          hintText: l10n.passwordHint,
-                          onSubmitted: _login,
-                          validator: AuthFieldValidators.required(l10n),
-                        ),
-                        Align(
-                          alignment: AlignmentDirectional.centerEnd,
-                          child: TextButton(
-                            onPressed: () =>
-                                context.push(ResetPasswordRoute.location),
-                            child: Text(l10n.forgotPassword),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.x6),
-                        FilledButton(
-                          onPressed: isLoading ? null : _login,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.x4,
-                            ),
-                          ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(l10n.logIn),
-                        ),
-                        const SizedBox(height: AppSpacing.x6),
-                        if (oauthSignInEnabled) ...[
-                          Row(
-                            children: [
-                              const Expanded(child: Divider()),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.x3,
-                                ),
-                                child: Text(
-                                  l10n.authOrContinueWith,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                              const Expanded(child: Divider()),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.x4),
-                          const OAuthButtons(),
-                          const SizedBox(height: AppSpacing.x4),
-                        ],
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                l10n.authNoAccount,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  context.go(RegisterRoute.location),
-                              child: Text(l10n.register),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+    return AuthScaffold(
+      title: l10n.loginHeadline,
+      subtitle: l10n.loginSubtitle,
+      children: [
+        AuthErrorBanner(
+          error: _errors.inBanner(_error),
+          actionLabel: l10n.authResendEmail,
+          isActionBusy: _isResending,
+          onAction: _resendVerification,
+        ),
+        AutofillGroup(
+          child: FormBuilder(
+            key: _formKey,
+            // Every edit may retire a server error: "wrong username or
+            // password" is about what was sent, not what is typed now.
+            onChanged: () => setState(() {}),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FormBuilderTextField(
+                  name: 'username',
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  autofillHints: const [
+                    AutofillHints.username,
+                    AutofillHints.email,
+                  ],
+                  onSubmitted: (_) => _passwordFocus.requestFocus(),
+                  decoration: InputDecoration(
+                    labelText: l10n.emailOrUsername,
+                    hintText: l10n.emailOrUsernameHint,
+                    prefixIcon: const Icon(Icons.person_outline),
                   ),
+                  validator: AuthFieldValidators.loginIdentifier(l10n),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.x4),
+                AuthPasswordField(
+                  name: 'password',
+                  focusNode: _passwordFocus,
+                  labelText: l10n.password,
+                  hintText: l10n.passwordHint,
+                  errorText: _errors.under(
+                    _error,
+                    'password',
+                    _valueOf,
+                    alsoAbout: const {'username'},
+                  ),
+                  onSubmitted: _login,
+                  validator: AuthFieldValidators.required(l10n),
+                ),
+              ],
             ),
           ),
         ),
-      ),
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: TextButton(
+            onPressed: () => context.push(ResetPasswordRoute.location),
+            child: Text(l10n.forgotPassword),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.x3),
+        AuthSubmitButton(
+          label: l10n.logIn,
+          isBusy: isLoading,
+          onPressed: _login,
+        ),
+        const OAuthSection(),
+        const SizedBox(height: AppSpacing.x4),
+        AuthSwitchPrompt(
+          question: l10n.authNoAccount,
+          action: l10n.register,
+          onPressed: () => context.go(RegisterRoute.location),
+        ),
+      ],
     );
   }
 }

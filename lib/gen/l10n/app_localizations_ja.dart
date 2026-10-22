@@ -754,9 +754,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get callTokenUnavailable => '通話を開始できませんでした';
 
   @override
-  String get loginTitle => 'ログイン';
-
-  @override
   String get emailOrUsername => 'メールまたはユーザー名';
 
   @override
@@ -776,9 +773,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get emailHint => 'メールアドレスを入力';
-
-  @override
-  String get passwordRule => '8文字以上・大小英字・数字・記号';
 
   @override
   String get confirmPassword => 'パスワードの確認';
@@ -806,6 +800,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get resetPassword => 'パスワードをリセット';
+
+  @override
+  String get resetPasswordSave => 'パスワードを保存';
 
   @override
   String get passwordUpdated => 'パスワードを更新しました。ログインしてください。';
@@ -850,6 +847,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String continueWith(String provider) {
     return '$provider で続行';
   }
+
+  @override
+  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'ユーザーを検索できませんでした';
@@ -2575,9 +2575,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get onboardingNext => '次へ';
 
   @override
-  String get onboardingDone => 'アカウントを作成';
-
-  @override
   String get onboardingRealtimeTitle => 'すべてリアルタイムで';
 
   @override
@@ -2616,13 +2613,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get registerSubtitle => '1 分ほどで終わります。';
 
   @override
-  String get authOrContinueWith => 'または次で続ける';
+  String get registerSubmit => 'アカウントを作成';
 
   @override
   String get authNoAccount => 'アカウントをお持ちでないですか？';
 
   @override
   String get authHaveAccount => 'すでにアカウントをお持ちですか？';
+
+  @override
+  String get authDividerOr => 'または';
 
   @override
   String get authErrorWrongLoginData => 'ユーザー名またはパスワードが違います。';
@@ -2687,6 +2687,34 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get passwordHide => 'パスワードを隠す';
+
+  @override
+  String get passwordRulesTitle => 'パスワードの条件';
+
+  @override
+  String passwordRuleLength(int min, int max) {
+    return '$min〜$max文字';
+  }
+
+  @override
+  String get passwordRuleUppercase => '大文字';
+
+  @override
+  String get passwordRuleLowercase => '小文字';
+
+  @override
+  String get passwordRuleDigit => '数字';
+
+  @override
+  String passwordRuleSpecial(String characters) {
+    return '記号: $characters';
+  }
+
+  @override
+  String get passwordRuleMet => '達成';
+
+  @override
+  String get passwordRuleUnmet => '未達成';
 
   @override
   String get verifyEmailHeadline => 'メールを確認してください';

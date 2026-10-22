@@ -86,7 +86,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signIn => 'Войти';
 
   @override
-  String get register => 'Регистрация';
+  String get register => 'Зарегистрироваться';
 
   @override
   String get forgotPassword => 'Забыли пароль?';
@@ -780,9 +780,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get callTokenUnavailable => 'Не удалось начать звонок';
 
   @override
-  String get loginTitle => 'Вход';
-
-  @override
   String get emailOrUsername => 'Email или имя пользователя';
 
   @override
@@ -802,9 +799,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get emailHint => 'Введите email';
-
-  @override
-  String get passwordRule => '8+ символов, прописные/строчные/цифра/спецсимвол';
 
   @override
   String get confirmPassword => 'Подтвердите пароль';
@@ -832,6 +826,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resetPassword => 'Сбросить пароль';
+
+  @override
+  String get resetPasswordSave => 'Сохранить пароль';
 
   @override
   String get passwordUpdated => 'Пароль обновлён — войдите снова.';
@@ -878,6 +875,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String continueWith(String provider) {
     return 'Продолжить через $provider';
   }
+
+  @override
+  String get oauthProviderYandex => 'Яндекс';
 
   @override
   String get peopleSearchFailed => 'Не удалось выполнить поиск людей';
@@ -2702,9 +2702,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get onboardingNext => 'Далее';
 
   @override
-  String get onboardingDone => 'Создать аккаунт';
-
-  @override
   String get onboardingRealtimeTitle => 'Всё в реальном времени';
 
   @override
@@ -2743,13 +2740,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get registerSubtitle => 'Это займёт около минуты.';
 
   @override
-  String get authOrContinueWith => 'или продолжить через';
+  String get registerSubmit => 'Создать аккаунт';
 
   @override
   String get authNoAccount => 'Нет аккаунта?';
 
   @override
   String get authHaveAccount => 'Уже есть аккаунт?';
+
+  @override
+  String get authDividerOr => 'или';
 
   @override
   String get authErrorWrongLoginData => 'Неверное имя пользователя или пароль.';
@@ -2817,6 +2817,34 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get passwordHide => 'Скрыть пароль';
+
+  @override
+  String get passwordRulesTitle => 'Требования к паролю';
+
+  @override
+  String passwordRuleLength(int min, int max) {
+    return 'От $min до $max символов';
+  }
+
+  @override
+  String get passwordRuleUppercase => 'Заглавная буква';
+
+  @override
+  String get passwordRuleLowercase => 'Строчная буква';
+
+  @override
+  String get passwordRuleDigit => 'Цифра';
+
+  @override
+  String passwordRuleSpecial(String characters) {
+    return 'Спецсимвол: $characters';
+  }
+
+  @override
+  String get passwordRuleMet => 'выполнено';
+
+  @override
+  String get passwordRuleUnmet => 'не выполнено';
 
   @override
   String get verifyEmailHeadline => 'Проверьте почту';

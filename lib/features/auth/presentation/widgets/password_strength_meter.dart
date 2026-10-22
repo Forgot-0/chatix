@@ -64,13 +64,17 @@ class PasswordStrengthMeter extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.x3),
-            SizedBox(
-              width: 72,
+            // A floor, not a fixed width: most verdicts fit it, so the bar
+            // keeps its length as the verdict changes, and a longer word
+            // ("Надёжность") widens it rather than being cut short.
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: AuthLayout.strengthLabelMinWidth,
+              ),
               child: Text(
                 label ?? l10n.passwordStrengthLabel,
                 textAlign: TextAlign.end,
                 maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: label == null ? scheme.onSurfaceVariant : colour,
                   fontWeight: FontWeight.w600,

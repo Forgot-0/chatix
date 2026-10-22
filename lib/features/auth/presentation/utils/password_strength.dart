@@ -1,3 +1,5 @@
+import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+
 /// How far a password is from what the server will accept.
 ///
 /// The bar is the API's own rule, not a guess: `POST /users/register/`
@@ -42,6 +44,33 @@ final RegExp _upper = RegExp('[A-Z]');
 final RegExp _lower = RegExp('[a-z]');
 final RegExp _digit = RegExp('[0-9]');
 
+/// One of the rules `POST /users/register/` and the password reset hold a
+/// new password to (api-docs §3.2, §3.7), in the order the forms list them.
+///
+/// The server checks them all at once and answers a miss with a bare
+/// `422 VALIDATION`, so the forms tick them off one by one as the password
+/// is typed instead.
+enum PasswordRule {
+  /// 8 to 128 characters.
+  length,
+  uppercase,
+  lowercase,
+  digit,
+
+  /// One of `!@#$%^&*(),.?":{}|<>` — and only those: `-` or `_` do not count.
+  special;
+
+  bool isMetBy(String password) => switch (this) {
+    PasswordRule.length =>
+      password.length >= AuthFieldValidators.passwordMinLength &&
+          password.length <= AuthFieldValidators.passwordMaxLength,
+    PasswordRule.uppercase => _upper.hasMatch(password),
+    PasswordRule.lowercase => _lower.hasMatch(password),
+    PasswordRule.digit => _digit.hasMatch(password),
+    PasswordRule.special => _special.hasMatch(password),
+  };
+}
+
 /// Scores [password] the way the server would, then keeps going.
 ///
 /// Anything the server would refuse is [PasswordStrength.weak], however long
@@ -51,15 +80,10 @@ final RegExp _digit = RegExp('[0-9]');
 PasswordStrength estimatePasswordStrength(String password) {
   if (password.isEmpty) return PasswordStrength.empty;
 
-  final meetsLength = password.length >= 8 && password.length <= 128;
-  final classes = [
-    _upper.hasMatch(password),
-    _lower.hasMatch(password),
-    _digit.hasMatch(password),
-    _special.hasMatch(password),
-  ].where((present) => present).length;
-
-  if (!meetsLength || classes < 4) return PasswordStrength.weak;
+  final acceptable = PasswordRule.values.every(
+    (rule) => rule.isMetBy(password),
+  );
+  if (!acceptable) return PasswordStrength.weak;
 
   if (password.length >= 16) return PasswordStrength.strong;
   if (password.length >= 12) return PasswordStrength.good;

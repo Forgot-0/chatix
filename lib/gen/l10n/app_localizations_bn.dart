@@ -763,9 +763,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get callTokenUnavailable => 'কল শুরু করা যায়নি';
 
   @override
-  String get loginTitle => 'লগইন';
-
-  @override
   String get emailOrUsername => 'ইমেইল বা ইউজারনেম';
 
   @override
@@ -785,9 +782,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get emailHint => 'ইমেইল লিখুন';
-
-  @override
-  String get passwordRule => '৮+ অক্ষর, বড়/ছোট/সংখ্যা/বিশেষ';
 
   @override
   String get confirmPassword => 'পাসওয়ার্ড নিশ্চিত করুন';
@@ -815,6 +809,9 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get resetPassword => 'পাসওয়ার্ড রিসেট';
+
+  @override
+  String get resetPasswordSave => 'পাসওয়ার্ড সংরক্ষণ করুন';
 
   @override
   String get passwordUpdated => 'পাসওয়ার্ড হালনাগাদ হয়েছে — লগইন করুন।';
@@ -859,6 +856,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String continueWith(String provider) {
     return '$provider দিয়ে চালিয়ে যান';
   }
+
+  @override
+  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'মানুষ খোঁজা যায়নি';
@@ -2644,9 +2644,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get onboardingNext => 'পরবর্তী';
 
   @override
-  String get onboardingDone => 'অ্যাকাউন্ট তৈরি করুন';
-
-  @override
   String get onboardingRealtimeTitle => 'সবকিছু রিয়েল টাইমে';
 
   @override
@@ -2685,13 +2682,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get registerSubtitle => 'প্রায় এক মিনিট লাগে।';
 
   @override
-  String get authOrContinueWith => 'অথবা এর মাধ্যমে চালিয়ে যান';
+  String get registerSubmit => 'অ্যাকাউন্ট তৈরি করুন';
 
   @override
   String get authNoAccount => 'অ্যাকাউন্ট নেই?';
 
   @override
   String get authHaveAccount => 'আগে থেকেই অ্যাকাউন্ট আছে?';
+
+  @override
+  String get authDividerOr => 'অথবা';
 
   @override
   String get authErrorWrongLoginData =>
@@ -2763,6 +2763,34 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get passwordHide => 'পাসওয়ার্ড লুকান';
+
+  @override
+  String get passwordRulesTitle => 'পাসওয়ার্ডের শর্ত';
+
+  @override
+  String passwordRuleLength(int min, int max) {
+    return '$min–$maxটি অক্ষর';
+  }
+
+  @override
+  String get passwordRuleUppercase => 'একটি বড় হাতের অক্ষর';
+
+  @override
+  String get passwordRuleLowercase => 'একটি ছোট হাতের অক্ষর';
+
+  @override
+  String get passwordRuleDigit => 'একটি সংখ্যা';
+
+  @override
+  String passwordRuleSpecial(String characters) {
+    return 'একটি বিশেষ অক্ষর: $characters';
+  }
+
+  @override
+  String get passwordRuleMet => 'পূরণ হয়েছে';
+
+  @override
+  String get passwordRuleUnmet => 'এখনও নয়';
 
   @override
   String get verifyEmailHeadline => 'আপনার ইমেল দেখুন';

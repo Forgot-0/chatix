@@ -20,14 +20,16 @@ void main() {
   );
 
   group('describeAuthFailure (api-docs §2.4)', () {
-    test('WRONG_LOGIN_DATA says so without blaming a field', () {
+    // The server cannot say which of the two was wrong; the message goes
+    // under the password, the one people mistype.
+    test('WRONG_LOGIN_DATA is said under the password', () {
       final info = describeAuthFailure(
         apiFailure('WRONG_LOGIN_DATA', detail: {'username': 'ada'}),
         l10n,
       );
 
       expect(info.message, l10n.authErrorWrongLoginData);
-      expect(info.field, isNull);
+      expect(info.field, 'password');
       expect(info.hasAction, isFalse);
     });
 
@@ -128,13 +130,34 @@ void main() {
       );
     });
 
-    test('an expired verification code asks for a new one', () {
+    test('an expired verification code asks for a new one, on the code', () {
       for (final code in ['INVALID_TOKEN', 'EXPIRED_TOKEN']) {
-        expect(
-          describeAuthFailure(apiFailure(code), l10n).message,
-          l10n.authErrorInvalidCode,
-        );
+        final info = describeAuthFailure(apiFailure(code), l10n);
+        expect(info.message, l10n.authErrorInvalidCode);
+        expect(info.field, 'token');
       }
+    });
+
+    test('an address with no account behind it is said on the address', () {
+      final info = describeAuthFailure(
+        apiFailure('NOT_FOUND_USER', status: 404),
+        l10n,
+      );
+
+      expect(info.message, l10n.authErrorUserNotFound);
+      expect(info.field, 'email');
+    });
+
+    test('a mismatch is said on the repeat', () {
+      expect(
+        describeAuthFailure(apiFailure('PASSWORD_MISMATCH'), l10n).field,
+        'password_repeat',
+      );
+    });
+
+    test('a rate limit or a dead network belongs to no field', () {
+      expect(describeAuthFailure(const RateLimitFailure(), l10n).field, isNull);
+      expect(describeAuthFailure(const NetworkFailure(), l10n).field, isNull);
     });
 
     test('an unknown code falls back rather than showing nothing', () {

@@ -71,4 +71,62 @@ void main() {
       expect(PasswordStrength.strong.fraction, 1);
     });
   });
+
+  // The checklist under a new password ticks these off one by one; each has
+  // to agree with the server on its own, not only all five together.
+  group('PasswordRule', () {
+    test('length counts 8 to 128 characters, both ends included', () {
+      expect(PasswordRule.length.isMetBy('a' * 7), isFalse);
+      expect(PasswordRule.length.isMetBy('a' * 8), isTrue);
+      expect(PasswordRule.length.isMetBy('a' * 128), isTrue);
+      expect(PasswordRule.length.isMetBy('a' * 129), isFalse);
+    });
+
+    test('each character class is told apart from the others', () {
+      expect(PasswordRule.uppercase.isMetBy('abc'), isFalse);
+      expect(PasswordRule.uppercase.isMetBy('aBc'), isTrue);
+      expect(PasswordRule.lowercase.isMetBy('ABC'), isFalse);
+      expect(PasswordRule.lowercase.isMetBy('AbC'), isTrue);
+      expect(PasswordRule.digit.isMetBy('abc'), isFalse);
+      expect(PasswordRule.digit.isMetBy('ab3'), isTrue);
+    });
+
+    test("only the server's own symbols count as special", () {
+      for (final symbol in r'!@#$%^&*(),.?":{}|<>'.split('')) {
+        expect(
+          PasswordRule.special.isMetBy('a$symbol'),
+          isTrue,
+          reason: symbol,
+        );
+      }
+      // Common, and not in the set: the checklist must not tick them.
+      for (final symbol in ['-', '_', '+', '=', '/', '~', ' ']) {
+        expect(
+          PasswordRule.special.isMetBy('a$symbol'),
+          isFalse,
+          reason: symbol,
+        );
+      }
+    });
+
+    test(
+      'a non-Latin letter is neither upper- nor lowercase to the server',
+      () {
+        expect(PasswordRule.uppercase.isMetBy('Пароль'), isFalse);
+        expect(PasswordRule.lowercase.isMetBy('пароль'), isFalse);
+      },
+    );
+
+    test('meeting every rule is exactly what the meter calls acceptable', () {
+      const samples = ['', 'short', 'Chatix2026', 'Chatix2026!', 'Pa1!a'];
+      for (final password in samples) {
+        final allMet = PasswordRule.values.every((r) => r.isMetBy(password));
+        expect(
+          estimatePasswordStrength(password).isAcceptable,
+          allMet,
+          reason: password,
+        );
+      }
+    });
+  });
 }

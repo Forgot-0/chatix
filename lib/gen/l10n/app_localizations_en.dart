@@ -86,10 +86,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signIn => 'Sign In';
 
   @override
-  String get register => 'Register';
+  String get register => 'Sign up';
 
   @override
-  String get forgotPassword => 'Forgot Password?';
+  String get forgotPassword => 'Forgot password?';
 
   @override
   String get errorOccurred => 'An error occurred';
@@ -766,9 +766,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get callTokenUnavailable => 'Could not start the call';
 
   @override
-  String get loginTitle => 'Login';
-
-  @override
   String get emailOrUsername => 'Email or username';
 
   @override
@@ -778,7 +775,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get passwordHint => 'Enter your password';
 
   @override
-  String get logIn => 'Log In';
+  String get logIn => 'Log in';
 
   @override
   String get username => 'Username';
@@ -788,9 +785,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emailHint => 'Enter your email';
-
-  @override
-  String get passwordRule => '8+ chars, upper/lower/digit/special';
 
   @override
   String get confirmPassword => 'Confirm password';
@@ -818,6 +812,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resetPassword => 'Reset password';
+
+  @override
+  String get resetPasswordSave => 'Save password';
 
   @override
   String get passwordUpdated => 'Password updated — please log in.';
@@ -862,6 +859,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String continueWith(String provider) {
     return 'Continue with $provider';
   }
+
+  @override
+  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'Could not search for people';
@@ -2650,9 +2650,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingNext => 'Next';
 
   @override
-  String get onboardingDone => 'Create an account';
-
-  @override
   String get onboardingRealtimeTitle => 'Everything in real time';
 
   @override
@@ -2691,13 +2688,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerSubtitle => 'It takes about a minute.';
 
   @override
-  String get authOrContinueWith => 'or continue with';
+  String get registerSubmit => 'Create account';
 
   @override
   String get authNoAccount => 'Don\'t have an account?';
 
   @override
   String get authHaveAccount => 'Already have an account?';
+
+  @override
+  String get authDividerOr => 'or';
 
   @override
   String get authErrorWrongLoginData => 'Wrong username or password.';
@@ -2768,6 +2768,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordHide => 'Hide password';
+
+  @override
+  String get passwordRulesTitle => 'Password requirements';
+
+  @override
+  String passwordRuleLength(int min, int max) {
+    return '$min–$max characters';
+  }
+
+  @override
+  String get passwordRuleUppercase => 'An uppercase letter';
+
+  @override
+  String get passwordRuleLowercase => 'A lowercase letter';
+
+  @override
+  String get passwordRuleDigit => 'A digit';
+
+  @override
+  String passwordRuleSpecial(String characters) {
+    return 'A special character: $characters';
+  }
+
+  @override
+  String get passwordRuleMet => 'done';
+
+  @override
+  String get passwordRuleUnmet => 'not yet';
 
   @override
   String get verifyEmailHeadline => 'Check your mail';

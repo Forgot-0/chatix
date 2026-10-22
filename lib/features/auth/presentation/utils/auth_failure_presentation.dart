@@ -22,9 +22,12 @@ class AuthErrorInfo {
 
   final AuthErrorAction? action;
 
-  /// The form field the server blamed, where it named one — `DUPLICATE_USER`
-  /// carries `{field, value}` (api-docs §2.4), and putting the message on
-  /// that field is worth more than a banner above the form.
+  /// The form field the error belongs under. `DUPLICATE_USER` names it
+  /// itself — `{field, value}` (api-docs §2.4); for the rest it is the field
+  /// the code can only be about: the password for `WRONG_LOGIN_DATA`, the
+  /// code for `INVALID_TOKEN`, the address for `NOT_FOUND_USER`. Putting the
+  /// message on that field is worth more than a banner above the form; a
+  /// screen without the field shows it in the banner instead.
   final String? field;
 
   /// The address `EMAIL_NOT_CONFIRMED` named, so the resend does not have to
@@ -87,8 +90,13 @@ AuthErrorInfo _describeApiFailure(ApiFailure failure, AppLocalizations l10n) {
       : const <String, dynamic>{};
 
   switch (failure.code) {
+    // The server cannot say which of the two was wrong; the password is the
+    // one people mistype, and the one the message sits nearest to.
     case 'WRONG_LOGIN_DATA':
-      return AuthErrorInfo(message: l10n.authErrorWrongLoginData);
+      return AuthErrorInfo(
+        message: l10n.authErrorWrongLoginData,
+        field: 'password',
+      );
 
     case 'EMAIL_NOT_CONFIRMED':
       final email = fields['email'] as String?;
@@ -125,10 +133,10 @@ AuthErrorInfo _describeApiFailure(ApiFailure failure, AppLocalizations l10n) {
 
     case 'INVALID_TOKEN':
     case 'EXPIRED_TOKEN':
-      return AuthErrorInfo(message: l10n.authErrorInvalidCode);
+      return AuthErrorInfo(message: l10n.authErrorInvalidCode, field: 'token');
 
     case 'NOT_FOUND_USER':
-      return AuthErrorInfo(message: l10n.authErrorUserNotFound);
+      return AuthErrorInfo(message: l10n.authErrorUserNotFound, field: 'email');
 
     default:
       return AuthErrorInfo(

@@ -6,23 +6,24 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
-import 'package:chatix/core/ui/brand/chatix_logo.dart';
-import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_failure_presentation.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
+import 'package:chatix/features/auth/presentation/utils/auth_form_errors.dart';
 import 'package:chatix/features/auth/presentation/widgets/auth_error_banner.dart';
 import 'package:chatix/features/auth/presentation/widgets/auth_password_field.dart';
+import 'package:chatix/features/auth/presentation/widgets/auth_scaffold.dart';
+import 'package:chatix/features/auth/presentation/widgets/oauth_buttons.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// Registration.
 ///
 /// `POST /users/register/` refuses a weak password at the schema level, with
 /// a `422 VALIDATION` that names no rule (api-docs §3.2) — so the rules are
-/// enforced and shown here, under the field, before anything is sent. The
-/// one error the server does localise for us is `DUPLICATE_USER`, which
-/// carries `{field, value}`: it goes onto that field rather than into a
-/// banner nobody will connect to it.
+/// listed under the field and ticked off as they are met, before anything
+/// is sent. The errors the server does pin to a field — `DUPLICATE_USER`
+/// with its `{field, value}`, `PASSWORD_MISMATCH` — go onto that field
+/// rather than into a banner nobody will connect to it.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -35,13 +36,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _repeatFocus = FocusNode();
+  final _errors = AuthFormErrors(const {
+    'username',
+    'email',
+    'password',
+    'password_repeat',
+  });
 
   AuthErrorInfo? _error;
-
-  /// What was sent on the last attempt, so a server-side error about a field
-  /// can be dropped the moment that field is edited — the complaint was
-  /// about the old value, not the new one.
-  Map<String, String> _submitted = const <String, String>{};
 
   @override
   void dispose() {
@@ -51,11 +53,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  String _currentPassword() =>
-      (_formKey.currentState?.fields['password']?.value as String?) ?? '';
+  String _currentPassword() => _valueOf('password');
 
   String _valueOf(String field) =>
-      (_formKey.currentState?.fields[field]?.value as String?)?.trim() ?? '';
+      (_formKey.currentState?.fields[field]?.value as String?) ?? '';
 
   void _register() {
     final isValid = _formKey.currentState?.saveAndValidate() ?? false;
@@ -64,34 +65,39 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     FocusScope.of(context).unfocus();
 
     final values = _formKey.currentState!.value;
-    _submitted = {
-      'username': (values['username'] as String).trim(),
-      'email': (values['email'] as String).trim(),
+    final sent = {
+      for (final field in _errors.fields) field: values[field] as String,
     };
+    _errors.remember(sent);
 
     ref
         .read(authProvider.notifier)
         .register(
-          username: (values['username'] as String).trim(),
-          email: (values['email'] as String).trim(),
-          password: values['password'] as String,
-          passwordRepeat: values['password_repeat'] as String,
+          username: sent['username']!.trim(),
+          email: sent['email']!.trim(),
+          password: sent['password']!,
+          passwordRepeat: sent['password_repeat']!,
         );
+  }
+
+  /// "Passwords do not match" follows the password as it changes — but only
+  /// once there is a repeat to compare with. Before that, checking the empty
+  /// field would greet the reader with "repeat your password" while they
+  /// are still typing the first one.
+  void _recheckRepeat() {
+    final repeat = _formKey.currentState?.fields['password_repeat'];
+    if (repeat == null || _valueOf('password_repeat').isEmpty) return;
+    repeat.validate(focusOnInvalid: false);
   }
 
   /// The server-side error for [field], while it still applies to what is in
   /// it.
-  String? _serverErrorFor(String field) {
-    final error = _error;
-    if (error == null || error.field != field) return null;
-    if (_valueOf(field) != _submitted[field]) return null;
-    return error.message;
-  }
+  String? _serverErrorFor(String field) =>
+      _errors.under(_error, field, _valueOf);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
 
     ref.listen(authProvider, (previous, next) {
@@ -107,7 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final failed = describeAuthFailure(next.error, l10n);
       if (failed.action != AuthErrorAction.resendVerification) return;
 
-      final email = failed.email ?? _valueOf('email');
+      final email = failed.email ?? _valueOf('email').trim();
       if (email.isEmpty) return;
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -122,153 +128,95 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ? describeAuthFailure(authState.error, l10n)
         : null;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.register)),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.x6),
-          child: Center(
-            child: SingleChildScrollView(
-              child: AppContentWidth(
-                // A form column, not the window's width: outside the shell
-                // there is no pane to hold it in, and a 1400 px field reads
-                // as broken.
-                maxWidth: AppContentWidths.auth,
-                child: AutofillGroup(
-                  child: FormBuilder(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Center(child: ChatixLogo()),
-                        const SizedBox(height: AppSpacing.x5),
-                        Text(
-                          l10n.registerHeadline,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.x2),
-                        Text(
-                          l10n.registerSubtitle,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.x6),
-                        // A duplicate username or email is said on the field
-                        // itself; the banner is for everything else.
-                        AuthErrorBanner(
-                          error: _error?.field == null ? _error : null,
-                        ),
-                        FormBuilderTextField(
-                          name: 'username',
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.newUsername],
-                          onSubmitted: (_) => _emailFocus.requestFocus(),
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            labelText: l10n.username,
-                            hintText: l10n.usernameHint,
-                            prefixIcon: const Icon(Icons.person_outline),
-                            errorText: _serverErrorFor('username'),
-                          ),
-                          validator: AuthFieldValidators.username(l10n),
-                        ),
-                        const SizedBox(height: AppSpacing.x4),
-                        FormBuilderTextField(
-                          name: 'email',
-                          focusNode: _emailFocus,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [AutofillHints.email],
-                          onSubmitted: (_) => _passwordFocus.requestFocus(),
-                          onChanged: (_) => setState(() {}),
-                          decoration: InputDecoration(
-                            labelText: l10n.email,
-                            hintText: l10n.emailHint,
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            errorText: _serverErrorFor('email'),
-                          ),
-                          validator: AuthFieldValidators.email(l10n),
-                        ),
-                        const SizedBox(height: AppSpacing.x4),
-                        AuthPasswordField(
-                          name: 'password',
-                          focusNode: _passwordFocus,
-                          labelText: l10n.password,
-                          hintText: l10n.passwordRule,
-                          autofillHints: const [AutofillHints.newPassword],
-                          textInputAction: TextInputAction.next,
-                          showStrengthMeter: true,
-                          onSubmitted: () => _repeatFocus.requestFocus(),
-                          onChanged: (_) => _formKey
-                              .currentState
-                              ?.fields['password_repeat']
-                              ?.validate(),
-                          validator: AuthFieldValidators.password(l10n),
-                        ),
-                        const SizedBox(height: AppSpacing.x4),
-                        AuthPasswordField(
-                          name: 'password_repeat',
-                          focusNode: _repeatFocus,
-                          labelText: l10n.confirmPassword,
-                          hintText: l10n.confirmPasswordHint,
-                          autofillHints: const [AutofillHints.newPassword],
-                          onSubmitted: _register,
-                          validator: AuthFieldValidators.passwordRepeat(
-                            l10n,
-                            _currentPassword,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.x6),
-                        FilledButton(
-                          onPressed: isLoading ? null : _register,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: AppSpacing.x4,
-                            ),
-                          ),
-                          child: isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(l10n.register),
-                        ),
-                        const SizedBox(height: AppSpacing.x4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: Text(
-                                l10n.authHaveAccount,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => context.go(LoginRoute.location),
-                              child: Text(l10n.loginTitle),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+    return AuthScaffold(
+      title: l10n.registerHeadline,
+      subtitle: l10n.registerSubtitle,
+      children: [
+        // A taken username or email is said on the field itself; the banner
+        // is for everything else.
+        AuthErrorBanner(error: _errors.inBanner(_error)),
+        AutofillGroup(
+          child: FormBuilder(
+            key: _formKey,
+            onChanged: () => setState(() {}),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FormBuilderTextField(
+                  name: 'username',
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  autofillHints: const [AutofillHints.newUsername],
+                  onSubmitted: (_) => _emailFocus.requestFocus(),
+                  decoration: InputDecoration(
+                    labelText: l10n.username,
+                    hintText: l10n.usernameHint,
+                    prefixIcon: const Icon(Icons.person_outline),
+                    errorText: _serverErrorFor('username'),
+                  ),
+                  validator: AuthFieldValidators.username(l10n),
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                FormBuilderTextField(
+                  name: 'email',
+                  focusNode: _emailFocus,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  autofillHints: const [AutofillHints.email],
+                  onSubmitted: (_) => _passwordFocus.requestFocus(),
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    hintText: l10n.emailHint,
+                    prefixIcon: const Icon(Icons.email_outlined),
+                    errorText: _serverErrorFor('email'),
+                  ),
+                  validator: AuthFieldValidators.email(l10n),
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                AuthPasswordField(
+                  name: 'password',
+                  focusNode: _passwordFocus,
+                  labelText: l10n.password,
+                  autofillHints: const [AutofillHints.newPassword],
+                  textInputAction: TextInputAction.next,
+                  isNewPassword: true,
+                  onSubmitted: _repeatFocus.requestFocus,
+                  onChanged: (_) => _recheckRepeat(),
+                  validator: AuthFieldValidators.password(l10n),
+                ),
+                const SizedBox(height: AppSpacing.x4),
+                AuthPasswordField(
+                  name: 'password_repeat',
+                  focusNode: _repeatFocus,
+                  labelText: l10n.confirmPassword,
+                  hintText: l10n.confirmPasswordHint,
+                  autofillHints: const [AutofillHints.newPassword],
+                  errorText: _serverErrorFor('password_repeat'),
+                  onSubmitted: _register,
+                  validator: AuthFieldValidators.passwordRepeat(
+                    l10n,
+                    _currentPassword,
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.x6),
+        AuthSubmitButton(
+          label: l10n.registerSubmit,
+          isBusy: isLoading,
+          onPressed: _register,
+        ),
+        const OAuthSection(),
+        const SizedBox(height: AppSpacing.x4),
+        AuthSwitchPrompt(
+          question: l10n.authHaveAccount,
+          action: l10n.logIn,
+          onPressed: () => context.go(LoginRoute.location),
+        ),
+      ],
     );
   }
 }
