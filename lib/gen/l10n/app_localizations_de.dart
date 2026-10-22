@@ -831,9 +831,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get resetCodeSent => 'Prüfe deine E-Mails auf den Code.';
 
   @override
-  String get verifyEmailTitle => 'E-Mail bestätigen';
-
-  @override
   String get verifyEmailHint => 'Füge den Token aus unserer E-Mail ein.';
 
   @override
@@ -858,14 +855,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get browserOpenFailed => 'Browser konnte nicht geöffnet werden';
-
-  @override
-  String continueWith(String provider) {
-    return 'Weiter mit $provider';
-  }
-
-  @override
-  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'Personensuche fehlgeschlagen';
@@ -2723,6 +2712,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get authDividerOr => 'oder';
+
+  @override
+  String oauthSignInWith(String provider) {
+    return 'Mit $provider anmelden';
+  }
+
+  @override
+  String get oauthYandexSignIn => 'Sign in with Yandex ID';
 
   @override
   String get authErrorWrongLoginData =>

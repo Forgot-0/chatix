@@ -843,9 +843,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resetCodeSent => 'Код восстановления отправлен на ваш email.';
 
   @override
-  String get verifyEmailTitle => 'Подтверждение email';
-
-  @override
   String get verifyEmailHint =>
       'Вставьте токен из письма, которое мы отправили.';
 
@@ -870,14 +867,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get browserOpenFailed => 'Не удалось открыть браузер для входа';
-
-  @override
-  String continueWith(String provider) {
-    return 'Продолжить через $provider';
-  }
-
-  @override
-  String get oauthProviderYandex => 'Яндекс';
 
   @override
   String get peopleSearchFailed => 'Не удалось выполнить поиск людей';
@@ -2752,6 +2741,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get authDividerOr => 'или';
 
   @override
+  String oauthSignInWith(String provider) {
+    return 'Войти через $provider';
+  }
+
+  @override
+  String get oauthYandexSignIn => 'Войти с Яндекс ID';
+
+  @override
   String get authErrorWrongLoginData => 'Неверное имя пользователя или пароль.';
 
   @override
@@ -2866,7 +2863,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String verifyEmailResendIn(int seconds) {
-    return 'Новое письмо можно запросить через $seconds с';
+    return 'Отправить снова через $seconds с';
   }
 
   @override

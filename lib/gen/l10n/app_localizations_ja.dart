@@ -817,9 +817,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get resetCodeSent => 'メールでコードを確認してください。';
 
   @override
-  String get verifyEmailTitle => 'メールを確認';
-
-  @override
   String get verifyEmailHint => '送信したメールのトークンを貼り付けてください。';
 
   @override
@@ -842,14 +839,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get browserOpenFailed => 'ブラウザを開けませんでした';
-
-  @override
-  String continueWith(String provider) {
-    return '$provider で続行';
-  }
-
-  @override
-  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'ユーザーを検索できませんでした';
@@ -2623,6 +2612,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get authDividerOr => 'または';
+
+  @override
+  String oauthSignInWith(String provider) {
+    return '$provider でサインイン';
+  }
+
+  @override
+  String get oauthYandexSignIn => 'Sign in with Yandex ID';
 
   @override
   String get authErrorWrongLoginData => 'ユーザー名またはパスワードが違います。';

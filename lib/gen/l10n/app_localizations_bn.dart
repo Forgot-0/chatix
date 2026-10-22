@@ -826,9 +826,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get resetCodeSent => 'কোডের জন্য ইমেইল দেখুন।';
 
   @override
-  String get verifyEmailTitle => 'ইমেইল যাচাই';
-
-  @override
   String get verifyEmailHint => 'পাঠানো ইমেইলের টোকেন পেস্ট করুন।';
 
   @override
@@ -851,14 +848,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get browserOpenFailed => 'ব্রাউজার খোলা যায়নি';
-
-  @override
-  String continueWith(String provider) {
-    return '$provider দিয়ে চালিয়ে যান';
-  }
-
-  @override
-  String get oauthProviderYandex => 'Yandex';
 
   @override
   String get peopleSearchFailed => 'মানুষ খোঁজা যায়নি';
@@ -2694,6 +2683,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String get authDividerOr => 'অথবা';
 
   @override
+  String oauthSignInWith(String provider) {
+    return '$provider দিয়ে সাইন ইন করুন';
+  }
+
+  @override
+  String get oauthYandexSignIn => 'Sign in with Yandex ID';
+
+  @override
   String get authErrorWrongLoginData =>
       'ব্যবহারকারীর নাম বা পাসওয়ার্ড ঠিক নয়।';
 
@@ -2813,7 +2810,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String verifyEmailResendIn(int seconds) {
-    return '$seconds সেকেন্ড পরে নতুন ইমেল চাইতে পারবেন';
+    return '$seconds সেকেন্ড পরে আবার পাঠান';
   }
 
   @override

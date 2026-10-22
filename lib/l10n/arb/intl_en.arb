@@ -1083,10 +1083,6 @@
   "@resetCodeSent": {
     "description": "Reset request success"
   },
-  "verifyEmailTitle": "Verify email",
-  "@verifyEmailTitle": {
-    "description": "Email verification title"
-  },
   "verifyEmailHint": "Paste the token from the email we sent you.",
   "@verifyEmailHint": {
     "description": "Verification instructions"
@@ -1118,19 +1114,6 @@
   "browserOpenFailed": "Could not open the browser for sign-in",
   "@browserOpenFailed": {
     "description": "OAuth launch failure"
-  },
-  "continueWith": "Continue with {provider}",
-  "@continueWith": {
-    "description": "OAuth provider button",
-    "placeholders": {
-      "provider": {
-        "type": "String"
-      }
-    }
-  },
-  "oauthProviderYandex": "Yandex",
-  "@oauthProviderYandex": {
-    "description": "Yandex as an OAuth provider name, as the brand is written in this language."
   },
   "peopleSearchFailed": "Could not search for people",
   "@peopleSearchFailed": {
@@ -3392,6 +3375,20 @@
   "@authDividerOr": {
     "description": "The word on the divider between the form and the OAuth provider buttons."
   },
+  "oauthSignInWith": "Sign in with {provider}",
+  "@oauthSignInWith": {
+    "description": "An OAuth button for Google or GitHub. Matches the wording Yandex fixes for its own button (\"Sign in with Yandex ID\").",
+    "placeholders": {
+      "provider": {
+        "type": "String",
+        "example": "Google"
+      }
+    }
+  },
+  "oauthYandexSignIn": "Sign in with Yandex ID",
+  "@oauthYandexSignIn": {
+    "description": "The Yandex ID button. Yandex forbids changing its text and publishes it in Russian and English only, so every other language keeps the English one. Do not translate."
+  },
   "authErrorWrongLoginData": "Wrong username or password.",
   "@authErrorWrongLoginData": {
     "description": "Shown for WRONG_LOGIN_DATA."
@@ -3552,7 +3549,7 @@
   "@verifyEmailCodeFromClipboard": {
     "description": "Confirms that the code was filled in automatically."
   },
-  "verifyEmailResendIn": "You can ask for a new email in {seconds}s",
+  "verifyEmailResendIn": "Send again in {seconds} s",
   "@verifyEmailResendIn": {
     "description": "Countdown on the disabled resend button.",
     "placeholders": {

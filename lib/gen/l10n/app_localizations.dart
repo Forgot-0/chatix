@@ -1566,12 +1566,6 @@ abstract class AppLocalizations {
   /// **'Check your email for a reset code.'**
   String get resetCodeSent;
 
-  /// Email verification title
-  ///
-  /// In en, this message translates to:
-  /// **'Verify email'**
-  String get verifyEmailTitle;
-
   /// Verification instructions
   ///
   /// In en, this message translates to:
@@ -1619,18 +1613,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not open the browser for sign-in'**
   String get browserOpenFailed;
-
-  /// OAuth provider button
-  ///
-  /// In en, this message translates to:
-  /// **'Continue with {provider}'**
-  String continueWith(String provider);
-
-  /// Yandex as an OAuth provider name, as the brand is written in this language.
-  ///
-  /// In en, this message translates to:
-  /// **'Yandex'**
-  String get oauthProviderYandex;
 
   /// Profile search failure
   ///
@@ -4710,6 +4692,18 @@ abstract class AppLocalizations {
   /// **'or'**
   String get authDividerOr;
 
+  /// An OAuth button for Google or GitHub. Matches the wording Yandex fixes for its own button ("Sign in with Yandex ID").
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with {provider}'**
+  String oauthSignInWith(String provider);
+
+  /// The Yandex ID button. Yandex forbids changing its text and publishes it in Russian and English only, so every other language keeps the English one. Do not translate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Yandex ID'**
+  String get oauthYandexSignIn;
+
   /// Shown for WRONG_LOGIN_DATA.
   ///
   /// In en, this message translates to:
@@ -4911,7 +4905,7 @@ abstract class AppLocalizations {
   /// Countdown on the disabled resend button.
   ///
   /// In en, this message translates to:
-  /// **'You can ask for a new email in {seconds}s'**
+  /// **'Send again in {seconds} s'**
   String verifyEmailResendIn(int seconds);
 
   /// Precedes the change-address action.

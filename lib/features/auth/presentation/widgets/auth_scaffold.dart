@@ -177,7 +177,9 @@ class AuthSubmitButton extends StatelessWidget {
   });
 
   final String label;
-  final VoidCallback onPressed;
+
+  /// Null leaves the button disabled, as while another request is out.
+  final VoidCallback? onPressed;
   final bool isBusy;
 
   @override

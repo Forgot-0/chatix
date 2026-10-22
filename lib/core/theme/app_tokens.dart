@@ -563,9 +563,6 @@ abstract final class AuthLayout {
   /// Under the headline, before the first field.
   static const double headerGap = AppSpacing.x7;
 
-  /// The provider glyph at the start of an OAuth button.
-  static const double providerIcon = 20;
-
   /// One line of the password checklist: the tick and the gap after it.
   static const double ruleIcon = 16;
   static const double ruleIconGap = AppSpacing.x2;
@@ -576,6 +573,55 @@ abstract final class AuthLayout {
 
   /// The least room the strength meter keeps for its verdict.
   static const double strengthLabelMinWidth = 72;
+}
+
+/// "Sign in with …" buttons for other services.
+///
+/// One shape for all of them — a pill, the mark and the words centred
+/// together — in each provider's own colours. Almost nothing here is ours
+/// to choose: these are the numbers from Google's Sign-In branding
+/// guidelines (developers.google.com/identity/branding-guidelines) and
+/// Yandex ID's button design rules (yandex.ru/dev/id/doc/ru/codes/
+/// buttons-design), which forbid changing the button's colours, its stroke
+/// or the spacing inside it. GitHub sets no button rules, so its button
+/// borrows Google's neutral colours.
+abstract final class OAuthButtonSpec {
+  /// Yandex ID's "M" size exactly; Google's 40 px button scaled up, which
+  /// its rules allow.
+  static const double height = 44;
+
+  /// Yandex: the side margins may not be narrower than its icon.
+  static const double sidePadding = AppSpacing.x6;
+
+  /// The marks, at the sizes their owners ship them: Google's "G" at its
+  /// 1x size, Yandex's round icon as drawn in its M button.
+  static const double googleMark = 20;
+  static const double yandexMark = 24;
+  static const double githubMark = 20;
+
+  /// Between the mark and the words: Google asks for 10, Yandex draws 13.
+  static const double googleGap = 10;
+  static const double yandexGap = 13;
+  static const double githubGap = 12;
+
+  /// Google's light and dark buttons — also GitHub's.
+  static const Color lightFill = Color(0xFFFFFFFF);
+  static const Color lightStroke = Color(0xFF747775);
+  static const Color lightText = Color(0xFF1F1F1F);
+  static const Color darkFill = Color(0xFF131314);
+  static const Color darkStroke = Color(0xFF8E918F);
+  static const Color darkText = Color(0xFFE3E3E3);
+
+  /// Google draws a 1 px stroke inside the button.
+  static const double googleStroke = 1;
+
+  /// Yandex ID: the "additional" version (white, black 2 px stroke centred
+  /// on the edge) on a light page, the "main" version (black) on a dark
+  /// one. The red is the icon's.
+  static const Color yandexPaper = Color(0xFFFFFFFF);
+  static const Color yandexInk = Color(0xFF000000);
+  static const Color yandexRed = Color(0xFFFC3F1D);
+  static const double yandexStroke = 2;
 }
 
 /// The welcome tour.

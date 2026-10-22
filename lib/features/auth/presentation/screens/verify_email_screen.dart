@@ -6,15 +6,20 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
-import 'package:chatix/core/ui/widgets/app_content_width.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/utils/app_utils.dart';
 import 'package:chatix/features/auth/presentation/providers/email_verification_provider.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_failure_presentation.dart';
 import 'package:chatix/features/auth/presentation/utils/auth_field_validators.dart';
 import 'package:chatix/features/auth/presentation/widgets/auth_error_banner.dart';
+import 'package:chatix/features/auth/presentation/widgets/auth_scaffold.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// "Check your mail" — the screen between registering and being let in.
+///
+/// Built on [AuthScaffold] like the other signed-out screens: no app bar,
+/// the envelope and the headline on top, the way back only when it was
+/// pushed over another screen — and "Back to sign in" always.
 ///
 /// Two things it does that a plain code box does not:
 ///
@@ -151,158 +156,113 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen>
     final error = state.failure == null
         ? null
         : describeAuthFailure(state.failure, l10n);
+    final hintStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.verifyEmailTitle)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.x6),
-          child: AppContentWidth(
-            maxWidth: AppContentWidths.auth,
-            child: FormBuilder(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    Icons.mark_email_unread_outlined,
-                    size: 64,
-                    color: scheme.primary,
-                  ),
-                  const SizedBox(height: AppSpacing.x5),
-                  Text(
-                    l10n.verifyEmailHeadline,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.x2),
-                  Text(
-                    state.email == null
-                        ? l10n.verifyEmailSentToYou
-                        : l10n.verifyEmailSentTo(state.email!),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.x2),
-                  Text(
-                    l10n.verifyEmailClipboardHint,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.x6),
-                  AuthErrorBanner(error: error),
-                  FormBuilderTextField(
-                    name: 'token',
-                    autocorrect: false,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.oneTimeCode],
-                    onSubmitted: (_) => _confirm(),
-                    decoration: InputDecoration(
-                      labelText: l10n.verificationToken,
-                      prefixIcon: const Icon(Icons.vpn_key_outlined),
-                      helperText: _filledFromClipboard
-                          ? l10n.verifyEmailCodeFromClipboard
-                          : null,
-                    ),
-                    validator: AuthFieldValidators.required(l10n),
-                  ),
-                  const SizedBox(height: AppSpacing.x4),
-                  FilledButton(
-                    onPressed: state.isBusy ? null : () => _confirm(),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.x4,
-                      ),
-                    ),
-                    child: state.isConfirming
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.verify),
-                  ),
-                  const SizedBox(height: AppSpacing.x6),
-                  const Divider(),
-                  const SizedBox(height: AppSpacing.x4),
-                  Text(
-                    l10n.resendLimitHint,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.x3),
-                  OutlinedButton.icon(
-                    onPressed: state.canResend ? _resend : null,
-                    icon: state.isSending
-                        ? const SizedBox(
-                            height: 16,
-                            width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.outgoing_mail),
-                    label: Text(
-                      state.secondsUntilResend > 0
-                          ? l10n.verifyEmailResendIn(state.secondsUntilResend)
-                          : l10n.resendVerification,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.x4),
-                  if (_isChangingAddress) ...[
-                    FormBuilderTextField(
-                      name: 'email',
-                      initialValue: state.email,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _applyNewAddress(),
-                      decoration: InputDecoration(
-                        labelText: l10n.email,
-                        prefixIcon: const Icon(Icons.email_outlined),
-                      ),
-                      validator: AuthFieldValidators.email(l10n),
-                    ),
-                    const SizedBox(height: AppSpacing.x3),
-                    TextButton(
-                      onPressed: state.isSending ? null : _applyNewAddress,
-                      child: Text(l10n.resendVerification),
-                    ),
-                  ] else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            l10n.verifyEmailWrongAddress,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              setState(() => _isChangingAddress = true),
-                          child: Text(l10n.verifyEmailChangeAddress),
-                        ),
-                      ],
-                    ),
-                  TextButton(
-                    onPressed: () => context.go(LoginRoute.location),
-                    child: Text(l10n.backToSignIn),
-                  ),
-                ],
+    return AuthScaffold(
+      header: const AppIllustration(
+        kind: AppIllustrationKind.mail,
+        size: AuthLayout.illustrationSize,
+      ),
+      title: l10n.verifyEmailHeadline,
+      subtitle: state.email == null
+          ? l10n.verifyEmailSentToYou
+          : l10n.verifyEmailSentTo(state.email!),
+      children: [
+        Text(
+          l10n.verifyEmailClipboardHint,
+          textAlign: TextAlign.center,
+          style: hintStyle,
+        ),
+        const SizedBox(height: AppSpacing.x5),
+        AuthErrorBanner(error: error),
+        FormBuilder(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FormBuilderTextField(
+                name: 'token',
+                autocorrect: false,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                onSubmitted: (_) => _confirm(),
+                decoration: InputDecoration(
+                  labelText: l10n.verificationToken,
+                  prefixIcon: const Icon(Icons.vpn_key_outlined),
+                  helperText: _filledFromClipboard
+                      ? l10n.verifyEmailCodeFromClipboard
+                      : null,
+                ),
+                validator: AuthFieldValidators.required(l10n),
               ),
-            ),
+              const SizedBox(height: AppSpacing.x4),
+              AuthSubmitButton(
+                label: l10n.verify,
+                isBusy: state.isConfirming,
+                onPressed: state.isBusy ? null : () => _confirm(),
+              ),
+              const SizedBox(height: AppSpacing.x6),
+              Divider(color: scheme.outlineVariant),
+              const SizedBox(height: AppSpacing.x4),
+              Text(
+                l10n.resendLimitHint,
+                textAlign: TextAlign.center,
+                style: hintStyle,
+              ),
+              const SizedBox(height: AppSpacing.x3),
+              OutlinedButton.icon(
+                onPressed: state.canResend ? _resend : null,
+                icon: state.isSending
+                    ? const SizedBox.square(
+                        dimension: AppSpacing.x4,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.outgoing_mail),
+                label: Text(
+                  state.secondsUntilResend > 0
+                      ? l10n.verifyEmailResendIn(state.secondsUntilResend)
+                      : l10n.resendVerification,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.x4),
+              if (_isChangingAddress) ...[
+                FormBuilderTextField(
+                  name: 'email',
+                  initialValue: state.email,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  autofillHints: const [AutofillHints.email],
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _applyNewAddress(),
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    prefixIcon: const Icon(Icons.email_outlined),
+                  ),
+                  validator: AuthFieldValidators.email(l10n),
+                ),
+                const SizedBox(height: AppSpacing.x3),
+                TextButton(
+                  onPressed: state.isSending ? null : _applyNewAddress,
+                  child: Text(l10n.resendVerification),
+                ),
+              ] else
+                AuthSwitchPrompt(
+                  question: l10n.verifyEmailWrongAddress,
+                  action: l10n.verifyEmailChangeAddress,
+                  onPressed: () => setState(() => _isChangingAddress = true),
+                ),
+            ],
           ),
         ),
-      ),
+        Center(
+          child: TextButton(
+            onPressed: () => context.go(LoginRoute.location),
+            child: Text(l10n.backToSignIn),
+          ),
+        ),
+      ],
     );
   }
 }

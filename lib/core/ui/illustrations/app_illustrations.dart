@@ -33,6 +33,9 @@ enum AppIllustrationKind {
 
   /// Nothing picked yet: the settings pane before a section is opened.
   settings,
+
+  /// A letter has gone out and is waiting to be opened: check your mail.
+  mail,
 }
 
 /// The empty-state pictures, drawn rather than shipped.
@@ -46,7 +49,7 @@ enum AppIllustrationKind {
 /// decode.
 ///
 /// (`flutter_svg` is deliberately not a dependency. Nothing here needs a
-/// document format: these are eight shapes, and a vector file would be a
+/// document format: these are nine shapes, and a vector file would be a
 /// parser, a cache and a second styling system to keep in step with the
 /// theme.)
 class AppIllustration extends StatelessWidget {
@@ -87,7 +90,7 @@ class AppIllustration extends StatelessWidget {
   }
 }
 
-/// One painter, one switch, because the eight drawings share a vocabulary:
+/// One painter, one switch, because the nine drawings share a vocabulary:
 /// the same stroke width, the same rounded joints, the same two fills.
 class _IllustrationPainter extends CustomPainter {
   const _IllustrationPainter({
@@ -132,6 +135,8 @@ class _IllustrationPainter extends CustomPainter {
         _media(canvas);
       case AppIllustrationKind.settings:
         _settings(canvas);
+      case AppIllustrationKind.mail:
+        _mail(canvas);
     }
 
     canvas.restore();
@@ -339,6 +344,30 @@ class _IllustrationPainter extends CustomPainter {
 
     toggle(38, on: true);
     toggle(62, on: false);
+  }
+
+  /// A sealed envelope with the dot an unread letter wears.
+  void _mail(Canvas canvas) {
+    final body = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(14, 28, 72, 50),
+      const Radius.circular(AppRadii.md),
+    );
+    canvas
+      ..drawRRect(body, _fill)
+      ..drawRRect(body, _accentStroke);
+
+    // The flap, folded down to the middle of the envelope.
+    final flap = Path()
+      ..moveTo(19, 34)
+      ..lineTo(50, 56)
+      ..lineTo(81, 34);
+    canvas.drawPath(flap, _accentStroke);
+
+    // The two folds below it, fainter: paper, not edges.
+    _line(canvas, const Offset(22, 70), 14);
+    _line(canvas, const Offset(64, 70), 14);
+
+    canvas.drawCircle(const Offset(80, 28), 8, Paint()..color = accent);
   }
 
   @override

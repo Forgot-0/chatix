@@ -201,6 +201,9 @@ flutter:
     - .env
     # Fonts
     - assets/fonts/
+    # Sign-in provider marks, as their owners ship them (2.0x-4.0x variants
+    # are picked up from the subfolders)
+    - assets/brand/oauth/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

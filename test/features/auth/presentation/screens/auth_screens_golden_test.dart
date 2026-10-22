@@ -15,6 +15,8 @@ import 'package:chatix/features/auth/presentation/screens/login_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/register_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_confirm_screen.dart';
 import 'package:chatix/features/auth/presentation/screens/reset_password_request_screen.dart';
+import 'package:chatix/features/auth/presentation/screens/verify_email_screen.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/features/auth/presentation/widgets/oauth_buttons.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -38,6 +40,10 @@ void main() {
     'tablet': Size(800, 1024),
     'desktop': Size(1440, 900),
   };
+
+  /// Past the resend countdown the verify-email screen starts, so no
+  /// ticker outlives the test.
+  const cooldown = Duration(seconds: 61);
 
   late _MockAuthRepository repository;
 
@@ -113,6 +119,26 @@ void main() {
     expect(find.byType(BackButton), findsOneWidget);
   });
 
+  testWidgets('"check your mail" has no app bar, an envelope, a way back', (
+    tester,
+  ) async {
+    await pumpScreen(
+      tester,
+      const VerifyEmailScreen(email: 'ada@example.com'),
+      pushed: true,
+    );
+
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(BackButton), findsOneWidget);
+    expect(
+      tester.widget<AppIllustration>(find.byType(AppIllustration)).kind,
+      AppIllustrationKind.mail,
+    );
+    expect(find.textContaining('ada@example.com'), findsOneWidget);
+
+    await tester.pump(cooldown);
+  });
+
   testWidgets('the form is never wider than 420 px', (tester) async {
     for (final size in windows.values) {
       await pumpScreen(tester, const LoginScreen(), size: size);
@@ -160,6 +186,19 @@ void main() {
             pushed: true,
           );
           await screenMatchesGolden(tester, 'reset_request_$suffix');
+        });
+
+        // Straight after registering: the countdown on the resend button.
+        testGoldens('verify email, $suffix', (tester) async {
+          await pumpScreen(
+            tester,
+            const VerifyEmailScreen(email: 'ada@example.com'),
+            size: window.value,
+            dark: theme.value,
+            pushed: true,
+          );
+          await screenMatchesGolden(tester, 'verify_email_$suffix');
+          await tester.pump(cooldown);
         });
 
         // Submitted empty: the field errors sit under their fields.
