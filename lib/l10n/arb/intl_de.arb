@@ -1224,6 +1224,7 @@
   "subscribersCount": "{count, plural, =0{Keine Abonnenten} =1{1 Abonnent} other{{count} Abonnenten}}",
   "muteForTwoDays": "2 Tage stummschalten",
   "chatMenuSearch": "Suchen",
+  "chatProfileNotificationsAction": "Ton",
   "chatMenuMute": "Benachrichtigungen aus",
   "chatMenuUnmute": "Benachrichtigungen an",
   "chatMenuPin": "Chat anheften",

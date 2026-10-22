@@ -8,6 +8,7 @@ import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
@@ -164,52 +165,66 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
           ),
         ),
 
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 8),
-              if (description != null && description.isNotEmpty)
-                _DescriptionBlock(description: description),
-              if (chat.isPublic) _InviteLinkBlock(chatId: chat.id),
-              ChatProfileActionsRow(actions: _actions(l10n, chat, me)),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.people_outline),
-                title: Text(l10n.membersTitle),
-                subtitle: Text(l10n.membersCount(chat.memberCount)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(ChatMembersRoute.locationOf(chat.id)),
-              ),
-              const Divider(height: 1),
-              _DangerZone(
-                chat: chat,
-                me: me,
-                busy: _isLeaving,
-                onLeave: () => _exit(chat, ChatExit.leave),
-                onDelete: () => _exit(chat, ChatExit.delete),
-              ),
-              const Divider(height: 1),
-            ],
-          ),
-        ),
-
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: SharedContentTabsHeader(
-            sharedContentTabBar(
-              l10n,
-              controller: _tabController,
-              content: content,
+        // The same column a person's profile holds itself to, for the same
+        // reason: on a wide pane a row that runs the whole width puts the
+        // chevron a monitor away from the word it belongs to, and leaves the
+        // centred action row floating off on its own.
+        SliverContentWidth(
+          maxWidth: AppContentWidths.profile,
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 8),
+                if (description != null && description.isNotEmpty)
+                  _DescriptionBlock(description: description),
+                if (chat.isPublic) _InviteLinkBlock(chatId: chat.id),
+                ChatProfileActionsRow(actions: _actions(l10n, chat, me)),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.people_outline),
+                  title: Text(l10n.membersTitle),
+                  subtitle: Text(l10n.membersCount(chat.memberCount)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () =>
+                      context.push(ChatMembersRoute.locationOf(chat.id)),
+                ),
+                const Divider(height: 1),
+                _DangerZone(
+                  chat: chat,
+                  me: me,
+                  busy: _isLeaving,
+                  onLeave: () => _exit(chat, ChatExit.leave),
+                  onDelete: () => _exit(chat, ChatExit.delete),
+                ),
+                const Divider(height: 1),
+              ],
             ),
           ),
         ),
 
-        ChatSharedContentSliver(
-          key: ValueKey<SharedContentTab>(_tab),
-          chatId: widget.chatId,
-          tab: _tab,
-          content: content,
+        SliverContentWidth(
+          maxWidth: AppContentWidths.profile,
+          sliver: SliverPersistentHeader(
+            pinned: true,
+            delegate: SharedContentTabsHeader(
+              sharedContentTabBar(
+                l10n,
+                controller: _tabController,
+                content: content,
+              ),
+            ),
+          ),
+        ),
+
+        SliverContentWidth(
+          maxWidth: AppContentWidths.profile,
+          sliver: ChatSharedContentSliver(
+            key: ValueKey<SharedContentTab>(_tab),
+            chatId: widget.chatId,
+            tab: _tab,
+            content: content,
+          ),
         ),
       ],
     );
@@ -252,7 +267,9 @@ class _ChatProfileScreenState extends ConsumerState<ChatProfileScreen>
         icon: muted == true
             ? Icons.notifications_off_outlined
             : Icons.notifications_none,
-        label: l10n.notifications,
+        // One short word, as with search above: the quick-action button is
+        // a fixed slot wide, and "Notifications" does not fit under it.
+        label: l10n.chatProfileNotificationsAction,
         onPressed: () => _openNotifications(muted),
       ),
       ChatProfileAction(

@@ -1224,6 +1224,7 @@
   "subscribersCount": "{count, plural, other{{count} 人の登録者}}",
   "muteForTwoDays": "2日間ミュート",
   "chatMenuSearch": "検索",
+  "chatProfileNotificationsAction": "通知音",
   "chatMenuMute": "通知をオフ",
   "chatMenuUnmute": "通知をオン",
   "chatMenuPin": "チャットをピン留め",

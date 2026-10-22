@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 
 /// An accent row at the top of a list of people — "Add contact", "New
 /// group" — that lines up with the people below it: the same height, an
@@ -34,17 +35,18 @@ class ContactEntryRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: ContactsLayout.actionBadge,
-              height: ContactsLayout.actionBadge,
-              decoration: BoxDecoration(
-                color: scheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: ContactsLayout.actionIcon,
-                color: scheme.onPrimaryContainer,
+            AppRoundBox(
+              diameter: ContactsLayout.actionBadge,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: ContactsLayout.actionIcon,
+                  color: scheme.onPrimaryContainer,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.x3),

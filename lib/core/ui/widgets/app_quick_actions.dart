@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 
 /// One button in a row of quick actions.
 class AppQuickAction {
@@ -100,8 +101,8 @@ class _ActionButton extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox.square(
-                dimension: QuickActionSizes.button,
+              AppRoundBox(
+                diameter: QuickActionSizes.button,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: scheme.surfaceContainerHigh,

@@ -1224,6 +1224,7 @@
   "subscribersCount": "{count, plural, =0{কোন সাবস্ক্রাইবার নেই} =1{১ জন সাবস্ক্রাইবার} other{{count} জন সাবস্ক্রাইবার}}",
   "muteForTwoDays": "২ দিন নীরব",
   "chatMenuSearch": "খুঁজুন",
+  "chatProfileNotificationsAction": "শব্দ",
   "chatMenuMute": "নোটিফিকেশন বন্ধ করুন",
   "chatMenuUnmute": "নোটিফিকেশন চালু করুন",
   "chatMenuPin": "চ্যাট পিন করুন",

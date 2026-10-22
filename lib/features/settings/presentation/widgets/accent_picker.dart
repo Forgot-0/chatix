@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/features/settings/presentation/providers/avatar_accent_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -84,26 +85,27 @@ class _Swatch extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: AnimatedContainer(
-          duration: AppMotion.fast,
-          curve: AppMotion.curve,
-          width: AccentPicker.swatchSize,
-          height: AccentPicker.swatchSize,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected ? scheme.onSurface : color,
-              width: 2,
+        child: AppRoundBox(
+          diameter: AccentPicker.swatchSize,
+          child: AnimatedContainer(
+            duration: AppMotion.fast,
+            curve: AppMotion.curve,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? scheme.onSurface : color,
+                width: 2,
+              ),
             ),
+            child: isSelected
+                ? Icon(
+                    Icons.check,
+                    size: 20,
+                    color: AppContrast.foregroundOn(color),
+                  )
+                : null,
           ),
-          child: isSelected
-              ? Icon(
-                  Icons.check,
-                  size: 20,
-                  color: AppContrast.foregroundOn(color),
-                )
-              : null,
         ),
       ),
     );

@@ -3326,6 +3326,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get chatMenuSearch => 'খুঁজুন';
 
   @override
+  String get chatProfileNotificationsAction => 'শব্দ';
+
+  @override
   String get chatMenuMute => 'নোটিফিকেশন বন্ধ করুন';
 
   @override

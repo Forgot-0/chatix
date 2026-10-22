@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/core/utils/debouncer.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
@@ -324,30 +325,31 @@ class PickCheck extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return AnimatedContainer(
-      duration: AppMotion.fast,
-      curve: AppMotion.curve,
-      width: NewChatLayout.checkSize,
-      height: NewChatLayout.checkSize,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: selected ? scheme.primary : Colors.transparent,
-        border: Border.all(
-          color: selected
-              ? scheme.primary
-              : enabled
-              ? scheme.outline
-              : scheme.outlineVariant,
-          width: NewChatLayout.checkBorder,
+    return AppRoundBox(
+      diameter: NewChatLayout.checkSize,
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        curve: AppMotion.curve,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: selected ? scheme.primary : Colors.transparent,
+          border: Border.all(
+            color: selected
+                ? scheme.primary
+                : enabled
+                ? scheme.outline
+                : scheme.outlineVariant,
+            width: NewChatLayout.checkBorder,
+          ),
         ),
+        child: selected
+            ? Icon(
+                Icons.check_rounded,
+                size: NewChatLayout.checkIcon,
+                color: scheme.onPrimary,
+              )
+            : null,
       ),
-      child: selected
-          ? Icon(
-              Icons.check_rounded,
-              size: NewChatLayout.checkIcon,
-              color: scheme.onPrimary,
-            )
-          : null,
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:chatix/core/media/avatar_variants.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/ui/motion/motion.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 
@@ -236,12 +237,12 @@ class ChatAvatar extends StatelessWidget {
     );
 
     if (!showsPresence) {
-      return _RoundBox(diameter: size.diameter, child: circle);
+      return AppRoundBox(diameter: size.diameter, child: circle);
     }
 
     return Semantics(
       label: onlineLabel,
-      child: _RoundBox(
+      child: AppRoundBox(
         diameter: size.diameter,
         child: Stack(
           children: [
@@ -260,33 +261,6 @@ class ChatAvatar extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Keeps an avatar a circle whatever box it is put in.
-///
-/// A parent that forces a size — a 44 px gutter column, a chip's avatar slot,
-/// a list tile's leading box — would otherwise stretch a fixed-size square
-/// into a rectangle, and the clip inside it into an oval. Here the avatar
-/// takes its own diameter and sits in the middle of whatever it was given;
-/// in a box too small for that, it shrinks to the largest circle that fits
-/// rather than spilling out of it.
-class _RoundBox extends StatelessWidget {
-  const _RoundBox({required this.diameter, required this.child});
-
-  final double diameter;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      widthFactor: 1,
-      heightFactor: 1,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: diameter, maxHeight: diameter),
-        child: AspectRatio(aspectRatio: 1, child: child),
       ),
     );
   }
@@ -319,7 +293,7 @@ class ChatAvatarMosaic extends StatelessWidget {
     final shown = faces.take(maxTiles).toList();
 
     if (shown.isEmpty) {
-      return _RoundBox(
+      return AppRoundBox(
         diameter: diameter,
         child: DecoratedBox(
           decoration: BoxDecoration(
@@ -335,7 +309,7 @@ class ChatAvatarMosaic extends StatelessWidget {
       );
     }
 
-    return _RoundBox(
+    return AppRoundBox(
       diameter: diameter,
       child: ClipOval(
         child: CustomMultiChildLayout(

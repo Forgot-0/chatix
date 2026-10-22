@@ -6,6 +6,7 @@ import 'package:chatix/core/localization/app_date_format.dart';
 import 'package:chatix/core/rbac/permission_helpers.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/core/ui/widgets/app_swipe_actions.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_draft.dart';
@@ -863,16 +864,20 @@ class MentionBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      width: ChatsListLayout.badgeHeight,
-      height: ChatsListLayout.badgeHeight,
-      decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.alternate_email,
-        size: ChatsListLayout.markerGlyph,
-        color: scheme.onPrimary,
-        semanticLabel: AppLocalizations.of(context).chatUnreadMentionLabel,
+    return AppRoundBox(
+      diameter: ChatsListLayout.badgeHeight,
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.primary,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.alternate_email,
+          size: ChatsListLayout.markerGlyph,
+          color: scheme.onPrimary,
+          semanticLabel: AppLocalizations.of(context).chatUnreadMentionLabel,
+        ),
       ),
     );
   }

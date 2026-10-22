@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/attachment_file_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/video_poster_provider.dart';
@@ -132,17 +133,18 @@ class VideoPlayBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: ChatLayout.videoPlayBadgeSize,
-      height: ChatLayout.videoPlayBadgeSize,
-      decoration: const BoxDecoration(
-        color: AppPalette.mediaScrim,
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.play_arrow_rounded,
-        color: AppPalette.onMediaScrim,
-        size: ChatLayout.videoPlayGlyphSize,
+    return const AppRoundBox(
+      diameter: ChatLayout.videoPlayBadgeSize,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppPalette.mediaScrim,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.play_arrow_rounded,
+          color: AppPalette.onMediaScrim,
+          size: ChatLayout.videoPlayGlyphSize,
+        ),
       ),
     );
   }

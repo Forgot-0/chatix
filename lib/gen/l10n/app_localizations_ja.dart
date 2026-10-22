@@ -3208,6 +3208,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatMenuSearch => '検索';
 
   @override
+  String get chatProfileNotificationsAction => '通知音';
+
+  @override
   String get chatMenuMute => '通知をオフ';
 
   @override

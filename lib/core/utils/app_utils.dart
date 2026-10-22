@@ -66,10 +66,12 @@ class AppUtils {
   }) {
     final overlay = Overlay.of(context);
     final overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        bottom: MediaQuery.of(context).size.height * 0.1,
-        width: MediaQuery.of(context).size.width,
-        child: Center(
+      // Positioned.fill over the overlay with the toast aligned inside it:
+      // the overlay already is the area the toast belongs to, so nothing
+      // here has to measure the window.
+      builder: (context) => Positioned.fill(
+        child: Align(
+          alignment: const Alignment(0, 0.8),
           child: Material(
             color: Colors.transparent,
             child: Container(

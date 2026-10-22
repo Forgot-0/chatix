@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/localization/file_size_format.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/chat/data/datasources/recent_media_source.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -522,21 +523,22 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      width: 20,
-      height: 20,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: scheme.primary,
-        border: Border.all(color: Colors.white, width: 1.5),
-      ),
-      child: Text(
-        '$order',
-        style: TextStyle(
-          color: scheme.onPrimary,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
+    return AppRoundBox(
+      diameter: 20,
+      child: Container(
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: scheme.primary,
+          border: Border.all(color: Colors.white, width: 1.5),
+        ),
+        child: Text(
+          '$order',
+          style: TextStyle(
+            color: scheme.onPrimary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

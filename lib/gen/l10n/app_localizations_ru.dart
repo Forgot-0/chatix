@@ -3386,6 +3386,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatMenuSearch => 'Поиск';
 
   @override
+  String get chatProfileNotificationsAction => 'Звук';
+
+  @override
   String get chatMenuMute => 'Выключить уведомления';
 
   @override

@@ -6,6 +6,7 @@ import 'package:chatix/core/storage/file_revealer.dart';
 import 'package:chatix/core/storage/file_sharer.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/typography/middle_ellipsis_text.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
@@ -264,8 +265,8 @@ class _DocumentButton extends StatelessWidget {
       _ => null,
     };
 
-    return SizedBox.square(
-      dimension: ChatLayout.documentButtonSize,
+    return AppRoundBox(
+      diameter: ChatLayout.documentButtonSize,
       child: DecoratedBox(
         decoration: BoxDecoration(color: fill, shape: BoxShape.circle),
         child: Stack(

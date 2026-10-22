@@ -60,6 +60,28 @@ Future<void> pumpChatGolden(
   await screenMatchesGolden(tester, name, customPump: pump);
 }
 
+/// Waits for every picture on screen to be decoded.
+///
+/// A file image starts loading inside the test's fake clock, and the engine's
+/// answer only lands once real time has passed *and* the fake zone is pumped
+/// — so neither alone gets there, and priming a golden on a load that is
+/// still pending waits forever. This alternates the two until nothing is
+/// left blank, and fails loudly rather than hanging.
+Future<void> waitForImages(WidgetTester tester) async {
+  bool blank() => find
+      .byType(RawImage, skipOffstage: false)
+      .evaluate()
+      .any((element) => (element.widget as RawImage).image == null);
+
+  for (var round = 0; blank(); round++) {
+    if (round == 200) fail('pictures on screen never finished decoding');
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+}
+
 final Uint8List kStubImageBytes = Uint8List.fromList(<int>[
   0x89,
   0x50,

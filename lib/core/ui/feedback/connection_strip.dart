@@ -42,12 +42,23 @@ class ConnectionStrip extends StatefulWidget {
   /// zero height, animated, so the content below settles rather than jumps.
   final bool visible;
 
-  /// Height of the text row. The rule sits under it.
+  /// Height of the text row at the default text size. The rule sits under
+  /// it.
   static const double _rowHeight = 22;
 
   static const double _ruleHeight = 2;
 
+  /// The strip at the default text size.
   static const double height = _rowHeight + _ruleHeight;
+
+  /// The strip's height where [context] has it.
+  ///
+  /// The row grows with the reader's text size: at twice the default the
+  /// one line of label needs about twice the room, and a fixed 22 px row
+  /// simply sliced the tops and tails off the letters. The rule under it is
+  /// two pixels at any size — it is a rule, not type.
+  static double heightOf(BuildContext context) =>
+      MediaQuery.textScalerOf(context).scale(_rowHeight) + _ruleHeight;
 
   @override
   State<ConnectionStrip> createState() => _ConnectionStripState();
@@ -121,7 +132,7 @@ class _ConnectionStripState extends State<ConnectionStrip>
               excludeSemantics: true,
               label: widget.label,
               child: SizedBox(
-                height: ConnectionStrip.height,
+                height: ConnectionStrip.heightOf(context),
                 width: double.infinity,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

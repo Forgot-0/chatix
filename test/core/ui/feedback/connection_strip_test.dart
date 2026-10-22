@@ -7,9 +7,16 @@ import 'package:chatix/core/ui/feedback/connection_strip.dart';
 /// hairline: one line of small text and a two-pixel rule, collapsing to
 /// nothing when there is nothing to say.
 void main() {
-  Widget host(Widget child, {bool reduceMotion = false}) => MaterialApp(
+  Widget host(
+    Widget child, {
+    bool reduceMotion = false,
+    double textScale = 1,
+  }) => MaterialApp(
     home: MediaQuery(
-      data: MediaQueryData(disableAnimations: reduceMotion),
+      data: MediaQueryData(
+        disableAnimations: reduceMotion,
+        textScaler: TextScaler.linear(textScale),
+      ),
       child: Scaffold(body: Column(children: [child])),
     ),
   );
@@ -49,6 +56,30 @@ void main() {
       ConnectionStrip.height,
     );
     expect(ConnectionStrip.height, lessThan(32));
+  });
+
+  testWidgets('grows with a larger text size rather than clipping', (
+    tester,
+  ) async {
+    const label = 'Waiting for the network';
+
+    await tester.pumpWidget(
+      host(
+        const ConnectionStrip(label: label, tone: ConnectionStripTone.waiting),
+        textScale: 2,
+      ),
+    );
+    await tester.pump();
+
+    final strip = tester.getSize(find.byType(ConnectionStrip)).height;
+    expect(
+      strip,
+      greaterThan(ConnectionStrip.height),
+      reason: 'a fixed row sliced the tops and tails off the letters',
+    );
+
+    // The line fits in the row, rather than being drawn over its edges.
+    expect(tester.getSize(find.text(label)).height, lessThanOrEqualTo(strip));
   });
 
   testWidgets('the working rule keeps moving', (tester) async {

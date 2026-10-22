@@ -5712,6 +5712,12 @@ abstract class AppLocalizations {
   /// **'Search'**
   String get chatMenuSearch;
 
+  /// Quick action under a chat's name that opens how this chat should notify. One short word: the button is 84 px wide and 'Notifications' does not fit under it
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get chatProfileNotificationsAction;
+
   /// Chat menu item: silence notifications; opens the choice of how long
   ///
   /// In en, this message translates to:

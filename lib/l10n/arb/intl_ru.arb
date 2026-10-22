@@ -934,6 +934,7 @@
   "subscribersCount": "{count, plural, =0{Нет подписчиков} one{{count} подписчик} few{{count} подписчика} many{{count} подписчиков} other{{count} подписчика}}",
   "muteForTwoDays": "Выключить на 2 дня",
   "chatMenuSearch": "Поиск",
+  "chatProfileNotificationsAction": "Звук",
   "chatMenuMute": "Выключить уведомления",
   "chatMenuUnmute": "Включить уведомления",
   "chatMenuPin": "Закрепить чат",

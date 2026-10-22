@@ -47,9 +47,10 @@ class VideoNoteViewer extends StatefulWidget {
       transitionBuilder: (context, animation, _, child) => FadeTransition(
         opacity: CurvedAnimation(parent: animation, curve: AppMotion.curve),
         child: ScaleTransition(
-          scale: Tween<double>(begin: 0.9, end: 1).animate(
-            CurvedAnimation(parent: animation, curve: AppMotion.curve),
-          ),
+          scale: Tween<double>(
+            begin: 0.9,
+            end: 1,
+          ).animate(CurvedAnimation(parent: animation, curve: AppMotion.curve)),
           child: child,
         ),
       ),
@@ -110,46 +111,51 @@ class _VideoNoteViewerState extends State<VideoNoteViewer> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final media = MediaQuery.of(context);
-
-    // As big as the narrow side allows, less the room the close button and
-    // the clock need. A circle that touches both edges has nowhere to be
-    // dismissed from.
-    final diameter =
-        (media.size.shortestSide - AppSpacing.x8).clamp(160.0, 520.0);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Anywhere outside the circle closes it, which is the gesture
-          // everyone already tries first.
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => Navigator.of(context).pop(),
-            ),
-          ),
-          Center(
-            child: SizedBox.square(
-              dimension: diameter,
-              child: _body(diameter),
-            ),
-          ),
-          SafeArea(
-            child: Align(
-              alignment: AlignmentDirectional.topEnd,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.x2),
-                child: IconButton.filledTonal(
-                  tooltip: l10n.close,
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.of(context).pop(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // As big as the narrow side of this box allows, less the room the
+          // close button and the clock need. A circle that touches both
+          // edges has nowhere to be dismissed from. Measured from the box
+          // and not from the window: in two panes the note opens inside a
+          // pane, and a circle sized to the window would not fit in it.
+          final diameter = (constraints.biggest.shortestSide - AppSpacing.x8)
+              .clamp(160.0, 520.0);
+
+          return Stack(
+            children: [
+              // Anywhere outside the circle closes it, which is the gesture
+              // everyone already tries first.
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.of(context).pop(),
                 ),
               ),
-            ),
-          ),
-        ],
+              Center(
+                child: SizedBox.square(
+                  dimension: diameter,
+                  child: _body(diameter),
+                ),
+              ),
+              SafeArea(
+                child: Align(
+                  alignment: AlignmentDirectional.topEnd,
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.x2),
+                    child: IconButton.filledTonal(
+                      tooltip: l10n.close,
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

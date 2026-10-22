@@ -3359,6 +3359,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get chatMenuSearch => 'Buscar';
 
   @override
+  String get chatProfileNotificationsAction => 'Sonido';
+
+  @override
   String get chatMenuMute => 'Silenciar notificaciones';
 
   @override

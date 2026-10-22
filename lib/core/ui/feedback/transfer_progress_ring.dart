@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 
 /// What a transfer ring is currently saying.
 enum TransferRingState {
@@ -61,9 +62,8 @@ class TransferProgressRing extends StatelessWidget {
 
     // White on a dark scrim rather than theme colours: the badge sits on a
     // photograph, which is neither a light nor a dark surface.
-    final ring = SizedBox(
-      width: size,
-      height: size,
+    final ring = AppRoundBox(
+      diameter: size,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -72,7 +72,7 @@ class TransferProgressRing extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.45),
               shape: BoxShape.circle,
             ),
-            child: SizedBox(width: size, height: size),
+            child: const SizedBox.expand(),
           ),
           SizedBox(
             width: size - 6,
@@ -111,7 +111,11 @@ class TransferProgressRing extends StatelessWidget {
 }
 
 class _Figure extends StatelessWidget {
-  const _Figure({required this.percent, required this.icon, required this.size});
+  const _Figure({
+    required this.percent,
+    required this.icon,
+    required this.size,
+  });
 
   final String? percent;
   final IconData icon;

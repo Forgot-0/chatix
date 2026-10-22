@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/widgets/app_round_box.dart';
 import 'package:chatix/features/chat/domain/entities/attachment_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_profile_entity.dart';
 import 'package:chatix/features/chat/domain/entities/voice_waveform.dart';
@@ -274,9 +275,8 @@ class _PlayButton extends StatelessWidget {
           onTap: onPressed,
           radius: 22,
           customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 36,
-            height: 36,
+          child: AppRoundBox(
+            diameter: 36,
             child: isLoading
                 ? Center(
                     child: SizedBox(

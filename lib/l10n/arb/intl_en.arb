@@ -4180,6 +4180,10 @@
   "@chatMenuSearch": {
     "description": "Chat menu item: open the search field over this chat"
   },
+  "chatProfileNotificationsAction": "Sound",
+  "@chatProfileNotificationsAction": {
+    "description": "Quick action under a chat's name that opens how this chat should notify. One short word: the button is 84 px wide and 'Notifications' does not fit under it"
+  },
   "chatMenuMute": "Mute notifications",
   "@chatMenuMute": {
     "description": "Chat menu item: silence notifications; opens the choice of how long"
