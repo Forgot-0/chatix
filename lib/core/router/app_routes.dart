@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 abstract final class RouteParams {
   static const String chatId = 'chatId';
   static const String profileId = 'profileId';
+  static const String username = 'username';
+  static const String privacyRule = 'privacyRule';
+  static const String privacyList = 'privacyList';
 }
 
 abstract final class RouteNames {
@@ -44,6 +47,7 @@ abstract final class RouteNames {
   static const String profileDetailAvatar = 'profileDetailAvatar';
   static const String profiles = 'profiles';
   static const String profileDetail = 'profileDetail';
+  static const String profileByUsername = 'profileByUsername';
 
   static const String settings = 'settings';
   static const String appearanceSettings = 'appearanceSettings';
@@ -52,6 +56,9 @@ abstract final class RouteNames {
   static const String privacySettings = 'privacySettings';
   static const String blockedUsers = 'blockedUsers';
   static const String sessions = 'sessions';
+  static const String privacyRule = 'privacyRule';
+  static const String privacyExceptions = 'privacyExceptions';
+  static const String privacyExceptionsEdit = 'privacyExceptionsEdit';
   static const String dataStorageSettings = 'dataStorageSettings';
   static const String devicesSettings = 'devicesSettings';
   static const String settingsFolders = 'settingsFolders';
@@ -431,6 +438,25 @@ abstract final class ProfileDetailAvatarRoute {
   static String locationOf(int profileId) => '/profiles/$profileId/$path';
 }
 
+/// `/u/{username}` — somebody by their handle: what a profile link opens,
+/// the way `t.me/name` does.
+///
+/// Resolved through the public `GET /profiles/u/{username}/` (api-docs
+/// §4.3), case aside, so the link keeps working for anyone who has the
+/// handle — and says plainly when nobody has it. An old-style handle may
+/// hold a space, hence the encoding.
+abstract final class UsernameProfileRoute {
+  static const String path = '/u/:${RouteParams.username}';
+
+  static String locationOf(String username) =>
+      '/u/${Uri.encodeComponent(username)}';
+
+  static String? usernameFrom(GoRouterState state) {
+    final raw = state.pathParameters[RouteParams.username]?.trim();
+    return raw == null || raw.isEmpty ? null : raw;
+  }
+}
+
 abstract final class SettingsRoute {
   static const String path = '/settings';
   static const String location = '/settings';
@@ -453,6 +479,43 @@ abstract final class BlockedUsersRoute {
 abstract final class SessionsRoute {
   static const String path = 'devices';
   static const String location = '${PrivacySettingsRoute.location}/$path';
+}
+
+/// `/settings/privacy/{rule}` — who may see or do one thing: `last-seen`,
+/// `photo`, `messages`, `group-invites`, `calls` (api-docs §4.14).
+///
+/// Declared after `blocked` and `devices`, which would otherwise be read as
+/// rules. Takes the rule's slug rather than the rule, so this file stays
+/// free of the settings feature.
+abstract final class PrivacyRuleRoute {
+  static const String path = ':${RouteParams.privacyRule}';
+
+  static String locationOf(String ruleSlug) =>
+      '${PrivacySettingsRoute.location}/$ruleSlug';
+
+  static String? slugFrom(GoRouterState state) =>
+      state.pathParameters[RouteParams.privacyRule];
+}
+
+/// `/settings/privacy/{rule}/{allow|deny}` — one of a rule's two lists of
+/// people it makes an exception for.
+abstract final class PrivacyExceptionsRoute {
+  static const String path = ':${RouteParams.privacyList}';
+
+  static String locationOf(String ruleSlug, String listSlug) =>
+      '${PrivacyRuleRoute.locationOf(ruleSlug)}/$listSlug';
+
+  static String? slugFrom(GoRouterState state) =>
+      state.pathParameters[RouteParams.privacyList];
+}
+
+/// `/settings/privacy/{rule}/{allow|deny}/edit` — picking the people on
+/// that list.
+abstract final class PrivacyExceptionsEditRoute {
+  static const String path = 'edit';
+
+  static String locationOf(String ruleSlug, String listSlug) =>
+      '${PrivacyExceptionsRoute.locationOf(ruleSlug, listSlug)}/$path';
 }
 
 /// `/settings/devices` — where the account is signed in, as a section of

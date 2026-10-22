@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/auth/app_lock_providers.dart';
 import 'package:chatix/core/auth/biometric_providers.dart';
 import 'package:chatix/core/auth/biometric_service.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/cards/app_grouped_section.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -71,14 +73,13 @@ class _BiometricUnlockTileState extends ConsumerState<BiometricUnlockTile> {
         .watch(biometricsAvailableProvider)
         .maybeWhen(data: (value) => value, orElse: () => false);
 
-    return SwitchListTile(
-      secondary: const Icon(Icons.fingerprint),
-      title: Text(l10n.biometricUnlockTitle),
-      subtitle: Text(
-        available
-            ? l10n.biometricUnlockSubtitle
-            : l10n.biometricUnlockUnavailable,
-      ),
+    return AppGroupedSwitchTile(
+      icon: Icons.fingerprint_rounded,
+      plateColor: AppPlatePalette.mint,
+      title: l10n.biometricUnlockTitle,
+      subtitle: available
+          ? l10n.biometricUnlockSubtitle
+          : l10n.biometricUnlockUnavailable,
       value: enabled && available,
       onChanged: (!available || _busy) ? null : _toggle,
     );

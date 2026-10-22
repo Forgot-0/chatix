@@ -7,6 +7,7 @@ import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/entities/profile_photo.dart';
 import 'package:chatix/features/profile/domain/entities/profile_update.dart';
 import 'package:chatix/features/profile/domain/repositories/profile_repository.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
@@ -51,6 +52,35 @@ class ProfileRepositoryImpl implements ProfileRepository {
     final result = await _remoteDataSource.fetchMyProfile();
     return result.map((model) => model.toEntity());
   }
+
+  @override
+  Future<Either<Failure, ProfileEntity>> getProfileByUsername(
+    String username,
+  ) async {
+    final result = await _remoteDataSource.fetchProfileByUsername(username);
+    return result.map((model) => model.toEntity());
+  }
+
+  @override
+  Future<Either<Failure, PageResult<ProfilePhoto>>> getPhotos(
+    int profileId, {
+    int page = 1,
+    int pageSize = 20,
+  }) {
+    return _remoteDataSource.fetchPhotos(
+      profileId,
+      page: page,
+      pageSize: pageSize,
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> setMainPhoto(String photoId) =>
+      _remoteDataSource.setMainPhoto(photoId);
+
+  @override
+  Future<Either<Failure, void>> deletePhoto(String photoId) =>
+      _remoteDataSource.deletePhoto(photoId);
 
   @override
   Future<Either<Failure, void>> updateProfile(

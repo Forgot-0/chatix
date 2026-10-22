@@ -231,33 +231,14 @@ class AppGroupedTile extends StatelessWidget {
                     const SizedBox(width: SettingsLayout.plateGap),
                   ],
                   Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: !enabled
-                                ? theme.disabledColor
-                                : destructive
-                                ? scheme.error
-                                : null,
-                          ),
-                        ),
-                        if (subtitle != null)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top: SettingsLayout.lineGap,
-                            ),
-                            child: Text(
-                              subtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                      ],
+                    child: AppGroupedTileText(
+                      title: title,
+                      subtitle: subtitle,
+                      titleColor: !enabled
+                          ? theme.disabledColor
+                          : destructive
+                          ? scheme.error
+                          : null,
                     ),
                   ),
                   if (value != null)
@@ -293,6 +274,49 @@ class AppGroupedTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// A grouped row's words: the title, and the smaller grey line under it —
+/// for rows that lead with something other than a coloured square, a face
+/// say, and still have to read like the rest.
+class AppGroupedTileText extends StatelessWidget {
+  const AppGroupedTileText({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.titleColor,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Color? titleColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = this.subtitle;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.bodyLarge?.copyWith(color: titleColor),
+        ),
+        if (subtitle != null)
+          Padding(
+            padding: const EdgeInsets.only(top: SettingsLayout.lineGap),
+            child: Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

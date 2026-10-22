@@ -658,14 +658,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   // -------------------------------------------------------------- sharing
 
-  /// The system share sheet where there is one, the clipboard elsewhere. The
-  /// link opens only in this app — see [ProfileShareLink].
+  /// The system share sheet where there is one, the clipboard elsewhere.
+  /// The link is the public `/u/<username>` one — see [ProfileShareLink].
   Future<void> _share(ProfileEntity profile) async {
     final l10n = AppLocalizations.of(context);
     final text = ProfileShareLink.messageFor(
-      profile.id,
-      displayName: profile.displayName,
       username: profile.username,
+      displayName: profile.displayName,
     );
 
     final sharer = ref.read(fileSharerProvider);
@@ -690,7 +689,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Future<void> _showQr(ProfileEntity profile, String title) {
     return showProfileQrSheet(
       context,
-      profileId: profile.id,
       name: title,
       username: profile.username,
       onShare: () => _share(profile),

@@ -4100,4 +4100,174 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get languageScreenNote => 'メニュー、ボタン、日付はこの言語で表示されます。メッセージは書かれた言語のままです。';
+
+  @override
+  String profileByUsernameNotFound(String handle) {
+    return '$handle というユーザーはいません';
+  }
+
+  @override
+  String get profileByUsernameNotFoundHint => '名前が変わったか、アカウントが削除された可能性があります。';
+
+  @override
+  String get profilePhotoMakeMain => 'メイン写真にする';
+
+  @override
+  String get profilePhotoMadeMain => 'メイン写真になりました';
+
+  @override
+  String get profilePhotoDelete => '写真を削除';
+
+  @override
+  String get profilePhotoDeleteTitle => 'この写真を削除しますか？';
+
+  @override
+  String get profilePhotoDeleteBody => '写真の履歴から消えます。';
+
+  @override
+  String get profilePhotoDeleteCurrentBody =>
+      'プロフィールとチャットから消え、ひとつ前の写真に置き換わります。';
+
+  @override
+  String get profilePhotoDeleted => '写真を削除しました';
+
+  @override
+  String get privacyRulesSection => 'プライバシーのルール';
+
+  @override
+  String get privacyRulesFooter =>
+      '変更はすぐに反映され、チャットでは数秒で反映されます。連絡先とは自分のアドレス帳にいる人のことです。';
+
+  @override
+  String get privacyRulesLoadFailed => 'プライバシー設定を読み込めませんでした';
+
+  @override
+  String get privacySaveFailed => '変更を保存できませんでした';
+
+  @override
+  String get privacyRuleLastSeen => '最終ログインとオンライン';
+
+  @override
+  String get privacyRulePhoto => 'プロフィール写真';
+
+  @override
+  String get privacyRuleMessages => 'メッセージ';
+
+  @override
+  String get privacyRuleGroupInvites => 'グループとチャンネル';
+
+  @override
+  String get privacyRuleCalls => '通話';
+
+  @override
+  String get privacyQuestionLastSeen => 'オンライン状態を見られる人';
+
+  @override
+  String get privacyQuestionPhoto => '写真を見られる人';
+
+  @override
+  String get privacyQuestionMessages => 'メッセージを送れる人';
+
+  @override
+  String get privacyQuestionGroupInvites => 'グループやチャンネルに追加できる人';
+
+  @override
+  String get privacyQuestionCalls => '通話できる人';
+
+  @override
+  String get privacyFooterLastSeen =>
+      '現在、他の人に見えるのはオンラインかどうかだけです。最終ログイン時刻はまだサーバーに保存されません。';
+
+  @override
+  String get privacyFooterPhoto => '現在の写真と履歴のすべてが対象です。自分の写真はいつでも見られます。';
+
+  @override
+  String get privacyFooterMessages =>
+      '個人チャットにのみ適用されます。グループとチャンネルには独自のルールがあります。自分からは誰にでも送れます。';
+
+  @override
+  String get privacyFooterGroupInvites => 'それ以外の人は招待リンクを送る必要があります。';
+
+  @override
+  String get privacyFooterCalls => '個人チャットでの通話に適用されます。';
+
+  @override
+  String get privacyEverybody => '全員';
+
+  @override
+  String get privacyMyContacts => '連絡先のみ';
+
+  @override
+  String get privacyNobody => '誰にも見せない';
+
+  @override
+  String get privacyExceptionsSection => '例外';
+
+  @override
+  String get privacyExceptionsFooter => '例外は上の設定より優先されます。';
+
+  @override
+  String get privacyAlwaysAllow => '常に許可';
+
+  @override
+  String get privacyNeverAllow => '常に許可しない';
+
+  @override
+  String get privacyExceptionsAdd => '追加';
+
+  @override
+  String privacyPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count人',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyExceptionsMinus(int count) {
+    return '−$count';
+  }
+
+  @override
+  String privacyExceptionsPlus(int count) {
+    return '+$count';
+  }
+
+  @override
+  String privacyValueWithExceptions(String value, String exceptions) {
+    return '$value ($exceptions)';
+  }
+
+  @override
+  String get privacyExceptionsEdit => 'ユーザーを追加・削除';
+
+  @override
+  String privacyExceptionsLimitHint(int limit) {
+    return 'ひとつのルールの両リスト合わせて最大 $limit 人です。';
+  }
+
+  @override
+  String get privacyExceptionRemove => '削除';
+
+  @override
+  String get privacyExceptionsFull => 'このルールにはこれ以上追加できません';
+
+  @override
+  String privacyPickerCount(int count, int max) {
+    return '$max 人中 $count 人';
+  }
+
+  @override
+  String get apiErrorCallsPrivacyRestricted => 'この人は特定の人からの通話のみ受け付けています。';
+
+  @override
+  String get apiErrorPrivacyExceptionsLimit => '例外が多すぎます。1つのルールにつき最大100人です。';
+
+  @override
+  String get apiErrorProfilePhotosLimit => '写真はすでに100枚あります。先に古い写真を削除してください。';
+
+  @override
+  String get apiErrorProfilePhotoNotFound => 'この写真はもうありません。';
 }

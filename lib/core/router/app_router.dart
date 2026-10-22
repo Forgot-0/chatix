@@ -44,11 +44,16 @@ import 'package:chatix/features/onboarding/presentation/screens/welcome_screen.d
 import 'package:chatix/features/profile/presentation/screens/profile_avatar_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
+import 'package:chatix/features/profile/presentation/screens/username_profile_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/about_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/appearance_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/data_storage_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/developer_menu_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
+import 'package:chatix/features/settings/domain/entities/privacy_settings.dart';
+import 'package:chatix/features/settings/presentation/screens/privacy_exceptions_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/privacy_people_picker_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/privacy_rule_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/privacy_settings_screen.dart';
 import 'package:chatix/features/ui_showcase/ui_showcase.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -453,6 +458,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                 ],
               ),
+              // A profile link: somebody by their handle, the public
+              // `GET /profiles/u/{username}/` behind it (api-docs §4.3).
+              GoRoute(
+                path: UsernameProfileRoute.path,
+                name: RouteNames.profileByUsername,
+                pageBuilder: (context, state) => _push(
+                  state,
+                  UsernameProfileScreen(
+                    username: UsernameProfileRoute.usernameFrom(state) ?? '',
+                  ),
+                ),
+              ),
             ],
           ),
 
@@ -508,6 +525,52 @@ final routerProvider = Provider<GoRouter>((ref) {
                             name: RouteNames.sessions,
                             pageBuilder: (context, state) =>
                                 _push(state, const SessionsScreen()),
+                          ),
+                          // After `blocked` and `devices`, which would
+                          // otherwise be taken for rules.
+                          GoRoute(
+                            path: PrivacyRuleRoute.path,
+                            name: RouteNames.privacyRule,
+                            redirect: (context, state) =>
+                                _privacyRuleOf(state) == null
+                                ? PrivacySettingsRoute.location
+                                : null,
+                            pageBuilder: (context, state) => _push(
+                              state,
+                              PrivacyRuleScreen(rule: _privacyRuleOf(state)!),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: PrivacyExceptionsRoute.path,
+                                name: RouteNames.privacyExceptions,
+                                redirect: (context, state) =>
+                                    _privacyListOf(state) == null
+                                    ? PrivacyRuleRoute.locationOf(
+                                        PrivacyRuleRoute.slugFrom(state)!,
+                                      )
+                                    : null,
+                                pageBuilder: (context, state) => _push(
+                                  state,
+                                  PrivacyExceptionsScreen(
+                                    rule: _privacyRuleOf(state)!,
+                                    kind: _privacyListOf(state)!,
+                                  ),
+                                ),
+                                routes: [
+                                  GoRoute(
+                                    path: PrivacyExceptionsEditRoute.path,
+                                    name: RouteNames.privacyExceptionsEdit,
+                                    pageBuilder: (context, state) => _push(
+                                      state,
+                                      PrivacyPeoplePickerScreen(
+                                        rule: _privacyRuleOf(state)!,
+                                        kind: _privacyListOf(state)!,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -702,6 +765,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+PrivacyRule? _privacyRuleOf(GoRouterState state) =>
+    PrivacyRule.fromSlug(PrivacyRuleRoute.slugFrom(state));
+
+PrivacyExceptionKind? _privacyListOf(GoRouterState state) =>
+    PrivacyExceptionKind.fromSlug(PrivacyExceptionsRoute.slugFrom(state));
 
 String? resolveAuthRedirect({
   required String location,

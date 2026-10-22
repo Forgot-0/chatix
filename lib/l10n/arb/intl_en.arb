@@ -5413,5 +5413,242 @@
   "languageScreenNote": "Menus, buttons and dates follow this choice. Messages stay in the language they were written in.",
   "@languageScreenNote": {
     "description": "Note under the list of languages."
+  },
+  "profileByUsernameNotFound": "Nobody goes by {handle}",
+  "@profileByUsernameNotFound": {
+    "description": "A profile link points at a handle nobody has.",
+    "placeholders": {
+      "handle": {
+        "type": "String"
+      }
+    }
+  },
+  "profileByUsernameNotFoundHint": "The name may have changed, or the account was deleted.",
+  "@profileByUsernameNotFoundHint": {
+    "description": "Under the not-found title of a profile link."
+  },
+  "profilePhotoMakeMain": "Set as main photo",
+  "@profilePhotoMakeMain": {
+    "description": "Photo viewer menu: make an old photo the current one."
+  },
+  "profilePhotoMadeMain": "This is your main photo now",
+  "@profilePhotoMadeMain": {
+    "description": "Toast after an old photo became the current one."
+  },
+  "profilePhotoDelete": "Delete photo",
+  "@profilePhotoDelete": {
+    "description": "Photo viewer menu and dialog button: delete a photo."
+  },
+  "profilePhotoDeleteTitle": "Delete this photo?",
+  "@profilePhotoDeleteTitle": {
+    "description": "Title of the dialog before a profile photo is deleted."
+  },
+  "profilePhotoDeleteBody": "It disappears from your photo history.",
+  "@profilePhotoDeleteBody": {
+    "description": "Body of the delete dialog for an old photo."
+  },
+  "profilePhotoDeleteCurrentBody": "It disappears from your profile and your chats, and the photo before it takes its place.",
+  "@profilePhotoDeleteCurrentBody": {
+    "description": "Body of the delete dialog for the current photo."
+  },
+  "profilePhotoDeleted": "Photo deleted",
+  "@profilePhotoDeleted": {
+    "description": "Toast after a profile photo was deleted."
+  },
+  "privacyRulesSection": "Privacy rules",
+  "@privacyRulesSection": {
+    "description": "Caption over the five privacy rules."
+  },
+  "privacyRulesFooter": "Changes apply right away, in chats within a couple of seconds. A contact is someone in your own address book.",
+  "@privacyRulesFooter": {
+    "description": "Under the privacy rules."
+  },
+  "privacyRulesLoadFailed": "Couldn’t load privacy settings",
+  "@privacyRulesLoadFailed": {
+    "description": "The privacy settings could not be read."
+  },
+  "privacySaveFailed": "Couldn’t save the change",
+  "@privacySaveFailed": {
+    "description": "A privacy change was refused or could not be sent."
+  },
+  "privacyRuleLastSeen": "Last seen & online",
+  "@privacyRuleLastSeen": {
+    "description": "Privacy rule: who sees the online mark."
+  },
+  "privacyRulePhoto": "Profile photos",
+  "@privacyRulePhoto": {
+    "description": "Privacy rule: who sees the profile photos."
+  },
+  "privacyRuleMessages": "Messages",
+  "@privacyRuleMessages": {
+    "description": "Privacy rule: who may write in a direct chat."
+  },
+  "privacyRuleGroupInvites": "Groups & channels",
+  "@privacyRuleGroupInvites": {
+    "description": "Privacy rule: who may add the person to groups and channels."
+  },
+  "privacyRuleCalls": "Calls",
+  "@privacyRuleCalls": {
+    "description": "Privacy rule: who may call."
+  },
+  "privacyQuestionLastSeen": "Who can see when I’m online",
+  "@privacyQuestionLastSeen": {
+    "description": "Caption over the answers of the last-seen rule."
+  },
+  "privacyQuestionPhoto": "Who can see my photos",
+  "@privacyQuestionPhoto": {
+    "description": "Caption over the answers of the photo rule."
+  },
+  "privacyQuestionMessages": "Who can message me",
+  "@privacyQuestionMessages": {
+    "description": "Caption over the answers of the messages rule."
+  },
+  "privacyQuestionGroupInvites": "Who can add me to groups and channels",
+  "@privacyQuestionGroupInvites": {
+    "description": "Caption over the answers of the group invites rule."
+  },
+  "privacyQuestionCalls": "Who can call me",
+  "@privacyQuestionCalls": {
+    "description": "Caption over the answers of the calls rule."
+  },
+  "privacyFooterLastSeen": "For now others only see whether you’re online — the server keeps no last-seen time yet.",
+  "@privacyFooterLastSeen": {
+    "description": "Under the last-seen answers: only the online mark exists for now."
+  },
+  "privacyFooterPhoto": "Covers your current photo and the whole history. You always see your own.",
+  "@privacyFooterPhoto": {
+    "description": "Under the photo answers."
+  },
+  "privacyFooterMessages": "Applies to direct chats only — groups and channels follow their own rules. You can still write to anyone.",
+  "@privacyFooterMessages": {
+    "description": "Under the messages answers."
+  },
+  "privacyFooterGroupInvites": "Everyone else will have to send you an invite link instead.",
+  "@privacyFooterGroupInvites": {
+    "description": "Under the group invites answers."
+  },
+  "privacyFooterCalls": "Applies to calls in direct chats.",
+  "@privacyFooterCalls": {
+    "description": "Under the calls answers."
+  },
+  "privacyEverybody": "Everybody",
+  "@privacyEverybody": {
+    "description": "Privacy answer: everybody."
+  },
+  "privacyMyContacts": "My contacts",
+  "@privacyMyContacts": {
+    "description": "Privacy answer: only my contacts."
+  },
+  "privacyNobody": "Nobody",
+  "@privacyNobody": {
+    "description": "Privacy answer: nobody."
+  },
+  "privacyExceptionsSection": "Exceptions",
+  "@privacyExceptionsSection": {
+    "description": "Caption over the two exception lists of a rule."
+  },
+  "privacyExceptionsFooter": "Exceptions win over the choice above.",
+  "@privacyExceptionsFooter": {
+    "description": "Under the exception lists."
+  },
+  "privacyAlwaysAllow": "Always allow",
+  "@privacyAlwaysAllow": {
+    "description": "Exception list: people always let in."
+  },
+  "privacyNeverAllow": "Never allow",
+  "@privacyNeverAllow": {
+    "description": "Exception list: people always kept out."
+  },
+  "privacyExceptionsAdd": "Add",
+  "@privacyExceptionsAdd": {
+    "description": "Value of an empty exception list row."
+  },
+  "privacyPeopleCount": "{count, plural, =1{1 person} other{{count} people}}",
+  "@privacyPeopleCount": {
+    "description": "How many people are on an exception list.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyExceptionsMinus": "−{count}",
+  "@privacyExceptionsMinus": {
+    "description": "Short form in a rule summary: this many people kept out.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyExceptionsPlus": "+{count}",
+  "@privacyExceptionsPlus": {
+    "description": "Short form in a rule summary: this many people let in.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyValueWithExceptions": "{value} ({exceptions})",
+  "@privacyValueWithExceptions": {
+    "description": "A rule summary: the answer and its exceptions, e.g. \"My contacts (−2, +1)\".",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "exceptions": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyExceptionsEdit": "Add or remove people",
+  "@privacyExceptionsEdit": {
+    "description": "Row on an exception list that opens the people picker."
+  },
+  "privacyExceptionsLimitHint": "Up to {limit} people on both lists of one rule together.",
+  "@privacyExceptionsLimitHint": {
+    "description": "Under an exception list: the limit per rule.",
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyExceptionRemove": "Remove",
+  "@privacyExceptionRemove": {
+    "description": "Tooltip: take a person off an exception list."
+  },
+  "privacyExceptionsFull": "No room for more people in this rule",
+  "@privacyExceptionsFull": {
+    "description": "Toast: an exception list has no room for another person."
+  },
+  "privacyPickerCount": "{count} of {max}",
+  "@privacyPickerCount": {
+    "description": "Under the picker title: how many are picked out of how many fit.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "apiErrorCallsPrivacyRestricted": "This person only accepts calls from certain people.",
+  "@apiErrorCallsPrivacyRestricted": {
+    "description": "CALLS_PRIVACY_RESTRICTED: the person only takes calls from certain people"
+  },
+  "apiErrorPrivacyExceptionsLimit": "Too many exceptions: up to 100 people per rule.",
+  "@apiErrorPrivacyExceptionsLimit": {
+    "description": "PRIVACY_EXCEPTIONS_LIMIT: more than 100 people on one rule"
+  },
+  "apiErrorProfilePhotosLimit": "You already have 100 photos. Delete an old one first.",
+  "@apiErrorProfilePhotosLimit": {
+    "description": "PROFILE_PHOTOS_LIMIT: the photo history is full"
+  },
+  "apiErrorProfilePhotoNotFound": "This photo is gone.",
+  "@apiErrorProfilePhotoNotFound": {
+    "description": "NOT_FOUND_PROFILE_PHOTO: the photo is no longer there"
   }
 }

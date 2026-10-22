@@ -6,6 +6,8 @@ import 'package:chatix/core/network/api_client.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/features/profile/data/models/avatar_presign_model.dart';
 import 'package:chatix/features/profile/data/models/profile_model.dart';
+import 'package:chatix/features/profile/data/models/profile_photo_model.dart';
+import 'package:chatix/features/profile/domain/entities/profile_photo.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
 
 abstract class ProfileRemoteDataSource {
@@ -24,6 +26,23 @@ abstract class ProfileRemoteDataSource {
 
   /// The caller's own profile, created on the spot if it is not there yet.
   Future<Either<Failure, ProfileModel>> fetchMyProfile();
+
+  /// Somebody by their handle — the public lookup a profile link resolves
+  /// through (api-docs §4.3).
+  Future<Either<Failure, ProfileModel>> fetchProfileByUsername(String username);
+
+  /// A page of [profileId]'s photo history, current first (api-docs §4.5.1).
+  Future<Either<Failure, PageResult<ProfilePhoto>>> fetchPhotos(
+    int profileId, {
+    int page = 1,
+    int pageSize = 20,
+  });
+
+  /// Makes one of the caller's old photos the current one.
+  Future<Either<Failure, void>> setMainPhoto(String photoId);
+
+  /// Removes one photo from the caller's history.
+  Future<Either<Failure, void>> deletePhoto(String photoId);
 
   /// Sends every editable field, `null`s included — see the implementation.
   Future<Either<Failure, void>> updateProfile(
@@ -113,6 +132,58 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     return result.map(
       (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
     );
+  }
+
+  @override
+  Future<Either<Failure, ProfileModel>> fetchProfileByUsername(
+    String username,
+  ) async {
+    // Public on the server — a token is optional and only decides what the
+    // privacy settings let this viewer see. The name is matched without
+    // regard to case (`/u/Durov/` finds `durov`), and an old-style one may
+    // still hold a space, hence the encoding (api-docs §3.17, §4.3).
+    final result = await _apiClient.get(
+      '/profiles/u/${Uri.encodeComponent(username)}/',
+    );
+    return result.map(
+      (data) => ProfileModel.fromJson(data as Map<String, dynamic>),
+    );
+  }
+
+  @override
+  Future<Either<Failure, PageResult<ProfilePhoto>>> fetchPhotos(
+    int profileId, {
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final result = await _apiClient.get(
+      '/profiles/$profileId/photos/',
+      queryParameters: {'page': page, 'page_size': pageSize},
+    );
+    // A viewer the `photo` privacy setting or a block keeps out gets
+    // `200` with an empty page, not an error (api-docs §4.5.1).
+    return result.map(
+      (data) => PageResult<ProfilePhoto>.fromJson(
+        data as Map<String, dynamic>,
+        (item) => ProfilePhotoModel.fromJson(item as Map<String, dynamic>),
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> setMainPhoto(String photoId) async {
+    final result = await _apiClient.put(
+      '/profiles/photos/${Uri.encodeComponent(photoId)}/main/',
+    );
+    return result.map((_) {});
+  }
+
+  @override
+  Future<Either<Failure, void>> deletePhoto(String photoId) async {
+    final result = await _apiClient.delete(
+      '/profiles/photos/${Uri.encodeComponent(photoId)}/',
+    );
+    return result.map((_) {});
   }
 
   @override

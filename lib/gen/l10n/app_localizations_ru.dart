@@ -4321,4 +4321,186 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get languageScreenNote =>
       'Меню, кнопки и даты будут на выбранном языке. Сообщения останутся на том, на котором их написали.';
+
+  @override
+  String profileByUsernameNotFound(String handle) {
+    return 'Пользователя $handle нет';
+  }
+
+  @override
+  String get profileByUsernameNotFoundHint =>
+      'Возможно, имя сменили или аккаунт удалён.';
+
+  @override
+  String get profilePhotoMakeMain => 'Сделать основным';
+
+  @override
+  String get profilePhotoMadeMain => 'Теперь это основное фото';
+
+  @override
+  String get profilePhotoDelete => 'Удалить фото';
+
+  @override
+  String get profilePhotoDeleteTitle => 'Удалить это фото?';
+
+  @override
+  String get profilePhotoDeleteBody => 'Оно пропадёт из истории фото.';
+
+  @override
+  String get profilePhotoDeleteCurrentBody =>
+      'Оно пропадёт из профиля и чатов, а его место займёт предыдущее.';
+
+  @override
+  String get profilePhotoDeleted => 'Фото удалено';
+
+  @override
+  String get privacyRulesSection => 'Правила приватности';
+
+  @override
+  String get privacyRulesFooter =>
+      'Изменения действуют сразу, в чатах — через пару секунд. Контакт — тот, кто есть в вашей адресной книге.';
+
+  @override
+  String get privacyRulesLoadFailed =>
+      'Не удалось загрузить настройки приватности';
+
+  @override
+  String get privacySaveFailed => 'Не удалось сохранить изменение';
+
+  @override
+  String get privacyRuleLastSeen => 'Время захода';
+
+  @override
+  String get privacyRulePhoto => 'Фото профиля';
+
+  @override
+  String get privacyRuleMessages => 'Сообщения';
+
+  @override
+  String get privacyRuleGroupInvites => 'Группы и каналы';
+
+  @override
+  String get privacyRuleCalls => 'Звонки';
+
+  @override
+  String get privacyQuestionLastSeen => 'Кто видит, что я в сети';
+
+  @override
+  String get privacyQuestionPhoto => 'Кто видит мои фото';
+
+  @override
+  String get privacyQuestionMessages => 'Кто может мне писать';
+
+  @override
+  String get privacyQuestionGroupInvites =>
+      'Кто может добавлять меня в группы и каналы';
+
+  @override
+  String get privacyQuestionCalls => 'Кто может мне звонить';
+
+  @override
+  String get privacyFooterLastSeen =>
+      'Пока другие видят только отметку «в сети»: времени последнего захода сервер ещё не хранит.';
+
+  @override
+  String get privacyFooterPhoto =>
+      'Касается и текущего фото, и всей истории. Свои фото вы видите всегда.';
+
+  @override
+  String get privacyFooterMessages =>
+      'Действует только в личных чатах — в группах и каналах свои права. Сами вы можете писать кому угодно.';
+
+  @override
+  String get privacyFooterGroupInvites =>
+      'Остальным придётся прислать вам ссылку-приглашение.';
+
+  @override
+  String get privacyFooterCalls => 'Действует для звонков в личных чатах.';
+
+  @override
+  String get privacyEverybody => 'Все';
+
+  @override
+  String get privacyMyContacts => 'Мои контакты';
+
+  @override
+  String get privacyNobody => 'Никто';
+
+  @override
+  String get privacyExceptionsSection => 'Исключения';
+
+  @override
+  String get privacyExceptionsFooter => 'Исключения сильнее выбора выше.';
+
+  @override
+  String get privacyAlwaysAllow => 'Всегда разрешать';
+
+  @override
+  String get privacyNeverAllow => 'Никогда не разрешать';
+
+  @override
+  String get privacyExceptionsAdd => 'Добавить';
+
+  @override
+  String privacyPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count человека',
+      many: '$count человек',
+      few: '$count человека',
+      one: '$count человек',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyExceptionsMinus(int count) {
+    return '−$count';
+  }
+
+  @override
+  String privacyExceptionsPlus(int count) {
+    return '+$count';
+  }
+
+  @override
+  String privacyValueWithExceptions(String value, String exceptions) {
+    return '$value ($exceptions)';
+  }
+
+  @override
+  String get privacyExceptionsEdit => 'Добавить или убрать людей';
+
+  @override
+  String privacyExceptionsLimitHint(int limit) {
+    return 'В обоих списках одного правила вместе — не больше $limit человек.';
+  }
+
+  @override
+  String get privacyExceptionRemove => 'Убрать';
+
+  @override
+  String get privacyExceptionsFull =>
+      'Больше людей в это правило не поместится';
+
+  @override
+  String privacyPickerCount(int count, int max) {
+    return '$count из $max';
+  }
+
+  @override
+  String get apiErrorCallsPrivacyRestricted =>
+      'Этот человек принимает звонки только от определённых людей.';
+
+  @override
+  String get apiErrorPrivacyExceptionsLimit =>
+      'Слишком много исключений: не больше 100 человек на правило.';
+
+  @override
+  String get apiErrorProfilePhotosLimit =>
+      'У вас уже 100 фото — сначала удалите старое.';
+
+  @override
+  String get apiErrorProfilePhotoNotFound => 'Этого фото больше нет.';
 }

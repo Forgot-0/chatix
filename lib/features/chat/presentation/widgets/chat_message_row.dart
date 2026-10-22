@@ -30,6 +30,7 @@ import 'package:chatix/features/chat/presentation/widgets/reaction_picker.dart';
 import 'package:chatix/features/chat/presentation/widgets/reaction_users_sheet.dart';
 import 'package:chatix/features/chat/presentation/widgets/status_ticks.dart';
 import 'package:chatix/features/chat/presentation/widgets/unread_divider.dart';
+import 'package:chatix/features/profile/presentation/utils/profile_share_link.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 /// One row of the conversation: the bubble, plus whatever separates it from
@@ -251,6 +252,15 @@ class ChatMessageRow extends ConsumerWidget {
     }
 
     final uri = Uri.tryParse(link.target);
+
+    // A profile link on this app's own host is a person, not a web page:
+    // open them here rather than sending the reader to a browser.
+    final inApp = uri == null ? null : ProfileShareLink.inAppLocation(uri);
+    if (inApp != null) {
+      context.push(inApp);
+      return;
+    }
+
     final opened =
         uri != null &&
         await launchUrl(uri, mode: LaunchMode.externalApplication);

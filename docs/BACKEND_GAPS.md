@@ -22,6 +22,9 @@ client now uses it. Kept here as a record of what moved, not as work:
 | Searching people in one field | `GET /profiles/?q=`, matching username OR display name |
 | A profile knowing its own handle | `ProfileDTO.username` — non-null, on `GET /profiles/{id}/` and on the list |
 | Drafts that follow the account | `ChatDTO.draft`, `PATCH /chats/{id}/state/ {draft}` → `ChatStateDTO.draft_updated_at` (see §4 for what is still missing) |
+| A profile anyone can be sent to | `GET /profiles/u/{username}/`, public, case aside — the app's `/u/<username>` route and share links resolve through it (see §11 for what is left) |
+| More than one photo per person | `GET /profiles/{id}/photos/`, `PUT /profiles/photos/{id}/main/`, `DELETE /profiles/photos/{id}/` — the full-screen photo pages through the history |
+| Who may see and reach me | `GET`/`PUT /profiles/privacy/`, five rules with `allow`/`deny` lists — Settings → Privacy |
 
 On the client: `features/chat/presentation/providers/chat_state_actions.dart`
 writes all three through one endpoint and moves the row while the request is
@@ -296,28 +299,28 @@ already written.
 
 ---
 
-## 11. Sharing a profile is passing a string around 🔴
+## 11. A profile link has an API behind it, not a page 🟡
 
-Same shape as the chat invite link in §8, and the same cause. There is no
-public identity for a profile: no slug, no shareable URL, and
-`GET /profiles/{id}/` needs a token (§4.2 closed the list too). So there is
-nothing to hand somebody that opens anywhere.
+`GET /profiles/u/{username}/` is public (api-docs §4.3), so a profile now
+has an address: `ProfileShareLink` hands out `https://<host>/u/<username>`
+— in "Share", in the QR code, in the contacts invite — and the app opens it
+at `UsernameProfileRoute`, through that lookup, with a plain "nobody goes by
+@name" when the handle is free. Tapped in a message, a link on the app's own
+host opens the person in the app rather than in a browser; links handed out
+before (`/profiles/<id>`) still do.
 
-**What the client does.** `ProfileShareLink` composes
-`https://<host>/profiles/<id>` from the configured origin and copies it to
-the clipboard, with the name and handle above it when they are known. Inside
-the app the link routes correctly; outside it, it is a 404.
+**What is left.** The API answers JSON. A phone camera or a browser that
+opens the link lands on whatever the origin serves at `/u/<name>`: the
+ChatiX web build routes it (it is the same router), anything else is a 404.
+There is no HTML landing page with the person's name and an "open in the
+app" button, and no app links / universal links are registered, so a tap
+outside the app does not open the app. The same holds for chat invites
+(§8).
 
-**What the user loses.** "Share profile" reaches people who already have
-ChatiX and are signed in. Sending one to anybody else does nothing. The
-same holds for the profile's QR code (long press on `@username`, П-11): it
-encodes this link, so a phone camera opens a 404 rather than the person.
-
-**What the backend would need.** The same landing-page work §8 asks for — a
-web page on the origin that renders a public sliver of a profile and deep
-links into the app. The handle to address it by now exists
-(`ProfileDTO.username`), so `/u/{username}` is available as a shape; what is
-missing is something that serves it.
+**What the backend would need.** A small public page at `/u/{username}`
+rendering the public sliver of the profile, plus the
+`assetlinks.json` / `apple-app-site-association` files that let the
+platforms hand such links to the app.
 
 ---
 
@@ -508,8 +511,10 @@ are only as good as the API allows.
   — there is no per-person notification setting to write instead.
 
 **What the backend would need.** A presence read by user id with a
-`last_seen_at` (rounded, with a privacy setting, if wanted) — the same ask as
-§15 — and the shared-media index from §7, ideally filterable by peer.
+`last_seen_at` — the same ask as §15 — and the shared-media index from §7,
+ideally filterable by peer. The privacy setting for it already exists
+(`last_seen`, api-docs §4.14): today it governs only the online flag, and
+Settings → Privacy → "Last seen" says so under its answers.
 
 ---
 

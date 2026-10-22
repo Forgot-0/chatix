@@ -199,7 +199,7 @@ abstract final class ContactActions {
 
     final text = l10n.contactsInviteMessage(
       me.username,
-      ProfileShareLink.of(me.id),
+      ProfileShareLink.of(me.username),
     );
 
     final sharer = ref.read(fileSharerProvider);

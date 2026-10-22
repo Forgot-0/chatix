@@ -1,44 +1,78 @@
 import 'package:chatix/core/constants/app_constants.dart';
+import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/utils/link_origin.dart';
 
-/// The link that points at somebody's profile.
+/// The public link to somebody's profile: `https://<host>/u/<username>`,
+/// the way Telegram hands out `t.me/name`.
 ///
-/// ⚠️ Composed here rather than fetched, for the same reason a chat invite
-/// is: the API has no shareable identity for a profile. `ProfileDTO` carries
-/// no slug, no public URL and not even a `username` (api-docs §4.3), and
-/// `GET /profiles/{id}/` needs a token, so nothing minted here opens in a
-/// browser for a stranger.
-///
-/// What the link is good for is passing a person around inside the app — in
-/// a message, in an email to somebody who already has ChatiX. It is worded
-/// that way on screen, and the gap is written down in
-/// `docs/BACKEND_GAPS.md`.
+/// It resolves through `GET /profiles/u/{username}/`, which is public
+/// (api-docs §4.3): the app opens it at [UsernameProfileRoute], a ChatiX web
+/// build served on the origin does the same, and a handle nobody has any
+/// more says so instead of opening a stranger. Built on the host this build
+/// talks to, so a staging build hands out staging links.
 abstract final class ProfileShareLink {
-  /// `https://<host>/profiles/<id>` — this app's own route, on the host this
-  /// build talks to, so a staging build hands out staging links.
-  static String of(int profileId, {String? baseUrl}) {
+  /// The link to [username] (without its `@`).
+  static String of(String username, {String? baseUrl}) {
     final origin = linkOrigin(baseUrl ?? AppConstants.serverBaseUrl);
-    return '$origin/profiles/$profileId';
+    return '$origin${UsernameProfileRoute.locationOf(username)}';
   }
 
   /// What actually gets shared: the link, introduced by whoever it points at
   /// when that is known.
-  static String messageFor(
-    int profileId, {
+  static String messageFor({
+    required String username,
     String? displayName,
-    String? username,
     String? baseUrl,
   }) {
-    final link = of(profileId, baseUrl: baseUrl);
+    final link = of(username, baseUrl: baseUrl);
 
     final name = displayName?.trim();
-    final handle = username?.trim();
+    final handle = username.trim();
 
     final who = <String>[
       if (name != null && name.isNotEmpty) name,
-      if (handle != null && handle.isNotEmpty) '@$handle',
+      if (handle.isNotEmpty) '@$handle',
     ].join(' ');
 
     return who.isEmpty ? link : '$who\n$link';
   }
+
+  /// Where in the app [uri] leads, when it is a profile link on this
+  /// build's own host — so tapping one in a message opens the profile here
+  /// rather than in a browser. Null for anything else.
+  ///
+  /// Also takes the `/profiles/<id>` links handed out before profiles had a
+  /// public address.
+  static String? inAppLocation(Uri uri, {String? baseUrl}) {
+    final origin = Uri.tryParse(
+      linkOrigin(baseUrl ?? AppConstants.serverBaseUrl),
+    );
+    if (origin == null || !origin.hasAuthority) return null;
+    if (!uri.hasAuthority ||
+        uri.host.toLowerCase() != origin.host.toLowerCase() ||
+        _portOf(uri) != _portOf(origin)) {
+      return null;
+    }
+
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.length != 2) return null;
+
+    final [kind, value] = segments;
+    switch (kind) {
+      case 'u':
+        final handle = value.trim();
+        return handle.isEmpty ? null : UsernameProfileRoute.locationOf(handle);
+      case 'profiles':
+        final id = int.tryParse(value);
+        return id == null || id <= 0 ? null : ProfileDetailRoute(id).location;
+    }
+    return null;
+  }
+
+  static int _portOf(Uri uri) => uri.hasPort
+      ? uri.port
+      : switch (uri.scheme) {
+          'http' => 80,
+          _ => 443,
+        };
 }

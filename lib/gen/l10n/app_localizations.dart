@@ -7271,6 +7271,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Menus, buttons and dates follow this choice. Messages stay in the language they were written in.'**
   String get languageScreenNote;
+
+  /// A profile link points at a handle nobody has.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody goes by {handle}'**
+  String profileByUsernameNotFound(String handle);
+
+  /// Under the not-found title of a profile link.
+  ///
+  /// In en, this message translates to:
+  /// **'The name may have changed, or the account was deleted.'**
+  String get profileByUsernameNotFoundHint;
+
+  /// Photo viewer menu: make an old photo the current one.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as main photo'**
+  String get profilePhotoMakeMain;
+
+  /// Toast after an old photo became the current one.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your main photo now'**
+  String get profilePhotoMadeMain;
+
+  /// Photo viewer menu and dialog button: delete a photo.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete photo'**
+  String get profilePhotoDelete;
+
+  /// Title of the dialog before a profile photo is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this photo?'**
+  String get profilePhotoDeleteTitle;
+
+  /// Body of the delete dialog for an old photo.
+  ///
+  /// In en, this message translates to:
+  /// **'It disappears from your photo history.'**
+  String get profilePhotoDeleteBody;
+
+  /// Body of the delete dialog for the current photo.
+  ///
+  /// In en, this message translates to:
+  /// **'It disappears from your profile and your chats, and the photo before it takes its place.'**
+  String get profilePhotoDeleteCurrentBody;
+
+  /// Toast after a profile photo was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo deleted'**
+  String get profilePhotoDeleted;
+
+  /// Caption over the five privacy rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy rules'**
+  String get privacyRulesSection;
+
+  /// Under the privacy rules.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes apply right away, in chats within a couple of seconds. A contact is someone in your own address book.'**
+  String get privacyRulesFooter;
+
+  /// The privacy settings could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t load privacy settings'**
+  String get privacyRulesLoadFailed;
+
+  /// A privacy change was refused or could not be sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save the change'**
+  String get privacySaveFailed;
+
+  /// Privacy rule: who sees the online mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen & online'**
+  String get privacyRuleLastSeen;
+
+  /// Privacy rule: who sees the profile photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photos'**
+  String get privacyRulePhoto;
+
+  /// Privacy rule: who may write in a direct chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get privacyRuleMessages;
+
+  /// Privacy rule: who may add the person to groups and channels.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups & channels'**
+  String get privacyRuleGroupInvites;
+
+  /// Privacy rule: who may call.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get privacyRuleCalls;
+
+  /// Caption over the answers of the last-seen rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see when I’m online'**
+  String get privacyQuestionLastSeen;
+
+  /// Caption over the answers of the photo rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can see my photos'**
+  String get privacyQuestionPhoto;
+
+  /// Caption over the answers of the messages rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can message me'**
+  String get privacyQuestionMessages;
+
+  /// Caption over the answers of the group invites rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can add me to groups and channels'**
+  String get privacyQuestionGroupInvites;
+
+  /// Caption over the answers of the calls rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Who can call me'**
+  String get privacyQuestionCalls;
+
+  /// Under the last-seen answers: only the online mark exists for now.
+  ///
+  /// In en, this message translates to:
+  /// **'For now others only see whether you’re online — the server keeps no last-seen time yet.'**
+  String get privacyFooterLastSeen;
+
+  /// Under the photo answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Covers your current photo and the whole history. You always see your own.'**
+  String get privacyFooterPhoto;
+
+  /// Under the messages answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to direct chats only — groups and channels follow their own rules. You can still write to anyone.'**
+  String get privacyFooterMessages;
+
+  /// Under the group invites answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone else will have to send you an invite link instead.'**
+  String get privacyFooterGroupInvites;
+
+  /// Under the calls answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies to calls in direct chats.'**
+  String get privacyFooterCalls;
+
+  /// Privacy answer: everybody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everybody'**
+  String get privacyEverybody;
+
+  /// Privacy answer: only my contacts.
+  ///
+  /// In en, this message translates to:
+  /// **'My contacts'**
+  String get privacyMyContacts;
+
+  /// Privacy answer: nobody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nobody'**
+  String get privacyNobody;
+
+  /// Caption over the two exception lists of a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Exceptions'**
+  String get privacyExceptionsSection;
+
+  /// Under the exception lists.
+  ///
+  /// In en, this message translates to:
+  /// **'Exceptions win over the choice above.'**
+  String get privacyExceptionsFooter;
+
+  /// Exception list: people always let in.
+  ///
+  /// In en, this message translates to:
+  /// **'Always allow'**
+  String get privacyAlwaysAllow;
+
+  /// Exception list: people always kept out.
+  ///
+  /// In en, this message translates to:
+  /// **'Never allow'**
+  String get privacyNeverAllow;
+
+  /// Value of an empty exception list row.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get privacyExceptionsAdd;
+
+  /// How many people are on an exception list.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 person} other{{count} people}}'**
+  String privacyPeopleCount(int count);
+
+  /// Short form in a rule summary: this many people kept out.
+  ///
+  /// In en, this message translates to:
+  /// **'−{count}'**
+  String privacyExceptionsMinus(int count);
+
+  /// Short form in a rule summary: this many people let in.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count}'**
+  String privacyExceptionsPlus(int count);
+
+  /// A rule summary: the answer and its exceptions, e.g. "My contacts (−2, +1)".
+  ///
+  /// In en, this message translates to:
+  /// **'{value} ({exceptions})'**
+  String privacyValueWithExceptions(String value, String exceptions);
+
+  /// Row on an exception list that opens the people picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or remove people'**
+  String get privacyExceptionsEdit;
+
+  /// Under an exception list: the limit per rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {limit} people on both lists of one rule together.'**
+  String privacyExceptionsLimitHint(int limit);
+
+  /// Tooltip: take a person off an exception list.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get privacyExceptionRemove;
+
+  /// Toast: an exception list has no room for another person.
+  ///
+  /// In en, this message translates to:
+  /// **'No room for more people in this rule'**
+  String get privacyExceptionsFull;
+
+  /// Under the picker title: how many are picked out of how many fit.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {max}'**
+  String privacyPickerCount(int count, int max);
+
+  /// CALLS_PRIVACY_RESTRICTED: the person only takes calls from certain people
+  ///
+  /// In en, this message translates to:
+  /// **'This person only accepts calls from certain people.'**
+  String get apiErrorCallsPrivacyRestricted;
+
+  /// PRIVACY_EXCEPTIONS_LIMIT: more than 100 people on one rule
+  ///
+  /// In en, this message translates to:
+  /// **'Too many exceptions: up to 100 people per rule.'**
+  String get apiErrorPrivacyExceptionsLimit;
+
+  /// PROFILE_PHOTOS_LIMIT: the photo history is full
+  ///
+  /// In en, this message translates to:
+  /// **'You already have 100 photos. Delete an old one first.'**
+  String get apiErrorProfilePhotosLimit;
+
+  /// NOT_FOUND_PROFILE_PHOTO: the photo is no longer there
+  ///
+  /// In en, this message translates to:
+  /// **'This photo is gone.'**
+  String get apiErrorProfilePhotoNotFound;
 }
 
 class _AppLocalizationsDelegate

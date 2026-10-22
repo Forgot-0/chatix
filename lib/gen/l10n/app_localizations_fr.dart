@@ -4321,4 +4321,187 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get languageScreenNote =>
       'Les menus, boutons et dates suivent ce choix. Les messages restent dans la langue où ils ont été écrits.';
+
+  @override
+  String profileByUsernameNotFound(String handle) {
+    return 'Personne ne s’appelle $handle';
+  }
+
+  @override
+  String get profileByUsernameNotFoundHint =>
+      'Le nom a peut-être changé, ou le compte a été supprimé.';
+
+  @override
+  String get profilePhotoMakeMain => 'Définir comme photo principale';
+
+  @override
+  String get profilePhotoMadeMain => 'C’est maintenant votre photo principale';
+
+  @override
+  String get profilePhotoDelete => 'Supprimer la photo';
+
+  @override
+  String get profilePhotoDeleteTitle => 'Supprimer cette photo ?';
+
+  @override
+  String get profilePhotoDeleteBody =>
+      'Elle disparaîtra de votre historique de photos.';
+
+  @override
+  String get profilePhotoDeleteCurrentBody =>
+      'Elle disparaîtra de votre profil et de vos discussions, et la photo précédente prendra sa place.';
+
+  @override
+  String get profilePhotoDeleted => 'Photo supprimée';
+
+  @override
+  String get privacyRulesSection => 'Règles de confidentialité';
+
+  @override
+  String get privacyRulesFooter =>
+      'Les changements s’appliquent tout de suite, dans les discussions en quelques secondes. Un contact est quelqu’un de votre propre carnet d’adresses.';
+
+  @override
+  String get privacyRulesLoadFailed =>
+      'Impossible de charger les réglages de confidentialité';
+
+  @override
+  String get privacySaveFailed => 'Impossible d’enregistrer la modification';
+
+  @override
+  String get privacyRuleLastSeen => 'Vu pour la dernière fois';
+
+  @override
+  String get privacyRulePhoto => 'Photos de profil';
+
+  @override
+  String get privacyRuleMessages => 'Messages';
+
+  @override
+  String get privacyRuleGroupInvites => 'Groupes et canaux';
+
+  @override
+  String get privacyRuleCalls => 'Appels';
+
+  @override
+  String get privacyQuestionLastSeen => 'Qui voit quand je suis en ligne';
+
+  @override
+  String get privacyQuestionPhoto => 'Qui voit mes photos';
+
+  @override
+  String get privacyQuestionMessages => 'Qui peut m’écrire';
+
+  @override
+  String get privacyQuestionGroupInvites =>
+      'Qui peut m’ajouter à des groupes et canaux';
+
+  @override
+  String get privacyQuestionCalls => 'Qui peut m’appeler';
+
+  @override
+  String get privacyFooterLastSeen =>
+      'Pour l’instant, les autres voient seulement si vous êtes en ligne : le serveur ne garde pas encore l’heure de dernière connexion.';
+
+  @override
+  String get privacyFooterPhoto =>
+      'Concerne votre photo actuelle et tout l’historique. Vous voyez toujours les vôtres.';
+
+  @override
+  String get privacyFooterMessages =>
+      'S’applique uniquement aux discussions privées ; les groupes et canaux ont leurs propres règles. Vous pouvez toujours écrire à qui vous voulez.';
+
+  @override
+  String get privacyFooterGroupInvites =>
+      'Les autres devront plutôt vous envoyer un lien d’invitation.';
+
+  @override
+  String get privacyFooterCalls =>
+      'S’applique aux appels dans les discussions privées.';
+
+  @override
+  String get privacyEverybody => 'Tout le monde';
+
+  @override
+  String get privacyMyContacts => 'Mes contacts';
+
+  @override
+  String get privacyNobody => 'Personne';
+
+  @override
+  String get privacyExceptionsSection => 'Exceptions';
+
+  @override
+  String get privacyExceptionsFooter =>
+      'Les exceptions l’emportent sur le choix ci-dessus.';
+
+  @override
+  String get privacyAlwaysAllow => 'Toujours autoriser';
+
+  @override
+  String get privacyNeverAllow => 'Ne jamais autoriser';
+
+  @override
+  String get privacyExceptionsAdd => 'Ajouter';
+
+  @override
+  String privacyPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count personnes',
+      one: '1 personne',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyExceptionsMinus(int count) {
+    return '−$count';
+  }
+
+  @override
+  String privacyExceptionsPlus(int count) {
+    return '+$count';
+  }
+
+  @override
+  String privacyValueWithExceptions(String value, String exceptions) {
+    return '$value ($exceptions)';
+  }
+
+  @override
+  String get privacyExceptionsEdit => 'Ajouter ou retirer des personnes';
+
+  @override
+  String privacyExceptionsLimitHint(int limit) {
+    return 'Jusqu’à $limit personnes sur les deux listes d’une règle réunies.';
+  }
+
+  @override
+  String get privacyExceptionRemove => 'Retirer';
+
+  @override
+  String get privacyExceptionsFull =>
+      'Plus de place pour d’autres personnes dans cette règle';
+
+  @override
+  String privacyPickerCount(int count, int max) {
+    return '$count sur $max';
+  }
+
+  @override
+  String get apiErrorCallsPrivacyRestricted =>
+      'Cette personne n’accepte les appels que de certaines personnes.';
+
+  @override
+  String get apiErrorPrivacyExceptionsLimit =>
+      'Trop d’exceptions : 100 personnes au plus par règle.';
+
+  @override
+  String get apiErrorProfilePhotosLimit =>
+      'Vous avez déjà 100 photos. Supprimez-en d’abord une ancienne.';
+
+  @override
+  String get apiErrorProfilePhotoNotFound => 'Cette photo n’existe plus.';
 }

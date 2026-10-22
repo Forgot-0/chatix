@@ -4248,4 +4248,183 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get languageScreenNote =>
       'মেনু, বোতাম ও তারিখ এই ভাষায় দেখাবে। মেসেজ যে ভাষায় লেখা, সেই ভাষাতেই থাকবে।';
+
+  @override
+  String profileByUsernameNotFound(String handle) {
+    return '$handle নামে কেউ নেই';
+  }
+
+  @override
+  String get profileByUsernameNotFoundHint =>
+      'হয়তো নামটি বদলেছে বা অ্যাকাউন্টটি মুছে ফেলা হয়েছে।';
+
+  @override
+  String get profilePhotoMakeMain => 'প্রধান ছবি করুন';
+
+  @override
+  String get profilePhotoMadeMain => 'এটি এখন আপনার প্রধান ছবি';
+
+  @override
+  String get profilePhotoDelete => 'ছবি মুছুন';
+
+  @override
+  String get profilePhotoDeleteTitle => 'এই ছবিটি মুছবেন?';
+
+  @override
+  String get profilePhotoDeleteBody => 'এটি আপনার ছবির ইতিহাস থেকে মুছে যাবে।';
+
+  @override
+  String get profilePhotoDeleteCurrentBody =>
+      'এটি প্রোফাইল ও চ্যাট থেকে মুছে যাবে, আর আগের ছবিটি তার জায়গা নেবে।';
+
+  @override
+  String get profilePhotoDeleted => 'ছবি মুছে ফেলা হয়েছে';
+
+  @override
+  String get privacyRulesSection => 'গোপনীয়তার নিয়ম';
+
+  @override
+  String get privacyRulesFooter =>
+      'পরিবর্তন সঙ্গে সঙ্গে কার্যকর হয়, চ্যাটে কয়েক সেকেন্ডে। পরিচিতি মানে আপনার নিজের ঠিকানা বইয়ে থাকা কেউ।';
+
+  @override
+  String get privacyRulesLoadFailed => 'গোপনীয়তার সেটিংস লোড করা গেল না';
+
+  @override
+  String get privacySaveFailed => 'পরিবর্তন সংরক্ষণ করা গেল না';
+
+  @override
+  String get privacyRuleLastSeen => 'শেষ দেখা ও অনলাইন';
+
+  @override
+  String get privacyRulePhoto => 'প্রোফাইলের ছবি';
+
+  @override
+  String get privacyRuleMessages => 'মেসেজ';
+
+  @override
+  String get privacyRuleGroupInvites => 'গ্রুপ ও চ্যানেল';
+
+  @override
+  String get privacyRuleCalls => 'কল';
+
+  @override
+  String get privacyQuestionLastSeen => 'আমি অনলাইনে আছি কি না, কে দেখতে পাবে';
+
+  @override
+  String get privacyQuestionPhoto => 'আমার ছবি কে দেখতে পাবে';
+
+  @override
+  String get privacyQuestionMessages => 'কে আমাকে মেসেজ পাঠাতে পারবে';
+
+  @override
+  String get privacyQuestionGroupInvites =>
+      'কে আমাকে গ্রুপ ও চ্যানেলে যোগ করতে পারবে';
+
+  @override
+  String get privacyQuestionCalls => 'কে আমাকে কল করতে পারবে';
+
+  @override
+  String get privacyFooterLastSeen =>
+      'এখন অন্যরা শুধু দেখতে পান আপনি অনলাইনে কি না — শেষ দেখার সময় সার্ভার এখনো রাখে না।';
+
+  @override
+  String get privacyFooterPhoto =>
+      'বর্তমান ছবি আর পুরো ইতিহাস — দুটোতেই প্রযোজ্য। নিজের ছবি আপনি সবসময় দেখতে পান।';
+
+  @override
+  String get privacyFooterMessages =>
+      'শুধু ব্যক্তিগত চ্যাটে প্রযোজ্য — গ্রুপ ও চ্যানেলের নিজস্ব নিয়ম আছে। আপনি নিজে যে কাউকে লিখতে পারবেন।';
+
+  @override
+  String get privacyFooterGroupInvites =>
+      'অন্যদের এর বদলে আপনাকে আমন্ত্রণ লিংক পাঠাতে হবে।';
+
+  @override
+  String get privacyFooterCalls => 'ব্যক্তিগত চ্যাটের কলে প্রযোজ্য।';
+
+  @override
+  String get privacyEverybody => 'সবাই';
+
+  @override
+  String get privacyMyContacts => 'আমার পরিচিতি';
+
+  @override
+  String get privacyNobody => 'কেউ না';
+
+  @override
+  String get privacyExceptionsSection => 'ব্যতিক্রম';
+
+  @override
+  String get privacyExceptionsFooter =>
+      'ব্যতিক্রম ওপরের পছন্দের চেয়ে অগ্রাধিকার পায়।';
+
+  @override
+  String get privacyAlwaysAllow => 'সবসময় অনুমতি দিন';
+
+  @override
+  String get privacyNeverAllow => 'কখনো অনুমতি দেবেন না';
+
+  @override
+  String get privacyExceptionsAdd => 'যোগ করুন';
+
+  @override
+  String privacyPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count জন',
+      one: '১ জন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyExceptionsMinus(int count) {
+    return '−$count';
+  }
+
+  @override
+  String privacyExceptionsPlus(int count) {
+    return '+$count';
+  }
+
+  @override
+  String privacyValueWithExceptions(String value, String exceptions) {
+    return '$value ($exceptions)';
+  }
+
+  @override
+  String get privacyExceptionsEdit => 'লোক যোগ বা বাদ দিন';
+
+  @override
+  String privacyExceptionsLimitHint(int limit) {
+    return 'একটি নিয়মের দুই তালিকা মিলিয়ে সর্বোচ্চ $limit জন।';
+  }
+
+  @override
+  String get privacyExceptionRemove => 'সরান';
+
+  @override
+  String get privacyExceptionsFull => 'এই নিয়মে আর কাউকে যোগ করা যাবে না';
+
+  @override
+  String privacyPickerCount(int count, int max) {
+    return '$max এর মধ্যে $count';
+  }
+
+  @override
+  String get apiErrorCallsPrivacyRestricted =>
+      'এই ব্যক্তি শুধু নির্দিষ্ট কিছু মানুষের কল নেন।';
+
+  @override
+  String get apiErrorPrivacyExceptionsLimit =>
+      'ব্যতিক্রম বেশি হয়ে গেছে: প্রতি নিয়মে সর্বোচ্চ ১০০ জন।';
+
+  @override
+  String get apiErrorProfilePhotosLimit =>
+      'আপনার ইতিমধ্যে ১০০টি ছবি আছে। আগে একটি পুরোনো ছবি মুছুন।';
+
+  @override
+  String get apiErrorProfilePhotoNotFound => 'এই ছবিটি আর নেই।';
 }

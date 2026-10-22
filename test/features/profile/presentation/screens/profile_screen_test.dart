@@ -212,7 +212,7 @@ void main() {
       await tester.tap(find.text(ru.profileCopyLink));
       await tester.pumpAndSettle();
 
-      expect(clipboard, [ProfileShareLink.of(kProfileOther)]);
+      expect(clipboard, [ProfileShareLink.of('ada')]);
       await drainSnackbars(tester);
     });
   });
@@ -297,9 +297,8 @@ void main() {
       expect(
         clipboard.single,
         ProfileShareLink.messageFor(
-          kProfileOther,
-          displayName: 'Ada Lovelace',
           username: 'ada',
+          displayName: 'Ada Lovelace',
         ),
       );
       await drainSnackbars(tester);

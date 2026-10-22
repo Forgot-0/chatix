@@ -8,6 +8,7 @@ import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_upload_stage.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_detail_provider.dart';
+import 'package:chatix/features/profile/presentation/providers/profile_photos_provider.dart';
 import 'package:chatix/features/profile/presentation/providers/profile_providers.dart';
 
 /// How long to wait for the background task that turns an uploaded file
@@ -143,6 +144,8 @@ class AvatarUploadController extends AsyncNotifier<AvatarUploadStage?> {
       _lastAttempt = null;
       state = const AsyncValue.data(AvatarUploadStage.done);
       ref.invalidate(profileDetailProvider(profileId));
+      // The new picture is also the newest in the history (api-docs §4.5).
+      ref.invalidate(profilePhotosProvider(profileId));
       return;
     }
 

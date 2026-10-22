@@ -10,13 +10,10 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// The profile's QR code in a sheet, with the two things to do with it:
 /// share the link, or copy it.
 ///
-/// What the code holds is [ProfileShareLink] — the app's own route on the
-/// host this build talks to. The API has no public page for a profile
-/// (see that class), so the code is for another ChatiX, not for a browser,
-/// and the sheet says so.
+/// What the code holds is [ProfileShareLink] — `https://<host>/u/<name>`,
+/// the public link the handle resolves through (api-docs §4.3).
 Future<void> showProfileQrSheet(
   BuildContext context, {
-  required int profileId,
   required String name,
   required String username,
   required Future<void> Function() onShare,
@@ -26,7 +23,6 @@ Future<void> showProfileQrSheet(
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => ProfileQrSheet(
-      profileId: profileId,
       name: name,
       username: username,
       onShare: () async {
@@ -40,13 +36,11 @@ Future<void> showProfileQrSheet(
 class ProfileQrSheet extends StatelessWidget {
   const ProfileQrSheet({
     super.key,
-    required this.profileId,
     required this.name,
     required this.username,
     required this.onShare,
   });
 
-  final int profileId;
   final String name;
 
   /// Without the `@`.
@@ -58,7 +52,7 @@ class ProfileQrSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final link = ProfileShareLink.of(profileId);
+    final link = ProfileShareLink.of(username);
 
     return SafeArea(
       child: Center(

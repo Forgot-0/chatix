@@ -4261,4 +4261,182 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get languageScreenNote =>
       'Menus, buttons and dates follow this choice. Messages stay in the language they were written in.';
+
+  @override
+  String profileByUsernameNotFound(String handle) {
+    return 'Nobody goes by $handle';
+  }
+
+  @override
+  String get profileByUsernameNotFoundHint =>
+      'The name may have changed, or the account was deleted.';
+
+  @override
+  String get profilePhotoMakeMain => 'Set as main photo';
+
+  @override
+  String get profilePhotoMadeMain => 'This is your main photo now';
+
+  @override
+  String get profilePhotoDelete => 'Delete photo';
+
+  @override
+  String get profilePhotoDeleteTitle => 'Delete this photo?';
+
+  @override
+  String get profilePhotoDeleteBody => 'It disappears from your photo history.';
+
+  @override
+  String get profilePhotoDeleteCurrentBody =>
+      'It disappears from your profile and your chats, and the photo before it takes its place.';
+
+  @override
+  String get profilePhotoDeleted => 'Photo deleted';
+
+  @override
+  String get privacyRulesSection => 'Privacy rules';
+
+  @override
+  String get privacyRulesFooter =>
+      'Changes apply right away, in chats within a couple of seconds. A contact is someone in your own address book.';
+
+  @override
+  String get privacyRulesLoadFailed => 'Couldn’t load privacy settings';
+
+  @override
+  String get privacySaveFailed => 'Couldn’t save the change';
+
+  @override
+  String get privacyRuleLastSeen => 'Last seen & online';
+
+  @override
+  String get privacyRulePhoto => 'Profile photos';
+
+  @override
+  String get privacyRuleMessages => 'Messages';
+
+  @override
+  String get privacyRuleGroupInvites => 'Groups & channels';
+
+  @override
+  String get privacyRuleCalls => 'Calls';
+
+  @override
+  String get privacyQuestionLastSeen => 'Who can see when I’m online';
+
+  @override
+  String get privacyQuestionPhoto => 'Who can see my photos';
+
+  @override
+  String get privacyQuestionMessages => 'Who can message me';
+
+  @override
+  String get privacyQuestionGroupInvites =>
+      'Who can add me to groups and channels';
+
+  @override
+  String get privacyQuestionCalls => 'Who can call me';
+
+  @override
+  String get privacyFooterLastSeen =>
+      'For now others only see whether you’re online — the server keeps no last-seen time yet.';
+
+  @override
+  String get privacyFooterPhoto =>
+      'Covers your current photo and the whole history. You always see your own.';
+
+  @override
+  String get privacyFooterMessages =>
+      'Applies to direct chats only — groups and channels follow their own rules. You can still write to anyone.';
+
+  @override
+  String get privacyFooterGroupInvites =>
+      'Everyone else will have to send you an invite link instead.';
+
+  @override
+  String get privacyFooterCalls => 'Applies to calls in direct chats.';
+
+  @override
+  String get privacyEverybody => 'Everybody';
+
+  @override
+  String get privacyMyContacts => 'My contacts';
+
+  @override
+  String get privacyNobody => 'Nobody';
+
+  @override
+  String get privacyExceptionsSection => 'Exceptions';
+
+  @override
+  String get privacyExceptionsFooter => 'Exceptions win over the choice above.';
+
+  @override
+  String get privacyAlwaysAllow => 'Always allow';
+
+  @override
+  String get privacyNeverAllow => 'Never allow';
+
+  @override
+  String get privacyExceptionsAdd => 'Add';
+
+  @override
+  String privacyPeopleCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count people',
+      one: '1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyExceptionsMinus(int count) {
+    return '−$count';
+  }
+
+  @override
+  String privacyExceptionsPlus(int count) {
+    return '+$count';
+  }
+
+  @override
+  String privacyValueWithExceptions(String value, String exceptions) {
+    return '$value ($exceptions)';
+  }
+
+  @override
+  String get privacyExceptionsEdit => 'Add or remove people';
+
+  @override
+  String privacyExceptionsLimitHint(int limit) {
+    return 'Up to $limit people on both lists of one rule together.';
+  }
+
+  @override
+  String get privacyExceptionRemove => 'Remove';
+
+  @override
+  String get privacyExceptionsFull => 'No room for more people in this rule';
+
+  @override
+  String privacyPickerCount(int count, int max) {
+    return '$count of $max';
+  }
+
+  @override
+  String get apiErrorCallsPrivacyRestricted =>
+      'This person only accepts calls from certain people.';
+
+  @override
+  String get apiErrorPrivacyExceptionsLimit =>
+      'Too many exceptions: up to 100 people per rule.';
+
+  @override
+  String get apiErrorProfilePhotosLimit =>
+      'You already have 100 photos. Delete an old one first.';
+
+  @override
+  String get apiErrorProfilePhotoNotFound => 'This photo is gone.';
 }

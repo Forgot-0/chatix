@@ -3,6 +3,7 @@ import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/models/page_result.dart';
 import 'package:chatix/features/profile/domain/entities/avatar_presign_entity.dart';
 import 'package:chatix/features/profile/domain/entities/profile_entity.dart';
+import 'package:chatix/features/profile/domain/entities/profile_photo.dart';
 import 'package:chatix/features/profile/domain/entities/profile_update.dart';
 import 'package:chatix/core/network/request_cancellation.dart';
 
@@ -24,6 +25,23 @@ abstract class ProfileRepository {
 
   /// The caller's own profile, created on the spot if it is not there yet.
   Future<Either<Failure, ProfileEntity>> getMyProfile();
+
+  /// Somebody by their `@handle`, matched without regard to case.
+  Future<Either<Failure, ProfileEntity>> getProfileByUsername(String username);
+
+  /// A page of [profileId]'s photo history, the current photo first.
+  Future<Either<Failure, PageResult<ProfilePhoto>>> getPhotos(
+    int profileId, {
+    int page = 1,
+    int pageSize = 20,
+  });
+
+  /// Puts one of the caller's old photos back in front.
+  Future<Either<Failure, void>> setMainPhoto(String photoId);
+
+  /// Deletes one of the caller's photos; when it was the current one, the
+  /// next in the history takes its place.
+  Future<Either<Failure, void>> deletePhoto(String photoId);
 
   /// Writes [update] over the profile wholesale.
   ///

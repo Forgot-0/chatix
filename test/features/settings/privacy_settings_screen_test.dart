@@ -11,14 +11,24 @@ import 'package:chatix/core/auth/biometric_providers.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/features/auth/domain/entities/session_entity.dart';
+import 'package:chatix/features/auth/domain/entities/user_entity.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_providers.dart';
 import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
 import 'package:chatix/features/contacts/domain/entities/blocked_user.dart';
+import 'package:chatix/features/settings/data/repositories/privacy_repository_impl.dart';
 import 'package:chatix/features/settings/presentation/screens/privacy_settings_screen.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_ru.dart';
 
 import '../../helpers/pane_frame.dart';
+import '../../helpers/privacy_harness.dart';
+
+class _FakeAuth extends AuthController {
+  @override
+  Future<UserEntity?> build() async =>
+      const UserEntity(id: 7, username: 'maria', email: 'm@example.com');
+}
 
 SessionEntity _session(int id, String device, {bool active = true}) =>
     SessionEntity(
@@ -30,8 +40,8 @@ SessionEntity _session(int id, String device, {bool active = true}) =>
       isActive: active,
     );
 
-/// Settings → Privacy: the block list, the devices and the app lock — and
-/// nothing the API cannot back.
+/// Settings → Privacy: the block list, the devices, the five privacy rules
+/// and the app lock.
 void main() {
   final ru = AppLocalizationsRu();
 
@@ -54,6 +64,8 @@ void main() {
       InMemoryAppLockStore(enabled: biometricsOn),
     ),
     biometricsAvailableProvider.overrideWith((ref) async => true),
+    privacyRepositoryProvider.overrideWithValue(FakePrivacyRepository()),
+    authProvider.overrideWith(_FakeAuth.new),
   ];
 
   Future<void> pump(

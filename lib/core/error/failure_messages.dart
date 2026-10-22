@@ -120,7 +120,13 @@ String? _exactMessage(String code, AppLocalizations l10n) => switch (code) {
   // Privacy and blocks (api-docs §4.13, §4.14).
   'USER_PRIVACY_RESTRICTED' => l10n.apiErrorUserPrivacyRestricted,
   'MESSAGES_PRIVACY_RESTRICTED' => l10n.apiErrorMessagesPrivacyRestricted,
+  'CALLS_PRIVACY_RESTRICTED' => l10n.apiErrorCallsPrivacyRestricted,
+  'PRIVACY_EXCEPTIONS_LIMIT' => l10n.apiErrorPrivacyExceptionsLimit,
   'USER_BLOCKED' => l10n.apiErrorUserBlocked,
+
+  // The photo history (api-docs §4.5, §4.5.1).
+  'PROFILE_PHOTOS_LIMIT' => l10n.apiErrorProfilePhotosLimit,
+  'NOT_FOUND_PROFILE_PHOTO' => l10n.apiErrorProfilePhotoNotFound,
 
   'CHAT_AVATAR_VALIDATION' => l10n.apiErrorChatAvatarValidation,
 
