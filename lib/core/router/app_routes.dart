@@ -52,6 +52,12 @@ abstract final class RouteNames {
   static const String privacySettings = 'privacySettings';
   static const String blockedUsers = 'blockedUsers';
   static const String sessions = 'sessions';
+  static const String dataStorageSettings = 'dataStorageSettings';
+  static const String devicesSettings = 'devicesSettings';
+  static const String settingsFolders = 'settingsFolders';
+  static const String settingsFolderEditor = 'settingsFolderEditor';
+  static const String aboutSettings = 'aboutSettings';
+  static const String developerSettings = 'developerSettings';
   static const String componentShowcase = 'componentShowcase';
 }
 
@@ -449,7 +455,61 @@ abstract final class SessionsRoute {
   static const String location = '${PrivacySettingsRoute.location}/$path';
 }
 
-/// `/settings/appearance` — theme, accent, wallpaper, bubbles and media.
+/// `/settings/devices` — where the account is signed in, as a section of
+/// its own in the settings list.
+///
+/// The same screen Privacy opens at [SessionsRoute]: Privacy keeps its row
+/// (the block list, the devices and the lock are what Telegram groups
+/// there), and the list gets its own way in, so in two panes the row that
+/// was tapped is the one that stays marked.
+abstract final class DevicesSettingsRoute {
+  static const String path = 'devices';
+  static const String location = '/settings/devices';
+}
+
+/// `/settings/data` — auto-download by kind of network, the cache and its
+/// limit, video-note autoplay.
+abstract final class DataStorageSettingsRoute {
+  static const String path = 'data';
+  static const String location = '/settings/data';
+}
+
+/// `/settings/folders` — the chat folders screen, opened from settings.
+///
+/// The screen is the one `/chats/folders` shows over the chat list; under
+/// settings it opens in the settings pane, beside the list it was picked
+/// from, and its editor follows it there ([SettingsFolderEditorRoute]).
+abstract final class SettingsFoldersRoute {
+  static const String path = 'folders';
+  static const String location = '/settings/folders';
+}
+
+/// `/settings/folders/edit` — [FolderEditorRoute], under settings.
+abstract final class SettingsFolderEditorRoute {
+  static const String path = 'edit';
+  static const String location = '${SettingsFoldersRoute.location}/$path';
+
+  static String locationOf(String? folderId) {
+    if (folderId == null || folderId.isEmpty) return location;
+    return '$location?${FolderEditorRoute.folderQueryParam}='
+        '${Uri.encodeQueryComponent(folderId)}';
+  }
+}
+
+/// `/settings/about` — the version, what is new in it, and the links.
+abstract final class AboutSettingsRoute {
+  static const String path = 'about';
+  static const String location = '/settings/about';
+}
+
+/// `/settings/developer` — the hidden menu seven taps on the version open.
+/// Sends anyone who has not opened it back to settings.
+abstract final class DeveloperSettingsRoute {
+  static const String path = 'developer';
+  static const String location = '/settings/developer';
+}
+
+/// `/settings/appearance` — theme, accent, wallpaper, bubbles, text size.
 abstract final class AppearanceSettingsRoute {
   static const String path = 'appearance';
   static const String location = '/settings/appearance';
@@ -470,7 +530,8 @@ abstract final class NotificationSettingsRoute {
   static const String location = '/settings/notifications';
 }
 
-/// The design-system showcase. Debug-only.
+/// The design-system showcase. Behind the developer menu, in debug and
+/// release builds alike.
 abstract final class ComponentShowcaseRoute {
   static const String path = '/demo/design-system';
   static const String location = '/demo/design-system';

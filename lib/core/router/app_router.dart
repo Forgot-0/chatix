@@ -1,13 +1,15 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_page_transitions.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/chats_pane_shell.dart';
 import 'package:chatix/core/router/locale_aware_router.dart';
+import 'package:chatix/core/router/settings_pane_shell.dart';
+import 'package:chatix/core/settings/dev_menu.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
@@ -42,10 +44,12 @@ import 'package:chatix/features/onboarding/presentation/screens/welcome_screen.d
 import 'package:chatix/features/profile/presentation/screens/profile_avatar_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_edit_screen.dart';
 import 'package:chatix/features/profile/presentation/screens/profile_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/about_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/appearance_settings_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/data_storage_screen.dart';
+import 'package:chatix/features/settings/presentation/screens/developer_menu_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
 import 'package:chatix/features/settings/presentation/screens/privacy_settings_screen.dart';
-import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/features/ui_showcase/ui_showcase.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -54,6 +58,19 @@ Page<void> _push(GoRouterState state, Widget child) {
   return AppPageTransitions.sharedAxisHorizontal<void>(
     key: state.pageKey,
     name: state.name ?? state.fullPath,
+    child: child,
+  );
+}
+
+/// A settings section: an ordinary push on one pane; beside the list on two,
+/// a swap with no back arrow, since the list it was picked from is the way
+/// back. Reads the layout here, so the pages are rebuilt when the window
+/// crosses the breakpoint.
+Page<void> _section(BuildContext context, GoRouterState state, Widget child) {
+  return AppPageTransitions.section<void>(
+    key: state.pageKey,
+    name: state.name ?? state.fullPath,
+    besideList: AppLayoutScope.of(context).isTwoPane,
     child: child,
   );
 }
@@ -444,71 +461,150 @@ final routerProvider = Provider<GoRouter>((ref) {
           // The account lives here now that the profile tab is gone: /profile
           // is a second top-level route of this branch, so opening it selects
           // the settings tab rather than dropping the shell entirely.
+          //
+          // Like the chats branch, the whole of it sits in a ShellRoute that
+          // decides the layout in one place: on a wide window the list moves
+          // to the left and this navigator — the section, and what was
+          // opened from it — is the right pane. Sections come up through
+          // `_section`, which leaves the back arrow off beside the list.
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: SettingsRoute.path,
-                name: RouteNames.settings,
-                pageBuilder: (context, state) =>
-                    _root(state, const SettingsScreen()),
+              ShellRoute(
+                builder: (context, state, child) =>
+                    SettingsPaneShell(location: state.uri.path, child: child),
                 routes: [
                   GoRoute(
-                    path: AppearanceSettingsRoute.path,
-                    name: RouteNames.appearanceSettings,
+                    path: SettingsRoute.path,
+                    name: RouteNames.settings,
                     pageBuilder: (context, state) =>
-                        _push(state, const AppearanceSettingsScreen()),
-                  ),
-                  GoRoute(
-                    path: LanguageSettingsRoute.path,
-                    name: RouteNames.languageSettings,
-                    pageBuilder: (context, state) =>
-                        _push(state, const LanguageSettingsScreen()),
-                  ),
-                  GoRoute(
-                    path: NotificationSettingsRoute.path,
-                    name: RouteNames.notificationSettings,
-                    pageBuilder: (context, state) =>
-                        _push(state, const NotificationSettingsScreen()),
-                  ),
-                  GoRoute(
-                    path: PrivacySettingsRoute.path,
-                    name: RouteNames.privacySettings,
-                    pageBuilder: (context, state) =>
-                        _push(state, const PrivacySettingsScreen()),
+                        _root(state, const SettingsHomePane()),
                     routes: [
                       GoRoute(
-                        path: BlockedUsersRoute.path,
-                        name: RouteNames.blockedUsers,
-                        pageBuilder: (context, state) =>
-                            _push(state, const BlockedUsersScreen()),
+                        path: NotificationSettingsRoute.path,
+                        name: RouteNames.notificationSettings,
+                        pageBuilder: (context, state) => _section(
+                          context,
+                          state,
+                          const NotificationSettingsScreen(),
+                        ),
                       ),
                       GoRoute(
-                        path: SessionsRoute.path,
-                        name: RouteNames.sessions,
+                        path: PrivacySettingsRoute.path,
+                        name: RouteNames.privacySettings,
+                        pageBuilder: (context, state) => _section(
+                          context,
+                          state,
+                          const PrivacySettingsScreen(),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: BlockedUsersRoute.path,
+                            name: RouteNames.blockedUsers,
+                            pageBuilder: (context, state) =>
+                                _push(state, const BlockedUsersScreen()),
+                          ),
+                          GoRoute(
+                            path: SessionsRoute.path,
+                            name: RouteNames.sessions,
+                            pageBuilder: (context, state) =>
+                                _push(state, const SessionsScreen()),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: DataStorageSettingsRoute.path,
+                        name: RouteNames.dataStorageSettings,
                         pageBuilder: (context, state) =>
-                            _push(state, const SessionsScreen()),
+                            _section(context, state, const DataStorageScreen()),
+                      ),
+                      GoRoute(
+                        path: DevicesSettingsRoute.path,
+                        name: RouteNames.devicesSettings,
+                        pageBuilder: (context, state) =>
+                            _section(context, state, const SessionsScreen()),
+                      ),
+                      GoRoute(
+                        path: AppearanceSettingsRoute.path,
+                        name: RouteNames.appearanceSettings,
+                        pageBuilder: (context, state) => _section(
+                          context,
+                          state,
+                          const AppearanceSettingsScreen(),
+                        ),
+                      ),
+                      GoRoute(
+                        path: SettingsFoldersRoute.path,
+                        name: RouteNames.settingsFolders,
+                        pageBuilder: (context, state) => _section(
+                          context,
+                          state,
+                          const ChatFoldersScreen(
+                            editorLocationOf:
+                                SettingsFolderEditorRoute.locationOf,
+                          ),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: SettingsFolderEditorRoute.path,
+                            name: RouteNames.settingsFolderEditor,
+                            pageBuilder: (context, state) => _push(
+                              state,
+                              FolderEditorScreen(
+                                folderId: FolderEditorRoute.folderIdFrom(state),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      GoRoute(
+                        path: LanguageSettingsRoute.path,
+                        name: RouteNames.languageSettings,
+                        pageBuilder: (context, state) => _section(
+                          context,
+                          state,
+                          const LanguageSettingsScreen(),
+                        ),
+                      ),
+                      GoRoute(
+                        path: AboutSettingsRoute.path,
+                        name: RouteNames.aboutSettings,
+                        pageBuilder: (context, state) =>
+                            _section(context, state, const AboutScreen()),
+                      ),
+                      GoRoute(
+                        path: DeveloperSettingsRoute.path,
+                        name: RouteNames.developerSettings,
+                        redirect: (context, state) =>
+                            ref.read(devMenuUnlockedProvider)
+                            ? null
+                            : SettingsRoute.location,
+                        pageBuilder: (context, state) => _section(
+                          context,
+                          state,
+                          const DeveloperMenuScreen(),
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-              GoRoute(
-                path: ProfileRoute.path,
-                name: RouteNames.profile,
-                pageBuilder: (context, state) =>
-                    _push(state, const ProfileScreen()),
-                routes: [
                   GoRoute(
-                    path: ProfileEditRoute.path,
-                    name: RouteNames.profileEdit,
+                    path: ProfileRoute.path,
+                    name: RouteNames.profile,
                     pageBuilder: (context, state) =>
-                        _push(state, const ProfileEditScreen()),
-                  ),
-                  GoRoute(
-                    path: ProfileAvatarRoute.path,
-                    name: RouteNames.profileAvatar,
-                    pageBuilder: (context, state) =>
-                        _push(state, const ProfileAvatarScreen()),
+                        _push(state, const ProfileScreen()),
+                    routes: [
+                      GoRoute(
+                        path: ProfileEditRoute.path,
+                        name: RouteNames.profileEdit,
+                        pageBuilder: (context, state) =>
+                            _push(state, const ProfileEditScreen()),
+                      ),
+                      GoRoute(
+                        path: ProfileAvatarRoute.path,
+                        name: RouteNames.profileAvatar,
+                        pageBuilder: (context, state) =>
+                            _push(state, const ProfileAvatarScreen()),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -530,14 +626,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // The design-system showcase: a developer surface for checking tokens
-      // against both themes. `kDebugMode` is a compile-time constant, so the
-      // route and everything it pulls in is tree-shaken out of a release.
-      if (kDebugMode)
-        GoRoute(
-          path: ComponentShowcaseRoute.path,
-          name: RouteNames.componentShowcase,
-          builder: (context, state) => const ComponentShowcaseScreen(),
-        ),
+      // against both themes. Behind the developer menu rather than behind
+      // `kDebugMode`, so a release build can be checked too — seven taps on
+      // the version in About open it, and anyone else lands on settings.
+      GoRoute(
+        path: ComponentShowcaseRoute.path,
+        name: RouteNames.componentShowcase,
+        redirect: (context, state) =>
+            ref.read(devMenuUnlockedProvider) ? null : SettingsRoute.location,
+        builder: (context, state) => const ComponentShowcaseScreen(),
+      ),
 
       GoRoute(
         path: WelcomeRoute.path,

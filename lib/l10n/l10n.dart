@@ -23,8 +23,12 @@ class AppLocalizations {
     GlobalCupertinoLocalizations.delegate,
   ];
 
+  // Russian is a full ARB locale (intl_ru.arb) and had simply been left off
+  // this list, so a Russian device fell back to English and the language
+  // screen could not offer it.
   static const List<Locale> supportedLocales = [
     Locale('en'),
+    Locale('ru'),
     Locale('es'),
     Locale('fr'),
     Locale('de'),

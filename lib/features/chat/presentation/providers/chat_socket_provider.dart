@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 import 'package:chatix/core/providers/network_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
+import 'package:chatix/core/settings/dev_menu.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/core/websocket/socket_protocol_log.dart';
@@ -107,13 +108,17 @@ void _watchAppLifecycle(Ref ref, ChatSocketService service) {
   ref.onDispose(listener.dispose);
 }
 
-/// Turns protocol recording on and off as the flag changes.
+/// Turns protocol recording on and off as the flag changes — or as the
+/// developer menu's switch does, which records for this run whatever the
+/// flag says.
 void _watchProtocolLogFlag(Ref ref) {
   final flags = ref.watch(featureFlagServiceProvider);
   final log = ref.watch(socketProtocolLogProvider);
 
   void sync() {
-    final enabled = flags.getBool(kWsProtocolLogFlag, defaultValue: false);
+    final enabled =
+        flags.getBool(kWsProtocolLogFlag, defaultValue: false) ||
+        ref.read(socketRecordingSwitchProvider);
     if (enabled == log.enabled) return;
 
     log.enabled = enabled;
@@ -124,6 +129,9 @@ void _watchProtocolLogFlag(Ref ref) {
   sync();
   flags.addListener(sync);
   ref.onDispose(() => flags.removeListener(sync));
+  // Listened to, not watched: flipping the switch must not rebuild — and
+  // so reconnect — the socket this provider owns.
+  ref.listen(socketRecordingSwitchProvider, (_, _) => sync());
 }
 
 final chatSocketStatusProvider = StreamProvider<ChatSocketStatus>((ref) {

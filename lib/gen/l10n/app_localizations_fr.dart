@@ -4139,4 +4139,186 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get apiErrorChatAvatarValidation =>
       'Cette image ne peut pas être utilisée. Choisissez un JPEG, PNG ou WebP de 5 Mo maximum.';
+
+  @override
+  String get settingsSearchHint => 'Rechercher dans les réglages';
+
+  @override
+  String settingsSearchEmpty(String query) {
+    return 'Aucun résultat pour « $query »';
+  }
+
+  @override
+  String get settingsSearchEmptyHint =>
+      'Essayez un mot plus court ou différent.';
+
+  @override
+  String get settingsSearchClear => 'Effacer la recherche';
+
+  @override
+  String get settingsChatFolders => 'Dossiers de discussions';
+
+  @override
+  String get settingsProfileOpen => 'Ouvrir votre profil';
+
+  @override
+  String get settingsPanePlaceholderTitle => 'Choisissez une section';
+
+  @override
+  String get settingsPanePlaceholderHint =>
+      'Tout ce que vous pouvez régler dans ChatiX se trouve dans la liste à gauche.';
+
+  @override
+  String get dataStorageTitle => 'Données et stockage';
+
+  @override
+  String get dataStorageUsageSection => 'Utilisation du stockage';
+
+  @override
+  String get dataStorageCacheTitle => 'Cache des médias';
+
+  @override
+  String dataStorageUsageOf(String used, String limit) {
+    return '$used sur $limit';
+  }
+
+  @override
+  String get dataStorageClearConfirmTitle => 'Vider le cache des médias ?';
+
+  @override
+  String dataStorageClearConfirmBody(String size) {
+    return '$size de photos, vidéos, fichiers et messages vocaux téléchargés seront supprimés de cet appareil. Ils restent dans vos discussions et se téléchargent à nouveau quand vous les ouvrez.';
+  }
+
+  @override
+  String get autoDownloadOnMobile => 'Avec les données mobiles';
+
+  @override
+  String get autoDownloadOnWifi => 'En Wi-Fi';
+
+  @override
+  String get dataStorageAutoDownloadFooter =>
+      'Ce qui est activé pour les données mobiles est aussi téléchargé en Wi-Fi.';
+
+  @override
+  String get dataStorageReset => 'Réinitialiser le téléchargement automatique';
+
+  @override
+  String get dataStorageResetDone =>
+      'Le téléchargement automatique est revenu aux réglages par défaut';
+
+  @override
+  String get aboutTitle => 'À propos';
+
+  @override
+  String get aboutTagline => 'Une messagerie à vos couleurs';
+
+  @override
+  String get aboutVersion => 'Version';
+
+  @override
+  String aboutVersionValue(String version, String build) {
+    return '$version ($build)';
+  }
+
+  @override
+  String get aboutWhatsNew => 'Nouveautés';
+
+  @override
+  String aboutWhatsNewTitle(String version) {
+    return 'Nouveautés de la version $version';
+  }
+
+  @override
+  String get whatsNewSettingsTitle => 'Des réglages réorganisés';
+
+  @override
+  String get whatsNewSettingsBody =>
+      'Votre profil en haut, des sections en couleur, une recherche et une page à part pour les données et le stockage.';
+
+  @override
+  String get whatsNewFoldersTitle => 'Dossiers de discussions';
+
+  @override
+  String get whatsNewFoldersBody =>
+      'Rangez vos conversations dans des dossiers et écartez les plus bruyantes.';
+
+  @override
+  String get whatsNewChatsTitle => 'Groupes et canaux';
+
+  @override
+  String get whatsNewChatsBody =>
+      'Créez un groupe ou un canal en quelques étapes, avec photo et description.';
+
+  @override
+  String get whatsNewDesktopTitle => 'À l’aise sur ordinateur';
+
+  @override
+  String get whatsNewDesktopBody =>
+      'Raccourcis clavier, coller ou glisser des fichiers pour les envoyer, répondre et réagir avec les boutons près du message.';
+
+  @override
+  String get aboutPrivacyPolicy => 'Politique de confidentialité';
+
+  @override
+  String get aboutTerms => 'Conditions d’utilisation';
+
+  @override
+  String get aboutSupport => 'Assistance';
+
+  @override
+  String get aboutLicenses => 'Licences open source';
+
+  @override
+  String get aboutLinkFailed => 'Impossible d’ouvrir le lien';
+
+  @override
+  String devMenuTapsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Encore $count appuis pour ouvrir le menu développeur',
+      one: 'Encore un appui pour ouvrir le menu développeur',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devMenuUnlocked =>
+      'Le menu développeur est ouvert. Il se trouve en bas des réglages.';
+
+  @override
+  String get devMenuAlreadyOpen => 'Le menu développeur est déjà ouvert';
+
+  @override
+  String get devMenuTitle => 'Développeur';
+
+  @override
+  String get devMenuNote =>
+      'Des outils pour vérifier l’app. Rien ici ne modifie votre compte ni vos discussions.';
+
+  @override
+  String get designSystemHint =>
+      'Couleurs, typographie et composants dans les deux thèmes';
+
+  @override
+  String get devMenuRecordSocket => 'Enregistrer les trames WebSocket';
+
+  @override
+  String get devMenuRecordSocketHint =>
+      'Garde les dernières trames en mémoire jusqu’à la fermeture de l’app. Elles contiennent le texte des messages.';
+
+  @override
+  String get devMenuRecordSocketByFlag =>
+      'Activé pour ce compte depuis le serveur';
+
+  @override
+  String get devMenuHide => 'Masquer le menu développeur';
+
+  @override
+  String get devMenuHidden => 'Menu développeur masqué';
+
+  @override
+  String get languageScreenNote =>
+      'Les menus, boutons et dates suivent ce choix. Les messages restent dans la langue où ils ont été écrits.';
 }

@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/localization/app_date_format.dart';
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/storage/file_sharer.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
@@ -183,7 +184,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             subtitle: _presenceLabel(l10n, presence),
             subtitleIsAccent: presence == ProfilePresence.online,
             topPadding: MediaQuery.paddingOf(context).top,
-            onBack: _back,
+            onBack: _hasWayBack ? _back : null,
             onAvatarTap: profile.hasAvatar
                 ? () => context.push(_avatarLocation(profile.id, isMe: isMe))
                 : null,
@@ -255,7 +256,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         : l10n.profileEmptyHintOther,
                   ),
 
-                if (isMe) const _Inset(child: _AccountCard()),
+                if (isMe)
+                  _Inset(child: _AccountCard(besideSettings: !_hasWayBack)),
 
                 SizedBox(
                   height: chatId == null ? AppSpacing.x8 : AppSpacing.x2,
@@ -756,17 +758,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     ];
   }
 
+  /// Whether the bar gets a back arrow. One's own profile opened from the
+  /// settings list in a two-pane window is the right pane with nothing
+  /// under it, and the list beside it is the way back.
+  bool get _hasWayBack =>
+      widget.profileId != null ||
+      !AppLayoutScope.of(context).isTwoPane ||
+      (ModalRoute.of(context)?.impliesAppBarDismissal ?? false);
+
   void _back() {
     if (context.canPop()) {
       context.pop();
       return;
     }
-    final chatId = widget.chatId;
-    context.go(
-      chatId == null
-          ? ProfilesRoute.location
-          : ChatDetailRoute(chatId).location,
-    );
+    context.go(switch ((widget.profileId, widget.chatId)) {
+      // One's own profile is reached from settings.
+      (null, _) => SettingsRoute.location,
+      (_, final String chatId) => ChatDetailRoute(chatId).location,
+      _ => ProfilesRoute.location,
+    });
   }
 }
 
@@ -876,7 +886,11 @@ class _EmptyProfileNote extends StatelessWidget {
 
 /// Settings and devices — the rows that only belong on one's own profile.
 class _AccountCard extends ConsumerWidget {
-  const _AccountCard();
+  const _AccountCard({required this.besideSettings});
+
+  /// The profile is the right pane beside the settings list, which is
+  /// already on screen — a row leading to it would lead nowhere new.
+  final bool besideSettings;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -889,13 +903,14 @@ class _AccountCard extends ConsumerWidget {
 
     return ProfileInfoCard(
       children: [
-        ListTile(
-          leading: const Icon(Icons.settings_outlined),
-          title: Text(l10n.settings),
-          subtitle: Text(l10n.settingsRowHint),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push(SettingsRoute.location),
-        ),
+        if (!besideSettings)
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: Text(l10n.settings),
+            subtitle: Text(l10n.settingsRowHint),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(SettingsRoute.location),
+          ),
         ListTile(
           leading: const Icon(Icons.devices_outlined),
           title: Text(l10n.myDevices),

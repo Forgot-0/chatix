@@ -4136,4 +4136,185 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get apiErrorChatAvatarValidation =>
       'Dieses Bild geht nicht. Wähle ein JPEG, PNG oder WebP bis 5 MB.';
+
+  @override
+  String get settingsSearchHint => 'Einstellungen durchsuchen';
+
+  @override
+  String settingsSearchEmpty(String query) {
+    return 'Nichts gefunden für „$query“';
+  }
+
+  @override
+  String get settingsSearchEmptyHint =>
+      'Versuche ein kürzeres oder anderes Wort.';
+
+  @override
+  String get settingsSearchClear => 'Suche löschen';
+
+  @override
+  String get settingsChatFolders => 'Chatordner';
+
+  @override
+  String get settingsProfileOpen => 'Dein Profil öffnen';
+
+  @override
+  String get settingsPanePlaceholderTitle => 'Wähle einen Bereich';
+
+  @override
+  String get settingsPanePlaceholderHint =>
+      'Alles, was du in ChatiX einstellen kannst, steht links in der Liste.';
+
+  @override
+  String get dataStorageTitle => 'Daten und Speicher';
+
+  @override
+  String get dataStorageUsageSection => 'Speichernutzung';
+
+  @override
+  String get dataStorageCacheTitle => 'Medien-Cache';
+
+  @override
+  String dataStorageUsageOf(String used, String limit) {
+    return '$used von $limit';
+  }
+
+  @override
+  String get dataStorageClearConfirmTitle => 'Medien-Cache leeren?';
+
+  @override
+  String dataStorageClearConfirmBody(String size) {
+    return '$size an heruntergeladenen Fotos, Videos, Dateien und Sprachnachrichten werden von diesem Gerät entfernt. In deinen Chats bleiben sie erhalten und werden beim Öffnen erneut geladen.';
+  }
+
+  @override
+  String get autoDownloadOnMobile => 'Bei mobilen Daten';
+
+  @override
+  String get autoDownloadOnWifi => 'Bei WLAN-Verbindung';
+
+  @override
+  String get dataStorageAutoDownloadFooter =>
+      'Was für mobile Daten an ist, wird auch im WLAN geladen.';
+
+  @override
+  String get dataStorageReset => 'Auto-Download zurücksetzen';
+
+  @override
+  String get dataStorageResetDone => 'Auto-Download ist wieder auf Standard';
+
+  @override
+  String get aboutTitle => 'Über die App';
+
+  @override
+  String get aboutTagline => 'Ein Messenger in deinen Farben';
+
+  @override
+  String get aboutVersion => 'Version';
+
+  @override
+  String aboutVersionValue(String version, String build) {
+    return '$version ($build)';
+  }
+
+  @override
+  String get aboutWhatsNew => 'Neuigkeiten';
+
+  @override
+  String aboutWhatsNewTitle(String version) {
+    return 'Neu in $version';
+  }
+
+  @override
+  String get whatsNewSettingsTitle => 'Neu sortierte Einstellungen';
+
+  @override
+  String get whatsNewSettingsBody =>
+      'Dein Profil oben, farbige Bereiche, eine Suche und eine eigene Seite für Daten und Speicher.';
+
+  @override
+  String get whatsNewFoldersTitle => 'Chatordner';
+
+  @override
+  String get whatsNewFoldersBody =>
+      'Sortiere Unterhaltungen in Ordner und halte die lauten auf Abstand.';
+
+  @override
+  String get whatsNewChatsTitle => 'Gruppen und Kanäle';
+
+  @override
+  String get whatsNewChatsBody =>
+      'Gründe eine Gruppe oder einen Kanal in wenigen Schritten, mit Foto und Beschreibung.';
+
+  @override
+  String get whatsNewDesktopTitle => 'Zu Hause am Computer';
+
+  @override
+  String get whatsNewDesktopBody =>
+      'Tastenkürzel, Dateien einfügen oder hineinziehen, Antworten und Reaktionen per Knopf neben der Nachricht.';
+
+  @override
+  String get aboutPrivacyPolicy => 'Datenschutzerklärung';
+
+  @override
+  String get aboutTerms => 'Nutzungsbedingungen';
+
+  @override
+  String get aboutSupport => 'Support';
+
+  @override
+  String get aboutLicenses => 'Open-Source-Lizenzen';
+
+  @override
+  String get aboutLinkFailed => 'Link konnte nicht geöffnet werden';
+
+  @override
+  String devMenuTapsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Noch $count-mal tippen bis zum Entwicklermenü',
+      one: 'Noch ein Tippen bis zum Entwicklermenü',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devMenuUnlocked =>
+      'Das Entwicklermenü ist offen. Es steht unten in den Einstellungen.';
+
+  @override
+  String get devMenuAlreadyOpen => 'Das Entwicklermenü ist schon offen';
+
+  @override
+  String get devMenuTitle => 'Entwickler';
+
+  @override
+  String get devMenuNote =>
+      'Werkzeuge zum Prüfen der App. Nichts hier ändert dein Konto oder deine Chats.';
+
+  @override
+  String get designSystemHint =>
+      'Farben, Schrift und Komponenten in beiden Designs';
+
+  @override
+  String get devMenuRecordSocket => 'WebSocket-Frames aufzeichnen';
+
+  @override
+  String get devMenuRecordSocketHint =>
+      'Hält die letzten Frames bis zum Schließen der App im Speicher. Sie enthalten Nachrichtentext.';
+
+  @override
+  String get devMenuRecordSocketByFlag =>
+      'Für dieses Konto vom Server eingeschaltet';
+
+  @override
+  String get devMenuHide => 'Entwicklermenü ausblenden';
+
+  @override
+  String get devMenuHidden => 'Entwicklermenü ausgeblendet';
+
+  @override
+  String get languageScreenNote =>
+      'Menüs, Schaltflächen und Datumsangaben folgen dieser Wahl. Nachrichten bleiben in der Sprache, in der sie geschrieben wurden.';
 }

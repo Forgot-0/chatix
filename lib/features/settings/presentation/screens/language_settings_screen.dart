@@ -1,41 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:chatix/core/localization/language_selector_widget.dart';
-import 'package:chatix/core/ui/widgets/app_content_width.dart';
-import 'package:chatix/l10n/l10n.dart';
 
+import 'package:chatix/core/providers/localization_providers.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/cards/app_grouped_section.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart';
+import 'package:chatix/l10n/app_localizations_delegate.dart';
+import 'package:chatix/l10n/l10n.dart' as legacy;
+
+/// Settings → Language: every language the app is translated into, each
+/// under its own name, the one on screen ticked.
+///
+/// Names are written the way their speakers write them — "Русский", not
+/// "Russian" — because the person looking for their language may not read
+/// the one the app is in now.
 class LanguageSettingsScreen extends ConsumerWidget {
   const LanguageSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final current = Localizations.localeOf(context).languageCode;
+
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('language_settings'))),
+      appBar: AppBar(title: Text(l10n.language)),
       body: AppContentWidth(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  context.tr('select_your_language'),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-
-              const Expanded(child: Card(child: LanguageSelectorWidget())),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  context.tr('language_explanation'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ],
+        child: ListView(
+          key: const PageStorageKey<String>('language-list'),
+          padding: const EdgeInsets.only(
+            top: AppSpacing.x2,
+            bottom: AppSpacing.x8,
           ),
+          children: [
+            AppGroupedSection(
+              footer: l10n.languageScreenNote,
+              dividerIndent: AppSpacing.x4,
+              children: [
+                for (final locale in legacy.AppLocalizations.supportedLocales)
+                  Semantics(
+                    inMutuallyExclusiveGroup: true,
+                    checked: locale.languageCode == current,
+                    child: AppGroupedTile(
+                      title: LocalizationUtils.getLocaleName(locale),
+                      showChevron: false,
+                      trailing: locale.languageCode == current
+                          ? Icon(Icons.check_rounded, color: scheme.primary)
+                          : null,
+                      onTap: () => ref
+                          .read(persistentLocaleProvider.notifier)
+                          .setLocale(locale),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
-import 'package:chatix/core/settings/media_settings.dart';
+import 'package:chatix/core/settings/send_shortcut.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
+import 'package:chatix/core/ui/desktop/desktop_input.dart';
 import 'package:chatix/core/ui/wallpaper/mesh_wallpaper.dart';
 import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/features/settings/presentation/widgets/accent_picker.dart';
 import 'package:chatix/features/settings/presentation/widgets/appearance_preview.dart';
-import 'package:chatix/features/settings/presentation/widgets/cache_settings.dart';
 import 'package:chatix/features/settings/presentation/widgets/wallpaper_gallery.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// Everything about how ChatiX looks, on one screen, applied as it is
-/// touched.
+/// Everything about how ChatiX looks and feels, on one screen, applied as
+/// it is touched. What it downloads and keeps on disk moved to Data and
+/// storage.
 ///
 /// The preview at the top is the contract: nothing here is written down
 /// without being visible first, and nothing is visible that is not what a
@@ -258,65 +258,16 @@ class AppearanceSettingsScreen extends ConsumerWidget {
               secondary: const Icon(Icons.vibration_outlined),
             ),
 
-            const Divider(height: AppSpacing.x6),
-
-            // ── Media ──────────────────────────────────────────────────────
-            _SectionLabel(label: l10n.mediaSectionTitle),
-            _Hint(text: l10n.autoDownloadHint),
-            for (final kind in MediaKind.values) _AutoDownloadRow(kind: kind),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x4,
-                AppSpacing.x4,
-                AppSpacing.x4,
-                AppSpacing.x2,
-              ),
-              child: Text(
-                l10n.mediaAutoplay,
-                style: theme.textTheme.titleSmall,
-              ),
-            ),
-            _Hint(text: l10n.mediaAutoplayHint),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
-              child: SegmentedButton<MediaAutoplay>(
-                segments: [
-                  ButtonSegment(
-                    value: MediaAutoplay.always,
-                    label: Text(l10n.mediaAutoplayAlways),
-                  ),
-                  ButtonSegment(
-                    value: MediaAutoplay.wifiOnly,
-                    label: Text(l10n.mediaAutoplayWifi),
-                  ),
-                  ButtonSegment(
-                    value: MediaAutoplay.never,
-                    label: Text(l10n.mediaAutoplayNever),
-                  ),
-                ],
-                selected: {
-                  ref.watch(
-                    mediaSettingsProvider.select((s) => s.videoNoteAutoplay),
-                  ),
-                },
-                showSelectedIcon: false,
-                onSelectionChanged: (selection) => ref
-                    .read(mediaSettingsProvider.notifier)
-                    .setVideoNoteAutoplay(selection.first),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.x4,
-                AppSpacing.x5,
-                AppSpacing.x4,
-                AppSpacing.x2,
-              ),
-              child: Text(l10n.cacheLimit, style: theme.textTheme.titleSmall),
-            ),
-            const CacheSettingsSection(),
+            // ── Keyboard ───────────────────────────────────────────────────
+            //
+            // A physical keyboard's own question; a phone has no Enter to
+            // send with. Here rather than on the settings list because it
+            // is about how a conversation behaves, like the haptics above.
+            if (DesktopInput.isDesktop) ...[
+              const Divider(height: AppSpacing.x6),
+              _SectionLabel(label: l10n.settingsKeyboardSection),
+              const _SendShortcutTile(),
+            ],
 
             const Divider(height: AppSpacing.x6),
 
@@ -328,68 +279,13 @@ class AppearanceSettingsScreen extends ConsumerWidget {
                 AppSpacing.x4,
               ),
               child: OutlinedButton.icon(
-                onPressed: () async {
-                  await controller.reset();
-                  await ref.read(mediaSettingsProvider.notifier).reset();
-                },
+                onPressed: controller.reset,
                 icon: const Icon(Icons.restart_alt),
                 label: Text(l10n.resetAppearance),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// One auto-download kind and the three answers it takes.
-class _AutoDownloadRow extends ConsumerWidget {
-  const _AutoDownloadRow({required this.kind});
-
-  final MediaKind kind;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final policy = ref.watch(
-      mediaSettingsProvider.select((settings) => settings.policyFor(kind)),
-    );
-
-    return ListTile(
-      leading: Icon(switch (kind) {
-        MediaKind.photo => Icons.photo_outlined,
-        MediaKind.video => Icons.movie_outlined,
-        MediaKind.file => Icons.insert_drive_file_outlined,
-        MediaKind.voice => Icons.mic_none_outlined,
-      }),
-      title: Text(switch (kind) {
-        MediaKind.photo => l10n.autoDownloadPhotos,
-        MediaKind.video => l10n.autoDownloadVideos,
-        MediaKind.file => l10n.autoDownloadFiles,
-        MediaKind.voice => l10n.autoDownloadVoice,
-      }),
-      trailing: DropdownButton<MediaAutoDownload>(
-        value: policy,
-        underline: const SizedBox.shrink(),
-        onChanged: (value) {
-          if (value == null) return;
-          ref.read(mediaSettingsProvider.notifier).setAutoDownload(kind, value);
-        },
-        items: [
-          DropdownMenuItem(
-            value: MediaAutoDownload.always,
-            child: Text(l10n.autoDownloadMobile),
-          ),
-          DropdownMenuItem(
-            value: MediaAutoDownload.wifiOnly,
-            child: Text(l10n.autoDownloadWifi),
-          ),
-          DropdownMenuItem(
-            value: MediaAutoDownload.never,
-            child: Text(l10n.autoDownloadNever),
-          ),
-        ],
       ),
     );
   }
@@ -551,6 +447,39 @@ class _SectionLabel extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+    );
+  }
+}
+
+/// Enter or Ctrl+Enter (Cmd+Enter on a Mac) to send.
+///
+/// Worded as the switch's "on": sending with the modifier is the choice
+/// somebody makes on purpose, and the line under it says what each key
+/// does now, so nobody has to remember which way round the default was.
+class _SendShortcutTile extends ConsumerWidget {
+  const _SendShortcutTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final modifier = DesktopInput.usesCommandKey
+        ? l10n.keyboardCommandKey
+        : l10n.keyboardControlKey;
+    final withModifier =
+        ref.watch(sendShortcutProvider) == SendShortcut.modifierEnter;
+
+    return SwitchListTile(
+      secondary: const Icon(Icons.keyboard_return_rounded),
+      title: Text(l10n.settingsSendWithModifierEnter(modifier)),
+      subtitle: Text(
+        withModifier
+            ? l10n.settingsSendWithModifierEnterOn(modifier)
+            : l10n.settingsSendWithModifierEnterOff,
+      ),
+      value: withModifier,
+      onChanged: (value) => ref
+          .read(sendShortcutProvider.notifier)
+          .set(value ? SendShortcut.modifierEnter : SendShortcut.enter),
     );
   }
 }

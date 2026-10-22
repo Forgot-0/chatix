@@ -5177,5 +5177,241 @@
   "apiErrorChatAvatarValidation": "That picture can't be used. Pick a JPEG, PNG or WebP up to 5 MB.",
   "@apiErrorChatAvatarValidation": {
     "description": "CHAT_AVATAR_VALIDATION: the picture is of the wrong type or too big"
+  },
+  "settingsSearchHint": "Search settings",
+  "@settingsSearchHint": {
+    "description": "Hint in the search field over the settings list."
+  },
+  "settingsSearchEmpty": "Nothing found for “{query}”",
+  "@settingsSearchEmpty": {
+    "description": "Settings search found nothing for the typed words.",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSearchEmptyHint": "Try a shorter or a different word.",
+  "@settingsSearchEmptyHint": {
+    "description": "Under the empty settings search result."
+  },
+  "settingsSearchClear": "Clear search",
+  "@settingsSearchClear": {
+    "description": "Tooltip of the button that empties the settings search field."
+  },
+  "settingsChatFolders": "Chat folders",
+  "@settingsChatFolders": {
+    "description": "Settings row that opens the chat folders screen."
+  },
+  "settingsProfileOpen": "Open your profile",
+  "@settingsProfileOpen": {
+    "description": "Screen reader hint for the profile card at the top of settings."
+  },
+  "settingsPanePlaceholderTitle": "Pick a section",
+  "@settingsPanePlaceholderTitle": {
+    "description": "Right pane of a wide window before a settings section is picked."
+  },
+  "settingsPanePlaceholderHint": "Everything you can set up in ChatiX is in the list on the left.",
+  "@settingsPanePlaceholderHint": {
+    "description": "Under the placeholder title in the settings right pane."
+  },
+  "dataStorageTitle": "Data and storage",
+  "@dataStorageTitle": {
+    "description": "Settings section: auto-download, cache and autoplay."
+  },
+  "dataStorageUsageSection": "Storage usage",
+  "@dataStorageUsageSection": {
+    "description": "Caption over the cache card in Data and storage."
+  },
+  "dataStorageCacheTitle": "Media cache",
+  "@dataStorageCacheTitle": {
+    "description": "The downloaded-attachments cache, as a row title."
+  },
+  "dataStorageUsageOf": "{used} of {limit}",
+  "@dataStorageUsageOf": {
+    "description": "How much of the cache limit is in use: \"120 MB of 256 MB\".",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "dataStorageClearConfirmTitle": "Clear the media cache?",
+  "@dataStorageClearConfirmTitle": {
+    "description": "Title of the dialog before the media cache is emptied."
+  },
+  "dataStorageClearConfirmBody": "{size} of downloaded photos, videos, files and voice messages will be removed from this device. They stay in your chats and download again when you open them.",
+  "@dataStorageClearConfirmBody": {
+    "description": "Body of the clear-cache dialog; size is how much will be freed.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "autoDownloadOnMobile": "When using mobile data",
+  "@autoDownloadOnMobile": {
+    "description": "Caption over the auto-download switches for mobile data."
+  },
+  "autoDownloadOnWifi": "When connected to Wi-Fi",
+  "@autoDownloadOnWifi": {
+    "description": "Caption over the auto-download switches for Wi-Fi."
+  },
+  "dataStorageAutoDownloadFooter": "Anything turned on for mobile data is fetched on Wi-Fi too.",
+  "@dataStorageAutoDownloadFooter": {
+    "description": "Under the mobile-data switches: mobile implies Wi-Fi."
+  },
+  "dataStorageReset": "Reset auto-download settings",
+  "@dataStorageReset": {
+    "description": "Button that puts auto-download and video-note autoplay back to default; the cache limit stays."
+  },
+  "dataStorageResetDone": "Auto-download settings are back to default",
+  "@dataStorageResetDone": {
+    "description": "Toast after the auto-download settings were reset."
+  },
+  "aboutTitle": "About",
+  "@aboutTitle": {
+    "description": "Settings section with the version, what is new and links."
+  },
+  "aboutTagline": "A messenger in your colours",
+  "@aboutTagline": {
+    "description": "One line under the app name on the About screen."
+  },
+  "aboutVersion": "Version",
+  "@aboutVersion": {
+    "description": "Row title: the app version."
+  },
+  "aboutVersionValue": "{version} ({build})",
+  "@aboutVersionValue": {
+    "description": "The version and build number, e.g. \"1.0.0 (1)\".",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutWhatsNew": "What’s new",
+  "@aboutWhatsNew": {
+    "description": "Row that opens the release notes."
+  },
+  "aboutWhatsNewTitle": "What’s new in {version}",
+  "@aboutWhatsNewTitle": {
+    "description": "Title of the release notes sheet.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "whatsNewSettingsTitle": "Settings, regrouped",
+  "@whatsNewSettingsTitle": {
+    "description": "Release note: settings were regrouped."
+  },
+  "whatsNewSettingsBody": "Your profile on top, coloured sections, search, and a page of its own for data and storage.",
+  "@whatsNewSettingsBody": {
+    "description": "Release note body for the settings change."
+  },
+  "whatsNewFoldersTitle": "Chat folders",
+  "@whatsNewFoldersTitle": {
+    "description": "Release note: chat folders."
+  },
+  "whatsNewFoldersBody": "Sort conversations into folders and keep the busy ones out of the way.",
+  "@whatsNewFoldersBody": {
+    "description": "Release note body for chat folders."
+  },
+  "whatsNewChatsTitle": "Groups and channels",
+  "@whatsNewChatsTitle": {
+    "description": "Release note: creating groups and channels."
+  },
+  "whatsNewChatsBody": "Start a group or a channel in a couple of steps, with a photo and a description.",
+  "@whatsNewChatsBody": {
+    "description": "Release note body for groups and channels."
+  },
+  "whatsNewDesktopTitle": "At home on a desktop",
+  "@whatsNewDesktopTitle": {
+    "description": "Release note: desktop improvements."
+  },
+  "whatsNewDesktopBody": "Keyboard shortcuts, paste or drop files to send them, reply and react from the buttons by a message.",
+  "@whatsNewDesktopBody": {
+    "description": "Release note body for desktop improvements."
+  },
+  "aboutPrivacyPolicy": "Privacy policy",
+  "@aboutPrivacyPolicy": {
+    "description": "Link row in About."
+  },
+  "aboutTerms": "Terms of service",
+  "@aboutTerms": {
+    "description": "Link row in About."
+  },
+  "aboutSupport": "Support",
+  "@aboutSupport": {
+    "description": "Link row in About."
+  },
+  "aboutLicenses": "Open-source licences",
+  "@aboutLicenses": {
+    "description": "Row that opens the open-source licence list."
+  },
+  "aboutLinkFailed": "Couldn’t open the link",
+  "@aboutLinkFailed": {
+    "description": "Toast when a link from About could not be opened."
+  },
+  "devMenuTapsLeft": "{count, plural, =1{One more tap to open the developer menu} other{{count} more taps to open the developer menu}}",
+  "@devMenuTapsLeft": {
+    "description": "Toast while the version is tapped: taps left until the developer menu opens.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "devMenuUnlocked": "Developer menu is open. It’s at the bottom of Settings.",
+  "@devMenuUnlocked": {
+    "description": "Toast when seven taps opened the developer menu."
+  },
+  "devMenuAlreadyOpen": "The developer menu is already open",
+  "@devMenuAlreadyOpen": {
+    "description": "Toast when the version is tapped while the developer menu is already open."
+  },
+  "devMenuTitle": "Developer",
+  "@devMenuTitle": {
+    "description": "The hidden developer menu, as a settings row and a screen title."
+  },
+  "devMenuNote": "Tools for checking the app. Nothing here changes your account or your chats.",
+  "@devMenuNote": {
+    "description": "Note under the developer menu tools."
+  },
+  "designSystemHint": "Colours, type and components in both themes",
+  "@designSystemHint": {
+    "description": "Subtitle of the design system row in the developer menu."
+  },
+  "devMenuRecordSocket": "Record WebSocket frames",
+  "@devMenuRecordSocket": {
+    "description": "Developer switch that records WebSocket frames."
+  },
+  "devMenuRecordSocketHint": "Keeps the latest frames in memory until the app closes. They include message text.",
+  "@devMenuRecordSocketHint": {
+    "description": "Under the record-frames switch."
+  },
+  "devMenuRecordSocketByFlag": "Turned on for this account from the server",
+  "@devMenuRecordSocketByFlag": {
+    "description": "Under the record-frames switch when the server already turned recording on."
+  },
+  "devMenuHide": "Hide developer menu",
+  "@devMenuHide": {
+    "description": "Button that hides the developer menu again."
+  },
+  "devMenuHidden": "Developer menu hidden",
+  "@devMenuHidden": {
+    "description": "Toast after the developer menu was hidden."
+  },
+  "languageScreenNote": "Menus, buttons and dates follow this choice. Messages stay in the language they were written in.",
+  "@languageScreenNote": {
+    "description": "Note under the list of languages."
   }
 }

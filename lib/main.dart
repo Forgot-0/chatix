@@ -14,6 +14,7 @@ import 'package:chatix/core/providers/theme_providers.dart';
 import 'package:chatix/core/notifications/notification_providers.dart';
 import 'package:chatix/core/router/app_router.dart';
 import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/settings/dev_menu.dart';
 import 'package:chatix/core/settings/send_shortcut.dart';
 import 'package:chatix/core/ui/desktop/app_platform_menus.dart';
 import 'package:chatix/core/ui/desktop/desktop_scrolling.dart';
@@ -91,6 +92,12 @@ void main() async {
         // keystroke in it already has to follow the choice.
         sendShortcutStoreProvider.overrideWithValue(
           PrefsSendShortcutStore(sharedPreferences),
+        ),
+
+        // Seven taps on the version open the developer menu for good, in a
+        // release build too — the router asks before it lets anyone in.
+        devMenuStoreProvider.overrideWithValue(
+          PrefsDevMenuStore(sharedPreferences),
         ),
 
         // Push needs to know about chats, about the reader's local

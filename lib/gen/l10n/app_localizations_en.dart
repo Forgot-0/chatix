@@ -4081,4 +4081,184 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get apiErrorChatAvatarValidation =>
       'That picture can\'t be used. Pick a JPEG, PNG or WebP up to 5 MB.';
+
+  @override
+  String get settingsSearchHint => 'Search settings';
+
+  @override
+  String settingsSearchEmpty(String query) {
+    return 'Nothing found for “$query”';
+  }
+
+  @override
+  String get settingsSearchEmptyHint => 'Try a shorter or a different word.';
+
+  @override
+  String get settingsSearchClear => 'Clear search';
+
+  @override
+  String get settingsChatFolders => 'Chat folders';
+
+  @override
+  String get settingsProfileOpen => 'Open your profile';
+
+  @override
+  String get settingsPanePlaceholderTitle => 'Pick a section';
+
+  @override
+  String get settingsPanePlaceholderHint =>
+      'Everything you can set up in ChatiX is in the list on the left.';
+
+  @override
+  String get dataStorageTitle => 'Data and storage';
+
+  @override
+  String get dataStorageUsageSection => 'Storage usage';
+
+  @override
+  String get dataStorageCacheTitle => 'Media cache';
+
+  @override
+  String dataStorageUsageOf(String used, String limit) {
+    return '$used of $limit';
+  }
+
+  @override
+  String get dataStorageClearConfirmTitle => 'Clear the media cache?';
+
+  @override
+  String dataStorageClearConfirmBody(String size) {
+    return '$size of downloaded photos, videos, files and voice messages will be removed from this device. They stay in your chats and download again when you open them.';
+  }
+
+  @override
+  String get autoDownloadOnMobile => 'When using mobile data';
+
+  @override
+  String get autoDownloadOnWifi => 'When connected to Wi-Fi';
+
+  @override
+  String get dataStorageAutoDownloadFooter =>
+      'Anything turned on for mobile data is fetched on Wi-Fi too.';
+
+  @override
+  String get dataStorageReset => 'Reset auto-download settings';
+
+  @override
+  String get dataStorageResetDone =>
+      'Auto-download settings are back to default';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get aboutTagline => 'A messenger in your colours';
+
+  @override
+  String get aboutVersion => 'Version';
+
+  @override
+  String aboutVersionValue(String version, String build) {
+    return '$version ($build)';
+  }
+
+  @override
+  String get aboutWhatsNew => 'What’s new';
+
+  @override
+  String aboutWhatsNewTitle(String version) {
+    return 'What’s new in $version';
+  }
+
+  @override
+  String get whatsNewSettingsTitle => 'Settings, regrouped';
+
+  @override
+  String get whatsNewSettingsBody =>
+      'Your profile on top, coloured sections, search, and a page of its own for data and storage.';
+
+  @override
+  String get whatsNewFoldersTitle => 'Chat folders';
+
+  @override
+  String get whatsNewFoldersBody =>
+      'Sort conversations into folders and keep the busy ones out of the way.';
+
+  @override
+  String get whatsNewChatsTitle => 'Groups and channels';
+
+  @override
+  String get whatsNewChatsBody =>
+      'Start a group or a channel in a couple of steps, with a photo and a description.';
+
+  @override
+  String get whatsNewDesktopTitle => 'At home on a desktop';
+
+  @override
+  String get whatsNewDesktopBody =>
+      'Keyboard shortcuts, paste or drop files to send them, reply and react from the buttons by a message.';
+
+  @override
+  String get aboutPrivacyPolicy => 'Privacy policy';
+
+  @override
+  String get aboutTerms => 'Terms of service';
+
+  @override
+  String get aboutSupport => 'Support';
+
+  @override
+  String get aboutLicenses => 'Open-source licences';
+
+  @override
+  String get aboutLinkFailed => 'Couldn’t open the link';
+
+  @override
+  String devMenuTapsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more taps to open the developer menu',
+      one: 'One more tap to open the developer menu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devMenuUnlocked =>
+      'Developer menu is open. It’s at the bottom of Settings.';
+
+  @override
+  String get devMenuAlreadyOpen => 'The developer menu is already open';
+
+  @override
+  String get devMenuTitle => 'Developer';
+
+  @override
+  String get devMenuNote =>
+      'Tools for checking the app. Nothing here changes your account or your chats.';
+
+  @override
+  String get designSystemHint => 'Colours, type and components in both themes';
+
+  @override
+  String get devMenuRecordSocket => 'Record WebSocket frames';
+
+  @override
+  String get devMenuRecordSocketHint =>
+      'Keeps the latest frames in memory until the app closes. They include message text.';
+
+  @override
+  String get devMenuRecordSocketByFlag =>
+      'Turned on for this account from the server';
+
+  @override
+  String get devMenuHide => 'Hide developer menu';
+
+  @override
+  String get devMenuHidden => 'Developer menu hidden';
+
+  @override
+  String get languageScreenNote =>
+      'Menus, buttons and dates follow this choice. Messages stay in the language they were written in.';
 }

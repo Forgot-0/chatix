@@ -39,6 +39,9 @@ enum ChatAvatarSize {
   /// Chat-list rows.
   lg(52),
 
+  /// One's own face on the card at the top of settings.
+  card(64),
+
   /// A chat's profile header.
   xl(96),
 

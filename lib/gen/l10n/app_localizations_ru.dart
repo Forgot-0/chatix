@@ -4140,4 +4140,185 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get apiErrorChatAvatarValidation =>
       'Эту картинку нельзя использовать. Выберите JPEG, PNG или WebP до 5 МБ.';
+
+  @override
+  String get settingsSearchHint => 'Поиск по настройкам';
+
+  @override
+  String settingsSearchEmpty(String query) {
+    return 'По запросу «$query» ничего нет';
+  }
+
+  @override
+  String get settingsSearchEmptyHint => 'Попробуйте слово короче или другое.';
+
+  @override
+  String get settingsSearchClear => 'Очистить поиск';
+
+  @override
+  String get settingsChatFolders => 'Папки с чатами';
+
+  @override
+  String get settingsProfileOpen => 'Открыть свой профиль';
+
+  @override
+  String get settingsPanePlaceholderTitle => 'Выберите раздел';
+
+  @override
+  String get settingsPanePlaceholderHint =>
+      'Всё, что можно настроить в ChatiX, — в списке слева.';
+
+  @override
+  String get dataStorageTitle => 'Данные и память';
+
+  @override
+  String get dataStorageUsageSection => 'Использование памяти';
+
+  @override
+  String get dataStorageCacheTitle => 'Кэш медиа';
+
+  @override
+  String dataStorageUsageOf(String used, String limit) {
+    return '$used из $limit';
+  }
+
+  @override
+  String get dataStorageClearConfirmTitle => 'Очистить кэш медиа?';
+
+  @override
+  String dataStorageClearConfirmBody(String size) {
+    return 'С устройства удалятся скачанные фото, видео, файлы и голосовые — $size. В чатах они останутся и скачаются снова, когда вы их откроете.';
+  }
+
+  @override
+  String get autoDownloadOnMobile => 'Через мобильную сеть';
+
+  @override
+  String get autoDownloadOnWifi => 'Через Wi-Fi';
+
+  @override
+  String get dataStorageAutoDownloadFooter =>
+      'Всё, что включено для мобильной сети, скачивается и через Wi-Fi.';
+
+  @override
+  String get dataStorageReset => 'Сбросить настройки автозагрузки';
+
+  @override
+  String get dataStorageResetDone => 'Настройки автозагрузки сброшены';
+
+  @override
+  String get aboutTitle => 'О приложении';
+
+  @override
+  String get aboutTagline => 'Мессенджер в ваших цветах';
+
+  @override
+  String get aboutVersion => 'Версия';
+
+  @override
+  String aboutVersionValue(String version, String build) {
+    return '$version ($build)';
+  }
+
+  @override
+  String get aboutWhatsNew => 'Что нового';
+
+  @override
+  String aboutWhatsNewTitle(String version) {
+    return 'Что нового в версии $version';
+  }
+
+  @override
+  String get whatsNewSettingsTitle => 'Настройки по-новому';
+
+  @override
+  String get whatsNewSettingsBody =>
+      'Профиль сверху, цветные разделы, поиск и отдельная страница для данных и памяти.';
+
+  @override
+  String get whatsNewFoldersTitle => 'Папки с чатами';
+
+  @override
+  String get whatsNewFoldersBody =>
+      'Разложите переписки по папкам, а шумные уберите с глаз.';
+
+  @override
+  String get whatsNewChatsTitle => 'Группы и каналы';
+
+  @override
+  String get whatsNewChatsBody =>
+      'Группу или канал можно создать в пару шагов — сразу с фото и описанием.';
+
+  @override
+  String get whatsNewDesktopTitle => 'Удобно на компьютере';
+
+  @override
+  String get whatsNewDesktopBody =>
+      'Горячие клавиши, вставка и перетаскивание файлов, ответ и реакция кнопками у сообщения.';
+
+  @override
+  String get aboutPrivacyPolicy => 'Политика конфиденциальности';
+
+  @override
+  String get aboutTerms => 'Условия использования';
+
+  @override
+  String get aboutSupport => 'Поддержка';
+
+  @override
+  String get aboutLicenses => 'Лицензии открытого ПО';
+
+  @override
+  String get aboutLinkFailed => 'Не удалось открыть ссылку';
+
+  @override
+  String devMenuTapsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ещё $count нажатия — и откроется меню разработчика',
+      many: 'Ещё $count нажатий — и откроется меню разработчика',
+      few: 'Ещё $count нажатия — и откроется меню разработчика',
+      one: 'Ещё $count нажатие — и откроется меню разработчика',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devMenuUnlocked =>
+      'Меню разработчика открыто — оно внизу настроек.';
+
+  @override
+  String get devMenuAlreadyOpen => 'Меню разработчика уже открыто';
+
+  @override
+  String get devMenuTitle => 'Для разработчиков';
+
+  @override
+  String get devMenuNote =>
+      'Инструменты для проверки приложения. Ничто здесь не меняет ваш аккаунт и чаты.';
+
+  @override
+  String get designSystemHint => 'Цвета, шрифты и компоненты в обеих темах';
+
+  @override
+  String get devMenuRecordSocket => 'Записывать кадры WebSocket';
+
+  @override
+  String get devMenuRecordSocketHint =>
+      'Хранит последние кадры в памяти до закрытия приложения. В них есть текст сообщений.';
+
+  @override
+  String get devMenuRecordSocketByFlag =>
+      'Включено для этого аккаунта с сервера';
+
+  @override
+  String get devMenuHide => 'Скрыть меню разработчика';
+
+  @override
+  String get devMenuHidden => 'Меню разработчика скрыто';
+
+  @override
+  String get languageScreenNote =>
+      'Меню, кнопки и даты будут на выбранном языке. Сообщения останутся на том, на котором их написали.';
 }

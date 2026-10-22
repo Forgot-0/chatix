@@ -47,6 +47,31 @@ enum MediaAutoDownload {
     MediaAutoDownload.never => false,
   };
 
+  /// Whether this policy fetches over mobile data — the "mobile" switch
+  /// settings draw for it.
+  bool get onMobile => allowsOn(unmetered: false);
+
+  /// Whether it fetches over Wi-Fi — the "Wi-Fi" switch.
+  bool get onWifi => allowsOn(unmetered: true);
+
+  /// The policy after the mobile-data switch is flipped to [enabled].
+  ///
+  /// Settings show the three answers as two switches, one per kind of
+  /// network, and the two are not independent: anything worth spending
+  /// mobile data on is worth fetching on Wi-Fi. So turning mobile on turns
+  /// Wi-Fi on with it, and turning it off leaves Wi-Fi as it was.
+  MediaAutoDownload withMobile(bool enabled) {
+    if (enabled) return MediaAutoDownload.always;
+    return this == MediaAutoDownload.always ? MediaAutoDownload.wifiOnly : this;
+  }
+
+  /// The policy after the Wi-Fi switch is flipped to [enabled]. Turning
+  /// Wi-Fi off turns mobile off with it, for the same reason.
+  MediaAutoDownload withWifi(bool enabled) {
+    if (!enabled) return MediaAutoDownload.never;
+    return this == MediaAutoDownload.never ? MediaAutoDownload.wifiOnly : this;
+  }
+
   static MediaAutoDownload fromName(
     String? value,
     MediaAutoDownload fallback,

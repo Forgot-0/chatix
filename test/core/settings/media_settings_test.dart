@@ -124,4 +124,66 @@ void main() {
     }
     expect(steps, contains(MediaSettings.defaultCacheLimitBytes));
   });
+
+  // Settings draws the three answers as a mobile-data switch and a Wi-Fi
+  // switch per kind; these are the rules that keep the two in step.
+  group('as two switches', () {
+    test('read back as the networks each answer fetches on', () {
+      expect(MediaAutoDownload.always.onMobile, isTrue);
+      expect(MediaAutoDownload.always.onWifi, isTrue);
+      expect(MediaAutoDownload.wifiOnly.onMobile, isFalse);
+      expect(MediaAutoDownload.wifiOnly.onWifi, isTrue);
+      expect(MediaAutoDownload.never.onMobile, isFalse);
+      expect(MediaAutoDownload.never.onWifi, isFalse);
+    });
+
+    test('mobile on fetches everywhere, whatever it was', () {
+      for (final policy in MediaAutoDownload.values) {
+        expect(policy.withMobile(true), MediaAutoDownload.always);
+      }
+    });
+
+    test('mobile off keeps Wi-Fi as it was', () {
+      expect(
+        MediaAutoDownload.always.withMobile(false),
+        MediaAutoDownload.wifiOnly,
+      );
+      expect(
+        MediaAutoDownload.wifiOnly.withMobile(false),
+        MediaAutoDownload.wifiOnly,
+      );
+      expect(
+        MediaAutoDownload.never.withMobile(false),
+        MediaAutoDownload.never,
+      );
+    });
+
+    test('Wi-Fi off stops everything, mobile included', () {
+      for (final policy in MediaAutoDownload.values) {
+        expect(policy.withWifi(false), MediaAutoDownload.never);
+      }
+    });
+
+    test('Wi-Fi on keeps mobile as it was', () {
+      expect(
+        MediaAutoDownload.never.withWifi(true),
+        MediaAutoDownload.wifiOnly,
+      );
+      expect(
+        MediaAutoDownload.wifiOnly.withWifi(true),
+        MediaAutoDownload.wifiOnly,
+      );
+      expect(MediaAutoDownload.always.withWifi(true), MediaAutoDownload.always);
+    });
+
+    test('no flip of either switch reaches "mobile without Wi-Fi"', () {
+      for (final policy in MediaAutoDownload.values) {
+        for (final on in [true, false]) {
+          for (final next in [policy.withMobile(on), policy.withWifi(on)]) {
+            expect(next.onMobile && !next.onWifi, isFalse);
+          }
+        }
+      }
+    });
+  });
 }

@@ -4,14 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:chatix/core/localization/language_selector_widget.dart';
+import 'package:chatix/core/providers/localization_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/features/settings/presentation/screens/language_settings_screen.dart';
+import 'package:chatix/gen/l10n/app_localizations.dart' as arb;
+import 'package:chatix/l10n/app_localizations_delegate.dart';
 import 'package:chatix/l10n/l10n.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> pump(WidgetTester tester, Widget home, Size size) async {
+  Future<ProviderContainer> pump(
+    WidgetTester tester,
+    Widget home,
+    Size size,
+  ) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -19,50 +26,70 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: home,
+      UncontrolledProviderScope(
+        container: container,
+        // The app's own wiring: the screen follows the chosen locale.
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp(
+            locale: ref.watch(persistentLocaleProvider),
+            localizationsDelegates: [
+              ...AppLocalizations.localizationsDelegates,
+              arb.AppLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: home,
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+    return container;
   }
 
-  testWidgets(
-    'the language list scrolls instead of overflowing a short screen',
-    (tester) async {
-      // Shorter than the six locales need: the list used to be laid out at its
-      // natural height inside an Expanded and blew the Column by ~45px.
-      await pump(tester, const LanguageSettingsScreen(), const Size(400, 500));
-
-      expect(tester.takeException(), isNull);
-
-      final list = find.descendant(
-        of: find.byType(LanguageSelectorWidget),
-        matching: find.byType(Scrollable),
-      );
-      expect(list, findsOneWidget);
-
-      await tester.drag(list, const Offset(0, -120));
-      await tester.pumpAndSettle();
-
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets('a tall screen still lays the list out at its natural height', (
+  testWidgets('every language under its own name, Russian included', (
     tester,
   ) async {
     await pump(tester, const LanguageSettingsScreen(), const Size(400, 1400));
 
     expect(tester.takeException(), isNull);
+    expect(AppLocalizations.supportedLocales, contains(const Locale('ru')));
     for (final locale in AppLocalizations.supportedLocales) {
-      expect(find.text(locale.languageCode.toUpperCase()), findsWidgets);
+      expect(
+        find.text(LocalizationUtils.getLocaleName(locale)),
+        findsOneWidget,
+      );
     }
+    expect(find.text('Русский'), findsOneWidget);
+  });
+
+  testWidgets('picking one switches the app to it, ticked', (tester) async {
+    final container = await pump(
+      tester,
+      const LanguageSettingsScreen(),
+      const Size(400, 1400),
+    );
+
+    await tester.tap(find.text('Русский'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(persistentLocaleProvider), const Locale('ru'));
+    // The screen itself is now in Russian, and says which one is on.
+    expect(find.text('Язык'), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+  });
+
+  testWidgets('a short screen scrolls rather than overflowing', (tester) async {
+    await pump(tester, const LanguageSettingsScreen(), const Size(400, 360));
+
+    await tester.drag(find.byType(Scrollable).last, const Offset(0, -200));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the dialog keeps the list inside the viewport', (tester) async {

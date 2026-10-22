@@ -1,191 +1,369 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:chatix/core/feature_flags/feature_flag_providers.dart';
 import 'package:chatix/core/router/app_routes.dart';
-import 'package:chatix/core/settings/send_shortcut.dart';
+import 'package:chatix/core/settings/dev_menu.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/cards/app_grouped_section.dart';
 import 'package:chatix/core/ui/desktop/desktop_input.dart';
-import 'package:chatix/core/ui/feedback/app_snackbar.dart';
+import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
+import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/core/ui/typography/highlighted_text.dart';
 import 'package:chatix/core/ui/widgets/app_content_width.dart';
-import 'package:chatix/core/websocket/socket_protocol_log.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/features/notification/presentation/widgets/notification_bell.dart';
-import 'package:chatix/features/settings/presentation/widgets/settings_section_header.dart';
+import 'package:chatix/features/settings/presentation/utils/settings_catalog.dart';
+import 'package:chatix/features/settings/presentation/utils/settings_navigation.dart';
+import 'package:chatix/features/settings/presentation/widgets/settings_profile_card.dart';
 import 'package:chatix/features/settings/presentation/widgets/sign_out_tile.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
+import 'package:chatix/l10n/app_localizations_delegate.dart';
 
-class SettingsScreen extends ConsumerWidget {
-  const SettingsScreen({super.key});
+/// The settings list: the reader's card, then the sections in coloured
+/// groups, then signing out on a card of its own.
+///
+/// On a phone it is the whole tab and every row pushes its section. In a
+/// two-pane window it is the left pane and [selected] is the section open
+/// beside it, kept marked the way the chat list marks the open chat. A
+/// search field on top narrows it to the rows — and the rows inside the
+/// sections — whose names match.
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key, this.selected});
+
+  /// The section open in the right pane, or null on one pane and before
+  /// anything is picked.
+  final SettingsSection? selected;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  final TextEditingController _search = TextEditingController();
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _open(SettingsSection section) {
+    if (!section.opensInPane) {
+      context.push(section.location);
+      return;
+    }
+    openSettingsLocation(context, section.location);
+  }
+
+  void _clearSearch() {
+    _search.clear();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final developer = ref.watch(devMenuUnlockedProvider);
+    final query = _search.text.trim();
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
       body: AppContentWidth(
-        child: ListView(
-          key: const PageStorageKey<String>('settings-list'),
+        child: Column(
           children: [
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: Text(l10n.profile),
-              subtitle: Text(l10n.profileSettingsHint),
-              onTap: () => context.push(ProfileRoute.location),
+            _SearchField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              onClear: _clearSearch,
             ),
-
-            const _NotificationsTile(),
-
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: Text(l10n.language),
-              subtitle: Text(l10n.change_language),
-              onTap: () => context.push(LanguageSettingsRoute.location),
+            Expanded(
+              child: query.isEmpty
+                  ? _list(_groups(l10n, developer: developer))
+                  : _results(l10n, query, developer: developer),
             ),
-
-            ListTile(
-              leading: const Icon(Icons.palette_outlined),
-              title: Text(l10n.appearanceTitle),
-              subtitle: Text(l10n.appearanceHint),
-              onTap: () => context.push(AppearanceSettingsRoute.location),
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.notifications_active_outlined),
-              title: Text(l10n.notificationsAndSounds),
-              subtitle: Text(l10n.notification_settings),
-              onTap: () => context.push(NotificationSettingsRoute.location),
-            ),
-
-            // Blocked users, devices and the app lock live one level down,
-            // the way Telegram groups them.
-            ListTile(
-              leading: const Icon(Icons.lock_outline),
-              title: Text(l10n.privacySettingsTitle),
-              subtitle: Text(l10n.privacySettingsHint),
-              onTap: () => context.push(PrivacySettingsRoute.location),
-            ),
-
-            if (kDebugMode)
-              ListTile(
-                leading: const Icon(Icons.widgets_outlined),
-                title: Text(l10n.designSystem),
-                onTap: () => context.push(ComponentShowcaseRoute.location),
-              ),
-
-            const _WsDiagnosticsTile(),
-
-            // A physical keyboard's own question; a phone has no Enter to
-            // send with.
-            if (DesktopInput.isDesktop) ...[
-              SettingsSectionHeader(title: l10n.settingsKeyboardSection),
-              const _SendShortcutTile(),
-            ],
-
-            SettingsSectionHeader(title: l10n.settingsAccountSection),
-
-            const SignOutTile(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _list(List<Widget> children) => ListView(
+    key: const PageStorageKey<String>('settings-list'),
+    padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+    children: children,
+  );
+
+  List<Widget> _groups(AppLocalizations l10n, {required bool developer}) {
+    return [
+      SettingsProfileCard(
+        selected: widget.selected == SettingsSection.profile,
+        onOpen: () => _open(SettingsSection.profile),
+        onEdit: () => openSettingsLocation(context, ProfileEditRoute.location),
+      ),
+      for (final group in SettingsSection.groups(developer: developer)) ...[
+        const SizedBox(height: SettingsLayout.groupGap),
+        AppGroupedSection(
+          children: [
+            for (final section in group)
+              _SectionRow(
+                section: section,
+                selected: widget.selected == section,
+                onTap: () => _open(section),
+              ),
+          ],
+        ),
+      ],
+      const SizedBox(height: SettingsLayout.groupGap),
+      const AppGroupedSection(children: [SignOutTile()]),
+    ];
+  }
+
+  Widget _results(
+    AppLocalizations l10n,
+    String query, {
+    required bool developer,
+  }) {
+    final hits = searchSettings(
+      settingsSearchIndex(
+        l10n,
+        developer: developer,
+        desktop: DesktopInput.isDesktop,
+      ),
+      query,
+    );
+
+    if (hits.isEmpty) {
+      return AppEmptyState(
+        illustration: AppIllustrationKind.search,
+        title: l10n.settingsSearchEmpty(query),
+        message: l10n.settingsSearchEmptyHint,
+      );
+    }
+
+    return ListView(
+      key: const PageStorageKey<String>('settings-search'),
+      padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+      children: [
+        AppGroupedSection(
+          children: [
+            for (final hit in hits)
+              _SearchHitRow(
+                hit: hit,
+                query: query,
+                selected: hit.isSection && widget.selected == hit.section,
+                onTap: () => _open(hit.section),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// The field over the list. Typing narrows the list in place — there is
+/// no separate search screen, because there is nothing to wait for: every
+/// name is already here.
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    final pill = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.full),
+      borderSide: BorderSide.none,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        SettingsLayout.groupInset,
+        AppSpacing.x1,
+        SettingsLayout.groupInset,
+        AppSpacing.x4,
+      ),
+      child: SizedBox(
+        height: SettingsLayout.searchHeight,
+        child: TextField(
+          controller: controller,
+          onChanged: onChanged,
+          textInputAction: TextInputAction.search,
+          autocorrect: false,
+          textAlignVertical: TextAlignVertical.center,
+          decoration: InputDecoration(
+            hintText: l10n.settingsSearchHint,
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: controller.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: l10n.settingsSearchClear,
+                    icon: const Icon(Icons.close),
+                    onPressed: onClear,
+                  ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.x4,
+            ),
+            fillColor: scheme.surfaceContainerHigh,
+            border: pill,
+            enabledBorder: pill,
+            focusedBorder: pill.copyWith(
+              borderSide: BorderSide(color: scheme.primary, width: 1.5),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-/// The alerts list, with how many are unread — one of its two ways in now
-/// that it is not a tab; the other is the bell on the chats list.
-class _NotificationsTile extends ConsumerWidget {
-  const _NotificationsTile();
+/// One section of the list, with whatever it has to say at its end: how
+/// many alerts are unread, which language the app speaks.
+class _SectionRow extends StatelessWidget {
+  const _SectionRow({
+    required this.section,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SettingsSection section;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final unread = ref.watch(notificationBadgeProvider);
 
-    return ListTile(
-      leading: const Icon(Icons.notifications_outlined),
-      title: Text(l10n.notifications),
-      subtitle: Text(l10n.notificationsFeedHint),
-      trailing: unread > 0
-          ? Semantics(
-              label: l10n.unreadNotificationsCount(unread),
-              excludeSemantics: true,
-              child: Badge(label: Text(NotificationBell.badgeLabel(unread))),
-            )
-          : null,
-      onTap: () => context.push(NotificationsRoute.location),
-    );
-  }
-}
-
-/// Enter or Ctrl+Enter (Cmd+Enter on a Mac) to send.
-///
-/// Worded as the switch's "on": sending with the modifier is the choice
-/// somebody makes on purpose, and the line under it says what each key
-/// does now, so nobody has to remember which way round the default was.
-class _SendShortcutTile extends ConsumerWidget {
-  const _SendShortcutTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final modifier = DesktopInput.usesCommandKey
-        ? l10n.keyboardCommandKey
-        : l10n.keyboardControlKey;
-    final withModifier =
-        ref.watch(sendShortcutProvider) == SendShortcut.modifierEnter;
-
-    return SwitchListTile(
-      secondary: const Icon(Icons.keyboard_return_rounded),
-      title: Text(l10n.settingsSendWithModifierEnter(modifier)),
-      subtitle: Text(
-        withModifier
-            ? l10n.settingsSendWithModifierEnterOn(modifier)
-            : l10n.settingsSendWithModifierEnterOff,
-      ),
-      value: withModifier,
-      onChanged: (value) => ref
-          .read(sendShortcutProvider.notifier)
-          .set(value ? SendShortcut.modifierEnter : SendShortcut.enter),
-    );
-  }
-}
-
-/// The way a recorded WebSocket session gets off the device.
-///
-/// Only here while `enable_ws_protocol_log` is on, which is also the only
-/// time there is anything to copy — the flag gates the recording and this
-/// entry together, so the app never offers to hand over a dump it does not
-/// have. Copying rather than sharing because a dump belongs in the bug
-/// report that is already being written, and the clipboard is the shortest
-/// path into one.
-class _WsDiagnosticsTile extends ConsumerWidget {
-  const _WsDiagnosticsTile();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref
-        .watch(featureFlagServiceProvider)
-        .getBool(kWsProtocolLogFlag, defaultValue: false);
-    if (!enabled) return const SizedBox.shrink();
-
-    final l10n = AppLocalizations.of(context);
-    final log = ref.watch(socketProtocolLogProvider);
-
-    return ListTile(
-      leading: const Icon(Icons.cable_outlined),
-      title: Text(l10n.wsDiagnostics),
-      subtitle: Text(l10n.wsDiagnosticsFrames(log.length)),
-      trailing: const Icon(Icons.copy_all_outlined),
-      onTap: () async {
-        await Clipboard.setData(ClipboardData(text: log.dump()));
-        if (!context.mounted) return;
-        AppSnackbar.quiet(context, l10n.wsDiagnosticsCopied);
+    return AppGroupedTile(
+      icon: section.icon,
+      plateColor: section.plate,
+      title: section.title(l10n),
+      selected: selected,
+      onTap: onTap,
+      value: switch (section) {
+        // The language actually on screen, which is what the reader is
+        // asking about — not a stored preference it may have fallen back
+        // from.
+        SettingsSection.language => LocalizationUtils.getLocaleName(
+          Localizations.localeOf(context),
+        ),
+        _ => null,
       },
+      trailing: section == SettingsSection.notificationsFeed
+          ? const _AlertsBadge()
+          : null,
+    );
+  }
+}
+
+/// How many alerts are unread, then the chevron — or the chevron alone.
+class _AlertsBadge extends ConsumerWidget {
+  const _AlertsBadge();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final unread = ref.watch(notificationBadgeProvider);
+    final chevron = Icon(Icons.chevron_right, color: scheme.onSurfaceVariant);
+    if (unread <= 0) return chevron;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: l10n.unreadNotificationsCount(unread),
+          excludeSemantics: true,
+          child: Badge(label: Text(NotificationBell.badgeLabel(unread))),
+        ),
+        const SizedBox(width: AppSpacing.x2),
+        chevron,
+      ],
+    );
+  }
+}
+
+/// A search hit: the name with the typed part picked out, and — for a row
+/// inside a section — the section it lives in, underneath.
+class _SearchHitRow extends StatelessWidget {
+  const _SearchHitRow({
+    required this.hit,
+    required this.query,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SettingsSearchEntry hit;
+  final String query;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final section = hit.section;
+
+    return Semantics(
+      selected: selected,
+      child: Material(
+        color: selected ? scheme.primaryContainer : Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: SettingsLayout.rowMinHeight,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.x4,
+                vertical: AppSpacing.x2,
+              ),
+              child: Row(
+                children: [
+                  AppIconPlate(icon: section.icon, color: section.plate),
+                  const SizedBox(width: SettingsLayout.plateGap),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        HighlightedText(
+                          text: hit.title,
+                          query: query,
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        if (!hit.isSection) ...[
+                          const SizedBox(height: SettingsLayout.lineGap),
+                          Text(
+                            section.title(l10n),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.x2),
+                  Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

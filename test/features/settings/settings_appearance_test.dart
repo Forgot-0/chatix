@@ -3,11 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:chatix/core/providers/media_settings_providers.dart';
 import 'package:chatix/core/providers/storage_providers.dart';
 import 'package:chatix/core/providers/theme_providers.dart';
-import 'package:chatix/core/settings/media_settings.dart';
-import 'package:chatix/core/storage/cache/attachment_cache_usage.dart';
+import 'package:chatix/core/settings/send_shortcut.dart';
 import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/theme/theme_config.dart';
@@ -51,8 +49,6 @@ class _AppearanceHarness extends ConsumerWidget {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late int cleared;
-
   /// Settling by hand rather than with `pumpAndSettle`: the preview's typing
   /// indicator repeats for as long as it is on screen, which is the point of
   /// it, so nothing here ever reaches a still frame. A couple of frames is
@@ -62,11 +58,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  setUp(() => cleared = 0);
-
   Future<SharedPreferences> pumpAppearance(
     WidgetTester tester, {
-    int cacheUsage = 0,
     AvatarAccentResult eyedropper = const AvatarAccentResult(
       AvatarAccentStatus.noAvatar,
     ),
@@ -85,13 +78,9 @@ void main() {
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
-          // The real one walks a cache directory the test platform has no
-          // plugin for; what it would answer is not what is under test here.
-          attachmentCacheUsageProvider.overrideWith((ref) async => cacheUsage),
-          clearAttachmentCacheProvider.overrideWithValue(() async {
-            cleared++;
-            return cacheUsage;
-          }),
+          sendShortcutStoreProvider.overrideWithValue(
+            InMemorySendShortcutStore(),
+          ),
           avatarAccentPickerProvider.overrideWithValue(() async => eyedropper),
         ],
         child: _AppearanceHarness(window: window, locale: locale),
@@ -255,7 +244,7 @@ void main() {
     expect(chatix(tester).bubbleRadius, AppearanceSettings.defaultBubbleRadius);
 
     // The sliders in document order: wallpaper intensity, wallpaper pattern,
-    // bubble corners, cache limit.
+    // bubble corners.
     final corners = find.byType(Slider).at(2);
     await tester.ensureVisible(corners);
     await settle(tester);
@@ -305,64 +294,73 @@ void main() {
     expect(relaunch(prefs).bubbleGradient, isTrue);
   });
 
-  testWidgets('auto-download is set per kind and survives a restart', (
+  // Auto-download, autoplay and the cache moved to Data and storage
+  // (data_storage_screen_test.dart); what stays here is how things look.
+  testWidgets('nothing about downloads or the cache is left here', (
     tester,
   ) async {
-    final prefs = await pumpAppearance(tester);
-    final l10n = strings(tester);
-
-    final dropdown = find
-        .byType(DropdownButton<MediaAutoDownload>)
-        .first; // photos
-    await tester.ensureVisible(dropdown);
-    await settle(tester);
-    await tester.tap(dropdown);
-    await settle(tester);
-
-    await tester.tap(find.text(l10n.autoDownloadNever).last);
-    await settle(tester);
-
-    final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    );
-    addTearDown(container.dispose);
-
-    expect(
-      container.read(mediaSettingsProvider).policyFor(MediaKind.photo),
-      MediaAutoDownload.never,
-    );
-    // The other kinds keep their own defaults rather than following photos.
-    expect(
-      container.read(mediaSettingsProvider).policyFor(MediaKind.voice),
-      MediaAutoDownload.always,
-    );
-  });
-
-  testWidgets('an empty cache offers nothing to clear', (tester) async {
     await pumpAppearance(tester);
-
-    expect(find.text(strings(tester).cacheEmpty), findsOneWidget);
-
-    final button = find.widgetWithText(TextButton, strings(tester).cacheClear);
-    expect(tester.widget<TextButton>(button).onPressed, isNull);
-  });
-
-  testWidgets('clearing a full cache reports what it freed', (tester) async {
-    await pumpAppearance(tester, cacheUsage: 12 * 1024 * 1024);
     final l10n = strings(tester);
 
-    expect(
-      find.text(l10n.cacheInUse(l10n.sizeMegabytes('12'))),
-      findsOneWidget,
+    expect(find.text(l10n.autoDownloadPhotos), findsNothing);
+    expect(find.text(l10n.cacheLimit), findsNothing);
+    expect(find.text(l10n.mediaAutoplay), findsNothing);
+  });
+
+  group('the keyboard section', () {
+    Finder sendSwitch(AppLocalizations l10n, String modifier) =>
+        find.widgetWithText(
+          SwitchListTile,
+          l10n.settingsSendWithModifierEnter(modifier),
+        );
+
+    testWidgets(
+      'a desktop chooses which Enter sends',
+      (tester) async {
+        await pumpAppearance(tester);
+        final l10n = strings(tester);
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(AppearanceSettingsScreen)),
+        );
+
+        expect(find.text(l10n.settingsKeyboardSection), findsOneWidget);
+        expect(
+          find.text(l10n.settingsSendWithModifierEnterOff),
+          findsOneWidget,
+        );
+
+        final row = sendSwitch(l10n, l10n.keyboardControlKey);
+        await tester.ensureVisible(row);
+        await settle(tester);
+        await tester.tap(row);
+        await settle(tester);
+
+        expect(
+          container.read(sendShortcutProvider),
+          SendShortcut.modifierEnter,
+        );
+        expect(
+          find.text(
+            l10n.settingsSendWithModifierEnterOn(l10n.keyboardControlKey),
+          ),
+          findsOneWidget,
+        );
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.windows),
     );
 
-    await tapText(tester, l10n.cacheClear);
+    testWidgets('a Mac says ⌘', (tester) async {
+      await pumpAppearance(tester);
+      final l10n = strings(tester);
 
-    expect(cleared, 1);
-    expect(
-      find.text(l10n.cacheCleared(l10n.sizeMegabytes('12'))),
-      findsOneWidget,
-    );
+      expect(sendSwitch(l10n, l10n.keyboardCommandKey), findsOneWidget);
+    }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
+
+    testWidgets('a phone has no Enter to choose', (tester) async {
+      await pumpAppearance(tester);
+
+      expect(find.text(strings(tester).settingsKeyboardSection), findsNothing);
+    }, variant: TargetPlatformVariant.mobile());
   });
 
   group('on a phone', () {
@@ -370,11 +368,7 @@ void main() {
       testWidgets(
         'lays out without overflowing in ${dark ? 'dark' : 'light'}',
         (tester) async {
-          await pumpAppearance(
-            tester,
-            cacheUsage: 3 * 1024 * 1024,
-            viewport: const Size(390, 844),
-          );
+          await pumpAppearance(tester, viewport: const Size(390, 844));
 
           if (dark) {
             await tapText(tester, strings(tester).darkMode);

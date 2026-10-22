@@ -30,6 +30,9 @@ enum AppIllustrationKind {
 
   /// No photos, videos or files have been shared here.
   media,
+
+  /// Nothing picked yet: the settings pane before a section is opened.
+  settings,
 }
 
 /// The empty-state pictures, drawn rather than shipped.
@@ -43,7 +46,7 @@ enum AppIllustrationKind {
 /// decode.
 ///
 /// (`flutter_svg` is deliberately not a dependency. Nothing here needs a
-/// document format: these are seven shapes, and a vector file would be a
+/// document format: these are eight shapes, and a vector file would be a
 /// parser, a cache and a second styling system to keep in step with the
 /// theme.)
 class AppIllustration extends StatelessWidget {
@@ -84,7 +87,7 @@ class AppIllustration extends StatelessWidget {
   }
 }
 
-/// One painter, one switch, because the seven drawings share a vocabulary:
+/// One painter, one switch, because the eight drawings share a vocabulary:
 /// the same stroke width, the same rounded joints, the same two fills.
 class _IllustrationPainter extends CustomPainter {
   const _IllustrationPainter({
@@ -127,6 +130,8 @@ class _IllustrationPainter extends CustomPainter {
         _locked(canvas);
       case AppIllustrationKind.media:
         _media(canvas);
+      case AppIllustrationKind.settings:
+        _settings(canvas);
     }
 
     canvas.restore();
@@ -303,6 +308,37 @@ class _IllustrationPainter extends CustomPainter {
     canvas
       ..drawPath(hills, _faintStroke)
       ..restore();
+  }
+
+  /// Two switches on a card, the upper one on: something to set, nothing
+  /// set yet.
+  void _settings(Canvas canvas) {
+    final card = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(14, 20, 72, 60),
+      const Radius.circular(AppRadii.lg),
+    );
+    canvas
+      ..drawRRect(card, _fill)
+      ..drawRRect(card, _faintStroke);
+
+    void toggle(double y, {required bool on}) {
+      final track = RRect.fromRectAndRadius(
+        Rect.fromLTWH(54, y - 7, 22, 14),
+        const Radius.circular(7),
+      );
+      canvas
+        ..drawRRect(track, _fill)
+        ..drawRRect(track, on ? _accentStroke : _faintStroke)
+        ..drawCircle(
+          Offset(on ? 69 : 61, y),
+          4,
+          Paint()..color = on ? accent : faint,
+        );
+      _line(canvas, Offset(24, y), 22, paint: on ? _stroke : _faintStroke);
+    }
+
+    toggle(38, on: true);
+    toggle(62, on: false);
   }
 
   @override

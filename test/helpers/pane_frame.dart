@@ -42,10 +42,20 @@ enum PaneWindow {
 /// after a chat list as well on a desktop. The rail and the list are plain
 /// shapes — only their widths matter here.
 class PaneFrame extends StatelessWidget {
-  const PaneFrame({super.key, required this.window, required this.child});
+  const PaneFrame({
+    super.key,
+    required this.window,
+    required this.child,
+    this.listStub = true,
+  });
 
   final PaneWindow window;
   final Widget child;
+
+  /// Whether the desktop's 360 px list is drawn as a stub. Off for a branch
+  /// that draws its own list beside its content — settings in two panes —
+  /// where [child] is the list and the pane together.
+  final bool listStub;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +98,7 @@ class PaneFrame extends StatelessWidget {
             width: PaneWindow.divider,
             thickness: PaneWindow.divider,
           ),
-          if (window.hasList) const _ListStub(),
+          if (window.hasList && listStub) const _ListStub(),
           Expanded(child: pane),
         ],
       ),

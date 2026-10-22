@@ -156,6 +156,18 @@ APP_VERSION_CODE=1
 API_URL=https://api.example.com
 ```
 
+#### Links in Settings → About
+
+Optional. Each key adds one row to the About screen, and only for an
+`https` address; an unset or malformed key leaves its row out
+(`lib/features/settings/presentation/providers/about_providers.dart`).
+
+```
+PRIVACY_POLICY_URL=https://example.com/privacy
+TERMS_URL=https://example.com/terms
+SUPPORT_URL=https://example.com/support
+```
+
 ## Manual Deployment
 
 ### Setting Up Fastlane (First Time)

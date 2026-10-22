@@ -45,6 +45,8 @@ class LocalizationUtils {
     switch (locale.languageCode) {
       case 'en':
         return 'English';
+      case 'ru':
+        return 'Русский';
       case 'es':
         return 'Español';
       case 'fr':

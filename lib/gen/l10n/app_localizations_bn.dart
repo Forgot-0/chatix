@@ -4068,4 +4068,184 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get apiErrorChatAvatarValidation =>
       'এই ছবি ব্যবহার করা যাবে না। ৫ MB পর্যন্ত JPEG, PNG বা WebP বেছে নিন।';
+
+  @override
+  String get settingsSearchHint => 'সেটিংসে খুঁজুন';
+
+  @override
+  String settingsSearchEmpty(String query) {
+    return '“$query” এর জন্য কিছু পাওয়া যায়নি';
+  }
+
+  @override
+  String get settingsSearchEmptyHint =>
+      'ছোট বা অন্য কোনো শব্দ দিয়ে চেষ্টা করুন।';
+
+  @override
+  String get settingsSearchClear => 'খোঁজা মুছুন';
+
+  @override
+  String get settingsChatFolders => 'চ্যাট ফোল্ডার';
+
+  @override
+  String get settingsProfileOpen => 'আপনার প্রোফাইল খুলুন';
+
+  @override
+  String get settingsPanePlaceholderTitle => 'একটি বিভাগ বেছে নিন';
+
+  @override
+  String get settingsPanePlaceholderHint =>
+      'ChatiX-এ যা যা সেট করা যায়, সবই বাঁদিকের তালিকায়।';
+
+  @override
+  String get dataStorageTitle => 'ডেটা ও স্টোরেজ';
+
+  @override
+  String get dataStorageUsageSection => 'স্টোরেজ ব্যবহার';
+
+  @override
+  String get dataStorageCacheTitle => 'মিডিয়া ক্যাশ';
+
+  @override
+  String dataStorageUsageOf(String used, String limit) {
+    return '$limit এর মধ্যে $used';
+  }
+
+  @override
+  String get dataStorageClearConfirmTitle => 'মিডিয়া ক্যাশ মুছবেন?';
+
+  @override
+  String dataStorageClearConfirmBody(String size) {
+    return 'ডাউনলোড করা ছবি, ভিডিও, ফাইল ও ভয়েস মেসেজ মিলিয়ে $size এই ডিভাইস থেকে মুছে যাবে। চ্যাটে সেগুলো থেকে যাবে, খুললে আবার ডাউনলোড হবে।';
+  }
+
+  @override
+  String get autoDownloadOnMobile => 'মোবাইল ডেটায়';
+
+  @override
+  String get autoDownloadOnWifi => 'Wi-Fi-তে';
+
+  @override
+  String get dataStorageAutoDownloadFooter =>
+      'মোবাইল ডেটার জন্য যা চালু, তা Wi-Fi-তেও ডাউনলোড হয়।';
+
+  @override
+  String get dataStorageReset => 'অটো-ডাউনলোড সেটিংস রিসেট করুন';
+
+  @override
+  String get dataStorageResetDone => 'অটো-ডাউনলোড সেটিংস আগের মতো হয়েছে';
+
+  @override
+  String get aboutTitle => 'অ্যাপ সম্পর্কে';
+
+  @override
+  String get aboutTagline => 'আপনার রঙে একটি মেসেঞ্জার';
+
+  @override
+  String get aboutVersion => 'সংস্করণ';
+
+  @override
+  String aboutVersionValue(String version, String build) {
+    return '$version ($build)';
+  }
+
+  @override
+  String get aboutWhatsNew => 'নতুন কী';
+
+  @override
+  String aboutWhatsNewTitle(String version) {
+    return '$version সংস্করণে নতুন কী';
+  }
+
+  @override
+  String get whatsNewSettingsTitle => 'নতুন করে সাজানো সেটিংস';
+
+  @override
+  String get whatsNewSettingsBody =>
+      'ওপরে আপনার প্রোফাইল, রঙিন বিভাগ, খোঁজার সুবিধা আর ডেটা ও স্টোরেজের আলাদা পাতা।';
+
+  @override
+  String get whatsNewFoldersTitle => 'চ্যাট ফোল্ডার';
+
+  @override
+  String get whatsNewFoldersBody =>
+      'কথোপকথন ফোল্ডারে সাজান, ব্যস্তগুলো সরিয়ে রাখুন।';
+
+  @override
+  String get whatsNewChatsTitle => 'গ্রুপ ও চ্যানেল';
+
+  @override
+  String get whatsNewChatsBody =>
+      'কয়েক ধাপেই ছবি ও বিবরণসহ গ্রুপ বা চ্যানেল খুলুন।';
+
+  @override
+  String get whatsNewDesktopTitle => 'কম্পিউটারেও স্বচ্ছন্দ';
+
+  @override
+  String get whatsNewDesktopBody =>
+      'কি-বোর্ড শর্টকাট, ফাইল পেস্ট বা টেনে এনে পাঠানো, মেসেজের পাশের বোতামে উত্তর ও রিঅ্যাকশন।';
+
+  @override
+  String get aboutPrivacyPolicy => 'গোপনীয়তা নীতি';
+
+  @override
+  String get aboutTerms => 'পরিষেবার শর্তাবলি';
+
+  @override
+  String get aboutSupport => 'সহায়তা';
+
+  @override
+  String get aboutLicenses => 'ওপেন সোর্স লাইসেন্স';
+
+  @override
+  String get aboutLinkFailed => 'লিংকটি খোলা গেল না';
+
+  @override
+  String devMenuTapsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'আর $count বার ট্যাপ করলে ডেভেলপার মেনু খুলবে',
+      one: 'আর একবার ট্যাপ করলে ডেভেলপার মেনু খুলবে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devMenuUnlocked =>
+      'ডেভেলপার মেনু খুলেছে। সেটিংসের একেবারে নিচে আছে।';
+
+  @override
+  String get devMenuAlreadyOpen => 'ডেভেলপার মেনু আগেই খোলা আছে';
+
+  @override
+  String get devMenuTitle => 'ডেভেলপার';
+
+  @override
+  String get devMenuNote =>
+      'অ্যাপ যাচাইয়ের সরঞ্জাম। এখানকার কিছুই আপনার অ্যাকাউন্ট বা চ্যাট বদলায় না।';
+
+  @override
+  String get designSystemHint => 'দুই থিমেই রং, অক্ষর ও উপাদান';
+
+  @override
+  String get devMenuRecordSocket => 'WebSocket ফ্রেম রেকর্ড করুন';
+
+  @override
+  String get devMenuRecordSocketHint =>
+      'অ্যাপ বন্ধ না হওয়া পর্যন্ত সাম্প্রতিক ফ্রেম মেমরিতে রাখে। এতে মেসেজের লেখা থাকে।';
+
+  @override
+  String get devMenuRecordSocketByFlag =>
+      'এই অ্যাকাউন্টের জন্য সার্ভার থেকে চালু করা';
+
+  @override
+  String get devMenuHide => 'ডেভেলপার মেনু লুকান';
+
+  @override
+  String get devMenuHidden => 'ডেভেলপার মেনু লুকানো হয়েছে';
+
+  @override
+  String get languageScreenNote =>
+      'মেনু, বোতাম ও তারিখ এই ভাষায় দেখাবে। মেসেজ যে ভাষায় লেখা, সেই ভাষাতেই থাকবে।';
 }

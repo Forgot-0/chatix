@@ -803,6 +803,61 @@ abstract final class ChatsListLayout {
   static const double endPadding = AppSpacing.x2;
 }
 
+/// Settings: the profile card on top, the rounded groups of rows under it,
+/// and the coloured square every row leads with.
+abstract final class SettingsLayout {
+  /// The coloured square, its corners, and the white glyph inside it — the
+  /// size of a line of title text and a half, so a row reads by its colour
+  /// before its words.
+  static const double plateSize = 30;
+  static const double plateRadius = AppRadii.sm;
+  static const double plateIcon = 18;
+
+  /// Between the square and the title.
+  static const double plateGap = AppSpacing.x4;
+
+  /// A row with one line of text: a touch target and a little air.
+  static const double rowMinHeight = 52;
+
+  /// Between a row's title and the line under it.
+  static const double lineGap = 2;
+
+  /// The spinner a row ends with while what it started is under way.
+  static const double rowSpinner = 18;
+
+  /// A group's own inset from the pane's edges, its corners, and the air
+  /// between two groups.
+  static const double groupInset = AppSpacing.x4;
+  static const double groupRadius = AppRadii.lg;
+  static const double groupGap = AppSpacing.x5;
+
+  /// The hairline between two rows starts where their titles start, so the
+  /// squares read as one column, the way a grouped list does it.
+  static const double rowDividerIndent = AppSpacing.x4 + plateSize + plateGap;
+
+  /// The camera on the corner of the card's avatar: smaller than the one
+  /// on the profile itself, which sits on a face twice the size.
+  static const double cameraBadge = 26;
+  static const double cameraIcon = 14;
+  static const double cameraRing = 2;
+
+  /// Between the card's avatar and the name beside it.
+  static const double cardAvatarGap = AppSpacing.x4;
+
+  /// The search field over the groups — as tall as every other search box.
+  static const double searchHeight = SearchPillSizes.height;
+
+  /// The value a row shows at its end — the current language — stops here,
+  /// so a long one is cut before it pushes the title off the row.
+  static const double valueMaxWidth = 160;
+
+  /// The block over About's rows: the logo and the app's name.
+  static const double aboutLogo = 72;
+
+  /// The used share of the cache limit, as a bar.
+  static const double usageBarHeight = 8;
+}
+
 abstract final class MentionListSizes {
   /// One person: a face, the name and the handle on a line.
   static const double rowHeight = 48;
@@ -1075,14 +1130,14 @@ abstract final class AppTypography {
 /// same author reads at the same strength on either ground.
 abstract final class AppAuthorPalette {
   static const List<Color> light = <Color>[
-    Color(0xFF6E56F8), // violet
-    Color(0xFF0E9F86), // mint
-    Color(0xFFD1442F), // coral
-    Color(0xFFB07400), // amber
-    Color(0xFF2563C9), // azure
-    Color(0xFFB13FA8), // orchid
-    Color(0xFF4C7A21), // moss
-    Color(0xFF9B5524), // clay
+    AppPlatePalette.violet,
+    AppPlatePalette.mint,
+    AppPlatePalette.coral,
+    AppPlatePalette.amber,
+    AppPlatePalette.azure,
+    AppPlatePalette.orchid,
+    AppPlatePalette.moss,
+    AppPlatePalette.clay,
   ];
 
   static const List<Color> dark = <Color>[
@@ -1101,4 +1156,38 @@ abstract final class AppAuthorPalette {
 
   static List<Color> of(Brightness brightness) =>
       brightness == Brightness.dark ? dark : light;
+}
+
+/// The grounds of the coloured squares settings rows lead with — a white
+/// glyph on one of these, one hue per row.
+///
+/// The deep end of each hue, which is also the author palette's light-ground
+/// ramp: every one of them carries white at 3:1 or better, which is what a
+/// glyph needs, and none of them is so dark that it turns into a hole in a
+/// dark theme. So the squares keep their colours in both themes, the way an
+/// app icon does — a row is found by its colour, and a colour that changed
+/// with the theme would have to be learned twice.
+abstract final class AppPlatePalette {
+  static const Color violet = Color(0xFF6E56F8);
+  static const Color mint = Color(0xFF0E9F86);
+  static const Color coral = Color(0xFFD1442F);
+  static const Color amber = Color(0xFFB07400);
+  static const Color azure = Color(0xFF2563C9);
+  static const Color orchid = Color(0xFFB13FA8);
+  static const Color moss = Color(0xFF4C7A21);
+  static const Color clay = Color(0xFF9B5524);
+
+  /// The brand's deep end, for the row that is about the app itself
+  /// rather than about the reader.
+  static const Color indigo = AppPalette.indigo;
+
+  /// A warm grey from the neutral ramp, for rows that are information
+  /// rather than a place to change something.
+  static const Color graphite = Color(0xFF6A6156);
+
+  /// Destructive rows: signing out.
+  static const Color danger = AppPalette.coralDeep;
+
+  /// The glyph on every square.
+  static const Color glyph = Color(0xFFFFFFFF);
 }

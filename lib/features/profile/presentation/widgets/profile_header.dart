@@ -36,7 +36,7 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
     required this.title,
     required this.subtitle,
     required this.topPadding,
-    required this.onBack,
+    this.onBack,
     required this.onAvatarTap,
     this.subtitleIsAccent = false,
     this.avatarAction,
@@ -71,7 +71,11 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
   final bool subtitleIsAccent;
 
   final double topPadding;
-  final VoidCallback onBack;
+
+  /// Leaves the profile. Null where there is nowhere to go back to — one's
+  /// own profile beside the settings list in a two-pane window, where the
+  /// list is the way back — and the bar then has no arrow at all.
+  final VoidCallback? onBack;
 
   /// Opens the picture full screen. Null when there is no picture to open.
   final VoidCallback? onAvatarTap;
@@ -115,14 +119,17 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
 
     final avatar = lerpDouble(_bigAvatar, _smallAvatar, t)!;
 
-    final avatarLeft = lerpDouble((width - _bigAvatar) / 2, _leadingInset, t)!;
+    // With no back arrow the collapsed face moves up to where the arrow
+    // would have been, rather than leaving a gap the size of one.
+    final leadingInset = onBack == null ? AppSpacing.x4 : _leadingInset;
+    final avatarLeft = lerpDouble((width - _bigAvatar) / 2, leadingInset, t)!;
     final avatarTop = lerpDouble(
       topPadding + 24,
       topPadding + (collapsedHeight - _smallAvatar) / 2,
       t,
     )!;
 
-    final textLeft = lerpDouble(16, _leadingInset + _smallAvatar + 12, t)!;
+    final textLeft = lerpDouble(16, leadingInset + _smallAvatar + 12, t)!;
     final textTop = lerpDouble(topPadding + 152, topPadding + 8, t)!;
 
     return Material(
@@ -151,15 +158,16 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
             ),
           ),
 
-          Positioned(
-            left: 4,
-            top: topPadding + (collapsedHeight - 48) / 2,
-            child: IconButton(
-              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              icon: const Icon(Icons.arrow_back),
-              onPressed: onBack,
+          if (onBack != null)
+            Positioned(
+              left: 4,
+              top: topPadding + (collapsedHeight - 48) / 2,
+              child: IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                icon: const Icon(Icons.arrow_back),
+                onPressed: onBack,
+              ),
             ),
-          ),
 
           if (trailing != null)
             Positioned(
@@ -283,7 +291,8 @@ class ProfileHeader extends SliverPersistentHeaderDelegate {
         oldDelegate.topPadding != topPadding ||
         oldDelegate.trailing != trailing ||
         oldDelegate.avatarAction != avatarAction ||
-        (oldDelegate.onAvatarTap == null) != (onAvatarTap == null);
+        (oldDelegate.onAvatarTap == null) != (onAvatarTap == null) ||
+        (oldDelegate.onBack == null) != (onBack == null);
   }
 }
 

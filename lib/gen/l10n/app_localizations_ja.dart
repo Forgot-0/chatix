@@ -3930,4 +3930,174 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get apiErrorChatAvatarValidation =>
       'この画像は使用できません。5 MB以下のJPEG、PNG、WebPを選んでください。';
+
+  @override
+  String get settingsSearchHint => '設定を検索';
+
+  @override
+  String settingsSearchEmpty(String query) {
+    return '「$query」に一致する項目はありません';
+  }
+
+  @override
+  String get settingsSearchEmptyHint => '短い言葉や別の言葉で試してください。';
+
+  @override
+  String get settingsSearchClear => '検索をクリア';
+
+  @override
+  String get settingsChatFolders => 'チャットフォルダ';
+
+  @override
+  String get settingsProfileOpen => '自分のプロフィールを開く';
+
+  @override
+  String get settingsPanePlaceholderTitle => '項目を選んでください';
+
+  @override
+  String get settingsPanePlaceholderHint => 'ChatiX で設定できることはすべて左のリストにあります。';
+
+  @override
+  String get dataStorageTitle => 'データとストレージ';
+
+  @override
+  String get dataStorageUsageSection => 'ストレージ使用量';
+
+  @override
+  String get dataStorageCacheTitle => 'メディアキャッシュ';
+
+  @override
+  String dataStorageUsageOf(String used, String limit) {
+    return '$limit 中 $used';
+  }
+
+  @override
+  String get dataStorageClearConfirmTitle => 'メディアキャッシュを消去しますか？';
+
+  @override
+  String dataStorageClearConfirmBody(String size) {
+    return 'ダウンロード済みの写真・動画・ファイル・ボイスメッセージ $size がこの端末から削除されます。チャットには残り、開くと再びダウンロードされます。';
+  }
+
+  @override
+  String get autoDownloadOnMobile => 'モバイルデータ使用時';
+
+  @override
+  String get autoDownloadOnWifi => 'Wi-Fi接続時';
+
+  @override
+  String get dataStorageAutoDownloadFooter =>
+      'モバイルデータでオンにしたものは Wi-Fi でもダウンロードされます。';
+
+  @override
+  String get dataStorageReset => '自動ダウンロード設定をリセット';
+
+  @override
+  String get dataStorageResetDone => '自動ダウンロード設定を初期状態に戻しました';
+
+  @override
+  String get aboutTitle => 'このアプリについて';
+
+  @override
+  String get aboutTagline => 'あなたの色のメッセンジャー';
+
+  @override
+  String get aboutVersion => 'バージョン';
+
+  @override
+  String aboutVersionValue(String version, String build) {
+    return '$version（$build）';
+  }
+
+  @override
+  String get aboutWhatsNew => '新機能';
+
+  @override
+  String aboutWhatsNewTitle(String version) {
+    return 'バージョン $version の新機能';
+  }
+
+  @override
+  String get whatsNewSettingsTitle => '設定を整理しました';
+
+  @override
+  String get whatsNewSettingsBody => 'プロフィールを上部に、色分けされた項目、検索、データとストレージ専用のページ。';
+
+  @override
+  String get whatsNewFoldersTitle => 'チャットフォルダ';
+
+  @override
+  String get whatsNewFoldersBody => '会話をフォルダに分けて、にぎやかなものは脇へ。';
+
+  @override
+  String get whatsNewChatsTitle => 'グループとチャンネル';
+
+  @override
+  String get whatsNewChatsBody => '数ステップで、写真と説明つきのグループやチャンネルを作成できます。';
+
+  @override
+  String get whatsNewDesktopTitle => 'パソコンでも快適に';
+
+  @override
+  String get whatsNewDesktopBody =>
+      'キーボードショートカット、ファイルの貼り付けやドロップで送信、メッセージ横のボタンで返信とリアクション。';
+
+  @override
+  String get aboutPrivacyPolicy => 'プライバシーポリシー';
+
+  @override
+  String get aboutTerms => '利用規約';
+
+  @override
+  String get aboutSupport => 'サポート';
+
+  @override
+  String get aboutLicenses => 'オープンソースライセンス';
+
+  @override
+  String get aboutLinkFailed => 'リンクを開けませんでした';
+
+  @override
+  String devMenuTapsLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'あと$count回タップすると開発者メニューが開きます',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get devMenuUnlocked => '開発者メニューが開きました。設定の一番下にあります。';
+
+  @override
+  String get devMenuAlreadyOpen => '開発者メニューはすでに開いています';
+
+  @override
+  String get devMenuTitle => '開発者向け';
+
+  @override
+  String get devMenuNote => 'アプリを確認するためのツールです。アカウントやチャットは変更されません。';
+
+  @override
+  String get designSystemHint => '両方のテーマでの色・文字・コンポーネント';
+
+  @override
+  String get devMenuRecordSocket => 'WebSocket フレームを記録';
+
+  @override
+  String get devMenuRecordSocketHint =>
+      'アプリを閉じるまで最新のフレームをメモリに保持します。メッセージ本文を含みます。';
+
+  @override
+  String get devMenuRecordSocketByFlag => 'サーバーからこのアカウントで有効化されています';
+
+  @override
+  String get devMenuHide => '開発者メニューを隠す';
+
+  @override
+  String get devMenuHidden => '開発者メニューを隠しました';
+
+  @override
+  String get languageScreenNote => 'メニュー、ボタン、日付はこの言語で表示されます。メッセージは書かれた言語のままです。';
 }

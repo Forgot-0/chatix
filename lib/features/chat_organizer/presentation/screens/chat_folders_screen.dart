@@ -15,7 +15,15 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// Where folders are made, ordered and thrown away, and where the two
 /// switches that change how the list behaves live.
 class ChatFoldersScreen extends ConsumerWidget {
-  const ChatFoldersScreen({super.key});
+  const ChatFoldersScreen({
+    super.key,
+    this.editorLocationOf = FolderEditorRoute.locationOf,
+  });
+
+  /// Where a folder — or a new one, for null — is edited. Over the chat
+  /// list that is `/chats/folders/edit`; opened from settings it is the
+  /// settings pane's own copy, so the editor stays beside the list there.
+  final String Function(String? folderId) editorLocationOf;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,7 +39,7 @@ class ChatFoldersScreen extends ConsumerWidget {
         title: Text(l10n.chatFolders),
         actions: [
           IconButton(
-            onPressed: () => context.push(FolderEditorRoute.locationOf(null)),
+            onPressed: () => context.push(editorLocationOf(null)),
             icon: const Icon(Icons.add),
             tooltip: l10n.newFolder,
           ),
@@ -62,6 +70,7 @@ class ChatFoldersScreen extends ConsumerWidget {
                     key: ValueKey<String>(folder.id),
                     folder: folder,
                     index: index,
+                    editorLocationOf: editorLocationOf,
                   );
                 },
               ),
@@ -146,10 +155,16 @@ class ChatFoldersScreen extends ConsumerWidget {
 /// One folder in the list: what it is called, what it keeps, and a handle to
 /// drag it by.
 class _FolderRow extends ConsumerWidget {
-  const _FolderRow({super.key, required this.folder, required this.index});
+  const _FolderRow({
+    super.key,
+    required this.folder,
+    required this.index,
+    required this.editorLocationOf,
+  });
 
   final ChatFolder folder;
   final int index;
+  final String Function(String? folderId) editorLocationOf;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -171,7 +186,7 @@ class _FolderRow extends ConsumerWidget {
           color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
-      onTap: () => context.push(FolderEditorRoute.locationOf(folder.id)),
+      onTap: () => context.push(editorLocationOf(folder.id)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

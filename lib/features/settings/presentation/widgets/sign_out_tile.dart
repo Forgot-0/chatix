@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/cards/app_grouped_section.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -62,16 +64,19 @@ class _SignOutTileState extends ConsumerState<SignOutTile> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
 
-    return ListTile(
-      leading: Icon(Icons.logout, color: scheme.error),
-      title: Text(l10n.logout, style: TextStyle(color: scheme.error)),
-      subtitle: _busy ? Text(l10n.logoutInProgress) : null,
+    // A row of the grouped list like every other, set apart by its own
+    // card at the bottom and by the danger colour, so it is never the row
+    // a thumb lands on by habit.
+    return AppGroupedTile(
+      icon: Icons.logout_rounded,
+      plateColor: AppPlatePalette.danger,
+      title: l10n.logout,
+      destructive: true,
+      subtitle: _busy ? l10n.logoutInProgress : null,
       trailing: _busy
-          ? const SizedBox(
-              height: 18,
-              width: 18,
+          ? const SizedBox.square(
+              dimension: SettingsLayout.rowSpinner,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : null,

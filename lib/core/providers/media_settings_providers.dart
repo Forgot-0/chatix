@@ -27,6 +27,12 @@ class MediaSettingsController extends Notifier<MediaSettings> {
 
   Future<void> reset() => _apply(const MediaSettings());
 
+  /// Auto-download and autoplay back to their defaults. The cache limit is
+  /// a disk budget rather than a rule about downloading, and stays.
+  Future<void> resetAutoDownload() => _apply(
+    const MediaSettings().copyWith(cacheLimitBytes: state.cacheLimitBytes),
+  );
+
   Future<void> _apply(MediaSettings next) async {
     if (next == state) return;
     state = next;

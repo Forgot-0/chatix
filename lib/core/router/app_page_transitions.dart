@@ -76,6 +76,35 @@ abstract final class AppPageTransitions {
     );
   }
 
+  /// A section picked from a list that may still be on screen beside it —
+  /// a settings section in a two-pane window.
+  ///
+  /// With [besideList] the list is the way back, so the section's app bar
+  /// gets no back arrow even though the pane's own stack has a page under
+  /// it, and changing sections fades through instead of sliding: one is
+  /// swapped for the next, not entered from it. Without it — one pane —
+  /// this is [sharedAxisHorizontal]. The pane reads the layout when it
+  /// builds its pages, so a window dragged across the breakpoint gets the
+  /// arrow back without anybody navigating.
+  static Page<T> section<T>({
+    required LocalKey key,
+    required Widget child,
+    required bool besideList,
+    String? name,
+  }) {
+    return _SectionPage<T>(
+      key: key,
+      name: name,
+      besideList: besideList,
+      transitionDuration: besideList ? AppMotion.base : duration,
+      reverseTransitionDuration: besideList ? AppMotion.base : duration,
+      transitionsBuilder: besideList
+          ? buildFadeThrough
+          : buildSharedAxisHorizontal,
+      child: child,
+    );
+  }
+
   /// Exposed separately so a `Navigator` outside go_router — a dialog route,
   /// a test harness — can reuse the same motion.
   static Widget buildSharedAxisHorizontal(
@@ -93,4 +122,80 @@ abstract final class AppPageTransitions {
     Widget child,
   ) =>
       AppTransitions.fadeThrough(context, animation, secondaryAnimation, child);
+}
+
+class _SectionPage<T> extends CustomTransitionPage<T> {
+  const _SectionPage({
+    required super.key,
+    required super.name,
+    required this.besideList,
+    required super.transitionDuration,
+    required super.reverseTransitionDuration,
+    required super.transitionsBuilder,
+    required super.child,
+  });
+
+  final bool besideList;
+
+  @override
+  Route<T> createRoute(BuildContext context) => _SectionRoute<T>(this);
+}
+
+/// go_router's own route for a [CustomTransitionPage], with one change:
+/// beside a list, the app bar is not told it can go back.
+///
+/// The page is read through [settings] on every call, so a page rebuilt
+/// for a new layout changes the answer for the route that is already up —
+/// the navigator hands it the new page and the app bar rebuilds.
+class _SectionRoute<T> extends PageRoute<T> {
+  _SectionRoute(_SectionPage<T> page) : super(settings: page);
+
+  _SectionPage<T> get _page => settings as _SectionPage<T>;
+
+  @override
+  bool get impliesAppBarDismissal =>
+      !_page.besideList && super.impliesAppBarDismissal;
+
+  @override
+  bool get barrierDismissible => _page.barrierDismissible;
+
+  @override
+  Color? get barrierColor => _page.barrierColor;
+
+  @override
+  String? get barrierLabel => _page.barrierLabel;
+
+  @override
+  Duration get transitionDuration => _page.transitionDuration;
+
+  @override
+  Duration get reverseTransitionDuration => _page.reverseTransitionDuration;
+
+  @override
+  bool get maintainState => _page.maintainState;
+
+  @override
+  bool get fullscreenDialog => _page.fullscreenDialog;
+
+  @override
+  bool get opaque => _page.opaque;
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => Semantics(
+    scopesRoute: true,
+    explicitChildNodes: true,
+    child: _page.child,
+  );
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => _page.transitionsBuilder(context, animation, secondaryAnimation, child);
 }

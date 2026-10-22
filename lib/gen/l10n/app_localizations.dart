@@ -6971,6 +6971,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That picture can\'t be used. Pick a JPEG, PNG or WebP up to 5 MB.'**
   String get apiErrorChatAvatarValidation;
+
+  /// Hint in the search field over the settings list.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings'**
+  String get settingsSearchHint;
+
+  /// Settings search found nothing for the typed words.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found for “{query}”'**
+  String settingsSearchEmpty(String query);
+
+  /// Under the empty settings search result.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a shorter or a different word.'**
+  String get settingsSearchEmptyHint;
+
+  /// Tooltip of the button that empties the settings search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get settingsSearchClear;
+
+  /// Settings row that opens the chat folders screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat folders'**
+  String get settingsChatFolders;
+
+  /// Screen reader hint for the profile card at the top of settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your profile'**
+  String get settingsProfileOpen;
+
+  /// Right pane of a wide window before a settings section is picked.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a section'**
+  String get settingsPanePlaceholderTitle;
+
+  /// Under the placeholder title in the settings right pane.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you can set up in ChatiX is in the list on the left.'**
+  String get settingsPanePlaceholderHint;
+
+  /// Settings section: auto-download, cache and autoplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Data and storage'**
+  String get dataStorageTitle;
+
+  /// Caption over the cache card in Data and storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage usage'**
+  String get dataStorageUsageSection;
+
+  /// The downloaded-attachments cache, as a row title.
+  ///
+  /// In en, this message translates to:
+  /// **'Media cache'**
+  String get dataStorageCacheTitle;
+
+  /// How much of the cache limit is in use: "120 MB of 256 MB".
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {limit}'**
+  String dataStorageUsageOf(String used, String limit);
+
+  /// Title of the dialog before the media cache is emptied.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear the media cache?'**
+  String get dataStorageClearConfirmTitle;
+
+  /// Body of the clear-cache dialog; size is how much will be freed.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} of downloaded photos, videos, files and voice messages will be removed from this device. They stay in your chats and download again when you open them.'**
+  String dataStorageClearConfirmBody(String size);
+
+  /// Caption over the auto-download switches for mobile data.
+  ///
+  /// In en, this message translates to:
+  /// **'When using mobile data'**
+  String get autoDownloadOnMobile;
+
+  /// Caption over the auto-download switches for Wi-Fi.
+  ///
+  /// In en, this message translates to:
+  /// **'When connected to Wi-Fi'**
+  String get autoDownloadOnWifi;
+
+  /// Under the mobile-data switches: mobile implies Wi-Fi.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything turned on for mobile data is fetched on Wi-Fi too.'**
+  String get dataStorageAutoDownloadFooter;
+
+  /// Button that puts auto-download and video-note autoplay back to default; the cache limit stays.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset auto-download settings'**
+  String get dataStorageReset;
+
+  /// Toast after the auto-download settings were reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-download settings are back to default'**
+  String get dataStorageResetDone;
+
+  /// Settings section with the version, what is new and links.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutTitle;
+
+  /// One line under the app name on the About screen.
+  ///
+  /// In en, this message translates to:
+  /// **'A messenger in your colours'**
+  String get aboutTagline;
+
+  /// Row title: the app version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get aboutVersion;
+
+  /// The version and build number, e.g. "1.0.0 (1)".
+  ///
+  /// In en, this message translates to:
+  /// **'{version} ({build})'**
+  String aboutVersionValue(String version, String build);
+
+  /// Row that opens the release notes.
+  ///
+  /// In en, this message translates to:
+  /// **'What’s new'**
+  String get aboutWhatsNew;
+
+  /// Title of the release notes sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'What’s new in {version}'**
+  String aboutWhatsNewTitle(String version);
+
+  /// Release note: settings were regrouped.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings, regrouped'**
+  String get whatsNewSettingsTitle;
+
+  /// Release note body for the settings change.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile on top, coloured sections, search, and a page of its own for data and storage.'**
+  String get whatsNewSettingsBody;
+
+  /// Release note: chat folders.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat folders'**
+  String get whatsNewFoldersTitle;
+
+  /// Release note body for chat folders.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort conversations into folders and keep the busy ones out of the way.'**
+  String get whatsNewFoldersBody;
+
+  /// Release note: creating groups and channels.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups and channels'**
+  String get whatsNewChatsTitle;
+
+  /// Release note body for groups and channels.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a group or a channel in a couple of steps, with a photo and a description.'**
+  String get whatsNewChatsBody;
+
+  /// Release note: desktop improvements.
+  ///
+  /// In en, this message translates to:
+  /// **'At home on a desktop'**
+  String get whatsNewDesktopTitle;
+
+  /// Release note body for desktop improvements.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts, paste or drop files to send them, reply and react from the buttons by a message.'**
+  String get whatsNewDesktopBody;
+
+  /// Link row in About.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get aboutPrivacyPolicy;
+
+  /// Link row in About.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of service'**
+  String get aboutTerms;
+
+  /// Link row in About.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get aboutSupport;
+
+  /// Row that opens the open-source licence list.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licences'**
+  String get aboutLicenses;
+
+  /// Toast when a link from About could not be opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t open the link'**
+  String get aboutLinkFailed;
+
+  /// Toast while the version is tapped: taps left until the developer menu opens.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One more tap to open the developer menu} other{{count} more taps to open the developer menu}}'**
+  String devMenuTapsLeft(int count);
+
+  /// Toast when seven taps opened the developer menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer menu is open. It’s at the bottom of Settings.'**
+  String get devMenuUnlocked;
+
+  /// Toast when the version is tapped while the developer menu is already open.
+  ///
+  /// In en, this message translates to:
+  /// **'The developer menu is already open'**
+  String get devMenuAlreadyOpen;
+
+  /// The hidden developer menu, as a settings row and a screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get devMenuTitle;
+
+  /// Note under the developer menu tools.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools for checking the app. Nothing here changes your account or your chats.'**
+  String get devMenuNote;
+
+  /// Subtitle of the design system row in the developer menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Colours, type and components in both themes'**
+  String get designSystemHint;
+
+  /// Developer switch that records WebSocket frames.
+  ///
+  /// In en, this message translates to:
+  /// **'Record WebSocket frames'**
+  String get devMenuRecordSocket;
+
+  /// Under the record-frames switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps the latest frames in memory until the app closes. They include message text.'**
+  String get devMenuRecordSocketHint;
+
+  /// Under the record-frames switch when the server already turned recording on.
+  ///
+  /// In en, this message translates to:
+  /// **'Turned on for this account from the server'**
+  String get devMenuRecordSocketByFlag;
+
+  /// Button that hides the developer menu again.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide developer menu'**
+  String get devMenuHide;
+
+  /// Toast after the developer menu was hidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer menu hidden'**
+  String get devMenuHidden;
+
+  /// Note under the list of languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Menus, buttons and dates follow this choice. Messages stay in the language they were written in.'**
+  String get languageScreenNote;
 }
 
 class _AppLocalizationsDelegate
