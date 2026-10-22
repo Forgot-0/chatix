@@ -1,4 +1,4 @@
-# API Documentation — messanger
+﻿# API Documentation — messanger
 
 > Сверено с исходным кодом на `main` (2026-08-14). Основной референс для написания клиента (роуты, Pydantic-схемы, DTO, exception-классы, конфиги).
 
@@ -34,10 +34,10 @@
 | 5 | **Refresh-токен** никогда не приходит и не уходит в JSON. Сервер кладёт его в **HttpOnly-cookie** `refresh_token` (`Secure=true`, `SameSite=strict`, `Path=/`). `POST /auth/refresh/` читает его из cookie автоматически. Подробности и последствия для мобильного/веб-клиента — в разделе 9. |
 | 6 | **Время жизни access-токена** — `ACCESS_TOKEN_EXPIRE_MINUTES = 5`. Клиенту обязателен агрессивный proactive-refresh или retry-on-401 механизм. Refresh-токен живёт 60 дней. |
 | 8 | **`POST /profiles/` не существует.** Профиль заводит бэкенд, консьюмер модуля `profiles` по событию `auth.user.verified` — то есть в момент подтверждения почты (у OAuth-пользователей сразу при первом входе). Доставка асинхронная, поэтому сразу после верификации `GET /profiles/{id}/` может успеть ответить `404 NOT_FOUND_PROFILE`. `GET /profiles/my/` на такой случай создаёт профиль сам и всегда отвечает `200`. |
-| 9 | **Аватар профиля**: `avatars: { "32"\|"64"\|"256"\|"512": { "jpg": url, "webp": url, "avif": url } }` — 4 размера × 3 формата на размер. См. раздел 4.5. |
+| 9 | **Аватар профиля**: `avatars: { "32"\|"64"\|"256"\|"512": { "jpg": url, "webp": url } }` — 4 размера × 2 формата на размер, столько же у аватара группы/канала. Бакет аватаров **приватный**: это presigned-ссылки с TTL `300` сек, как у вложений чата. Их нельзя складывать в свою БД и переиспользовать позже — после истечения они отдают `403`, нужен повторный запрос профиля. См. раздел 4.5. |
 | 10 | **Загрузка аватара — presigned PUT**, тем же механизмом, что и вложения чата (раздел 6.5), но валидация типа/размера файла происходит **асинхронно**, уже после подтверждения загрузки — `POST /profiles/avatar/upload_complete/` всегда отвечает `200 OK`, даже если файл в итоге окажется невалидным и аватар не обновится. См. раздел 4.5. |
 | 11 | Раздела "realtime" (`/chats/realtime/presence/`, `/chats/realtime/ws/status/`) в коде нет. Presence отдаётся через `GET /chats/{chat_id}/members/?include_presence=true` и через WS. |
-| 12 | **WebSocket-протокол** — полноценный протокол с 4 командами клиента (`subscribe`, `unsubscribe`, `resume`, `ping`/`pong`) и ~13 типами server-push событий (`new_message`, `message_edited`, `message_deleted`, `messages_read`, `member_joined`, `member_left`, `member_kick`, `member_banned`, `chat_created`, `chat_updated`, `attachment_success`, `chat_deleted`, `reaction_update`, плюс служебные `ws.ready/subscribed/unsubscribed/history/pong/ping/error`). В `payload` каждого доменного события лежит дельта `event` (поля конкретного типа: `reader_id`, `target_user_id`, `deleted_by`, ...) и `event_id` для дедупликации — доставка at-least-once. Полный `MessageDTO` приходит только в `new_message`/`message_edited`. Полностью расписан в разделе 7. |
+| 12 | **WebSocket-протокол** — полноценный протокол с 5 командами клиента (`subscribe`, `unsubscribe`, `resume`, `typing`, `ping`/`pong`) и ~21 типом server-push событий (`new_message`, `message_edited`, `message_deleted`, `messages_read`, `message_pinned`, `message_unpinned`, `typing_start`, `typing_stop`, `member_joined`, `member_left`, `member_kick`, `member_banned`, `join_request_created`, `join_request_approved`, `join_request_declined`, `join_request_cancelled`, `chat_created`, `chat_updated`, `attachment_success`, `chat_deleted`, `reaction_update`, плюс служебные `ws.ready/subscribed/unsubscribed/history/pong/ping/error`). В `payload` каждого доменного события лежит дельта `event` (поля конкретного типа: `reader_id`, `target_user_id`, `deleted_by`, ...) и `event_id` для дедупликации — доставка at-least-once. Полный `MessageDTO` приходит только в `new_message`/`message_edited`. Полностью расписан в разделе 7. |
 | 13 | **Роли проекта** — реальные сид-роли: `owner(id=1)`, `maintainer(id=2)`, `developer(id=4, id=3 не существует)`, `user(id=5)`, с непустой картой прав. См. раздел 8. |
 | 14 | **429 Too Many Requests** не проходит через `ApplicationError` — это обычный FastAPI `HTTPException`, отдаётся как `{"detail": "Too Many Requests"}`, без `error/status/request_id/timestamp`. Обрабатывать нужно отдельной веткой по HTTP-статусу 429. |
 | 15 | **`GET /users/me/`** возвращает облегчённый `UserResponse`: только `{id, username, email}`. Роли/права/сессии — через `GET /users/` (админский, постранично) или `GET /users/sessions/`. |
@@ -52,6 +52,19 @@
 | 24 | **Серверный поиск по сообщениям ищет только `messages.content`.** `GET /chats/messages/search/` не ищет ни по именам файлов вложений, ни по названиям и описаниям чатов, ни по именам участников — только по тексту сообщения. Индекс полнотекстовый с конфигурацией `simple` (без стемминга, только нижний регистр), последний терм запроса матчится по префиксу, остальные точно: `догов кон` найдёт «договор» + «кон*», но не найдёт «договоры» по запросу «договор». Подстрочный поиск («*юдже*») не поддерживается. Ранжирования нет — порядок строго от новых к старым. Подсветку совпадений клиент делает сам. |
 | 25 | **У direct-чата собеседник приходит только в `GET /chats/`, полем `ChatDTO.peer`.** `name` и `avatar_s3_key` у direct не заполняются никогда, а `last_message` у пустого диалога `null` — без `peer` строку списка нечем отрисовать. У group/supergroup вместо него `members_preview` (до 3 участников кроме себя, по возрастанию `user_id`); у channel пусто и то и другое. В ответах `POST /chats/` и `PATCH /chats/{id}/` оба поля приходят пустыми — это не баг, они наполняются только в списке. См. 5.2. |
 | 25 | **`GET /profiles/` перестал быть публичным.** Списку и поиску профилей теперь нужен `Authorization`, и он ограничен 20 запросами в минуту. Поиск по одному полю ввода — параметр `q`: он ищет по `username` **ИЛИ** `display_name` одним запросом (минимум 2 символа). Старые `username`/`display_name` остались и по-прежнему комбинируются через **AND**; передать `q` вместе с любым из них — `422`, а не тихий приоритет. Форма ответа прежняя — `PageResult<ProfileDTO>`. См. 4.2. |
+| 26 | **Блокировка работает в чатах, но с задержкой доставки события.** Источник правды — `blocked_users` модуля profiles; чаты читают свою проекцию `chat_user_blocks`, которую наполняет консьюмер по `profiles.user.blocked/unblocked` (outbox → Kafka), поэтому блок вступает в силу в чатах через доли секунды, а не в момент ответа `POST /contacts/{id}/block/`. Последствия и коды ошибок — раздел 4.13. |
+| 27 | **`created_by` — это текущий владелец, а не исторический создатель.** `POST /chats/{chat_id}/transfer_ownership/` переписывает `created_by` на нового владельца (как флаг creator в Telegram): новый владелец не может выйти через `/leave/`, бывший — может. Клиенту, который сравнивал `created_by` со своим id, менять ничего не нужно. См. 5.2. |
+| 29 | **«Печатает…» — только через WebSocket и только эфемерно.** Клиент шлёт `{"op": "typing", "chat_id", "action"}`, получатели видят `typing_start`/`typing_stop`. Это не доменное событие: оно не пишется в БД, не идёт через outbox/Kafka, не попадает в `ws.history` и не переживает реконнект. Сервер сам режет повторы (одно и то же `action` — не чаще раза в 3 с), а кадр живёт 6 с (`expires_in`): клиент обязан гасить индикатор по таймеру и при `new_message` от того же автора, `typing_stop` может и не прийти. См. 6.3/6.4. |
+| 30 | **Закрепление сообщения порождает системное сообщение.** `PUT /chats/{chat_id}/pinned_messages/{message_id}/` кроме `message_pinned` создаёт в чате обычное сообщение `type: "system"`, `action: "message_pinned"`, `reply_to` — закреплённое; оно приходит через `new_message`, двигает `seq` и становится `last_message`. Открепление системного сообщения не создаёт. Удаление закреплённого сообщения само его открепляет (`message_unpinned`). См. 5.11. |
+| 31 | **Пакетная пересылка — один push на пакет.** `POST /chats/{chat_id}/messages/forward_many/` создаёт N сообщений и N `new_message`, но у всех, кроме последнего, в дельте `notify: false` — на них push не уходит. Порядок — порядок сообщений в исходном чате, а не в запросе; удалённые и чужие id молча пропускаются. См. 5.4. |
+| 32 | **«Кто прочитал» — только автору, только в маленьких группах и только 7 дней.** `GET /chats/{chat_id}/messages/{message_id}/reads/` работает для group/supergroup до 100 участников, только для своего сообщения и только пока сообщению меньше 7 дней; иначе `400 READ_RECEIPTS_UNAVAILABLE` с `reason`. Время — момент, когда курсор чтения участника впервые прошёл это сообщение, а не время последнего чтения. См. 5.4.2. |
+| 28 | **Три новых статических пути под `/chats/`**: `/chats/search/`, `/chats/u/{username}/`, `/chats/invites/{code}/` (и `/chats/invites/{code}/join/`). Они объявлены **до** `/chats/{chat_id}/`; без слэша в конце — `404`, а не попадание в чат. Публичное имя чата и username пользователя — **разные пространства имён**: `@name` может одновременно быть и каналом (`/chats/u/name/`), и человеком (`/profiles/u/name/`). |
+| 33 | **С фото и видео на сервере снимаются метаданные.** У `image` нет EXIF/XMP/IPTC (GPS, модель камеры). JPEG без поворота чистится без перекодирования — пиксели те же, `size` уменьшается на размер метаданных (у фото, сжатого клиентом, байты не меняются вовсе). JPEG с тегом поворота, PNG и WebP перекодируются: поворот вшивается в пиксели, `width`/`height` — уже после поворота. GIF хранится как есть. HEIC/HEIF как фото не принимаются (`400 ATTACHMENT_VALIDATION`) — клиент перегоняет их в JPEG сам, как Telegram и WhatsApp. У видео метаданные (геотег QuickTime) вырезаются ремуксом без перекодирования. Сравнивать загруженный файл с сохранённым по размеру или хэшу нельзя. См. 5.5. |
+| 35 | **Настройки приватности есть и применяются по всему API** (`/profiles/privacy/`, 5 осей: `last_seen`, `photo`, `messages`, `group_invites`, `calls`, значения `everybody`/`contacts`/`nobody` плюс персональные `allow`/`deny`). Порядок решения: своё видно всегда → блокировка → персональное исключение → значение правила. «Контакт» — тот, кого **владелец** настройки держит в своей адресной книге, так что добавление человека к себе его фото вам не открывает. В чатах настройка начинает действовать с задержкой доставки события (как блокировка), новые коды — `MESSAGES_PRIVACY_RESTRICTED` и `CALLS_PRIVACY_RESTRICTED`. См. 4.14. |
+| 34 | **Ленту рисуют превью, а не оригиналы.** У фото, видео и кружков есть `previews` (WebP по большей стороне 320/800/1280, без апскейла — у маленьких картинок одна ступень своего размера) и `thumbhash` — заглушка до загрузки. Кэшировать превью по их `s3_key` (ссылки живут 300 с). `previews` пуст, если постер видео не удалось снять — плитку рисовать по `thumbhash`/`width`/`height`, а если и их нет, как раньше. См. 5.5. |
+| 36 | **Username меняется в auth, профиль и чаты догоняют событием.** `PUT /users/me/username/` отвечает новым именем сразу, логин по нему работает сразу, а `ProfileDTO.username`, `GET /profiles/u/{name}/` и `username` в чатах (`peer`, участники, авторы) обновляются через доли секунды (`auth.user.username_changed` → профиль → `profiles.profile.updated` → проекция чатов). В access-токене до ближайшего `POST /auth/refresh/` остаётся старое имя — после смены стоит сразу обновить токен. Новое имя: 5–32 символа, латиница, цифры и `_`, с буквы, не на `_`; занятость и `GET /profiles/u/{username}/` — **без учёта регистра**. Регистрация пока принимает прежний формат (`^[a-zA-Z0-9 ,.'-]+$`), такие имена остаются как есть до первой смены. См. 3.17. |
+| 37 | **У профиля история фото, а не один аватар.** `ProfileDTO.avatars` — по-прежнему текущее фото; вся история — `GET /profiles/{id}/photos/` (текущее первым, `is_main: true`). Новая загрузка становится текущим фото, прежние остаются в истории (до 100). `DELETE /profiles/avatar/` удаляет текущее, и текущим становится предыдущее — как в Telegram; `PUT /profiles/photos/{photo_id}/main/` возвращает старое фото на первое место. Ключи объектов у каждого фото свои (`{user_id}/{photo_id}/{size}.{fmt}`), поэтому картинку можно кэшировать по ключу. Приватность `photo` и блокировка скрывают всю историю. См. 4.5–4.5.1. |
+| 38 | **Вступление может превратиться в заявку.** `POST /chats/invites/{code}/join/` и `POST /chats/{chat_id}/join/` теперь отвечают `200 JoinChatResultDTO` со `status: "joined" | "requested"`: у ссылки с `creates_join_request` и у чата с `join_by_request` участником сразу не становятся — создаётся заявка, которую модерация (право `member:invite`) одобряет или отклоняет **пакетами** в `/chats/{chat_id}/join_requests/approve|decline/` (до 100 за раз) либо закрывает целиком через `DELETE /chats/{chat_id}/join_requests/`. Клиент обязан смотреть на `status`, а не на наличие чата в ответе. После отказа повторная заявка — только через час (`429 JOIN_REQUEST_RETRY_LATER`). События заявок по WS видят только обладатели `member:invite` (и заявитель — решение по своей). См. 5.8.1. |
 
 ---
 
@@ -188,7 +201,9 @@ interface ErrorResponse {
 |---|---|---|
 | `WRONG_LOGIN_DATA` | 400 | `{ "username": string }` |
 | `NOT_FOUND_USER` | 404 | `{ "user_by": string\|number, "user_field": string }` |
-| `DUPLICATE_USER` | 409 | `{ "field": string, "value": string }` — при регистрации, если email/username занят |
+| `DUPLICATE_USER` | 409 | `{ "field": string, "value": string }` — при регистрации, если email/username занят (username сравнивается без учёта регистра) |
+| `INVALID_USERNAME` | 400 | `{ "username": string, "reason": "length" \| "format" \| "reserved" }` — смена username (3.17); при регистрации — только `reserved` |
+| `USERNAME_TAKEN` | 409 | `{ "username": string }` — `PUT /users/me/username/`: имя занято другим пользователем (без учёта регистра) |
 | `PASSWORD_MISMATCH` | 400 | `{}` — `password` и `password_repeat` не совпали |
 | `NOT_FOUND_ROLE` | 404 | `{ "name": string }` |
 | `DUPLICATE_ROLE` | 409 | `{ "name": string }` |
@@ -200,6 +215,8 @@ interface ErrorResponse {
 | `OAUTH_STATE_NOT_FOUND` | 404 | `{ "state": string }` |
 | `LINKED_ANOTHER_USER_OAUTH` | 409 | `{ "provider": string }` |
 | `NOT_EXIST_PROVIDER_OAUTH` | 400 | `{ "provider": string }` — провайдер не `google`/`yandex`/`github` |
+| `OAUTH_EMAIL_NOT_VERIFIED` | 403 | `{ "provider": string }` — провайдер не подтвердил, что почта принадлежит аккаунту |
+| `OAUTH_EMAIL_NOT_PROVIDED` | 400 | `{ "provider": string }` — провайдер не вернул почту |
 | `EMAIL_NOT_CONFIRMED` | 403 | `{ "email": string }` |
 | `TOKEN_IN_BLACKLIST` | 409 | `{}` |
 
@@ -215,6 +232,8 @@ interface ErrorResponse {
 | `AVATAR_NOT_TYPE_IMAGE` | 400 | `{ "type": string }` — реальный MIME-тип загруженного файла (определяется через `python-magic` по содержимому, а не по расширению) не начинается с `image/` |
 | `AVATAR_SIZE` | 400 | `{ "current_size": number }` — файл больше `AVATAR_MAX_SIZE` (5 МБ) |
 | `AVATAR_FILE_KEY` | 400 | `{ "file_key": string }` — ключ не принадлежит вызывающему |
+| `NOT_FOUND_PROFILE_PHOTO` | 404 | `{ "photo_id": string }` — фото нет в истории **своего** профиля (чужое фото — тоже 404) |
+| `PROFILE_PHOTOS_LIMIT` | 409 | `{ "limit": number }` — в истории уже `MAX_PROFILE_PHOTOS` (100) фото; отдаётся на `POST /profiles/avatar/presign/`, сначала удалить старое |
 | `NOT_FOUND_CONTACT` | 404 | `{ "contact_id": number }` — контакта нет в адресной книге вызывающего |
 | `NOT_FOUND_CONTACT_TARGET` | 404 | `{ "user_id": number\|null, "username": string\|null }` — некого добавлять: профиля с таким id/username нет |
 | `SELF_CONTACT_NOT_ALLOWED` | 400 | `{}` — попытка добавить или заблокировать самого себя |
@@ -225,7 +244,7 @@ interface ErrorResponse {
 | `IDENTIFIER_QUOTA_EXCEEDED` | 429 | `{ "limit": number, "period": "24h" }` — исчерпана суточная квота новых идентификаторов (5000). В отличие от rate-limit'а FastAPI, приходит в обычном конверте ошибки |
 | `IDENTIFIER_PEPPER_NOT_CONFIGURED` | 503 | `{}` — на сервере не задан `CONTACT_IDENTIFIER_PEPPER`, хеширование недоступно |
 
-⚠️ `AVATAR_NOT_TYPE_IMAGE` и `AVATAR_SIZE` возникают **асинхронно**, внутри фоновой задачи обработки аватара — они не приходят как HTTP-ответ ни на `/avatar/presign/`, ни на `/avatar/upload_complete/` (оба всегда отвечают `200`, если запрос сам по себе корректен). См. раздел 4.5.
+⚠️ `AVATAR_NOT_TYPE_IMAGE` и `AVATAR_SIZE` (а при гонке двух загрузок и `PROFILE_PHOTOS_LIMIT`) возникают **асинхронно**, внутри фоновой задачи обработки аватара — они не приходят как HTTP-ответ ни на `/avatar/presign/`, ни на `/avatar/upload_complete/` (оба всегда отвечают `200`, если запрос сам по себе корректен). См. раздел 4.5.
 
 ### 2.6 Коды модуля `chats`
 
@@ -242,6 +261,9 @@ interface ErrorResponse {
 | `TOO_LONG_CHAT_ROLE_NAME` | 400 | `{ "role_name": string, "max_len": 32 }` |
 | `DIRECT_CHAT_EXISTS` | 409 | `{ "chat_id": string }` |
 | `MEMBER_LIMIT_EXCEEDED` | 400 | `{ "limit": number }` — лимит зависит от типа чата (2/500/1000000/10000000), см. раздел 9 |
+| `PINNED_MESSAGES_LIMIT_EXCEEDED` | 400 | `{ "chat_id": string, "limit": 100 }` — в чате уже `MAX_PINNED_MESSAGES` закреплённых сообщений; см. 5.11 |
+| `SLOW_MODE_MULTIPLE_MESSAGES` | 400 | `{ "chat_id": string, "count": number }` — в чате slow mode, а `forward_many/` создал бы больше одного сообщения (комментарий тоже считается); переслать можно по одному. Staff и `slowmode:bypass` не ограничены |
+| `READ_RECEIPTS_UNAVAILABLE` | 400 | `{ "chat_id": string, "reason": "chat_type" \| "chat_too_large" \| "message_too_old", "max_members": 100, "retention_days": 7 }` — список прочитавших недоступен; см. 5.4.2 |
 | `PINNED_CHATS_LIMIT_EXCEEDED` | 400 | `{ "limit": 5 }` — попытка запинить шестой чат через `PATCH /chats/{chat_id}/state/`; лимит общий на пользователя, архив считается вместе с основным списком |
 | `MESSAGE_TOO_LONG` | 400 | `{ "length": number, "max_length": 4096 }` |
 | `LIVEKIT_ERROR` | 502 | `{ "reason": string }` |
@@ -260,6 +282,26 @@ interface ErrorResponse {
 | `REACTION_NOT_ALLOWED` | 400 | `{ "emoji": string, "allowed": string[] }` — режим чата `some`, эмодзи не в белом списке; см. 6.7.4 |
 | `REACTIONS_DISABLED` | 403 | `{ "chat_id": string }` — в чате `reactions_mode = "none"`; см. 6.7.4 |
 | `TOO_MANY_REACTIONS` | 400 | `{ "limit": number, "scope": "user" \| "message" }` — превышен лимит реакций; см. 6.7.4 |
+| `INVALID_CHAT_USERNAME` | 400 | `{ "username": string, "reason": "length" \| "format" \| "reserved" }` — см. 5.9 |
+| `CHAT_USERNAME_TAKEN` | 409 | `{ "username": string }` — имя занято другим чатом (сравнение без учёта регистра) |
+| `CHAT_USERNAME_NOT_ALLOWED` | 400 | `{ "chat_id": string, "reason": "direct_chat" \| "chat_not_public" }` — публичное имя бывает только у публичной группы/канала |
+| `NOT_FOUND_CHAT_USERNAME` | 404 | `{ "username": string }` — `GET /chats/u/{username}/`: такого публичного чата нет |
+| `INVALID_OWNERSHIP_TRANSFER` | 400 | `{ "chat_id": string, "reason": "direct_chat" \| "already_owner" \| "target_banned" }` |
+| `NOT_FOUND_INVITE_LINK` | 404 | `{ "invite": string }` — код ссылки (или id при отзыве) не найден |
+| `INVITE_LINK_EXPIRED` | 410 | `{ "reason": "expired" \| "revoked" \| "usage_limit_reached" }` — ссылка была, но больше не действует |
+| `INVALID_INVITE_LINK` | 400 | `{ "reason": "expires_at_in_past" \| "usage_limit_out_of_range" \| "direct_chat" \| "request_link_with_usage_limit" }` |
+| `INVITE_LINKS_LIMIT_EXCEEDED` | 400 | `{ "limit": 100 }` — неотозванных ссылок у чата не больше `MAX_INVITE_LINKS_PER_CHAT` |
+| `NOT_FOUND_JOIN_REQUEST` | 404 | `{ "chat_id": string, "user_id": number }` — ожидающей заявки нет (не подавалась, уже решена или отозвана); см. 5.8.1 |
+| `JOIN_REQUEST_PENDING` | 409 | `{ "chat_id": string, "user_id": number }` — заявка уже ждёт решения |
+| `JOIN_REQUEST_RETRY_LATER` | 429 | `{ "chat_id": string, "user_id": number, "retry_after": number }` — после отказа повторная заявка возможна через час |
+| `JOIN_REQUESTS_LIMIT_EXCEEDED` | 400 | `{ "chat_id": string, "limit": 5000 }` — очередь ожидающих заявок переполнена |
+| `JOIN_REQUEST_NOT_ALLOWED` | 400 | `{ "chat_id": string, "reason": "direct_chat" }` — `join_by_request` нельзя включить в личке |
+| `CHAT_AVATAR_VALIDATION` | 400 | `{ "reason": string, "mime_type": string \| null, "file_size": number \| null }` — синхронно только на шаге запроса слота (`mime_type`, `size`, `direct_chat`); проверка содержимого файла асинхронная, см. 5.10 |
+| `USER_BLOCKED` | 403 | `{ "chat_id": string \| null, "user_id": number }` — личка заблокирована: один из собеседников заблокировал другого (`user_id` — собеседник). `chat_id: null` — при попытке создать новый direct. См. 4.13 |
+| `USER_PRIVACY_RESTRICTED` | 403 | `{ "user_ids": number[] }` — этих пользователей нельзя добавить в группу/канал: они заблокировали вызывающего **или** их настройка `group_invites` его не пускает. См. 4.13, 4.14 |
+| `MESSAGES_PRIVACY_RESTRICTED` | 403 | `{ "chat_id": string \| null, "user_id": number }` — настройка `messages` собеседника не пускает вызывающего: отправка и пересылка в личку, `typing`, создание нового direct (`chat_id: null`). См. 4.14 |
+| `CALLS_PRIVACY_RESTRICTED` | 403 | `{ "chat_id": string \| null, "user_id": number }` — настройка `calls` собеседника не пускает вызывающего в звонок. См. 4.14 |
+| `PRIVACY_EXCEPTIONS_LIMIT` | 400 | `{ "rule": string, "limit": number, "current": number }` — в одном правиле больше 100 исключений (`allow` + `deny`). См. 4.14 |
 
 ⚠️ `ATTACHMENT_MEDIA_VALIDATION` (класс `AttachmentMediaValidationError`) в этой таблице **намеренно не указан** — он никогда не долетает до HTTP-ответа: возникает только внутри фонового воркера `ProccessAttachmentsCommandHandler` (см. 6.5), там же перехватывается и сворачивается в `attachment_status: "error"`. Клиенту как код ошибки API не отдаётся.
 
@@ -301,7 +343,9 @@ interface ErrorResponse {
 { id: number; username: string; email: string }
 ```
 
-**Ошибки:** `400 PASSWORD_MISMATCH`, `409 DUPLICATE_USER` (`detail: {field: "username"|"email", value}`).
+**Ошибки:** `400 PASSWORD_MISMATCH`, `400 INVALID_USERNAME` (`reason: "reserved"` — `admin`, `support`, `system`… в любом регистре), `409 DUPLICATE_USER` (`detail: {field: "username"|"email", value}`). Username сравнивается **без учёта регистра**: при занятом `ivan` регистрация `Ivan` — `409`.
+
+Формат при регистрации пока прежний, шире правил смены (3.17): клиенты валидируют форму по нему. Имя с пробелом или запятой зарегистрировать можно, а сменить на такое — нет.
 
 После успешной регистрации бэкенд асинхронно (через Kafka) создаёт профиль пользователя — см. раздел 4.1. Пользователь создаётся сразу с `is_active=true`, `is_verified=false`, ролью `user`.
 
@@ -368,7 +412,11 @@ Rate limit: 4 запроса / 5 минут.
    Response `200`: `{ url: string }`.
 3. **`GET /auth/oauth/{provider}/callback/?code=...&state=...`** 🔓 — callback от провайдера (обычно провайдер сам делает редирект браузера сюда; фронтенду нужно перехватить редирект / deep link и переслать `code`+`state`, либо это должно открываться прямо в системном браузере, а моб. приложение ловит финальный deep-link с результатом — конкретная схема зависит от того, как настроен `redirect_uri` у провайдера в конфиге бэкенда, уточнить у бэкенд-команды).
    Response `200`: `AccessTokenResponse` + `Set-Cookie: refresh_token`.
-   Ошибки: `400 NOT_EXIST_PROVIDER_OAUTH`, `404 OAUTH_STATE_NOT_FOUND` / `NOT_FOUND_USER`, `409 LINKED_ANOTHER_USER_OAUTH`.
+   Ошибки: `400 NOT_EXIST_PROVIDER_OAUTH` / `OAUTH_EMAIL_NOT_PROVIDED`, `403 OAUTH_EMAIL_NOT_VERIFIED`, `404 OAUTH_STATE_NOT_FOUND` / `NOT_FOUND_USER`, `409 LINKED_ANOTHER_USER_OAUTH`, `502 OAUTH_PROVIDER_UNAVAILABLE`.
+
+   **Почта должна быть подтверждена у провайдера.** Google обязан вернуть `email_verified`, GitHub — хотя бы один адрес с `verified: true` (неподтверждённый primary пропускается). У Yandex флага подтверждения в API нет: адреса в ответе — собственные адреса аккаунта, проверяется только их наличие.
+
+   **Username при первом входе** берётся у провайдера (Google `name`, Yandex `login`/`display_name`, GitHub `login`): кириллица транслитерируется, недопустимые символы срезаются под тот же набор, что и при регистрации. Если имени нет или после чистки ничего не осталось — берётся локальная часть почты, затем `user`. Занятое (без учёта регистра) или зарезервированное имя получает суффикс вида `-a1b2c3`. Почта в username больше не попадает.
 
 ### 3.9 `GET /users/me/` ⚠️ облегчённый ответ
 
@@ -473,6 +521,56 @@ interface SessionDTO {
 
 Полный список системных строк-прав: `system:manage_settings`, `system:view_logs`, `user:create`, `user:update`, `user:delete`, `user:view`, `user:impersonate`, `role:create`, `role:update`, `role:delete`, `role:view`, `role:assign`, `role:remove`, `permission:create`, `permission:update`, `permission:delete`, `permission:view`.
 
+### 3.17 Смена username
+
+Username — один на аккаунт: им входят (`POST /auth/login/`), его показывает профиль и чаты, на него
+ссылаются `@`-упоминания. Источник правды — `users.username` (модуль auth); профиль и чаты держат копию.
+
+**Правила нового имени** (`User.validate_username`):
+
+- 5–32 символа после `strip()`; ведущий `@` отбрасывается;
+- латиница, цифры и `_`; начинается с буквы, не заканчивается на `_` (`^[A-Za-z][A-Za-z0-9_]*[A-Za-z0-9]$`);
+- не из зарезервированных (`admin`, `administrator`, `moderator`, `support`, `system`, `official`,
+  `security`, `root`, `bot`, `chatix`, `telegram`… — `USERNAME_RESERVED`), регистр не важен;
+- занятость — **без учёта регистра**: `Ivan` занят, если есть `ivan`. Своё имя в другом регистре
+  (`ivan` → `Ivan`) можно. Имя удалённого аккаунта остаётся занятым.
+
+**`PUT /users/me/username/`** 🔒 (лимит 5/1ч, `USERNAME_CHANGE_RATE_*`)
+
+```ts
+// Request (ChangeUsernameRequest)
+{ username: string }     // "@" в начале допустим
+// Response 200 (UserResponse)
+{ id: number; username: string; email: string }
+```
+
+Ошибки: `400 INVALID_USERNAME` (`reason: "length" | "format" | "reserved"`), `409 USERNAME_TAKEN`,
+`404 NOT_FOUND_USER`, `429`. То же имя, что сейчас, — `200` без изменений и без события.
+
+Что происходит после `200`:
+
+- вход по новому имени работает сразу, по старому — нет (почта как логин работает всегда);
+- старое имя сразу свободно для других;
+- в access-токене (`username`) старое имя живёт до `POST /auth/refresh/` — обновить токен сразу;
+- событие `auth.user.username_changed` (`{user_id, old_username, username}`) через outbox → Kafka
+  переписывает `ProfileDTO.username`, а оттуда `profiles.profile.updated` — проекцию чатов.
+  Профиль и чаты видят новое имя через доли секунды, `GET /profiles/u/{старое}/` до этого
+  может ещё найти профиль.
+
+**`GET /users/username/check/?username=`** 🔒 (лимит 30/1мин) — проверить имя до отправки, пока
+пользователь печатает. Ничего не меняет и не резервирует.
+
+```ts
+interface UsernameAvailabilityDTO {
+  username: string;            // очищенное имя (без "@" и пробелов по краям)
+  available: boolean;
+  reason: "length" | "format" | "reserved" | "taken" | null;
+}
+```
+
+Нарушение правил приходит в `reason` с `200`, а не ошибкой. Своё текущее имя — `available: true`.
+`available: true` не гарантирует успех `PUT`: между проверкой и сменой имя может занять другой.
+
 
 ## 4. Профили и контакты (`/profiles`, `/contacts`)
 
@@ -526,17 +624,23 @@ Query (`GetProfilesRequest`): `q?, username?, display_name?, skills?: string[], 
 **Response `200`**: `PageResult<ProfileDTO>` (только 4 поля пагинации, см. 1.5) — форма ответа
 одинакова и для списка, и для поиска.
 
-### 4.3 `GET /profiles/{profile_id}/` 🔒
+### 4.3 `GET /profiles/{profile_id}/` 🔒 и `GET /profiles/u/{username}/`
 
-(Раньше документировался как публичный — в коде он всегда требовал токен.)
+(Раньше `/profiles/{profile_id}/` документировался как публичный — в коде он всегда требовал токен.)
+
+`GET /profiles/u/{username}/` — **публичный**: токен не обязателен. Если он есть, настройки
+приватности считают зрителя по нему; без токена зритель «не контакт», и закрытое фото приходит
+как `avatars: {}` — профиль отдаётся, просто без фото (см. 4.14). Битый или просроченный токен
+на этом роуте — ошибка авторизации, а не «аноним». Ошибка отсутствия профиля —
+`404 NOT_FOUND_PROFILE` с `{ "username": ... }`. Имя ищется **без учёта регистра**
+(`/profiles/u/Durov/` найдёт `durov`), как и `@username` в контактах (4.9, 4.12).
 
 **Response `200`**: `ProfileDTO`. Ошибки: `404 NOT_FOUND_PROFILE`.
 
 ```ts
 interface ProfileDTO {
   id: number;                                   // === user_id
-  username: string;                             // без "@", всегда есть — не nullable, в отличие от display_name
-  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp"|"avif", string>>;
+  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp", string>>;  // presigned, TTL 300 сек
   specialization: string | null;
   display_name: string | null;
   bio: string | null;
@@ -549,9 +653,11 @@ interface ProfileLinkDTO { profile_id: number; provider: string; contact: string
 
 Если у пользователя ещё нет аватара, `avatars` — пустой объект `{}`.
 
-`username` приходит и здесь, и в списке `GET /profiles/` — то есть профиль всегда знает свой хэндл,
-и клиенту не нужно доставать его из `ChatProfileDTO` (§5.3) или `ContactProfileDTO` (§4.7).
-Это единственный стабильный идентификатор человека: `display_name` необязателен и не уникален.
+Бакет аватаров приватный, поэтому значения в `avatars` — **подписанные ссылки с TTL `300` сек**
+(`AVATAR_URL_TTL`), а не постоянные URL. Кешировать картинку нужно по **ключу объекта** — пути
+ссылки без query-строки: у каждого фото он свой (`{user_id}/{photo_id}/{size}.{fmt}`), так что
+новое фото — это новый ключ, и закэшированная старая картинка не подменит его. Хранить саму ссылку дольше TTL бессмысленно:
+по истечении S3 ответит `403`, и ссылку нужно получить заново любым запросом, который отдаёт профиль.
 
 ### 4.4 `PUT /profiles/{profile_id}/` 🔒 ⚠️ именно PUT, не PATCH
 
@@ -579,7 +685,7 @@ interface ProfileLinkDTO { profile_id: number; provider: string; contact: string
 // Request (AvatarPreSignUrlRequest)
 { filename: string }
 ```
-Имя файла санитизируется той же регуляркой `[^\w.\-]` → `_`, ключ в S3 — `{user_id}/{clean_filename}`, бакет `pending_avatar`. Никакой проверки типа/размера на этом шаге нет — сервер просто генерирует ключ и подписывает URL.
+Имя файла санитизируется той же регуляркой `[^\w.\-]` → `_`, ключ в S3 — `{user_id}/{clean_filename}`, бакет `pending-avatar` (приватный, как и `profiles`: читать и писать в него можно только по подписанной ссылке). Проверки типа/размера на этом шаге нет — сервер генерирует ключ и подписывает URL. Проверяется только место в истории: если в ней уже `MAX_PROFILE_PHOTOS` (100) фото — `409 PROFILE_PHOTOS_LIMIT`, сначала удалить старое (4.5.1). Повтор с тем же `filename` в течение 90 с отдаёт ту же ссылку.
 ```ts
 // Response 200 (AvatarPresign)
 {
@@ -597,7 +703,45 @@ interface ProfileLinkDTO { profile_id: number; provider: string; contact: string
 ```
 Ответ `200`, тело `"OK"` (строка). Эндпоинт только ставит фоновую задачу в очередь и сразу отвечает — никакой валидации файла на этом шаге не происходит.
 
-**Фоновая обработка** (без обратной связи в API): задача скачивает файл из `pending_avatar`, определяет реальный MIME-тип по содержимому (`python-magic`, не по расширению/заголовку), проверяет размер (≤ 5 МБ, `AVATAR_MAX_SIZE`) — при нарушении генерируется `AVATAR_SIZE`/`AVATAR_NOT_TYPE_IMAGE`, но это не долетает до клиента как HTTP-ответ (см. раздел 2.5), просто новый аватар не появится. При успехе генерируются 4 размера (32/64/256/512) × 3 формата (jpg/webp/avif), заливаются в бакет `profiles` и складываются в `ProfileDTO.avatars`. Клиенту стоит после шага 3 подождать и переопросить `GET /profiles/{id}/` (например с retry/poll в течение нескольких секунд), а если `avatars` не изменился — считать, что загрузка не удалась, и позволить попробовать снова.
+**Фоновая обработка** (без обратной связи в API): задача скачивает файл из `pending_avatar`, определяет реальный MIME-тип по содержимому (`python-magic`, не по расширению/заголовку; допустимы `image/jpeg`, `image/png`, `image/webp` — HEIC клиент перегоняет в JPEG сам), проверяет размер (≤ 5 МБ, `AVATAR_MAX_SIZE`) — при нарушении генерируется `AVATAR_SIZE`/`AVATAR_NOT_TYPE_IMAGE`, но это не долетает до клиента как HTTP-ответ (см. раздел 2.5), просто новый аватар не появится. При успехе генерируются 4 размера (32/64/256/512) × 2 формата (jpg/webp; avif убран — клиенту он не нужен, а pyvips тратит на него больше всего времени) — с вырезанными EXIF/GPS исходника — заливаются в приватный бакет `profiles`. Загрузка **добавляет фото в историю** (4.5.1) и делает его текущим: оно попадает в `ProfileDTO.avatars`, прежнее остаётся в истории. Файл из `pending-avatar` после обработки удаляется. В БД лежат **ключи объектов** (`{user_id}/{photo_id}/{size}.{fmt}`), а ссылки подписываются на каждом чтении профиля (`ProfileAvatarUrlService`, подписи кешируются в Redis). Клиенту стоит после шага 3 подождать и переопросить `GET /profiles/{id}/` (например с retry/poll в течение нескольких секунд), а если `avatars` не изменился — считать, что загрузка не удалась, и позволить попробовать снова.
+
+### 4.5.1 История фото профиля: листание и удаление
+
+У профиля может быть до `MAX_PROFILE_PHOTOS = 100` фото. Текущее — то, что в `ProfileDTO.avatars`
+и в чатах; остальные — история, которую листают на экране профиля (как в Telegram).
+Порядок — «когда фото последний раз стало текущим», от нового к старому: свежая загрузка
+и `.../main/` ставят фото первым.
+
+**`GET /profiles/{profile_id}/photos/`** 🔒 — query `page=1`, `page_size=20` (1..100) → `PageResult<ProfilePhotoDTO>`
+
+```ts
+interface ProfilePhotoDTO {
+  id: string;                                   // UUID фото
+  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp", string>>;  // presigned, TTL 300 сек, как в ProfileDTO
+  is_main: boolean;                             // текущее фото; у первой строки первой страницы
+  created_at: string;                           // когда загружено
+}
+```
+
+- Приватность `photo` (4.14) и блокировка (4.13) действуют на **всю** историю: если зрителю не
+  видно фото профиля, он получает `200` с `items: []`, `total: 0` — как `avatars: {}` в профиле.
+  Своя история видна всегда.
+- `404 NOT_FOUND_PROFILE` — профиля нет или он удалён.
+- `total` — честное число фото, им удобно подписывать «2 из 5».
+
+**`PUT /profiles/photos/{photo_id}/main/`** 🔒 (лимит 30/1мин) → `204` — сделать старое фото текущим.
+Оно встаёт первым в истории и в `ProfileDTO.avatars`; текущее — `204` без изменений.
+
+**`DELETE /profiles/photos/{photo_id}/`** 🔒 (лимит 30/1мин) → `204` — удалить фото из своей истории.
+Если оно было текущим, текущим становится следующее по истории; если фото было последним —
+`avatars: {}`. Файлы удаляются из бакета сразу, уже выданные ссылки отдают `404`.
+
+**`DELETE /profiles/avatar/`** 🔒 (лимит 30/1мин) → `204` — то же для текущего фото, без `photo_id`.
+Нет аватара — `204`, ничего не происходит.
+
+Только своё: чужое или несуществующее фото — `404 NOT_FOUND_PROFILE_PHOTO`. Любая смена текущего
+фото рассылается как обычный `profiles.profile.updated` — чаты подхватывают новый аватар через
+доли секунды (как после загрузки).
 
 ### 4.6 Ссылки на внешние профили (`links`)
 
@@ -641,7 +785,7 @@ interface ContactProfileDTO {
   id: number;                         // === user_id, поле называется как в ProfileDTO
   username: string | null;
   display_name: string | null;
-  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp"|"avif", string>>;
+  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp", string>>;  // presigned, TTL 300 сек
 }
 ```
 
@@ -789,7 +933,27 @@ interface BlockedListDTO {
   Блокировка себя → `400 SELF_CONTACT_NOT_ALLOWED`. Контакт при блокировке не удаляется.
 - **`DELETE /contacts/{user_id}/block/`** 🔒 → `204`, в том числе если блокировки не было.
 
-Проверка «отправитель заблокирован» на стороне чатов — этап 2, сейчас блок-лист только хранится и отдаётся.
+#### Что делает блокировка (A заблокировал B)
+
+| Где | Поведение |
+|---|---|
+| Личка A↔B: `POST /chats/{id}/messages/`, пересылка в эту личку, `POST /chats/{id}/calls/join/` | `403 USER_BLOCKED` **в обе стороны**: B не может писать и звонить A, а A — B, пока не разблокирует (как кнопка «Разблокировать» вместо поля ввода в Telegram). Редактировать и удалять свои сообщения можно. |
+| Новый direct: `POST /chats/` с `chat_type: "direct"` | `403 USER_BLOCKED` с `chat_id: null`, если direct ещё не существует. Уже существующий direct возвращается как раньше. |
+| Добавление в группу/канал: `POST /chats/{id}/members/`, `POST /chats/` с `member_ids` | B не может добавить A: `403 USER_PRIVACY_RESTRICTED` со списком `user_ids`. Группа при создании не заводится частично. A добавить B может. |
+| Фото A для B | Скрыто: `ProfileDTO.avatars = {}` в `GET /profiles/{id}/` и `GET /profiles/`; `ContactProfileDTO.avatars = {}` в `GET /contacts/` и `/contacts/search/`; в чатах `ChatProfileDTO.avatar_url = avatar_s3_key = null` — в `peer`, `members_preview`, `GET /members/`, `GET /chats/{id}/`, авторах сообщений (`GET /messages/`, контекст, деталь, поиск). Бакет аватаров приватный, так что скрытие настоящее: без подписанной ссылки объект не отдаётся, а ранее выданная подпись живёт не дольше `300` сек. |
+| Онлайн A для B | `GET /chats/{id}/members/?include_presence=true` отдаёт `is_online: false`. |
+| Общие группы | Не затронуты: B видит сообщения A и пишет в общую группу. |
+
+⚠️ **Задержка.** Модуль чатов узнаёт о блокировке из события `profiles.user.blocked` (outbox → Kafka →
+консьюмер `chat_block_projection`), поэтому в чатах блок начинает действовать через доли секунды
+после `204` на `POST /contacts/{id}/block/`. Профили и контакты применяют его сразу.
+
+⚠️ **Ограничения скрытия фото.** Realtime-кадр `new_message` собирается один на всех получателей
+чата, поэтому в WS-доставке и в `ws.history` аватар автора не фильтруется по зрителю —
+скрытие действует в REST. Бакет аватаров приватный, так что скрытие настоящее: без подписанной
+ссылки файл не отдаётся, но уже выданная подпись живёт свой TTL (300 с) — мгновенного отзыва нет.
+`GET /profiles/u/{username}/` публичный, но токен на нём учитывается: без токена зритель считается
+«не контактом» (см. 4.14).
 
 **WS-событие `contacts_import_completed`** приходит по обычному соединению `/chats/ws/` (раздел 6),
 подписка на канал не нужна:
@@ -810,6 +974,92 @@ interface BlockedListDTO {
 ```
 
 
+### 4.14 Настройки приватности (`/profiles/privacy/`)
+
+Пять независимых осей, у каждой — одно из трёх значений и свои персональные исключения.
+Настройки **свои**: `user_id` берётся из токена, чужие менять нельзя и путь без id.
+
+| Правило | Что закрывает | Где применяется |
+|---|---|---|
+| `last_seen` | онлайн и время захода | `is_online` в `GET /chats/{id}/members/?include_presence=true` |
+| `photo` | фото профиля | `ProfileDTO.avatars`, `ContactProfileDTO.avatars`, `ChatProfileDTO.avatar_url`/`avatar_s3_key` |
+| `messages` | кто может писать в личку | `POST /chats/{id}/messages/`, пересылка в личку, `typing`, `POST /chats/` с `chat_type: "direct"` |
+| `group_invites` | кто может добавлять в группы и каналы | `POST /chats/{id}/members/`, `POST /chats/` с `member_ids` |
+| `calls` | кто может звонить | `POST /chats/{id}/calls/join/` в личке |
+
+Значения: `everybody` (по умолчанию), `contacts`, `nobody`.
+
+**Как считается решение** — в таком порядке:
+
+1. **Себя настройка не касается**: своё фото и свой онлайн видны всегда.
+2. **Блокировка сильнее приватности.** Если один из участников заблокировал другого, в личке
+   приходит `USER_BLOCKED`, а не `*_PRIVACY_RESTRICTED` (см. 4.13).
+3. **Персональное исключение** (`allow` / `deny`) сильнее общего значения.
+4. Иначе — само значение: `everybody` — всем, `contacts` — только контактам, `nobody` — никому.
+
+⚠️ **«Контакт» определяет владелец настройки.** Контакт — это тот, кого владелец держит в **своей**
+адресной книге (`POST /contacts/`). То, что вы добавили человека к себе, его фото вам не открывает.
+Аноним (запрос без токена) контактом не бывает никогда.
+
+**`GET /profiles/privacy/`** 🔒 → `200`
+
+```ts
+interface PrivacySettingsDTO {
+  rules: Record<"last_seen"|"photo"|"messages"|"group_invites"|"calls",
+                "everybody"|"contacts"|"nobody">;
+  exceptions: Record<"last_seen"|"photo"|"messages"|"group_invites"|"calls",
+                     { allow: number[]; deny: number[] }>;
+}
+```
+
+Пока пользователь ничего не менял, строки настроек в БД нет и приходят дефолты: все пять осей
+`everybody`, все списки исключений пустые. Отдельного «ещё не настроено» в ответе нет.
+
+**`PUT /profiles/privacy/`** 🔒 (лимит 20/1мин) → `200`, тот же `PrivacySettingsDTO`
+
+```ts
+// Request (PrivacySettingsUpdateRequest) — частичное обновление
+{
+  rules?: Partial<Record<Rule, Visibility>>;              // меняются только присланные оси
+  exceptions?: Partial<Record<Rule, { allow?: number[]; deny?: number[] }>>;  // список заменяется целиком
+}
+```
+
+- Прислать `{}` — `422`: хотя бы одно из `rules`/`exceptions` должно быть непустым.
+- Неизвестное правило или значение — `422`.
+- `exceptions` для правила **заменяют** прежние списки этого правила, остальные правила не трогаются.
+  Чтобы очистить — прислать `{"allow": [], "deny": []}`.
+- Свой id из исключений выбрасывается, пересечение решается в пользу `allow`.
+- Больше 100 исключений на правило (`allow` + `deny`) — `400 PRIVACY_EXCEPTIONS_LIMIT`;
+  список длиннее 100 в одном поле — `422`.
+
+⚠️ **Задержка в чатах — та же, что у блокировок.** `PUT` отвечает `200` сразу, а модуль чатов
+узнаёт о настройках из события `profiles.privacy.updated` (outbox → Kafka → консьюмер
+`chat_privacy_projection`), как и об адресной книге из `profiles.contact.added/removed`. Профили и
+контакты применяют настройку сразу, чаты — через доли секунды. Клиенту, который сразу после `PUT`
+перепроверяет поведение в чатах, стоит это учитывать.
+
+Что происходит при каждом значении:
+
+| Где | `contacts` (вызывающий не контакт) | `nobody` |
+|---|---|---|
+| `GET /profiles/{id}/`, `GET /profiles/`, `GET /profiles/u/{username}/` | `avatars: {}` | `avatars: {}` |
+| `GET /contacts/`, `GET /contacts/search/`, `GET /contacts/blocked/` | `profile.avatars: {}` | `profile.avatars: {}` |
+| Чаты: `peer`, `members_preview`, `GET /members/`, авторы сообщений | `avatar_url = avatar_s3_key = null` | то же |
+| `GET /members/?include_presence=true` (`last_seen`) | `is_online: false` | `is_online: false` |
+| Личка: отправка, пересылка, `typing` (`messages`) | `403 MESSAGES_PRIVACY_RESTRICTED` | то же |
+| Новый direct (`messages`) | `403 MESSAGES_PRIVACY_RESTRICTED`, `chat_id: null` | то же |
+| Добавление в группу/канал (`group_invites`) | `403 USER_PRIVACY_RESTRICTED` со списком `user_ids` | то же |
+| Звонок в личке (`calls`) | `403 CALLS_PRIVACY_RESTRICTED` | то же |
+
+Настройка односторонняя: она закрывает входящие. Если A поставил `messages: nobody`, писать ему
+нельзя, а сам он пишет в тот же direct как раньше. Группы и каналы `messages` не касаются —
+там работают права чата (раздел 5.3).
+
+⚠️ `last_seen` пока применяется только к флагу `is_online`: самого времени последнего захода
+(`last_seen_at`) в API ещё нет.
+
+
 ## 5. Чаты — REST
 
 Базовый путь для всех эндпоинтов ниже (если не указано иное) — `/chats` и вложенные `/chats/{chat_id}/...`. Все требуют авторизации.
@@ -823,9 +1073,14 @@ interface BlockedListDTO {
 | `/chats` | `routes/v1/chats.py` | `chats` | ✅ |
 | `/chats/messages/search/` | `routes/v1/chats.py` (статический путь выше `/{chat_id}/`) | `chats` | ✅ |
 | `/chats/reactions/catalog/` | `routes/v1/chats.py` (статический путь выше `/{chat_id}/`) | `chats` | ✅ |
+| `/chats/search/`, `/chats/u/{username}/` | `routes/v1/chats.py` (статические пути выше `/{chat_id}/`) | `chats` | ✅ |
+| `/chats/invites/{code}/`, `/chats/invites/{code}/join/` | `routes/v1/chats.py` (статические пути выше `/{chat_id}/`) | `chats` | ✅ |
+| `/chats/{chat_id}/invites` | `routes/v1/invites.py` | `chat-invites` | ✅ |
+| `/chats/{chat_id}/join_requests` | `routes/v1/join_requests.py` | `chat-join-requests` | ✅ |
 | `/chats/{chat_id}/members` | `routes/v1/members.py` | `chat-members` | ✅ |
 | `/chats/{chat_id}/messages` | `routes/v1/messages.py` | `chat-messages` | ✅ |
-| `/chats/{chat_id}` | `routes/v1/attachments.py` | `chat-attachments` | ✅ |
+| `/chats/{chat_id}/pinned_messages` | `routes/v1/pins.py` | `chat-pinned-messages` | ✅ |
+| `/chats/{chat_id}` | `routes/v1/attachments.py` (в т.ч. `/media/`) | `chat-attachments` | ✅ |
 | `/chats/{chat_id}/calls` | `routes/v1/calls.py` | `chat-calls` | ✅ |
 | `/chats` (ws) | `routes/v1/ws.py` | `chats-ws` | ✅ |
 | `/chats/{chat_id}/messages/{message_id}/reactions` | `routes/v1/reactions.py` | `chat-reactions` | ✅ |
@@ -849,10 +1104,30 @@ interface BlockedListDTO {
 | PATCH | `/chats/{chat_id}/` | 4/5мин | `UpdateChatRequest` | `200`, `ChatDTO` |
 | PATCH | `/chats/{chat_id}/state/` | 60/1мин | `UpdateChatStateRequest` | `200`, `ChatStateDTO` — личное состояние чата: пин, архив, мьют уведомлений, черновик |
 | DELETE | `/chats/{chat_id}/` | 4/5мин | — | `204` |
-| POST | `/chats/{chat_id}/join/` | 10/5мин | — | `204` — вступить в публичный чат |
+| POST | `/chats/{chat_id}/join/` | 10/5мин | — | `200`, `JoinChatResultDTO` — вступить в публичный чат; при `join_by_request` создаётся заявка, см. 5.8.1 |
 | POST | `/chats/{chat_id}/leave/` | 4/5мин | — | `204` |
+| POST | `/chats/{chat_id}/transfer_ownership/` | 4/5мин | `{ user_id: number }` | `204` — передать владение (только текущий владелец), см. ниже |
+| PUT | `/chats/{chat_id}/username/` | 10/5мин | `{ username: string }` | `200`, `ChatDTO` — публичное имя, см. 5.9 |
+| DELETE | `/chats/{chat_id}/username/` | 10/5мин | — | `204` — снять публичное имя |
+| POST | `/chats/{chat_id}/avatar/upload-requests/` | 10/5мин | `{ mime_type, file_size }` | `201`, `ChatAvatarUploadSlotDTO` — аватар группы/канала, см. 5.10 |
+| POST | `/chats/{chat_id}/avatar/upload-requests/confirm/` | 10/5мин | `{ upload_token }` | `202` |
+| DELETE | `/chats/{chat_id}/avatar/` | 10/5мин | — | `204` — убрать аватар |
+| GET | `/chats/search/` | 20/1мин | Query `{ q: string (2..64), limit=20 (≤50) }` | `PublicChatSearchDTO`, см. 5.9 |
+| GET | `/chats/u/{username}/` | 20/1мин | — | `ChatPreviewDTO`, см. 5.9 |
+| GET | `/chats/invites/{code}/` | 30/1мин | — | `ChatInvitePreviewDTO` — превью по ссылке, см. 5.8 |
+| POST | `/chats/invites/{code}/join/` | 10/5мин | — | `200`, `JoinChatResultDTO` — вступить по ссылке или создать заявку, см. 5.8, 5.8.1 |
 
-⚠️ **Создатель чата (`created_by`) не может выйти через `/leave/`** — `Chat.leave()` сравнивает `user_id` с полем `created_by` (не с ролью!) и при совпадении кидает `403 CHAT_ACCESS_DENIED`. Это ограничение не снимается сменой роли через `PATCH /members/{user_id}/role/` — `created_by` не меняется никаким эндпоинтом, так что создатель заперт в чате навсегда (может только удалить чат целиком через `DELETE /chats/{chat_id}/`, если у него остались права `chat:delete`).
+⚠️ **Владелец чата (`created_by`) не может выйти через `/leave/`** — `Chat.leave()` сравнивает `user_id` с полем `created_by` (не с ролью!) и при совпадении кидает `403 CHAT_ACCESS_DENIED`. Сменой роли через `PATCH /members/{user_id}/role/` это не снимается, нужно сначала передать владение.
+
+**Передача владения — `POST /chats/{chat_id}/transfer_ownership/` `{ user_id }`**. Вызывать может только
+текущий владелец (`created_by`) или системный админ с `chat:update`. Цель — активный участник того же
+чата. В одной транзакции: `created_by` становится `user_id`, новому владельцу выдаётся `role_id=1`
+(owner), прежний опускается до `role_id=2` (admin); строка чата блокируется `FOR UPDATE`, так что две
+одновременные передачи не перемешаются. Прежний владелец после этого может выйти, новый — нет.
+Всем участникам уходит WS-событие `chat_ownership_transferred` (6.4).
+Ошибки: `403 CHAT_ACCESS_DENIED` (не владелец), `403 NOT_CHAT_MEMBER` (цель не в чате),
+`400 INVALID_OWNERSHIP_TRANSFER` (`reason`: `direct_chat` — у лички нет владельца, `already_owner`,
+`target_banned`), `404 NOT_FOUND_CHAT`.
 
 ```ts
 // CreateChatRequest
@@ -887,6 +1162,9 @@ interface ChatDTO {
   id: string; seq_counter: number; last_activity_at: string | null;
   type: "direct" | "group" | "supergroup" | "channel";
   name: string | null; description: string | null; avatar_s3_key: string | null;
+  username: string | null;          // публичное имя без "@", только у публичных group/supergroup/channel (5.9)
+  avatar_url: string | null;        // готовая ссылка на аватар 64px (jpg) группы/канала, = avatar_s3_key (5.10)
+  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp", string>>;  // все варианты; {} — аватара нет
   is_public: boolean; admin_only: boolean; slow_mode_seconds: number;
   permissions: Record<string, boolean>;
   created_by: number; member_count: number; unread_count: number;
@@ -917,6 +1195,8 @@ interface ChatDetailDTO {   // ответ GET /chats/{id}/ — отличает�
   id: string; seq_counter: number; last_activity_at: string | null;
   type: "direct" | "group" | "supergroup" | "channel";
   name: string | null; description: string | null; avatar_s3_key: string | null;
+  username: string | null; avatar_url: string | null;
+  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp", string>>;
   is_public: boolean; admin_only: boolean; slow_mode_seconds: number;
   permissions: Record<string, boolean>;
   created_by: number; member_count: number;
@@ -929,6 +1209,17 @@ interface ListChats {   // ответ GET /chats/ — курсорная паг�
   next_chat_id: string | null;   // передать следующим запросом как last_chat_id
 }
 interface ReadDetail { last_read_message_seq: number; last_read_at: string }
+interface ChatPreviewDTO {  // публичная карточка: поиск, резолв @username, превью инвайта
+  id: string;
+  type: "group" | "supergroup" | "channel";
+  name: string | null; description: string | null;
+  username: string | null;
+  avatar_s3_key: string | null; avatar_url: string | null;
+  avatars: Record<"32"|"64"|"256"|"512", Record<"jpg"|"webp", string>>;
+  is_public: boolean;
+  member_count: number;
+  is_member: boolean;               // вызывающий уже состоит в чате (и не забанен)
+}
 ```
 
 ⚠️ **Курсор списка чатов двусоставной**: для следующей страницы нужно передать **оба** значения — `last_activity_at = next_date` и `last_chat_id = next_chat_id` (сортировка `last_activity_at DESC, id DESC`, второй ключ разрешает коллизии по времени).
@@ -938,7 +1229,7 @@ interface ReadDetail { last_read_message_seq: number; last_read_at: string }
 ⚠️ **Пины и курсор.** Запиненные чаты вырезаны из keyset-тела на всех страницах и отдаются отдельным запросом в начале **первой** страницы (когда курсор не передан), в порядке `pinned_at DESC`. Поэтому первая страница может содержать до `limit + 5` элементов, а `has_next`/`next_date`/`next_chat_id` считаются только по непинованной части — пины в курсор не попадают и на следующих страницах не повторяются. Пин и архив независимы: у набора `archived=true` свои пины, которые точно так же едут в начале его первой страницы. Лимит — 5 закреплённых чатов на пользователя (общий на оба набора), шестой пин отвечает `400 PINNED_CHATS_LIMIT_EXCEEDED`.
 
 
-#### `peer` и `members_preview` — кого показывать в строке списка чатов 🆕
+#### `peer` и `members_preview` — кого показывать в строке списка чатов
 
 У direct-чата **нет ни `name`, ни `avatar_s3_key`**: `POST /chats/` с `chat_type: "direct"`
 их не заполняет, и заполнить их нечем. Пока в диалоге не появилось первое сообщение,
@@ -964,6 +1255,11 @@ interface ReadDetail { last_read_message_seq: number; last_read_at: string }
 `{user_id, username: null, display_name: null, avatar_url: null, avatar_s3_key: null}` —
 клиенту стоит уметь отрисовать заглушку по одному `user_id`, а не считать такой ответ ошибкой.
 
+⚠️ **`is_online` фильтруется по приватности.** Участник с `last_seen: contacts`/`nobody`
+приходит с `is_online: false` для тех, кому не разрешил (как и заблокировавший вызывающего),
+независимо от реального присутствия. Фото и онлайн — разные оси: скрытое фото не значит
+скрытый онлайн и наоборот. См. 4.14.
+
 ⚠️ **Забаненные в выдачу не попадают.** Участник с активным `banned_until` не считается ни
 `peer`, ни частью `members_preview` — так же, как он не виден в `GET /members/`. Для direct'а
 это теоретический случай (у роли `direct` нет права `member:ban`), но если он случится,
@@ -988,6 +1284,9 @@ interface ReadDetail { last_read_message_seq: number; last_read_at: string }
 | POST | `/chats/{chat_id}/members/` | 30/5мин | `AddMemberRequest {user_id: number, role_id: 1..6 = 5}` | `204` |
 | PATCH | `/chats/{chat_id}/members/{user_id}/role/` | — | `ChangeMemberRoleRequest {role_id: 1..6}` | `204` |
 | PATCH | `/chats/{chat_id}/members/{user_id}/ban/` | — | `BanMemberRequest {reason?: string, banned_to?: datetime}` | `204` |
+| DELETE | `/chats/{chat_id}/members/{user_id}/ban/` | — | — | `204` — явный разбан |
+| PATCH | `/chats/{chat_id}/members/{user_id}/mute/` | — | `MuteMemberRequest {muted_until?: datetime \| null}` | `204` — модераторский мьют |
+| DELETE | `/chats/{chat_id}/members/{user_id}/mute/` | — | — | `204` — снять мьют |
 
 ⚠️ **Назначить можно только роль строго ниже собственной.** Овнер (level 100) не может
 выдать роль `owner` — передача владения чатом не делается сменой роли; админ (90) не может
@@ -996,12 +1295,25 @@ interface ReadDetail { last_read_message_seq: number; last_read_at: string }
 `POST /members/` (пригласить сразу овнером нельзя), и `PATCH /members/{id}/role/`.
 
 ⚠️ `BanMemberRequest.banned_to`: `null` — бан навсегда, дата в прошлом — снятие бана,
-дата в будущем — временный бан.
+дата в будущем — временный бан. Для разбана теперь есть явный `DELETE .../ban/` (право
+`member:ban`): разбан не забаненного — `204` без события, разбан забаненного пишет запись в
+историю банов и шлёт `member_banned` с `ban: false`.
+
+**Модераторский мьют** — `PATCH .../mute/` с правом `member:mute` (owner, admin). Семантика
+`muted_until` как у бана: поле не передано или `null` — навсегда (в ответах это
+`muted_until: "9999-12-31T00:00:00Z"`), дата в будущем — до этой даты, дата в прошлом — снять.
+`DELETE .../mute/` снимает мьют явно. Замьюченный участник остаётся в чате и читает его, но
+`POST /messages/`, пересылка в этот чат и загрузка вложений отвечают `403 CHAT_ACCESS_DENIED`.
+Кого можно мьютить — те же правила, что у бана и кика: не себя и не участника с ролью выше
+своей. Изменение рассылается WS-событием `member_muted` (6.4); повторный мьют с тем же сроком
+и снятие несуществующего мьюта события не порождают.
 | DELETE | `/chats/{chat_id}/members/{user_id}/` | — | — | `204` (кик) |
 
 ```ts
 interface MemberChatDTO {
   user_id: number; role_id: number; is_muted: boolean; is_banned: boolean;
+  muted_until: string | null;       // срок модераторского мьюта; 9999-12-31 — навсегда
+  banned_until: string | null;      // срок бана; 9999-12-31 — навсегда
   permissions_overrides: Record<string, boolean>;
   profile: ChatProfileDTO | null;   // денормализованный профиль, ходить в /profiles/ не нужно
 }
@@ -1049,6 +1361,8 @@ interface MemberPresenceDTO { user_id: number; is_online: boolean }
 | PATCH | `/chats/{chat_id}/messages/{message_id}/` | — | `EditMessageRequest {content: string (1..4096)}` | `200`, `MessageDTO` |
 | DELETE | `/chats/{chat_id}/messages/{message_id}/` | — | — | `204` |
 | POST | `/chats/{chat_id}/messages/forward/` | 10/сек | `ForwardMessageRequest` + опц. заголовок `Idempotency-Key` | `201`, `MessageDTO` |
+| POST | `/chats/{chat_id}/messages/forward_many/` | 10/сек и 30/60 сек | `ForwardMessagesRequest` + опц. заголовок `Idempotency-Key` | `201`, `ForwardedMessagesDTO` |
+| GET | `/chats/{chat_id}/messages/{message_id}/reads/` | — | — | `MessageReadsDTO`, см. 5.4.2 |
 | POST | `/chats/{chat_id}/messages/read/` | — | `MarkReadRequest {message_seq: number}` | `204` |
 
 ```ts
@@ -1061,24 +1375,35 @@ interface MemberPresenceDTO { user_id: number; is_online: boolean }
 }
 // ForwardMessageRequest
 { source_chat_id: string; source_message_id: string; comment?: string | null }  // comment ≤ 4096
+// ForwardMessagesRequest
+{
+  source_chat_id: string;
+  source_message_ids: string[];   // 1..100; дубликаты схлопываются, порядок в запросе не важен
+  hide_author?: boolean;          // false по умолчанию; true — копия без «Переслано от»
+  comment?: string | null;        // ≤ 4096; отдельное текстовое сообщение ПЕРЕД пересланными
+}
+// ForwardedMessagesDTO
+{ messages: MessageDTO[] }        // в порядке seq: сначала комментарий (если был), затем пересланные
 // MarkReadRequest
 { message_seq: number }
 ```
 
 ⚠️ `"system"` и `"forward"` клиенту недоступны — их ставит только сервер (`"forward"` появляется
-через `POST /messages/forward/`). Попытка отправить их в `POST /messages/` → `422`.
+через `POST /messages/forward/` и `forward_many/`, `"system"` — при закреплении сообщения, см. 5.11).
+Попытка отправить их в `POST /messages/` → `422`.
 
 ⚠️ **Контент сообщения хранится и отдаётся как есть**, без HTML-экранирования: в `content`
 придёт ровно то, что ввёл автор (`<`, `&`, `"`). Экранирование при выводе — забота клиента.
 
 ⚠️ **`message_type` расширен**: добавлены `"voice"` и `"video_note"`. Для голосового нужно передать `message_type: "voice"` **и** `upload_tokens` со слотом, запрошенным с `attachment_type: "voice"` (см. 5.5).
 
-**`Idempotency-Key`** (необязательный заголовок при отправке **и пересылке** сообщения — `POST /messages/` и `POST /messages/forward/`): результат кэшируется в Redis на **86 400 сек (24 часа)**; повторный запрос с тем же ключом вернёт закэшированный `MessageDTO` первой отправки. Ключ действует в пределах пары «пользователь + чат» и отдельно для отправки и пересылки. Если предыдущий запрос с тем же ключом ещё обрабатывается (lock на 30 сек) — `409 IDEMPOTENCY_CONFLICT`. Рекомендуется всегда генерировать UUID на клиенте перед отправкой (важно для сценария "нет сети → повтор при реконнекте", чтобы не задублировать сообщение).
+**`Idempotency-Key`** (необязательный заголовок при отправке **и пересылке** сообщения — `POST /messages/`, `POST /messages/forward/` и `POST /messages/forward_many/`): результат кэшируется в Redis на **86 400 сек (24 часа)**; повторный запрос с тем же ключом вернёт закэшированный `MessageDTO` первой отправки. Ключ действует в пределах пары «пользователь + чат» и отдельно для отправки и пересылки. Если предыдущий запрос с тем же ключом ещё обрабатывается (lock на 30 сек) — `409 IDEMPOTENCY_CONFLICT`. Рекомендуется всегда генерировать UUID на клиенте перед отправкой (важно для сценария "нет сети → повтор при реконнекте", чтобы не задублировать сообщение).
 
 ```ts
 interface MessageDTO {
   id: string; chat_id: string; seq: number; author_id: number | null;
   type: "text" | "image" | "file" | "system" | "reply" | "forward" | "voice" | "video_note";
+  action: "message_pinned" | null;   // только у type = "system": что произошло; см. 5.11
   content: string | null;
   reply_to_id: string | null;
   forwarded_from_chat_id: string | null;
@@ -1106,7 +1431,75 @@ interface MessagesDTO {   // курсорная пагинация, has_next —
 - **`PATCH .../messages/{message_id}/` (правка)** — разрешена **только автору сообщения** (`message.author_id == user_id`), без ограничения по времени и без permission-based обхода; чужое сообщение поправить нельзя вообще, даже с `message:delete`/`chat:update`. При несовпадении автора — `403 CHAT_ACCESS_DENIED`. Хранится только текущая версия текста (`is_edited: true`), прошлые версии нигде не сохраняются.
 - **`DELETE .../messages/{message_id}/` (удаление)** — разрешено автору **или** любому участнику с правом `message:delete` (роли `owner`/`admin`/`editor`, см. 8.1), в отличие от правки. Мягкое удаление (`is_deleted = true`), контент из БД физически не стирается.
 
-Ошибки: `400 MESSAGE_TOO_LONG/INVALID_MESSAGE/SLOW_MODE_OUT_OF_RANGE`, `403 NOT_CHAT_MEMBER/CHAT_ACCESS_DENIED`, `404 NOT_FOUND_CHAT/NOT_FOUND_MESSAGE`, `409 IDEMPOTENCY_CONFLICT`, `429 SLOW_MODE_LIMIT`.
+Ошибки: `400 MESSAGE_TOO_LONG/INVALID_MESSAGE/SLOW_MODE_OUT_OF_RANGE/SLOW_MODE_MULTIPLE_MESSAGES`, `403 NOT_CHAT_MEMBER/CHAT_ACCESS_DENIED/USER_BLOCKED/MESSAGES_PRIVACY_RESTRICTED`, `404 NOT_FOUND_CHAT/NOT_FOUND_MESSAGE`, `409 IDEMPOTENCY_CONFLICT`, `429 SLOW_MODE_LIMIT`.
+
+#### `POST /chats/{chat_id}/messages/forward_many/` — пересылка нескольких сообщений
+
+`{chat_id}` в пути — чат **назначения**, источник — `source_chat_id` в теле (один чат на запрос,
+как в Telegram). Всё создаётся одной транзакцией: либо весь пакет, либо ничего.
+
+- **Порядок** — по `seq` в исходном чате, а не по порядку `source_message_ids`. Новые сообщения
+  получают подряд идущие `seq` (`allocate` одним `UPDATE` на весь пакет).
+- **Альбом остаётся альбомом.** Альбом в этом API — одно сообщение с несколькими вложениями,
+  поэтому он и пересылается одним сообщением: все готовые (`attachment_status: "success"`)
+  вложения в исходном порядке, вместе с `width`/`height`/`duration_seconds`. Незавершённые
+  вложения не копируются (это касается и одиночного `forward/`).
+- **`hide_author: false`** (по умолчанию) — каждое сообщение становится `type: "forward"` с
+  `forwarded_from_*`; при пересылке пересланного указывается **первоисточник**.
+- **`hide_author: true`** — «скрыть автора»: копия от имени пересылающего, без `forwarded_from_*`.
+  Тип берётся из содержимого: `text/image/file/voice/video_note` сохраняются, `reply` становится
+  `text` (связь с ответом не переносится), пересланное — тип по вложениям
+  (голосовое → `voice`, кружок → `video_note`, фото/видео → `image`, файл → `file`, иначе `text`).
+- **`comment`** — отдельное `text`-сообщение **перед** пересланными (а не подмена текста, как в
+  одиночном `forward/`). Пустой после `trim` комментарий не создаётся.
+- **Что пропускается молча:** удалённые сообщения, id из другого чата и несуществующие id,
+  системные сообщения, сообщения без текста и без готовых вложений. Если не осталось ничего —
+  `404 NOT_FOUND_MESSAGE` (не найдено ни одного) или `400 INVALID_MESSAGE` (найдены, но пересылать нечего).
+- **Push один на пакет:** у всех сообщений пакета, кроме последнего, в `new_message.payload.event`
+  стоит `notify: false` — сервер не шлёт по ним push. WS-события `new_message` приходят на каждое.
+- **Права:** в исходном чате — активное членство и `message:read`; в чате назначения — те же
+  проверки, что и при отправке (`message:send`, мьют, `admin_only`, блокировка лички).
+- **Slow mode:** при включённом slow mode пакет больше одного сообщения (комментарий считается)
+  → `400 SLOW_MODE_MULTIPLE_MESSAGES`; одно сообщение подчиняется обычному `SLOW_MODE_LIMIT`.
+  Staff и `slowmode:bypass` не ограничены.
+- **Лимиты:** до 100 id в запросе (`MAX_FORWARD_MESSAGES`, больше → `422`); общий лимит записи
+  10/сек плюс отдельный 30 пакетов в минуту (`FORWARD_MANY_RATE_LIMIT_*`).
+
+### 5.4.2 `GET /chats/{chat_id}/messages/{message_id}/reads/` — кто прочитал
+
+```ts
+interface MessageReadDTO {
+  user_id: number;
+  read_at: string;                  // когда курсор чтения участника впервые прошёл это сообщение
+  profile: ChatProfileDTO | null;   // avatar_url уже presigned, у заблокировавших вас — без аватара
+}
+interface MessageReadsDTO {
+  message_id: string;
+  readers: MessageReadDTO[];        // от последних прочитавших к первым; автор не входит
+}
+```
+
+**Когда доступно** (иначе `400 READ_RECEIPTS_UNAVAILABLE`, `detail.reason`):
+
+| Условие | `reason` |
+|---|---|
+| Чат — `group` или `supergroup` | `chat_type` (личка — используйте `messages_read`, каналы — нет) |
+| В чате не больше 100 участников (`READ_MARKS_MAX_MEMBERS`) | `chat_too_large` |
+| Сообщению меньше 7 дней (`READ_MARKS_RETENTION_DAYS`) | `message_too_old` |
+
+Спрашивать может **только автор сообщения** (иначе `403 CHAT_ACCESS_DENIED`), как в Telegram.
+В списке только текущие активные участники: вышедшие и забаненные пропадают. Пагинации нет —
+список ограничен размером чата.
+
+**Как считается время.** Сервер хранит не «кто прочитал какое сообщение», а каждое продвижение
+курсора чтения (`POST /messages/read/` → коалесер, окно 500 мс) в маленьких группах — таблица
+`read_receipt_marks`, хранится 7 дней. `read_at` для сообщения `seq = S` — время первого
+продвижения курсора участника на `seq ≥ S`. Отсюда следствия:
+
+- если участник прочитал сразу пачку, у всех сообщений пачки будет одно и то же время;
+- прочтения до выхода этой версии бэкенда, а также пока в группе было больше 100 участников,
+  не записывались — такие участники в списке не появятся;
+- `readers: []` — нормальный ответ «пока никто не прочитал».
 
 ### 5.4.1 `GET /chats/messages/search/` 🔒 — серверный поиск по сообщениям
 
@@ -1188,13 +1581,13 @@ interface MessageSearchDTO {      // курсорная пагинация, has_
 | `image` | 50 МБ (`MAX_MEDIA_SIZE`) | 10 (`MAX_MEDIA_PER_MESSAGE`) | — |
 | `video` | 50 МБ | 10 (общий счётчик с image) | — |
 | `file` | 100 МБ (`MAX_FILE_SIZE`) | 1 (`MAX_FILES_PER_MESSAGE`) | — |
-| `voice` 🆕 | 20 МБ (`MAX_VOICE_SIZE`) | 1 | ≤ 600 сек; **эксклюзивно** |
-| `video_note` 🆕 | 40 МБ (`MAX_VIDEO_NOTE_SIZE`) | 1 | ≤ 60 сек, ≤ 640 px; **эксклюзивно** |
+| `voice` | 20 МБ (`MAX_VOICE_SIZE`) | 1 | ≤ 600 сек; **эксклюзивно** |
+| `video_note` | 40 МБ (`MAX_VIDEO_NOTE_SIZE`) | 1 | ≤ 60 сек, ≤ 640 px; **эксклюзивно** |
 
 ⚠️ **Правило эксклюзивности**: `voice` и `video_note` нельзя смешивать ни друг с другом, ни с media/file в одном запросе. Нарушение → `400 ATTACHMENT_LIMIT_EXCEEDED`.
 
 **Разрешённые MIME** (полные списки из `chat_config`):
-- Изображения: `image/jpeg, image/png, image/gif, image/webp, image/heic, image/heif`
+- Изображения: `image/jpeg, image/png, image/gif, image/webp` (HEIC/HEIF клиент перегоняет в JPEG до отправки)
 - Видео: `video/mp4, video/webm, video/quicktime, video/x-msvideo`
 - Файлы: `application/pdf, application/zip, application/x-zip-compressed, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/plain, text/csv`
 - Голосовые: `audio/ogg, audio/opus, audio/mpeg, audio/mp4, audio/aac, audio/webm, audio/x-m4a`
@@ -1232,13 +1625,25 @@ Array<{
 { upload_tokens: string[] }   // 1..11 элементов, те же токены из шага 1
 // Response 202 Accepted, пустое тело — обработка асинхронная (fire-and-forget)
 ```
-После `202` бэкенд в фоне валидирует реальное содержимое файла и заполняет `width/height/duration_seconds`, переводя статус `pending → success` (или `error`). Готовность отслеживается через WS-событие `attachment_success` (раздел 7.4) — в его `payload.tokens` попадут завершённые `upload_token`. Отдельного WS-события на ОШИБКУ обработки в протоколе нет — для проверки неудачи ориентируйтесь на `attachment_status: "error"` после отправки сообщения.
+После `202` бэкенд в фоне валидирует реальное содержимое файла, готовит производные и переводит статус `pending → success` (или `error`). Готовность отслеживается через WS-событие `attachment_success` (раздел 7.4) — в его `payload.tokens` попадут завершённые `upload_token`. Отдельного WS-события на ОШИБКУ обработки в протоколе нет — для проверки неудачи ориентируйтесь на `attachment_status: "error"` после отправки сообщения.
 
-Внутри фонового воркера (`ProccessAttachmentsCommandHandler`) причина падения в `error` может быть любой из: несовпадение размера с заявленным, несовпадение реального MIME (magic bytes) с заявленным, инфраструктурная ошибка стораджа, а для `voice`/`video_note` — дополнительно любая из `AttachmentRejectionReason` (`size_limit_exceeded`, `duration_limit_exceeded`, `resolution_limit_exceeded` — только video_note, `frame_rate_limit_exceeded` — только video_note, `metadata_unreadable`, `probe_timeout`, `invalid_media` — напр. voice без аудиодорожки или с видеодорожкой, video_note не с одной видеодорожкой). Конкретная причина **никуда клиенту не передаётся** — только `attachment_status: "error"`, различить причины на фронте нельзя.
+Что делает фоновая обработка (`ProccessAttachmentsCommandHandler` → `AttachmentMediaProcessor`), по типам:
+
+| Тип | Проверка | Что сохраняется | Производные |
+|---|---|---|---|
+| `image` | декодируется (pyvips); не больше 100 Мпикс (`ATTACHMENT_IMAGE_MAX_PIXELS`) | оригинал без EXIF/XMP/IPTC и без данных после конца картинки, ICC-профиль сохранён. **JPEG без поворота — без перекодирования** (вырезаются сегменты метаданных); JPEG с поворотом — перекодирование q92 с поворотом в пикселях; PNG — без потерь; WebP — перекодирование (анимация сохраняется). **GIF — байт в байт** | `previews` 320/800/1280 + `thumbhash` |
+| `video` | ffprobe: есть видеодорожка, длительность и размеры читаются | ремукс без метаданных (геотег, title) с `+faststart`, без перекодирования; если ремукс не удался — исходные байты | постер = первый кадр (HDR тонмапится в SDR) → `previews` + `thumbhash` |
+| `video_note` | как раньше (≤ 60 с, ≤ 640 px, ≤ 60 fps) | байты как есть | постер → `previews` + `thumbhash` |
+| `voice` | как раньше | байты как есть | — |
+| `file` | — | байты как есть | — |
+
+Если постер видео снять не удалось (редкий кодек), вложение всё равно становится `success` — просто без `previews`/`thumbhash`. Если в воркере нет ffmpeg/ffprobe — `error` (инфраструктурная ошибка, как и раньше).
+
+Причина падения в `error` может быть любой из: несовпадение размера с заявленным, несовпадение реального MIME (magic bytes) с заявленным, инфраструктурная ошибка стораджа, нераскодируемая картинка или картинка больше лимита пикселей, а для `voice`/`video_note`/`video` — дополнительно любая из `AttachmentRejectionReason` (`size_limit_exceeded`, `duration_limit_exceeded`, `resolution_limit_exceeded`, `frame_rate_limit_exceeded` — только video_note, `metadata_unreadable`, `probe_timeout`, `invalid_media`). Конкретная причина **никуда клиенту не передаётся** — только `attachment_status: "error"`, различить причины на фронте нельзя.
 
 **Шаг 4 — отправить сообщение**, передав `upload_tokens` из шагов 1/3 в `POST /chats/{chat_id}/messages/` (раздел 5.4) с корректным `message_type`.
 
-**Скачивание:** `GET /chats/{chat_id}/messages/{message_id}/attachments/{attachment_id}/download-url/` → `AttachmentDownloadUrlDTO { attachment_id: string; url: string; expires_in: number }` (ссылка живёт 300 секунд, генерировать заново при истечении).
+**Скачивание:** `GET /chats/{chat_id}/messages/{message_id}/attachments/{attachment_id}/download-url/` → `AttachmentDownloadUrlDTO { attachment_id: string; url: string; expires_in: number }` (ссылка живёт 300 секунд, генерировать заново при истечении; видео по ней играется с перемоткой — см. 5.13).
 
 ```ts
 interface AttachmentDTO {
@@ -1247,12 +1652,26 @@ interface AttachmentDTO {
   attachment_status: "pending" | "success" | "error";
   url: string | null; url_expires_in: number | null;
   s3_key: string; mime_type: string; original_filename: string; size: number;
-  width: number | null; height: number | null; duration_seconds: number | null;
+  width: number | null; height: number | null;   // для фото/видео — после поворота
+  duration_seconds: number | null;
+  thumbhash: string | null;                       // base64 (с паддингом), ThumbHash: заглушка + пропорции
+  previews: AttachmentPreviewDTO[];               // [] у file/voice и пока не обработано
   created_at: string;
+}
+
+interface AttachmentPreviewDTO {
+  size: 320 | 800 | 1280;   // ступень (большая сторона ≤ size); у маленьких картинок одна ступень своего размера
+  width: number; height: number;
+  mime_type: string;        // "image/webp"
+  file_size: number;
+  s3_key: string;           // стабильный ключ — по нему кэшировать
+  url: string | null; url_expires_in: number | null;
 }
 ```
 
-⚠️ `url` живёт 300 секунд — кэшировать нужно скачанный файл (ключ — `s3_key`), а не сам URL.
+⚠️ `url` живёт 300 секунд — кэшировать нужно скачанный файл (ключ — `s3_key`), а не сам URL. То же для превью: ключ кэша — `previews[i].s3_key`.
+
+**Как рисовать ленту.** Сразу — `thumbhash` (декодер есть в пакете `thumbhash` для Dart) в рамке `width`×`height`; затем — наименьшая ступень `previews`, которая не меньше ширины плитки × devicePixelRatio (для плитки 420 логических px на 3x — 1280); оригинал по `url` — только в полноэкранном просмотре. Ссылки на вложения в `reply_to` и `forwarded_from` теперь тоже подписываются — цитату можно рисовать превью.
 
 Ошибки: `400 ATTACHMENT_VALIDATION/INVALID_UPLOAD_TOKEN/ATTACHMENT_LIMIT_EXCEEDED/EMPTY_ATTACHMENT_UPLOAD_REQUEST`, `403 CHAT_ACCESS_DENIED/NOT_CHAT_MEMBER`, `404 NOT_FOUND_CHAT/ATTACHMENT_NOT_FOUND`.
 
@@ -1273,7 +1692,7 @@ interface LiveKitParticipantsDTO { identity: string; name: string; state: number
 
 Ошибки: `502 LIVEKIT_ERROR {reason}`, `502 LIVEKIT_UNAUTHORIZED`, `404 NO_ACTIVE_CALL`, `409 ACTIVE_CALL_EXISTS`.
 
-### 5.7 Реакции на сообщения 🆕
+### 5.7 Реакции на сообщения
 
 #### 5.7.1 Эндпоинты
 
@@ -1378,7 +1797,7 @@ interface MessageReactionsDTO {
 
 Обработка: заменить группы реакций у локального сообщения `message_id` на `reaction.groups`. `reacted_by_me` в этом событии не персонализируется — клиент трекает свой выбор оптимистично (или сверяется через GET). После переподключения актуальные реакции для видимых сообщений приходят в `ws.history` / перезапросом списка сообщений.
 
-#### 5.7.7 Каталог реакций 🆕
+#### 5.7.7 Каталог реакций
 
 `GET /api/v1/chats/reactions/catalog/` — отдаёт тот самый каталог, по которому бэкенд валидирует
 эмодзи. Нужен, чтобы клиент не зашивал список в код и не узнавал о расхождении по `INVALID_REACTION`.
@@ -1413,6 +1832,309 @@ interface ReactionsCatalogDTO {
   как есть: в белом списке чата может остаться эмодзи, выпавшее из каталога стенда, — бэкенд отвергнет его
   с `INVALID_REACTION`);
 - `reactions_mode = "none"` — реакции в чате выключены, пикер не показываем.
+
+### 5.8 Ссылки-приглашения
+
+Приватную группу, супергруппу или канал можно открыть по ссылке. Ссылкой управляют участники с
+правом `member:invite` (owner, admin); у direct-чата ссылок нет.
+
+| Метод | Путь | Rate limit | Request | Response |
+|---|---|---|---|---|
+| POST | `/chats/{chat_id}/invites/` | 20/5мин | `CreateInviteLinkRequest` | `201`, `ChatInviteLinkDTO` |
+| GET | `/chats/{chat_id}/invites/` | — | Query `{ limit=50 (≤100), last_invite_id?: UUID }` | `ListInviteLinks` (новые сверху) |
+| DELETE | `/chats/{chat_id}/invites/{invite_id}/` | — | — | `200`, `ChatInviteLinkDTO` — отозванная ссылка; повторный отзыв ничего не меняет |
+| GET | `/chats/invites/{code}/` | 30/1мин | — | `ChatInvitePreviewDTO` — превью до вступления |
+| POST | `/chats/invites/{code}/join/` | 10/5мин | — | `200`, `JoinChatResultDTO` — вступить или создать заявку |
+
+```ts
+interface CreateInviteLinkRequest {
+  name?: string | null;          // ≤ 32 симв., подпись для админов («Для конференции»)
+  expires_at?: string | null;    // ISO, строго в будущем; null — бессрочно
+  usage_limit?: number | null;   // 1..99999; null — без лимита
+  creates_join_request?: boolean; // ссылка «по заявке»; несовместима с usage_limit, см. 5.8.1
+}
+interface ChatInviteLinkDTO {
+  id: string; chat_id: string;
+  code: string;                  // ~16 симв. [A-Za-z0-9_-]; ссылку клиент собирает сам: https://<домен>/+<code>
+  name: string | null; created_by: number; created_at: string;
+  expires_at: string | null; usage_limit: number | null; usage_count: number;
+  revoked_at: string | null;
+  creates_join_request: boolean; // true — вступление только через заявку (5.8.1)
+  is_revoked: boolean; is_expired: boolean;
+  is_active: boolean;            // не отозвана, не истекла и лимит не выбран
+}
+interface ListInviteLinks { invites: ChatInviteLinkDTO[]; has_next: boolean; next_invite_id: string | null }
+interface ChatInvitePreviewDTO {
+  chat: ChatPreviewDTO; expires_at: string | null;
+  creates_join_request: boolean;                   // показывать «Подать заявку», а не «Вступить»
+  join_request_status: "pending" | "approved" | "declined" | null;  // своя заявка по этой ссылке
+}
+interface JoinChatResultDTO {
+  status: "joined" | "requested";
+  chat: ChatDTO | null;                 // заполнен при "joined"
+  join_request: ChatJoinRequestDTO | null;  // заполнен при "requested", см. 5.8.1
+}
+```
+
+Поведение:
+- Вступивший по ссылке получает роль `member` (5), в канале — `viewer` (6). Остальным участникам
+  уходит обычный `member_joined`. У ссылки «по заявке» (`creates_join_request: true`) вступления
+  не происходит — ответ `status: "requested"`, см. 5.8.1.
+- Лимит использований выбирается атомарно (условный `UPDATE ... RETURNING`): при гонке за последний
+  слот вступит ровно один. Ошибка при вступлении (уже участник, лимит участников чата) использование
+  не тратит.
+- Превью отдаёт имя, описание, аватар, `member_count` и `is_member` даже приватного чата — это и
+  есть смысл ссылки. Без кода приватный чат по-прежнему не виден.
+- Кикнутый может вернуться по ссылке, забаненный — нет (`403 CHAT_ACCESS_DENIED`) до разбана.
+- У чата не больше 100 неотозванных ссылок (`400 INVITE_LINKS_LIMIT_EXCEEDED`).
+
+Ошибки превью и вступления: `404 NOT_FOUND_INVITE_LINK` — кода нет (или чат удалён);
+`410 INVITE_LINK_EXPIRED` с `reason: "expired" | "revoked" | "usage_limit_reached"`;
+`409 ALREADY_CHAT_MEMBER`; `403 CHAT_ACCESS_DENIED` — забанен; `400 MEMBER_LIMIT_EXCEEDED`.
+Создание: `400 INVALID_INVITE_LINK` (`expires_at_in_past`), `403 CHAT_ACCESS_DENIED`, `422` на
+`usage_limit` вне диапазона.
+
+### 5.8.1 Заявки на вступление
+
+Чат можно закрыть «по заявке»: человек просит доступ, модерация одобряет или отклоняет.
+Два входа в этот режим — и оба ведут в одну таблицу заявок:
+
+- **ссылка «по заявке»** — `POST /chats/{chat_id}/invites/` с `creates_join_request: true`
+  (несовместимо с `usage_limit`: `400 INVALID_INVITE_LINK`, `reason: "request_link_with_usage_limit"`);
+- **настройка чата** — `join_by_request` в `POST /chats/` и `PATCH /chats/{chat_id}/`
+  (право `chat:update`), она же приходит в `ChatDTO` / `ChatDetailDTO` / `ChatPreviewDTO`.
+  У direct-чата её нет: `400 JOIN_REQUEST_NOT_ALLOWED` (`reason: "direct_chat"`).
+  Настройка влияет на публичное вступление `POST /chats/{chat_id}/join/`; обычные ссылки
+  (без `creates_join_request`) по-прежнему пускают сразу.
+
+| Метод | Путь | Rate limit | Request | Response |
+|---|---|---|---|---|
+| GET | `/chats/{chat_id}/join_requests/` | — | Query `{ limit=50 (≤100), last_requested_at?: ISO, last_user_id?: number }` | `ListJoinRequests` — только ожидающие, новые сверху |
+| POST | `/chats/{chat_id}/join_requests/approve/` | 60/1мин | `ResolveJoinRequestsRequest` | `200`, `JoinRequestsResolutionDTO` |
+| POST | `/chats/{chat_id}/join_requests/decline/` | 60/1мин | `ResolveJoinRequestsRequest` | `200`, `JoinRequestsResolutionDTO` |
+| DELETE | `/chats/{chat_id}/join_requests/` | 60/1мин | — | `200`, `JoinRequestsDismissedDTO` — отклонить **все** ожидающие |
+| DELETE | `/chats/{chat_id}/join_requests/me/` | 60/1мин | — | `204` — заявитель отзывает свою заявку |
+
+Решения — **пакетные**: одиночных путей `/{user_id}/approve/` нет, одна заявка — это пакет из
+одного `user_ids: [id]`.
+
+```ts
+interface ChatJoinRequestDTO {
+  chat_id: string; user_id: number;
+  status: "pending" | "approved" | "declined";
+  invite_link_id: string | null;      // null — заявка из публичного чата, а не по ссылке
+  requested_at: string;
+  resolved_at: string | null; resolved_by: number | null;
+  profile: ChatProfileDTO | null;     // профиль заявителя (аватар — presigned, с учётом приватности)
+}
+interface ListJoinRequests {
+  requests: ChatJoinRequestDTO[];
+  total: number;                      // всего ожидающих в чате — бейдж для админа
+  has_next: boolean;
+  next_requested_at: string | null;   // курсор: передать обе части
+  next_user_id: number | null;
+}
+interface ResolveJoinRequestsRequest {
+  user_ids: number[];                 // 1..100 (MAX_JOIN_REQUESTS_BULK), дубли схлопываются
+}
+interface JoinRequestsResolutionDTO {
+  resolved: number[];                 // заявки, которые этот вызов закрыл (возрастающий порядок)
+  skipped: number[];                  // заявки не ждали решения: их нет, уже решены или заявитель забанен
+}
+interface JoinRequestsDismissedDTO { declined: number }  // сколько заявок закрыл «отклонить все»
+```
+
+Поведение:
+- Список и решения требуют права `member:invite` (owner, admin) — те же права, что и у ссылок.
+  Обычному участнику — `403 CHAT_ACCESS_DENIED`. `DELETE /join_requests/me/` прав не требует:
+  заявитель не участник чата.
+- Одобрение добавляет участников ровно как вступление по ссылке: роль `member` (в канале `viewer`),
+  `member_count` растёт атомарно на размер пакета (`400 MEMBER_LIMIT_EXCEEDED`, если пакет не
+  влезает — тогда не проходит **ничего**), участникам уходит обычный `member_joined` **на каждого**
+  принятого. Если заявки пришли по ссылкам, одобрение засчитывает ссылкам `usage_count` одним
+  UPDATE — счётчик ссылки «по заявке» показывает число **принятых**, а не поданных.
+- **Ошибки «не та заявка» нет**: всё, что в пакете не ждало решения (нет заявки, уже решена,
+  заявитель забанен), возвращается в `skipped`, остальное закрывается. Повторный вызов на том же
+  списке даст `resolved: []` и не создаст событий, так что ретрай клиента безопасен.
+- Строки пакета берутся `FOR UPDATE` в порядке `user_id` — два админа с пересекающимися
+  пакетами не ловят дедлок, и один и тот же человек не будет принят дважды: у второго админа
+  он просто попадёт в `skipped`.
+- «Отклонить все» — один `UPDATE ... WHERE resolved_at IS NULL` по partial-индексу: 5000 заявок
+  закрываются одним запросом и **одним** событием (`all: true`, `count: N`, без списка id).
+  Кулдаун повторной заявки при этом ставится всем, как при обычном отказе.
+- Запись о заявке не удаляется после решения — на ней живёт кулдаун. Повторная заявка после отказа
+  возможна через `JOIN_REQUEST_RETRY_AFTER_SECONDS` (1 час): раньше — `429 JOIN_REQUEST_RETRY_LATER`
+  с `retry_after` в секундах. Повторная заявка при уже ожидающей — `409 JOIN_REQUEST_PENDING`.
+  Отзыв своей заявки удаляет строку, то есть подать заново можно сразу (ограничивает только
+  rate limit на вступление).
+- Участник, подавший заявку, получает `409 ALREADY_CHAT_MEMBER`, забаненный — `403 CHAT_ACCESS_DENIED`.
+  Ожидающих заявок у чата не больше `MAX_PENDING_JOIN_REQUESTS = 5000` (`400 JOIN_REQUESTS_LIMIT_EXCEEDED`).
+- WS: `join_request_created` и `join_request_cancelled` уходят **только тем, у кого в чате
+  есть право `member:invite`** (owner, admin; до 200 адресатов),
+  `join_request_approved` / `join_request_declined` — им же и заявителям из пакета
+  (у «отклонить все» списка нет, поэтому событие получает только модерация). Доставка без подписки на чат (`require_subscription: false`),
+  потому что заявитель на чат не подписан. Push по заявкам нет — offline-сигнал в
+  `chats.offline-delivery` шлётся только по сообщениям; клиент добирает заявки списком при открытии.
+
+### 5.9 Публичное имя (`@username`) и поиск публичных чатов
+
+Публичной группе, супергруппе или каналу можно дать имя — по нему чат находят и открывают.
+
+- **`PUT /chats/{chat_id}/username/` `{ username }`** → `200 ChatDTO`. Нужно право `chat:update`.
+  Правила: 5–32 символа, латиница, цифры и `_`, начинается с буквы, не кончается на `_`;
+  ведущий `@` можно передать, он отрезается. Регистр сохраняется для отображения, а уникальность
+  и поиск — без учёта регистра (`MyChannel` и `mychannel` — одно имя). Часть имён
+  зарезервирована (`admin`, `support`, `settings`, `search`, `invites`, …).
+- Имя есть только у **публичного** чата: для `is_public: false` — `400 CHAT_USERNAME_NOT_ALLOWED`
+  (`reason: "chat_not_public"`), для direct — `reason: "direct_chat"`. `PATCH /chats/{id}/` с
+  `is_public: false` освобождает имя автоматически.
+- **`DELETE /chats/{chat_id}/username/`** → `204`, имя сразу свободно для других чатов.
+- Изменение рассылается обычным `chat_updated` (в дельте есть `username`).
+- **`GET /chats/u/{username}/`** → `ChatPreviewDTO`. Ищет без учёта регистра, `@` допустим.
+  Приватный или удалённый чат — `404 NOT_FOUND_CHAT_USERNAME`. Вступить в найденный чат —
+  `POST /chats/{chat_id}/join/` (5.2).
+- **`GET /chats/search/?q=...&limit=20`** → `{ items: ChatPreviewDTO[] }`, только публичные
+  group/supergroup/channel. `q` 2..64 символа. Совпадение по префиксу `username` **или** по словам
+  названия (полнотекстовый индекс `simple`, последнее слово — префикс, как в поиске сообщений
+  5.4.1). Если `q` начинается с `@`, ищется только по `username`. Порядок: точное совпадение
+  имени первым, затем по `member_count` убыв. Пагинации нет — это топ результатов.
+
+Ошибки: `400 INVALID_CHAT_USERNAME` (`reason`: `length` | `format` | `reserved`),
+`409 CHAT_USERNAME_TAKEN`, `400 CHAT_USERNAME_NOT_ALLOWED`, `403 CHAT_ACCESS_DENIED`.
+
+⚠️ Имена чатов и пользователей — разные пространства: один и тот же `@name` может принадлежать
+каналу и человеку. Клиенту, который открывает `@name` из текста, стоит пробовать оба резолвера.
+
+### 5.10 Аватар группы и канала
+
+Тот же двухшаговый presigned PUT, что у вложений (5.5), но для чата целиком. Нужно право
+`chat:update`; у direct-чата аватара нет (`400 CHAT_AVATAR_VALIDATION`, `reason: "direct_chat"`,
+либо `403`, если нет права).
+
+**Шаг 1 — `POST /chats/{chat_id}/avatar/upload-requests/`** `{ mime_type, file_size }`
+- `mime_type` ∈ `image/jpeg`, `image/png`, `image/webp` (HEIC клиент перегоняет в JPEG сам);
+  `file_size` ≤ 5 МБ. Иначе — `400 CHAT_AVATAR_VALIDATION` сразу.
+```ts
+interface ChatAvatarUploadSlotDTO {
+  upload_token: string;   // UUID, нужен на шаге 3
+  upload_url: string;     // presigned PUT, живёт expires_in секунд
+  expires_in: number;     // 600
+}
+```
+
+**Шаг 2 — `PUT <upload_url>`** сырыми байтами файла.
+
+**Шаг 3 — `POST /chats/{chat_id}/avatar/upload-requests/confirm/`** `{ upload_token }` → `202`.
+Токен должен быть выдан этому же пользователю для этого же чата, иначе `400 INVALID_UPLOAD_TOKEN`.
+
+Дальше фоновая задача проверяет реальный размер и MIME по содержимому, нарезает квадрат по центру
+в 4 размера × 2 формата (jpg/webp) и кладёт их в публичный бакет под новой версией. Результат приходит всем
+участникам событием `chat_updated` с новыми `avatar_s3_key` / `avatars`. Если файл не прошёл
+проверку, аватар просто не меняется (как у профиля, 4.5) — события не будет.
+
+- `avatar_s3_key` и `avatar_url` у чата — **готовая ссылка** на вариант 64px jpg, presign не нужен.
+  У каждой загрузки свой URL, поэтому `avatar_s3_key` годится как ключ кеша картинки.
+- Прошлая версия удаляется из хранилища после замены; старые ссылки начинают отдавать 404.
+- **`DELETE /chats/{chat_id}/avatar/`** → `204`: `avatars = {}`, `avatar_s3_key = null`, `chat_updated`.
+
+### 5.11 Закреплённые сообщения
+
+| Метод | Путь | Rate limit | Ответ |
+|---|---|---|---|
+| GET | `/chats/{chat_id}/pinned_messages/` | — | `PinnedMessagesDTO`; query `limit=20 (≤100)`, `before_seq?` |
+| PUT | `/chats/{chat_id}/pinned_messages/{message_id}/` | 20/60 сек | `200`, `PinnedMessageDTO` |
+| DELETE | `/chats/{chat_id}/pinned_messages/{message_id}/` | 20/60 сек | `204` |
+| DELETE | `/chats/{chat_id}/pinned_messages/` | 20/60 сек | `204` — открепить все |
+
+```ts
+interface PinnedMessageDTO {
+  message: MessageDTO;      // полный, с вложениями (ссылки presigned) и реакциями
+  pinned_by: number;
+  pinned_at: string;
+}
+interface PinnedMessagesDTO {
+  items: PinnedMessageDTO[];   // от новых сообщений к старым (по seq закреплённого сообщения)
+  total: number;               // сколько всего закреплено в чате сейчас
+  has_next: boolean;
+  next_cursor: number | null;  // seq; передать следующим запросом как before_seq
+}
+```
+
+**Семантика (как в Telegram):**
+
+- Закреплённых сообщений в чате может быть несколько, до 100 (`MAX_PINNED_MESSAGES`),
+  дальше `400 PINNED_MESSAGES_LIMIT_EXCEEDED`. Шапка чата — `items[0]` из
+  `GET .../pinned_messages/?limit=1`, счётчик «N из M» — `total`.
+- **Права** — `message:pin`: owner, admin, editor и **оба** участника лички; обычный member и
+  подписчик канала — `403 CHAT_ACCESS_DENIED`, не участник — `403 NOT_CHAT_MEMBER`. Те же права
+  нужны, чтобы открепить. Смотреть список может любой активный участник.
+- `PUT` **идемпотентен**: повторное закрепление уже закреплённого сообщения вернёт ту же запись
+  (`pinned_at` первого раза), ничего не создаст и событий не пошлёт. `DELETE` тоже идемпотентен:
+  открепление незакреплённого — `204` без событий.
+- Нельзя закрепить системное сообщение (`400 INVALID_MESSAGE`) и сообщение другого чата
+  (`404 NOT_FOUND_MESSAGE`).
+- **Системное сообщение.** Каждое новое закрепление добавляет в чат сообщение
+  `{type: "system", action: "message_pinned", author_id: <кто закрепил>, content: null,
+  reply_to_id: <закреплённое>, reply_to: MessageDTO}` — обычное сообщение со своим `seq`,
+  приходит через `new_message`, попадает в историю, `ws.history` и `last_message` списка чатов,
+  по нему уходит push. Текст «Иван закрепил «…»» клиент собирает сам из `profile` и `reply_to`.
+  Открепление системного сообщения не создаёт. Неизвестный клиенту `action` нужно показывать
+  нейтрально, а не падать.
+- **Удаление закреплённого сообщения** открепляет его в той же транзакции: следом за
+  `message_deleted` придёт `message_unpinned`.
+- WS: `message_pinned` / `message_unpinned` всем участникам по обычной стратегии фан-аута
+  (см. 6.4). Набор закреплённых на клиенте меняется **только** этими двумя событиями.
+- В `MessageDTO` признака «закреплено» нет — клиенту хватает списка: он ограничен сотней,
+  держите его целиком и обновляйте по событиям.
+
+### 5.12 Общие медиа чата — `GET /chats/{chat_id}/media/` 🔒
+
+Вкладки «Медиа / Файлы / Голосовые / Ссылки» профиля чата — с сервера, на всю историю, а не из загруженного окна сообщений.
+
+```ts
+// Query
+{
+  type: "photo" | "video" | "media" | "file" | "voice" | "link";  // обязательно
+  limit?: number;    // 1..100, по умолчанию 30
+  cursor?: string;   // next_cursor предыдущей страницы, как есть
+}
+// Response 200 — SharedMediaDTO
+{
+  items: Array<{
+    message_id: string;
+    message_seq: number;
+    author_id: number | null;
+    content: string | null;        // подпись к медиа / текст сообщения со ссылкой
+    created_at: string;            // время сообщения
+    attachment: AttachmentDTO | null;  // null только у type = "link"; ссылки, previews, thumbhash — как в 5.5
+  }>;
+  has_next: boolean;
+  next_cursor: string | null;
+}
+```
+
+| `type` | Что в выдаче |
+|---|---|
+| `photo` | вложения `image` |
+| `video` | вложения `video` |
+| `media` | `image` + `video` вперемешку (сетка «Медиа» как в Telegram) |
+| `file` | вложения `file` |
+| `voice` | `voice` **и** `video_note` (как вкладка «Голосовые» в Telegram) |
+| `link` | сообщения, в тексте которых есть `http(s)://…` или `www.…` (та же регулярка, что у линкифаера клиента); сами ссылки клиент достаёт из `content` |
+
+- Порядок — от новых к старым: по `message_seq`, внутри альбома — по `attachment.id` убыв. Один элемент = одно вложение: альбом из 10 фото — 10 элементов с одним `message_id`.
+- Курсор непрозрачный (`"{seq}:{attachment_id}"` у вложений, `"{seq}"` у ссылок), передавать как есть; кривой курсор — `422`.
+- Удалённые сообщения и вложения не в статусе `success` не попадают. Права — как у ленты: участник без бана, иначе `403 NOT_CHAT_MEMBER`.
+- Под капотом: `message_attachments.message_seq` (проставляется при отправке/пересылке) + индекс `ix_msg_attachments_shared_media (chat_id, attachment_type, message_seq, id)`; для `link` — флаг `messages.has_links` и partial-индекс `ix_messages_chat_links`. Страница — обратный проход по индексу и `limit` строк, независимо от размера чата.
+
+### 5.13 Воспроизведение видео
+
+Как в Telegram и WhatsApp: отдельного потокового формата нет, видео играется из оригинала по `url`.
+
+- При обработке MP4/MOV ремуксятся с `+faststart`: индекс `moov` переносится в начало файла (у записи с телефона он в конце). Плеер читает первые килобайты, сразу показывает видео и при перемотке запрашивает нужный кусок через `Range` — presigned-ссылка SeaweedFS отвечает `206 Partial Content`. Скачивать файл целиком не нужно.
+- Flutter: `VideoPlayerController.networkUrl(Uri.parse(url))`. `url` живёт 300 с: если плеер открыт дольше и получил `403`, запросить свежий через `download-url/` и продолжить с той же позиции.
+- Сервер видео **не перекодирует** — какой кодек и битрейт загрузили, такой и играется. Поэтому, как в Telegram, сжимать видео перед отправкой должен клиент: H.264 (AVC) + AAC в MP4, длинная сторона до 1280 (или 1920 для «HD»), 1.5–3 Мбит/с. HEVC с айфона без сжатия играется не везде на Android.
+- Постер и заглушка до загрузки — `previews` и `thumbhash` вложения (5.5).
 
 ## 6. Чаты — WebSocket
 
@@ -1462,16 +2184,44 @@ WS  {BASE_URL}/api/v1/chats/ws/?token=<access_token>
 | `resume` | `cursors: Record<string, number>` — `{chat_id: last_seq}` | Массовая переподписка после реконнекта. **Максимум 20 ключей** — при превышении обработчик выбрасывает необработанное исключение `MAX_LIMIT_CURSOR`, которое **не** оборачивается в аккуратный `ws.error` (в отличие от остальных ошибок этого раздела) — на практике может привести к обрыву соединения. Не отправлять больше 20 курсоров за раз. |
 | `ping` | — | Проверка живости соединения по инициативе клиента, сервер ответит `ws.pong`. |
 | `pong` | — | Ответ на серверный `ws.ping` (обновляет heartbeat-таймер на сервере). |
+| `typing` | `chat_id: string (обязательно)`, `action?: TypingAction` (по умолчанию `"typing"`) | «Печатает…» / «записывает голосовое» / «отправляет фото». `action: "cancel"` — перестал. Ответа нет; ошибки — `ws.error`. Подписка на чат не обязательна. |
 
 ```ts
 // Общая форма исходящей команды
 interface WSClientCommand {
-  op: "subscribe" | "unsubscribe" | "resume" | "ping" | "pong";
+  op: "subscribe" | "unsubscribe" | "resume" | "typing" | "ping" | "pong";
   chat_id?: string;
   last_seq?: number;
   cursors?: Record<string, number>;
+  action?: TypingAction;   // только для op = "typing"
 }
+
+type TypingAction =
+  | "typing"              // печатает
+  | "record_voice"        // записывает голосовое
+  | "upload_voice"        // отправляет голосовое
+  | "record_video_note"   // записывает кружок
+  | "upload_video_note"   // отправляет кружок
+  | "upload_photo"        // отправляет фото
+  | "upload_video"        // отправляет видео
+  | "upload_file"         // отправляет файл
+  | "cancel";             // перестал — сервер разошлёт typing_stop
 ```
+
+**Как клиенту слать `typing`** (тот же контракт, что у Telegram `setTyping`):
+
+1. При первом нажатии клавиши / начале записи / начале загрузки — `typing` с нужным `action`.
+2. Пока действие продолжается — повторять **раз в 4–5 секунд**. Чаще бессмысленно: сервер
+   пропускает одинаковый `action` не чаще раза в 3 с на чат (`TYPING_BROADCAST_INTERVAL_MS`),
+   лишние кадры отбрасывает молча, но смена `action` уходит сразу.
+3. Стёр текст / отменил запись — `action: "cancel"`. После отправки сообщения `cancel` не нужен:
+   получатели гасят индикатор по `new_message`.
+4. Ошибки приходят `ws.error` один раз, а не на каждый кадр: `NOT_CHAT_MEMBER` (не участник или
+   забанен), `CHAT_ACCESS_DENIED` (нет права писать: мьют, `admin_only`, подписчик канала; в
+   каналах «печатает» нет вообще), `USER_BLOCKED` (личка заблокирована),
+   `MESSAGES_PRIVACY_RESTRICTED` (настройка `messages` собеседника не пускает, см. 4.14),
+   `BAD_COMMAND` (нет `chat_id`, не UUID, неизвестный `action`). Сервер запоминает отказ на 15 с
+   (`TYPING_CONTEXT_TTL_SECONDS`) и всё это время молча отбрасывает кадры этого чата.
 
 ### 6.4 События сервер → клиент
 
@@ -1514,16 +2264,26 @@ gateway), поэтому один и тот же кадр может прийт�
 
 | `type` | Когда | `payload.event` (дельта) | `payload.message` |
 |---|---|---|---|
-| `new_message` | Новое сообщение в чате | `{ message_id, seq, sender_id, message_type }` | полный `MessageDTO` с profile, attachments (с download-ссылками), reply_to, forwarded_from, reactions |
+| `new_message` | Новое сообщение в чате | `{ message_id, seq, sender_id, message_type, notify }` — `notify: false` у всех сообщений пакетной пересылки, кроме последнего (push по ним не уходит) | полный `MessageDTO` с profile, attachments (с download-ссылками), reply_to, forwarded_from, reactions |
 | `message_edited` | Сообщение отредактировано | `{ message_id, seq, modified_by }` | полный `MessageDTO` — заменить локальное по `message.id` |
 | `message_deleted` | Сообщение удалено | `{ message_id, seq, deleted_by }` | `null` — сообщения уже нет в БД, удаляйте локальное по `event.message_id` |
 | `messages_read` | Кто-то прочитал сообщения до seq X | `{ seq, reader_id }` | `null` — двигать «прочитано» для `reader_id` до `seq` |
+| `message_pinned` | Сообщение закреплено | `{ message_id, seq, pinned_by, pinned_at }` — `seq` закреплённого сообщения | `null`; само сообщение есть в истории (или `GET .../pinned_messages/`), системное «X закрепил…» придёт отдельным `new_message` |
+| `message_unpinned` | Сообщения откреплены (вручную или удалением) | `{ message_ids: string[], unpinned_by, all }` — `all: true` при «открепить все» | `null` |
+| `typing_start` | Участник печатает/записывает/отправляет | `{ user_id, action, expires_in }` — `action` из `TypingAction` (6.3), `expires_in` = 6 | `null`. **Эфемерное** — см. ниже |
+| `typing_stop` | Участник прислал `cancel` | `{ user_id }` | `null`. **Эфемерное** |
 | `member_joined` | Новый участник добавлен/вступил | `{ user_id, role_id }` | `null` |
 | `member_left` | Участник вышел сам | `{ user_id }` | `null` |
 | `member_kick` | Участника кикнули | `{ target_user_id, requester_id }` | `null` |
 | `member_banned` | Участника забанили/разбанили | `{ target_user_id, requester_id, ban }` — `ban: true` бан, `false` разбан | `null` |
+| `member_muted` | Модераторский мьют поставлен/снят | `{ target_user_id, requester_id, mute, muted_until }` — `mute: false` снятие, `muted_until` ISO или `null` | `null` |
+| `join_request_created` | Кто-то подал заявку на вступление | `{ user_id, invite_link_id, requested_at }` | `null` — приходит только тем, кто может решать заявки (право `member:invite`), см. 5.8.1 |
+| `join_request_approved` | Пакет заявок одобрен | `{ user_ids: number[], resolved_by, role_id }` — одно событие на пакет | `null` — тем, кто решает заявки, и заявителям; участникам чата отдельно придёт `member_joined` на каждого |
+| `join_request_declined` | Пакет заявок отклонён | `{ user_ids: number[], resolved_by, count, all }` — у «отклонить все» `all: true`, `user_ids: []`, в `count` число закрытых | `null` — тем, кто решает заявки, и заявителям из списка |
+| `join_request_cancelled` | Заявитель отозвал заявку | `{ user_id }` | `null` — только тем, кто решает заявки |
 | `chat_created` | Чат создан | `{ created_by, name, member_ids, chat_type, member_count }` | `null` |
-| `chat_updated` | Изменены настройки чата | `{ updated_by, name, description, is_public, admin_only, slow_mode_seconds, permissions, reactions_mode, allowed_reactions }` | `null` |
+| `chat_updated` | Изменены настройки чата, публичное имя или аватар | `{ updated_by, name, description, is_public, join_by_request, admin_only, slow_mode_seconds, permissions, reactions_mode, allowed_reactions, username, avatar_s3_key, avatars }` — последние три, это полный текущий снимок, а не только изменённое | `null` |
+| `chat_ownership_transferred` | Владение передано | `{ requester_id, previous_owner_id, new_owner_id }` — у нового владельца теперь `role_id=1` и `created_by`, у прежнего `role_id=2` | `null` |
 | `chat_deleted` | Чат удалён | `{ deleted_by }` | `null` — убрать чат из списка |
 | `reaction_update` | Поставили/сняли/заменили реакцию на сообщении | `{ message_id, actor_id, action }` | `null`; снимок групп — в `payload.reaction.groups` (полный текущий набор). Под нагрузкой рассылки коалесятся (окно 500 мс). Подробно — 5.7.6 |
 | `attachment_success` | Вложение(я) успешно обработаны после `confirm/` (шлётся лично пользователю-загрузчику, не всей подписке чата) | — | `payload` здесь другой: `AttachmentSuccessPayload { user_id, chat_id, tokens }`; `delivery.require_subscription=false`, `recipients=[user_id]` |
@@ -1532,7 +2292,22 @@ gateway), поэтому один и тот же кадр может прийт�
 адресно самому исключённому участнику — его уже нет в чате, и обычным фан-аутом он не
 покрывается. Ему это событие может прийти и без активной подписки на чат.
 
-**Определены, но реально нигде не публикуются** (есть в `WSEventType`, но ни одного места публикации в коде): `typing_start`, `typing_stop`, `call_started`, `call_ended`, `call_joined`, `call_left`. Не полагайтесь на их получение — заложить обработку на будущее можно, но сейчас бэкенд их не шлёт.
+**`typing_start` / `typing_stop` — эфемерные события.** Их публикует сам WS-gateway, принявший
+`op: "typing"`, напрямую в Redis Streams получателей — без outbox, Kafka и БД. Поэтому:
+
+- `payload.event_name` у них `"chats.typing.started"` / `"chats.typing.stopped"`, но в Kafka и в
+  таблице доменных событий их нет; `event_id` есть, дедуплицировать можно, но не обязательно;
+- кому: при `fanout_on_write` (личка, группа ≤ 500) — всем онлайн-участникам, **без подписки на
+  чат** (для «печатает…» в списке чатов); в супергруппах и больших группах — только тем, кто
+  сейчас подписан на чат. Самому печатающему (и его другим устройствам) не приходит;
+- в `ws.history`/`resume` не попадают, пропущенные при обрыве не досылаются;
+- у кадра есть срок жизни 6 с: если gateway вычитал его из стрима позже (переподхват записи
+  упавшего gateway через `xautoclaim`), кадр выбрасывается, а не доставляется с опозданием;
+- **клиент гасит индикатор сам** через `expires_in` секунд после последнего `typing_start` от этого
+  `user_id`, при `typing_stop` и при `new_message` с `sender_id` = этот `user_id`. Повторный
+  `typing_start` продлевает таймер, другой `action` — заменяет подпись.
+
+**Определены, но реально нигде не публикуются** (есть в `WSEventType`, но ни одного места публикации в коде): `call_started`, `call_ended`, `call_joined`, `call_left`. Не полагайтесь на их получение — заложить обработку на будущее можно, но сейчас бэкенд их не шлёт.
 
 #### Служебные события (`ws.*`)
 
@@ -1544,7 +2319,7 @@ gateway), поэтому один и тот же кадр может прийт�
 | `ws.history` | `{ type, chat_id: string, payload: { after_seq: number; messages: MessageDTO[]; has_more: boolean; next_last_seq: number }, ts }` | Досылается после `ws.subscribed`, только если был передан `last_seq`/курсор. `messages` — полные `MessageDTO` (раздел 5.4), с уже прикреплёнными download-ссылками для вложений. |
 | `ws.pong` | `{ type: "ws.pong", payload: {} }` | Ответ на клиентский `{"op": "ping"}` |
 | `ws.ping` | `{ type: "ws.ping", connection_id: string, ts }` ⚠️ без обёртки `payload` | Проактивный heartbeat-пинг от сервера, раз в `heartbeat_interval` сек |
-| `ws.error` | { type: "ws.error", code: "BAD_COMMAND" \| "BAD_FRAME" \| "NOT_CHAT_MEMBER", detail: string, ts: string } ⚠️ без payload | `subscribe`/`resume` на чат, где отправитель не состоит (или забанен) или Нераспарсенная/невалидная команда от клиента |
+| `ws.error` | { type: "ws.error", code: "BAD_COMMAND" \| "BAD_FRAME" \| "NOT_CHAT_MEMBER" \| "CHAT_ACCESS_DENIED" \| "USER_BLOCKED" \| "MESSAGES_PRIVACY_RESTRICTED" \| "NOT_FOUND_CHAT", detail: string, ts: string } ⚠️ без payload | `subscribe`/`resume`/`typing` на чат, где отправитель не состоит (или забанен), нераспарсенная/невалидная команда от клиента; `CHAT_ACCESS_DENIED`, `USER_BLOCKED` и `MESSAGES_PRIVACY_RESTRICTED` — только ответ на `typing` (см. 6.3, 4.14) |
 
 #### События не из модуля chats
 
@@ -1560,7 +2335,8 @@ gateway), поэтому один и тот же кадр может прийт�
 4. На `ws.ping` отвечать `{"op": "pong"}`.
 5. При разрыве соединения — переподключиться с экспоненциальным backoff, затем отправить `resume` с курсорами по всем открытым в UI чатам (≤20).
 6. При закрытии с кодом `1012` — значит открыто больше 2 соединений на аккаунт; просто переподключиться нормально (не ошибка, а следствие лимита).
-7. Не полагаться на `typing_start/stop` и `call_*` события — сейчас не реализованы бэкендом.
+7. «Печатает…»: слать `{"op": "typing", "chat_id", "action"}` раз в 4–5 с, пока пользователь печатает/записывает, и `action: "cancel"`, когда перестал; входящие `typing_start` гасить по таймеру `expires_in` и по `new_message` автора (см. 6.3/6.4).
+8. Не полагаться на `call_*` события — сейчас не реализованы бэкендом.
 
 
 ## 7. Уведомления
@@ -1682,7 +2458,7 @@ interface NotificationDTO {
 |---|---|---|
 | Presign-эндпоинт | `POST /profiles/avatar/presign/` | `POST /chats/{id}/attachments/upload-requests/` |
 | Что слать на presign | `{ filename }` | `{ uploads: [{ filename, mime_type, file_size, attachment_type? }] }`, до 11 файлов за раз |
-| TTL presigned URL | 90 секунд | 3600 секунд |
+| TTL presigned URL | 90 секунд (на скачивание готовых вариантов — 300 секунд) | 3600 секунд (на скачивание — 300 секунд) |
 | Подтверждение | `POST /profiles/avatar/upload_complete/` — `{ file_key }` | `POST /chats/{id}/attachments/upload-requests/confirm/` — `{ upload_tokens }` |
 | Валидация типа/размера | только асинхронно, после подтверждения (в фоне) | синхронно на presign по `mime_type`/`file_size` из запроса + асинхронно после подтверждения (доуточнение `width/height/duration`) |
 | Как узнать результат | переопросить `GET /profiles/{id}/` — новый `avatars`, либо файл не появится | WS-событие `attachment_success` / `attachment_status: "error"` на вложении |
@@ -1713,4 +2489,7 @@ interface NotificationDTO {
 - [ ] WS обрабатывает все перечисленные в 6.4 типы событий
 - [ ] `new_message`/`message_edited`/`message_deleted` не рендерятся напрямую из WS-payload
 - [ ] `resume` никогда не отправляется больше чем с 20 курсорами
-- [ ] Учтена структура `avatars` (4 размера × 3 формата), а не плоский `{url}`
+- [ ] Учтена структура `avatars` (4 размера × 2 формата, `jpg`/`webp`), а не плоский `{url}` — и у профиля, и у группы/канала (`ChatDTO.avatars`)
+- [ ] `USER_BLOCKED` в личке показывается как «Вы не можете написать этому пользователю», а не как сбой отправки
+- [ ] `MESSAGES_PRIVACY_RESTRICTED` и `CALLS_PRIVACY_RESTRICTED` показываются как настройка приватности собеседника, а не как сбой; экран настроек приватности работает с `GET`/`PUT /profiles/privacy/` (5 осей + списки `allow`/`deny`)
+- [ ] Пустой `avatars`/`avatar_url` не считается «нет аватара навсегда»: это может быть скрытое фото (приватность или блокировка)

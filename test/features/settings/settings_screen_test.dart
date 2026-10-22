@@ -9,11 +9,21 @@ import 'package:chatix/core/settings/send_shortcut.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/widgets/app_content_width.dart';
+import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/features/settings/presentation/screens/settings_screen.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 import 'package:chatix/gen/l10n/app_localizations_ru.dart';
 
 import '../../helpers/pane_frame.dart';
+
+class _FakeNotificationBadge extends NotificationBadgeController {
+  _FakeNotificationBadge(this._count);
+
+  final int _count;
+
+  @override
+  int build() => _count;
+}
 
 /// The settings page: what a desktop adds to it (the keyboard section) and
 /// how wide it lets itself grow.
@@ -27,12 +37,16 @@ void main() {
     PaneWindow window = PaneWindow.phone,
     bool dark = false,
     SendShortcut shortcut = SendShortcut.enter,
+    int alerts = 0,
   }) async {
     final container = ProviderContainer(
       retry: (_, _) => null,
       overrides: [
         sendShortcutStoreProvider.overrideWithValue(
           InMemorySendShortcutStore(shortcut),
+        ),
+        notificationBadgeProvider.overrideWith(
+          () => _FakeNotificationBadge(alerts),
         ),
       ],
     );
@@ -106,6 +120,57 @@ void main() {
     }, variant: TargetPlatformVariant.mobile());
   });
 
+  group('notifications', () {
+    testWidgets('the alerts list is a row of its own, with its count', (
+      tester,
+    ) async {
+      await pump(tester, alerts: 5);
+
+      final row = find.widgetWithText(ListTile, ru.notifications);
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(of: row, matching: find.text(ru.notificationsFeedHint)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.text('5')),
+        findsOneWidget,
+      );
+      // Read out in words; the tile merges it into its own label.
+      expect(
+        find.descendant(
+          of: row,
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Semantics &&
+                widget.properties.label == ru.unreadNotificationsCount(5),
+          ),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('nothing unread, no badge', (tester) async {
+      await pump(tester);
+
+      final row = find.widgetWithText(ListTile, ru.notifications);
+      expect(
+        find.descendant(of: row, matching: find.byType(Badge)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('its preferences keep their own row, named apart', (
+      tester,
+    ) async {
+      await pump(tester);
+
+      expect(find.text(ru.notificationsAndSounds), findsOneWidget);
+      // One "Notifications" on the page, not two rows of the same name.
+      expect(find.text(ru.notifications), findsOneWidget);
+    });
+  });
+
   testWidgets('on a wide pane the list keeps to a readable column', (
     tester,
   ) async {
@@ -132,6 +197,7 @@ void main() {
               window: window,
               dark: dark,
               shortcut: SendShortcut.modifierEnter,
+              alerts: 5,
             );
             await screenMatchesGolden(
               tester,

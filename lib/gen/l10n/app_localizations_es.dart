@@ -3952,4 +3952,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get menuWindow => 'Ventana';
+
+  @override
+  String get chatsStatusWaitingForNetwork => 'Esperando red…';
+
+  @override
+  String get chatsStatusConnecting => 'Conectando…';
+
+  @override
+  String get chatsStatusUpdating => 'Actualizando…';
+
+  @override
+  String get chatsSearchHint => 'Buscar';
+
+  @override
+  String get chatUnreadMentionLabel => 'Te han mencionado';
+
+  @override
+  String get notificationsAndSounds => 'Notificaciones y sonidos';
+
+  @override
+  String get notificationsFeedHint => 'Avisos de la cuenta y de los chats';
 }

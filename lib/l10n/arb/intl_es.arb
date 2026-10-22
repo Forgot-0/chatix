@@ -1392,5 +1392,12 @@
   "menuCopy": "Copiar",
   "menuPaste": "Pegar",
   "menuSelectAll": "Seleccionar todo",
-  "menuWindow": "Ventana"
+  "menuWindow": "Ventana",
+  "chatsStatusWaitingForNetwork": "Esperando red…",
+  "chatsStatusConnecting": "Conectando…",
+  "chatsStatusUpdating": "Actualizando…",
+  "chatsSearchHint": "Buscar",
+  "chatUnreadMentionLabel": "Te han mencionado",
+  "notificationsAndSounds": "Notificaciones y sonidos",
+  "notificationsFeedHint": "Avisos de la cuenta y de los chats"
 }

@@ -3981,4 +3981,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get menuWindow => 'Fenêtre';
+
+  @override
+  String get chatsStatusWaitingForNetwork => 'En attente du réseau…';
+
+  @override
+  String get chatsStatusConnecting => 'Connexion…';
+
+  @override
+  String get chatsStatusUpdating => 'Mise à jour…';
+
+  @override
+  String get chatsSearchHint => 'Rechercher';
+
+  @override
+  String get chatUnreadMentionLabel => 'Vous avez été mentionné';
+
+  @override
+  String get notificationsAndSounds => 'Notifications et sons';
+
+  @override
+  String get notificationsFeedHint => 'Alertes du compte et des chats';
 }

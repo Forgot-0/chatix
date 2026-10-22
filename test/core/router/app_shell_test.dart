@@ -4,16 +4,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/network/connectivity_providers.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/chats_pane_shell.dart';
+import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
+import 'package:chatix/features/notification/presentation/widgets/notification_bell.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
 class _FakeAuthController extends AuthController {
@@ -132,20 +136,17 @@ void main() {
             StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: NotificationsRoute.path,
-                  builder: (_, _) => const _Probe('alerts-branch'),
-                ),
-              ],
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
                   path: SettingsRoute.path,
                   builder: (_, _) => const _Probe('settings-branch'),
                 ),
               ],
             ),
           ],
+        ),
+        // As in the real router: a page over the shell, not a tab of it.
+        GoRoute(
+          path: NotificationsRoute.path,
+          builder: (_, _) => const _Probe('alerts-page'),
         ),
       ],
     );
@@ -174,6 +175,8 @@ void main() {
           notificationBadgeProvider.overrideWith(
             () => _FakeNotificationBadge(alerts),
           ),
+          chatSocketStateProvider.overrideWithValue(ChatSocketStatus.ready),
+          hasNetworkLinkProvider.overrideWithValue(true),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -192,12 +195,20 @@ void main() {
     return router;
   }
 
+  /// A destination, not the list header's title of the same name.
+  Finder tab(String label) => find.descendant(
+    of: find.byWidgetPredicate(
+      (widget) => widget is NavigationBar || widget is NavigationRail,
+    ),
+    matching: find.text(label),
+  );
+
   const phone = Size(400, 800);
   const tabletPortrait = Size(768, 1024);
   const desktop = Size(1200, 900);
 
   group('the shell', () {
-    testWidgets('offers four destinations, in order', (tester) async {
+    testWidgets('offers three destinations, in order', (tester) async {
       await pumpShell(tester, size: phone);
 
       final bar = tester.widget<NavigationBar>(find.byType(NavigationBar));
@@ -205,8 +216,16 @@ void main() {
         bar.destinations.cast<NavigationDestination>().map(
           (destination) => destination.label,
         ),
-        ['Chats', 'Contacts', 'Notifications', 'Settings'],
+        ['Chats', 'Contacts', 'Settings'],
       );
+    });
+
+    testWidgets('the rail has the same three', (tester) async {
+      await pumpShell(tester, size: desktop);
+
+      final rail = tester.widget<NavigationRail>(find.byType(NavigationRail));
+      expect(rail.destinations, hasLength(3));
+      expect(tab('Notifications'), findsNothing);
     });
 
     testWidgets('badges chats with the unread sum, not the alert count', (
@@ -223,10 +242,23 @@ void main() {
         alerts: 2,
       );
 
-      // 3 + 4 + 0 — the chats badge counts messages, the alerts badge counts
-      // notifications, and the two must not be the same number.
-      expect(find.text('7'), findsOneWidget);
-      expect(find.text('2'), findsOneWidget);
+      // 3 + 4 + 0 — the chats badge counts messages; the alerts count is
+      // the bell's, in the list's header, and the two must not be the same
+      // number.
+      expect(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('7'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(NotificationBell),
+          matching: find.text('2'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows no badge when everything is read', (tester) async {
@@ -237,13 +269,56 @@ void main() {
         alerts: 0,
       );
 
-      expect(find.byType(Badge), findsNothing);
+      expect(
+        tester
+            .widgetList<Badge>(find.byType(Badge))
+            .where((badge) => badge.isLabelVisible),
+        isEmpty,
+      );
     });
 
     testWidgets('caps a runaway count at 99+', (tester) async {
       await pumpShell(tester, size: phone, chats: [chat('a', unread: 120)]);
 
       expect(find.text('99+'), findsOneWidget);
+    });
+  });
+
+  group('notifications', () {
+    testWidgets('the bell opens them over the shell', (tester) async {
+      await pumpShell(tester, size: phone, alerts: 3);
+
+      await tester.tap(find.byType(NotificationBell));
+      await tester.pumpAndSettle();
+
+      expect(find.text('alerts-page'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+    });
+
+    testWidgets('a push link still lands on them, and back is the tab it '
+        'came from', (tester) async {
+      final router = await pumpShell(tester, size: phone);
+
+      await tester.tap(tab('Settings'));
+      await tester.pumpAndSettle();
+
+      // What a tapped push does when it cannot name a chat.
+      router.push(NotificationsRoute.location);
+      await tester.pumpAndSettle();
+      expect(find.text('alerts-page'), findsOneWidget);
+
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('settings-branch'), findsOneWidget);
+    });
+
+    testWidgets('a cold link opens them too', (tester) async {
+      final router = await pumpShell(tester, size: desktop);
+
+      router.go(NotificationsRoute.location);
+      await tester.pumpAndSettle();
+
+      expect(find.text('alerts-page'), findsOneWidget);
     });
   });
 
@@ -429,9 +504,9 @@ void main() {
       await tester.pumpAndSettle();
       final before = offsetOf(tester);
 
-      await tester.tap(find.text('Settings'));
+      await tester.tap(tab('Settings'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Chats'));
+      await tester.tap(tab('Chats'));
       await tester.pumpAndSettle();
 
       expect(offsetOf(tester), closeTo(before, 1));
@@ -476,7 +551,7 @@ void main() {
     testWidgets('switching keeps every branch mounted', (tester) async {
       await pumpShell(tester, size: phone);
 
-      await tester.tap(find.text('Settings'));
+      await tester.tap(tab('Settings'));
       await tester.pumpAndSettle();
 
       expect(find.text('settings-branch'), findsOneWidget);
@@ -495,11 +570,11 @@ void main() {
       router.go(const ChatDetailRoute('a').location);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Contacts'));
+      await tester.tap(tab('Contacts'));
       await tester.pumpAndSettle();
       expect(find.text('contacts-branch'), findsOneWidget);
 
-      await tester.tap(find.text('Chats'));
+      await tester.tap(tab('Chats'));
       await tester.pumpAndSettle();
       expect(find.text('chat:a'), findsOneWidget);
     });
@@ -520,9 +595,9 @@ void main() {
     testWidgets('a plain tap still just switches tab', (tester) async {
       await pumpShell(tester, size: phone);
 
-      await tester.tap(find.text('Contacts'));
+      await tester.tap(tab('Contacts'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Chats'));
+      await tester.tap(tab('Chats'));
       await tester.pumpAndSettle();
 
       expect(find.text('New group'), findsNothing);
@@ -545,7 +620,7 @@ void main() {
     testWidgets('reaches the chats tab from another tab', (tester) async {
       await pumpShell(tester, size: phone);
 
-      await tester.tap(find.text('Settings'));
+      await tester.tap(tab('Settings'));
       await tester.pumpAndSettle();
 
       await tester.longPress(find.byIcon(Icons.chat_bubble_outline));
@@ -559,7 +634,7 @@ void main() {
     testWidgets('dismissing it leaves the current tab alone', (tester) async {
       await pumpShell(tester, size: phone);
 
-      await tester.tap(find.text('Settings'));
+      await tester.tap(tab('Settings'));
       await tester.pumpAndSettle();
 
       await tester.longPress(find.byIcon(Icons.chat_bubble_outline));

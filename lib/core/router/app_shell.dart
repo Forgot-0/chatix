@@ -12,7 +12,11 @@ import 'package:chatix/features/contacts/presentation/providers/blocked_users_pr
 import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// The four places the app is ever "in": chats, contacts, alerts, settings.
+/// The three places the app is ever "in": chats, contacts, settings.
+///
+/// Notifications are not one of them — in a messenger the chats are where
+/// news arrives. The alerts list is a page the bell on the chats list and a
+/// row in settings both open (`/notifications`, outside the shell).
 ///
 /// The shell measures the window once and hands the answer down through
 /// [AppLayoutScope] — a bottom bar on a phone, a rail from tablet width up, and
@@ -50,27 +54,27 @@ class _AppShellScaffold extends ConsumerWidget {
   final AppLayoutMode mode;
 
   static const int _chatsBranch = 0;
-  static const int _settingsBranch = 3;
+  static const int _settingsBranch = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // The chats badge counts unread *messages*, summed over the chat list —
-    // the notifications badge below is a different number and stays separate.
+    // The chats badge counts unread *messages*, summed over the chat list.
     // Watching it here also keeps the chat list (and its socket subscription)
     // alive while the user is on another tab, which is what makes the count
     // move in real time. Direct chats with blocked people do not count.
     final unreadChats = ref.watch(chatsUnreadBadgeProvider);
-    final unreadAlerts = ref.watch(notificationBadgeProvider);
+
+    // The alerts count has no tab to sit on any more, but the bell and the
+    // settings row both show it, and whichever is on screen should find it
+    // current: owning it here keeps it polling, and resyncing on resume, for
+    // as long as somebody is signed in.
+    ref.listen(notificationBadgeProvider, (_, _) {});
 
     // Up for as long as somebody is signed in, and the chat list with it:
     // the place to keep the background isolate's copy of who is blocked.
     ref.watch(blockedSendersSnapshotProvider);
 
-    final destinations = _destinations(
-      context,
-      unreadChats: unreadChats,
-      unreadAlerts: unreadAlerts,
-    );
+    final destinations = _destinations(context, unreadChats: unreadChats);
 
     final body = FadeThroughSwitcher(
       switchKey: navigationShell.currentIndex,
@@ -133,7 +137,6 @@ class _AppShellScaffold extends ConsumerWidget {
   List<_ShellDestination> _destinations(
     BuildContext context, {
     required int unreadChats,
-    required int unreadAlerts,
   }) {
     final l10n = AppLocalizations.of(context);
 
@@ -163,19 +166,6 @@ class _AppShellScaffold extends ConsumerWidget {
         label: l10n.contacts,
         icon: const Icon(Icons.people_outline),
         selectedIcon: const Icon(Icons.people),
-      ),
-      _ShellDestination(
-        label: l10n.notifications,
-        icon: _CountBadge(
-          count: unreadAlerts,
-          semanticsLabel: l10n.unreadNotificationsCount(unreadAlerts),
-          child: const Icon(Icons.notifications_outlined),
-        ),
-        selectedIcon: _CountBadge(
-          count: unreadAlerts,
-          semanticsLabel: l10n.unreadNotificationsCount(unreadAlerts),
-          child: const Icon(Icons.notifications),
-        ),
       ),
       _ShellDestination(
         label: l10n.settings,

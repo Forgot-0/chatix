@@ -3911,4 +3911,25 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get menuWindow => 'উইন্ডো';
+
+  @override
+  String get chatsStatusWaitingForNetwork => 'নেটওয়ার্কের অপেক্ষায়…';
+
+  @override
+  String get chatsStatusConnecting => 'সংযোগ করা হচ্ছে…';
+
+  @override
+  String get chatsStatusUpdating => 'আপডেট হচ্ছে…';
+
+  @override
+  String get chatsSearchHint => 'খুঁজুন';
+
+  @override
+  String get chatUnreadMentionLabel => 'আপনাকে উল্লেখ করা হয়েছে';
+
+  @override
+  String get notificationsAndSounds => 'বিজ্ঞপ্তি ও শব্দ';
+
+  @override
+  String get notificationsFeedHint => 'অ্যাকাউন্ট ও চ্যাটের সতর্কতা';
 }

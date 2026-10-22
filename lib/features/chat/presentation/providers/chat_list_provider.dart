@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/utils/logger.dart';
+import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
@@ -33,6 +34,11 @@ class ChatListState extends Equatable {
   /// the row shows one tick, which is the honest answer: sent, unknown.
   final Map<String, int> peerReadSeqs;
 
+  /// Whether a fresh first page is on its way to replace these rows — the
+  /// list opened from the device's copy, or came back from a dropped
+  /// connection. What the title's "Updating…" is about.
+  final bool isCatchingUp;
+
   const ChatListState({
     this.items = const [],
     this.hasNext = false,
@@ -40,6 +46,7 @@ class ChatListState extends Equatable {
     this.nextChatId,
     this.isLoadingMore = false,
     this.peerReadSeqs = const {},
+    this.isCatchingUp = false,
   });
 
   int? peerReadSeqOf(String chatId) => peerReadSeqs[chatId];
@@ -66,6 +73,7 @@ class ChatListState extends Equatable {
     String? nextChatId,
     bool? isLoadingMore,
     Map<String, int>? peerReadSeqs,
+    bool? isCatchingUp,
   }) {
     return ChatListState(
       items: items ?? this.items,
@@ -74,6 +82,7 @@ class ChatListState extends Equatable {
       nextChatId: nextChatId,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       peerReadSeqs: peerReadSeqs ?? this.peerReadSeqs,
+      isCatchingUp: isCatchingUp ?? this.isCatchingUp,
     );
   }
 
@@ -85,6 +94,7 @@ class ChatListState extends Equatable {
     nextChatId,
     isLoadingMore,
     peerReadSeqs,
+    isCatchingUp,
   ];
 }
 
@@ -104,6 +114,8 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   StreamSubscription<WSEvent>? _eventSubscription;
 
   final Set<String> _inFlightChatFetches = <String>{};
+
+  bool _catchUpInFlight = false;
 
   @override
   Future<ChatListState> build() async {
@@ -128,6 +140,7 @@ class ChatListController extends AsyncNotifier<ChatListState> {
         hasNext: cached.hasNext,
         nextDate: cached.nextDate,
         nextChatId: cached.nextChatId,
+        isCatchingUp: true,
       );
     }
 
@@ -147,19 +160,36 @@ class ChatListController extends AsyncNotifier<ChatListState> {
     ref.onDispose(catchUp.cancel);
   }
 
-  /// Replaces the cached list with the current one.
+  /// Replaces the rows on screen with the current first page.
   ///
   /// The whole page is taken as written rather than merged: unread counts,
   /// previews and ordering all move, and the server's copy of all three is
-  /// the right one. A failure leaves the cached list alone — being offline
-  /// with yesterday's chat list is a working app, and an error page is not.
+  /// the right one. A failure leaves the list alone — being offline with
+  /// yesterday's chat list is a working app, and an error page is not.
   Future<void> _catchUp() async {
+    if (_catchUpInFlight) return;
+    _catchUpInFlight = true;
+
+    _mutate(
+      (s) => s.copyWith(
+        isCatchingUp: true,
+        nextDate: s.nextDate,
+        nextChatId: s.nextChatId,
+      ),
+    );
+
     final refreshed = await AsyncValue.guard(_fetchFirstPage);
+    _catchUpInFlight = false;
 
     final loaded = refreshed.value;
     if (loaded == null) {
-      Logger.warning(
-        'ChatList: opened from cache, catch-up failed (${refreshed.error})',
+      Logger.warning('ChatList: catch-up failed (${refreshed.error})');
+      _mutate(
+        (s) => s.copyWith(
+          isCatchingUp: false,
+          nextDate: s.nextDate,
+          nextChatId: s.nextChatId,
+        ),
       );
       return;
     }
@@ -175,16 +205,40 @@ class ChatListController extends AsyncNotifier<ChatListState> {
   }
 
   void _attachRealtime() {
-    _eventSubscription = ref
-        .read(chatSocketServiceProvider)
-        .events
-        .listen(
-          _onEvent,
-          onError: (Object error, StackTrace stackTrace) {
-            Logger.error('ChatList: event stream error', error, stackTrace);
-          },
-          cancelOnError: false,
-        );
+    final service = ref.read(chatSocketServiceProvider);
+
+    _eventSubscription = service.events.listen(
+      _onEvent,
+      onError: (Object error, StackTrace stackTrace) {
+        Logger.error('ChatList: event stream error', error, stackTrace);
+      },
+      cancelOnError: false,
+    );
+
+    _catchUpOnReconnect(service);
+  }
+
+  /// Fetches the first page again each time the socket comes back after it
+  /// had been up.
+  ///
+  /// Whatever the gateway sent while the connection was down is gone: a
+  /// `resume` replays history only for the chats it names (api-docs §6.3),
+  /// never the list's other rows, whose counts and previews would otherwise
+  /// stay as they were until a pull. The first connection is left alone —
+  /// [build] is already fetching for it.
+  void _catchUpOnReconnect(ChatSocketService service) {
+    var wasReady = service.status == ChatSocketStatus.ready;
+    var hasBeenReady = wasReady;
+
+    final subscription = service.statusStream.listen((status) {
+      final isReady = status == ChatSocketStatus.ready;
+      if (isReady && !wasReady && hasBeenReady) unawaited(_catchUp());
+
+      hasBeenReady = hasBeenReady || isReady;
+      wasReady = isReady;
+    });
+
+    ref.onDispose(subscription.cancel);
   }
 
   Future<void> _onEvent(WSEvent event) async {

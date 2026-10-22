@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
 import 'package:chatix/core/localization/app_date_format.dart';
+import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
@@ -115,6 +116,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        // A page over whatever opened it — unless a link opened it cold, with
+        // nothing underneath. The chats are the way into the app from there.
+        leading: Navigator.of(context).canPop()
+            ? null
+            : BackButton(onPressed: () => context.go(ChatsRoute.location)),
         title: Text(l10n.notifications),
         actions: [
           TextButton(

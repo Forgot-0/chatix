@@ -6725,6 +6725,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Window'**
   String get menuWindow;
+
+  /// Chats list title, shown in place of 'Chats' while there is no network to reach the server over
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for network…'**
+  String get chatsStatusWaitingForNetwork;
+
+  /// Chats list title, shown in place of 'Chats' while the app connects to the server
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get chatsStatusConnecting;
+
+  /// Chats list title, shown in place of 'Chats' while the list fetches what changed when the app was offline
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get chatsStatusUpdating;
+
+  /// Hint in the search box under the chats list title; tapping it opens search
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get chatsSearchHint;
+
+  /// Screen reader label for the @ mark on a chat row: one of the unread messages mentions the reader by @username
+  ///
+  /// In en, this message translates to:
+  /// **'You were mentioned'**
+  String get chatUnreadMentionLabel;
+
+  /// Settings row that opens notification preferences: sound, quiet hours, per-chat exceptions
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications and sounds'**
+  String get notificationsAndSounds;
+
+  /// Subtitle of the Settings row that opens the list of received notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Account and chat alerts in one list'**
+  String get notificationsFeedHint;
 }
 
 class _AppLocalizationsDelegate

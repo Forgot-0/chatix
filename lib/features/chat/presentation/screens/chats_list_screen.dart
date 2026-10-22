@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:chatix/core/router/app_layout.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
@@ -11,10 +12,10 @@ import 'package:chatix/features/chat/presentation/providers/chat_list_provider.d
 import 'package:chatix/features/chat/presentation/providers/chat_list_scroll_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_presence_provider.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
+import 'package:chatix/features/chat/presentation/widgets/chats_list_header.dart';
 import 'package:chatix/features/chat_organizer/domain/entities/organized_chats.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/chat_organizer_provider.dart';
 import 'package:chatix/features/chat_organizer/presentation/providers/folder_selection_provider.dart';
-import 'package:chatix/features/chat_organizer/presentation/widgets/folder_tabs_bar.dart';
 import 'package:chatix/features/contacts/presentation/providers/blocked_users_providers.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
@@ -28,6 +29,10 @@ import 'package:chatix/gen/l10n/app_localizations.dart';
 /// What the screen does with those rows — the pinned zone, the archive, the
 /// folder the strip is on — is the chat organizer's, and none of it exists
 /// on the server.
+///
+/// There is no app bar: the header ([ChatsListHeaderDelegate]) is the
+/// list's first sliver, so its search pill can scroll away with the rows and
+/// float back on the way up.
 class ChatsListScreen extends ConsumerStatefulWidget {
   const ChatsListScreen({super.key, this.selectedChatId});
 
@@ -88,76 +93,87 @@ class _ChatsListScreenState extends ConsumerState<ChatsListScreen> {
     ]);
   }
 
+  /// Whether a scroll belongs to the list, for pull-to-refresh: the list
+  /// itself, or the empty and error states, which scroll inside its last
+  /// sliver. Not the folder strip, which scrolls sideways in the header.
+  static bool _isListScroll(ScrollNotification notification) =>
+      notification.depth == 0 ||
+      (notification.depth == 1 && notification.metrics.axis == Axis.vertical);
+
   @override
   Widget build(BuildContext context) {
     final listState = ref.watch(chatListProvider);
     final l10n = AppLocalizations.of(context);
 
+    // A phone gets the round button over the list's corner. Anything with a
+    // rail has a pointer more often than a thumb, and the header is where a
+    // pointer looks for "new".
+    final hasFab = AppLayoutScope.of(context).usesBottomBar;
+
     final organizer = ref.watch(organizerDataProvider);
     final showFolders =
         organizer.folders.isNotEmpty && !organizer.settings.foldersHidden;
 
+    final header = ChatsListHeaderDelegate(
+      topInset: MediaQuery.paddingOf(context).top,
+      showFolders: showFolders,
+      showNewChat: !hasFab,
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.chats),
-        actions: [
-          IconButton(
-            onPressed: () => context.push(ChatFoldersRoute.location),
-            icon: const Icon(Icons.folder_outlined),
-            tooltip: l10n.chatFolders,
-          ),
-          IconButton(
-            onPressed: () => context.push(ChatSearchRoute.location),
-            icon: const Icon(Icons.search),
-            tooltip: l10n.searchChatsAndPeople,
-          ),
-        ],
-        bottom: showFolders ? const FolderTabsBar() : null,
-      ),
-      body: listState.when(
-        loading: () => const AppListSkeleton(hasTrailing: true),
-        error: (error, _) => AppErrorState(
-          error: error,
-          fallbackMessage: l10n.chatsLoadFailed,
-          onRetry: _refresh,
-        ),
-        data: (state) => _ChatsList(
-          state: state,
-          selectedChatId: widget.selectedChatId,
-          scrollController: _scrollController,
-          archiveOpen: _archiveOpen,
-          onToggleArchive: () => setState(() => _archiveOpen = !_archiveOpen),
+      body: MediaQuery.removePadding(
+        context: context,
+        removeTop: true,
+        child: RefreshIndicator(
           onRefresh: _refresh,
+          // Out from under the header, which is fully open whenever a pull
+          // can start.
+          edgeOffset: header.maxExtent,
+          notificationPredicate: _isListScroll,
+          child: CustomScrollView(
+            key: const PageStorageKey<String>('chats-list'),
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                floating: true,
+                delegate: header,
+              ),
+              ...listState.when(
+                loading: () => const [
+                  SliverFillRemaining(
+                    child: AppListSkeleton(hasTrailing: true),
+                  ),
+                ],
+                error: (error, _) => [
+                  SliverFillRemaining(
+                    child: AppErrorState(
+                      error: error,
+                      fallbackMessage: l10n.chatsLoadFailed,
+                      onRetry: _refresh,
+                    ),
+                  ),
+                ],
+                data: (state) => _contentSlivers(state, hasFab: hasFab),
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(CreateChatRoute.location),
-        icon: const Icon(Icons.add_comment_outlined),
-        label: Text(l10n.newChat),
-      ),
+      floatingActionButton: hasFab
+          ? FloatingActionButton(
+              onPressed: () => context.push(CreateChatRoute.location),
+              tooltip: l10n.newChat,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.edit_outlined),
+            )
+          : null,
     );
   }
-}
 
-class _ChatsList extends ConsumerWidget {
-  const _ChatsList({
-    required this.state,
-    required this.selectedChatId,
-    required this.scrollController,
-    required this.archiveOpen,
-    required this.onToggleArchive,
-    required this.onRefresh,
-  });
-
-  final ChatListState state;
-  final String? selectedChatId;
-  final ScrollController scrollController;
-  final bool archiveOpen;
-  final VoidCallback onToggleArchive;
-  final Future<void> Function() onRefresh;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  /// The rows under the header, or what stands in for them.
+  List<Widget> _contentSlivers(ChatListState state, {required bool hasFab}) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
@@ -177,96 +193,86 @@ class _ChatsList extends ConsumerWidget {
     final archived = archive?.items ?? const <ChatEntity>[];
 
     if (state.items.isEmpty && archived.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: onRefresh,
-        child: AppEmptyState(
-          illustration: AppIllustrationKind.conversations,
-          title: l10n.noChatsYet,
-          message: l10n.noChatsYetHint,
-          action: FilledButton.icon(
-            onPressed: () => context.push(CreateChatRoute.location),
-            icon: const Icon(Icons.add_comment_outlined),
-            label: Text(l10n.newChat),
+      return [
+        SliverFillRemaining(
+          child: AppEmptyState(
+            illustration: AppIllustrationKind.conversations,
+            title: l10n.noChatsYet,
+            message: l10n.noChatsYetHint,
+            action: FilledButton.icon(
+              onPressed: () => context.push(CreateChatRoute.location),
+              icon: const Icon(Icons.add_comment_outlined),
+              label: Text(l10n.newChat),
+            ),
           ),
         ),
-      );
+      ];
     }
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: CustomScrollView(
-        key: const PageStorageKey<String>('chats-list'),
-        controller: scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          if (archived.isNotEmpty)
-            SliverToBoxAdapter(
-              child: _ArchiveHeader(
-                count: archived.length,
-                unread: unreadInArchive(
-                  archived,
-                  quiet: ref.watch(blockedDirectChatIdsProvider),
-                ),
-                isOpen: archiveOpen,
-                onTap: onToggleArchive,
-              ),
+    return [
+      if (archived.isNotEmpty)
+        SliverToBoxAdapter(
+          child: _ArchiveHeader(
+            count: archived.length,
+            unread: unreadInArchive(
+              archived,
+              quiet: ref.watch(blockedDirectChatIdsProvider),
             ),
-          if (archived.isNotEmpty && archiveOpen)
-            _rows(archived, isLast: false, readState: archive),
-          if (archived.isNotEmpty &&
-              archiveOpen &&
-              (archive?.canLoadMore ?? false))
-            SliverToBoxAdapter(
-              child: Center(
-                child: TextButton(
-                  onPressed: () =>
-                      ref.read(archivedChatListProvider.notifier).loadMore(),
-                  child: Text(l10n.showMore),
-                ),
-              ),
+            isOpen: _archiveOpen,
+            onTap: () => setState(() => _archiveOpen = !_archiveOpen),
+          ),
+        ),
+      if (archived.isNotEmpty && _archiveOpen)
+        _rows(archived, state: archive!, isLast: false),
+      if (archived.isNotEmpty && _archiveOpen && archive!.canLoadMore)
+        SliverToBoxAdapter(
+          child: Center(
+            child: TextButton(
+              onPressed: () =>
+                  ref.read(archivedChatListProvider.notifier).loadMore(),
+              child: Text(l10n.showMore),
             ),
+          ),
+        ),
 
-          // The pinned zone is a block of its own, on its own ground: the
-          // point of pinning is that those rows are not part of the stream
-          // below them.
-          if (sections.pinned.isNotEmpty)
-            DecoratedSliver(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh,
-              ),
-              sliver: SliverMainAxisGroup(
-                slivers: [
-                  _SectionLabel(label: l10n.chatPinnedZone),
-                  _rows(sections.pinned, isLast: true),
-                  const SliverToBoxAdapter(child: SizedBox(height: 6)),
-                ],
-              ),
-            ),
+      // The pinned block keeps a ground of its own and no heading: the shade
+      // says these rows are not part of the stream below them, and each row
+      // carries its own pin.
+      if (sections.pinned.isNotEmpty)
+        DecoratedSliver(
+          decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer),
+          sliver: _rows(sections.pinned, state: state, isLast: true),
+        ),
 
-          if (sections.active.isNotEmpty) _rows(sections.active, isLast: true),
-          if (state.canLoadMore)
-            const SliverToBoxAdapter(child: AppLoadMoreIndicator()),
+      if (sections.active.isNotEmpty)
+        _rows(sections.active, state: state, isLast: true),
+      if (state.canLoadMore)
+        const SliverToBoxAdapter(child: AppLoadMoreIndicator()),
 
-          if (sections.visible.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: folder == null
-                  ? const _ArchiveOnlyNotice()
-                  : const _FolderEmptyNotice(),
-            )
-          else
-            const SliverToBoxAdapter(child: SizedBox(height: 88)),
-        ],
-      ),
-    );
+      if (sections.visible.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: folder == null
+              ? const _ArchiveOnlyNotice()
+              : const _FolderEmptyNotice(),
+        )
+      else
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: hasFab
+                ? ChatsListLayout.fabClearance
+                : ChatsListLayout.endPadding,
+          ),
+        ),
+    ];
   }
 
   /// One block of rows, hairline-separated the way a list of people is —
   /// the rule starts where the text does, so the avatars form a column.
   Widget _rows(
     List<ChatEntity> chats, {
+    required ChatListState state,
     required bool isLast,
-    ChatListState? readState,
   }) {
     return SliverList.builder(
       itemCount: chats.length,
@@ -280,8 +286,8 @@ class _ChatsList extends ConsumerWidget {
             ChatListTile(
               key: ValueKey<String>(chat.id),
               chat: chat,
-              isSelected: chat.id == selectedChatId,
-              peerReadSeq: (readState ?? state).peerReadSeqOf(chat.id),
+              isSelected: chat.id == widget.selectedChatId,
+              peerReadSeq: state.peerReadSeqOf(chat.id),
             ),
             if (!isBlockEnd || !isLast) const Divider(height: 1, indent: 80),
           ],
@@ -359,46 +365,6 @@ class _FolderEmptyNotice extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.x4,
-          AppSpacing.x3,
-          AppSpacing.x4,
-          AppSpacing.x1,
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.push_pin_outlined,
-              size: 14,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-              ),
             ),
           ],
         ),

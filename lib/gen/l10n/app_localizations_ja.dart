@@ -3781,4 +3781,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get menuWindow => 'ウインドウ';
+
+  @override
+  String get chatsStatusWaitingForNetwork => 'ネットワーク待機中…';
+
+  @override
+  String get chatsStatusConnecting => '接続中…';
+
+  @override
+  String get chatsStatusUpdating => '更新中…';
+
+  @override
+  String get chatsSearchHint => '検索';
+
+  @override
+  String get chatUnreadMentionLabel => 'メンションされました';
+
+  @override
+  String get notificationsAndSounds => '通知とサウンド';
+
+  @override
+  String get notificationsFeedHint => 'アカウントとチャットのお知らせ';
 }

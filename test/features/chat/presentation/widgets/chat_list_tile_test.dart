@@ -13,7 +13,9 @@ import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
+import 'package:chatix/features/chat/data/datasources/chat_local_data_source.dart';
 import 'package:chatix/features/chat/data/datasources/chat_local_prefs_store.dart';
+import 'package:chatix/features/chat/data/datasources/chat_local_store.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_member_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_pages.dart';
@@ -23,6 +25,7 @@ import 'package:chatix/features/chat/domain/usecases/get_members_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_drafts_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_local_prefs_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/unread_mentions_provider.dart';
 import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
 import 'package:chatix/features/contacts/data/datasources/block_list_local_store.dart';
 import 'package:chatix/features/contacts/data/datasources/contacts_local_store.dart';
@@ -46,6 +49,16 @@ class MockGetMembersUseCase extends Mock implements GetMembersUseCase {}
 
 class MockUpdateChatStateUseCase extends Mock
     implements UpdateChatStateUseCase {}
+
+/// Mentions as the socket would have recorded them.
+class _SeenMentions extends LiveMentionsController {
+  _SeenMentions(this._seen);
+
+  final Map<String, int> _seen;
+
+  @override
+  Map<String, int> build() => _seen;
+}
 
 class FakeAuthController extends AuthController {
   FakeAuthController(this._user);
@@ -194,8 +207,16 @@ void main() {
     String? draft,
     bool dark = false,
     List<Contact> contacts = const [],
+    bool isSelected = false,
+    Set<int> blocked = const {},
+    Map<String, int> seenMentions = const {},
+    List<Map<String, dynamic>> cachedMessages = const [],
   }) async {
     final book = KeyValueContactsLocalStore(MemoryKeyValueTable());
+    final cache = inMemoryChatLocalStore();
+    if (cachedMessages.isNotEmpty) {
+      await cache.writeMessages(value.id, cachedMessages);
+    }
     if (contacts.isNotEmpty) {
       await book.save(ContactsSnapshot(ownerId: myUserId, contacts: contacts));
     }
@@ -210,6 +231,13 @@ void main() {
         getMembersUseCaseProvider.overrideWithValue(getMembers),
         updateChatStateUseCaseProvider.overrideWithValue(updateState),
         authProvider.overrideWith(() => FakeAuthController(me)),
+        blockListLocalStoreProvider.overrideWithValue(
+          MemoryBlockListLocalStore(
+            BlockList(ownerId: myUserId, userIds: blocked),
+          ),
+        ),
+        liveMentionsProvider.overrideWith(() => _SeenMentions(seenMentions)),
+        chatLocalDataSourceProvider.overrideWithValue(cache),
       ],
     );
     addTearDown(container.dispose);
@@ -231,7 +259,11 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
-            body: ChatListTile(chat: value, peerReadSeq: peerReadSeq),
+            body: ChatListTile(
+              chat: value,
+              peerReadSeq: peerReadSeq,
+              isSelected: isSelected,
+            ),
           ),
         ),
       ),
@@ -660,6 +692,198 @@ void main() {
       await rightClick(tester, tester.getCenter(find.text('Design team')));
 
       expect(find.byType(PopupMenuItem<ChatRowAction>), findsNothing);
+    });
+  });
+
+  testWidgets('a pinned chat with something unread keeps the pin too', (
+    tester,
+  ) async {
+    await pumpTile(
+      tester,
+      chat(last: message(content: 'hi'), pinned: true, unread: 2),
+    );
+
+    expect(find.byIcon(Icons.push_pin), findsOneWidget);
+    expect(find.byType(UnreadBadge), findsOneWidget);
+  });
+
+  testWidgets('the open chat is filled in the primary container', (
+    tester,
+  ) async {
+    await pumpTile(
+      tester,
+      chat(last: message(content: 'hi')),
+      isSelected: true,
+    );
+
+    final fill = tester
+        .widgetList<Material>(
+          find.descendant(
+            of: find.byType(ChatListTile),
+            matching: find.byType(Material),
+          ),
+        )
+        .first
+        .color;
+    expect(fill, AppTheme.lightTheme.colorScheme.primaryContainer);
+  });
+
+  group('the @ for an unread mention', () {
+    // The reader is "me" (id 7); the rows' messages are Ann's (id 9).
+    Map<String, dynamic> cached(int seq, String content) => {
+      'id': 'm$seq',
+      'chat_id': chatId,
+      'seq': seq,
+      'author_id': peerId,
+      'type': 'text',
+      'content': content,
+      'reply_to_id': null,
+      'forwarded_from_chat_id': null,
+      'forwarded_from_message_id': null,
+      'forwarded_from_author_id': null,
+      'is_edited': false,
+      'created_at': '2026-01-01T00:00:00Z',
+      'attachments': <Object?>[],
+      'reactions': <Object?>[],
+    };
+
+    testWidgets('shows when the unread last message names the reader', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(unread: 2, last: message(content: '@me can you check?', seq: 9)),
+      );
+
+      expect(find.byType(MentionBadge), findsOneWidget);
+      expect(
+        tester
+            .widget<Icon>(
+              find.descendant(
+                of: find.byType(MentionBadge),
+                matching: find.byType(Icon),
+              ),
+            )
+            .semanticLabel,
+        l10n.chatUnreadMentionLabel,
+      );
+      // Beside the count, not instead of it.
+      expect(find.byType(UnreadBadge), findsOneWidget);
+    });
+
+    testWidgets('goes once the chat is read', (tester) async {
+      await pumpTile(tester, chat(last: message(content: '@me hi', seq: 9)));
+
+      expect(find.byType(MentionBadge), findsNothing);
+    });
+
+    testWidgets('is not for somebody whose handle starts the same', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(unread: 1, last: message(content: '@meredith hi', seq: 9)),
+      );
+
+      expect(find.byType(MentionBadge), findsNothing);
+    });
+
+    testWidgets('is not for the reader quoting their own handle', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(
+          unread: 1,
+          last: message(content: 'I am @me', authorId: myUserId, seq: 9),
+        ),
+      );
+
+      expect(find.byType(MentionBadge), findsNothing);
+    });
+
+    testWidgets('stays after newer messages, when the socket saw it', (
+      tester,
+    ) async {
+      // Read up to 6; the mention came at 7, two more since.
+      await pumpTile(
+        tester,
+        chat(unread: 3, last: message(content: 'and another', seq: 9)),
+        seenMentions: const {chatId: 7},
+      );
+
+      expect(find.byType(MentionBadge), findsOneWidget);
+    });
+
+    testWidgets('a mention the reader has read does not come back', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        chat(unread: 1, last: message(content: 'new one', seq: 9)),
+        seenMentions: const {chatId: 7},
+      );
+
+      expect(find.byType(MentionBadge), findsNothing);
+    });
+
+    testWidgets('is found in the message cache too', (tester) async {
+      await pumpTile(
+        tester,
+        chat(unread: 2, last: message(content: 'later', seq: 9)),
+        cachedMessages: [cached(7, 'old'), cached(8, 'ping @me')],
+      );
+
+      expect(find.byType(MentionBadge), findsOneWidget);
+    });
+
+    testWidgets('a silenced chat still shows it', (tester) async {
+      await pumpTile(
+        tester,
+        chat(
+          unread: 2,
+          muted: true,
+          last: message(content: '@me look', seq: 9),
+        ),
+      );
+
+      expect(find.byType(MentionBadge), findsOneWidget);
+    });
+
+    testWidgets('a blocked person cannot ask for the reader by name', (
+      tester,
+    ) async {
+      await pumpTile(
+        tester,
+        ChatEntity(
+          id: chatId,
+          seqCounter: 9,
+          lastActivityAt: DateTime.now(),
+          type: ChatType.direct,
+          name: null,
+          description: null,
+          avatarS3Key: null,
+          isPublic: false,
+          adminOnly: false,
+          slowModeSeconds: 0,
+          permissions: const {},
+          createdBy: myUserId,
+          memberCount: 2,
+          unreadCount: 2,
+          lastMessage: message(content: '@me answer!', seq: 9),
+          peer: const ChatProfileEntity(
+            userId: peerId,
+            username: 'ann',
+            displayName: 'Ann',
+            avatarUrl: null,
+            avatarS3Key: null,
+          ),
+        ),
+        blocked: const {peerId},
+      );
+
+      expect(find.byIcon(Icons.block), findsOneWidget);
+      expect(find.byType(MentionBadge), findsNothing);
     });
   });
 

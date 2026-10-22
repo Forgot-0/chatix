@@ -3982,4 +3982,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get menuWindow => 'Окно';
+
+  @override
+  String get chatsStatusWaitingForNetwork => 'Ожидание сети…';
+
+  @override
+  String get chatsStatusConnecting => 'Соединение…';
+
+  @override
+  String get chatsStatusUpdating => 'Обновление…';
+
+  @override
+  String get chatsSearchHint => 'Поиск';
+
+  @override
+  String get chatUnreadMentionLabel => 'Вас упомянули';
+
+  @override
+  String get notificationsAndSounds => 'Уведомления и звуки';
+
+  @override
+  String get notificationsFeedHint => 'Оповещения аккаунта и чатов';
 }

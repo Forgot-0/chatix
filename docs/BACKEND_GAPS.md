@@ -382,7 +382,15 @@ offered — letters, digits, `.`, `_`, `-`, not ending in a dot.
   space, a comma or an apostrophe has no end a pattern can find, so those
   people are not in the list and cannot be mentioned at all.
 - Nobody is notified of being mentioned: there is no server-side notion of
-  it, so no push, no "you were mentioned" badge, no jump to the mention.
+  it, so no push and no jump to the mention.
+- The `@` on a chat row (П-12) is the client's own guess: it reads the text
+  of the messages this device has seen — the row's `last_message`,
+  `new_message` / `message_edited` frames since the app started, the message
+  cache (`UnreadMentions`, `unread_mentions_provider.dart`). A mention that
+  arrived while the app was closed and was followed by other messages, in a
+  chat never opened on this device, is not seen, so the row shows no `@`.
+  It never shows one for a mention that was read: the read position is taken
+  as the later of `last_read` and "newest seq minus `unread_count`".
 - A mention survives a rename only as the old text.
 
 **What the backend would need.** Mention entities on the message —

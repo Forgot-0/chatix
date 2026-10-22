@@ -1392,5 +1392,12 @@
   "menuCopy": "কপি করুন",
   "menuPaste": "পেস্ট করুন",
   "menuSelectAll": "সব নির্বাচন করুন",
-  "menuWindow": "উইন্ডো"
+  "menuWindow": "উইন্ডো",
+  "chatsStatusWaitingForNetwork": "নেটওয়ার্কের অপেক্ষায়…",
+  "chatsStatusConnecting": "সংযোগ করা হচ্ছে…",
+  "chatsStatusUpdating": "আপডেট হচ্ছে…",
+  "chatsSearchHint": "খুঁজুন",
+  "chatUnreadMentionLabel": "আপনাকে উল্লেখ করা হয়েছে",
+  "notificationsAndSounds": "বিজ্ঞপ্তি ও শব্দ",
+  "notificationsFeedHint": "অ্যাকাউন্ট ও চ্যাটের সতর্কতা"
 }

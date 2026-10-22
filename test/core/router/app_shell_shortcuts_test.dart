@@ -7,16 +7,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:golden_toolkit/golden_toolkit.dart';
 
+import 'package:chatix/core/network/connectivity_providers.dart';
 import 'package:chatix/core/router/app_routes.dart';
 import 'package:chatix/core/router/app_shell.dart';
 import 'package:chatix/core/router/chats_pane_shell.dart';
 import 'package:chatix/core/theme/app_theme.dart';
 import 'package:chatix/core/ui/desktop/desktop_scrolling.dart';
+import 'package:chatix/core/websocket/chat_socket_service.dart';
 import 'package:chatix/features/auth/domain/entities/user_entity.dart';
 import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_profile_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
 import 'package:chatix/features/chat/presentation/screens/chats_list_screen.dart';
 import 'package:chatix/features/chat/presentation/widgets/chat_jump_palette.dart';
 import 'package:chatix/features/chat_organizer/data/datasources/chat_organizer_local_data_source.dart';
@@ -136,14 +139,6 @@ void main() {
             StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: NotificationsRoute.path,
-                  builder: (_, _) => const _Probe('alerts-branch'),
-                ),
-              ],
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
                   path: SettingsRoute.path,
                   builder: (_, _) => const _Probe('settings-branch'),
                   routes: [
@@ -180,6 +175,8 @@ void main() {
         authProvider.overrideWith(_FakeAuthController.new),
         chatListProvider.overrideWith(() => _FakeChatListController(chats)),
         notificationBadgeProvider.overrideWith(_FakeNotificationBadge.new),
+        chatSocketStateProvider.overrideWithValue(ChatSocketStatus.ready),
+        hasNetworkLinkProvider.overrideWithValue(true),
         chatOrganizerDataSourceProvider.overrideWithValue(
           InMemoryChatOrganizerDataSource(),
         ),

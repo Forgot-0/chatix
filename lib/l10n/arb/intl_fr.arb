@@ -1392,5 +1392,12 @@
   "menuCopy": "Copier",
   "menuPaste": "Coller",
   "menuSelectAll": "Tout sélectionner",
-  "menuWindow": "Fenêtre"
+  "menuWindow": "Fenêtre",
+  "chatsStatusWaitingForNetwork": "En attente du réseau…",
+  "chatsStatusConnecting": "Connexion…",
+  "chatsStatusUpdating": "Mise à jour…",
+  "chatsSearchHint": "Rechercher",
+  "chatUnreadMentionLabel": "Vous avez été mentionné",
+  "notificationsAndSounds": "Notifications et sons",
+  "notificationsFeedHint": "Alertes du compte et des chats"
 }

@@ -19,6 +19,7 @@ import 'package:chatix/features/chat/presentation/providers/chat_presence_provid
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_state_actions.dart';
 import 'package:chatix/features/chat/presentation/providers/search_history_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/unread_mentions_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_preview.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_title.dart';
 import 'package:chatix/features/chat/presentation/utils/open_chat.dart';
@@ -41,9 +42,10 @@ enum ChatRowAction { markRead, pin, archive, mute, delete }
 /// Everything on the row comes from the list response — `ChatDTO` carries
 /// `last_message`, `unread_count`, `me` and the draft (api-docs §5.2) —
 /// except the presence dot, which costs a member request per direct chat
-/// and is cached in [chatPresenceProvider]. The draft is the newer of the
-/// row's and this device's own copy, which may not have reached the server
-/// yet.
+/// and is cached in [chatPresenceProvider], and the `@`, which is read out
+/// of the messages this device has seen ([watchHasUnreadMention]). The draft
+/// is the newer of the row's and this device's own copy, which may not have
+/// reached the server yet.
 class ChatListTile extends ConsumerStatefulWidget {
   const ChatListTile({
     super.key,
@@ -55,7 +57,9 @@ class ChatListTile extends ConsumerStatefulWidget {
 
   final ChatEntity chat;
 
-  /// Whether this chat is the one open in the detail pane.
+  /// Whether this chat is the one open in the detail pane. Filled in the
+  /// primary container, so the row reads as "this one" from across the
+  /// window and not only under the pointer.
   final bool isSelected;
 
   /// How far the other side has read, when we have been told — the second
@@ -121,10 +125,14 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
     final isBlocked =
         peerId != null && ref.watch(isUserBlockedProvider(peerId));
 
+    // Somebody asking for the reader by name is worth more than a count —
+    // except from a person the reader has stopped listening to.
+    final hasMention = !isBlocked && watchHasUnreadMention(ref, chat);
+
     final preview = chatPreviewOf(chat, l10n, draft: draft, myUserId: myUserId);
 
     final row = Material(
-      color: widget.isSelected ? scheme.secondaryContainer : Colors.transparent,
+      color: widget.isSelected ? scheme.primaryContainer : Colors.transparent,
       child: InkWell(
         onTap: () => openChat(context, ref, chat.id),
         onLongPress: widget.enableActions ? () => _openMenu(myUserId) : null,
@@ -164,6 +172,7 @@ class _ChatListTileState extends ConsumerState<ChatListTile> {
                           isMuted: isMuted,
                           isPinned: isPinned,
                           isBlocked: isBlocked,
+                          hasMention: hasMention,
                         ),
                       ],
                     ),
@@ -775,13 +784,18 @@ class _PreviewLine extends StatelessWidget {
   }
 }
 
-/// The pin, the crossed-out bell and the unread count, in that order.
+/// The marks at the end of the preview line, in this order: the block mark,
+/// the crossed-out bell, the pin, the `@` and the unread count.
+///
+/// The pin stays when there is something unread as well: with no heading
+/// over the pinned block any more, it is what says why the row is up there.
 class _RowMarkers extends StatelessWidget {
   const _RowMarkers({
     required this.unread,
     required this.isMuted,
     required this.isPinned,
     this.isBlocked = false,
+    this.hasMention = false,
   });
 
   final int unread;
@@ -791,50 +805,67 @@ class _RowMarkers extends StatelessWidget {
   /// The other person of this direct chat is blocked.
   final bool isBlocked;
 
-  static const double _glyphSize = 15;
+  /// An unread message mentions the reader.
+  final bool hasMention;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
-    if (!isPinned && !isMuted && !isBlocked && unread == 0) {
-      return const SizedBox.shrink();
-    }
+    Widget glyph(IconData icon, String label) => Icon(
+      icon,
+      size: ChatsListLayout.markerGlyph,
+      color: scheme.onSurfaceVariant,
+      semanticLabel: label,
+    );
 
+    final marks = [
+      if (isBlocked) glyph(Icons.block, l10n.chatBlockedLabel),
+      if (isMuted) glyph(Icons.notifications_off_outlined, l10n.chatMutedLabel),
+      if (isPinned) glyph(Icons.push_pin, l10n.chatPinnedLabel),
+      if (hasMention) const MentionBadge(),
+      if (unread > 0) UnreadBadge(count: unread, isMuted: isMuted || isBlocked),
+    ];
+
+    if (marks.isEmpty) return const SizedBox.shrink();
+
+    // Gaps between the marks only: the last one ends where the stamp above
+    // it does.
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (isBlocked)
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.x1),
-            child: Icon(
-              Icons.block,
-              size: _glyphSize,
-              color: scheme.onSurfaceVariant,
-              semanticLabel: l10n.chatBlockedLabel,
-            ),
-          ),
-        if (isMuted)
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.x1),
-            child: Icon(
-              Icons.notifications_off_outlined,
-              size: _glyphSize,
-              color: scheme.onSurfaceVariant,
-              semanticLabel: l10n.chatMutedLabel,
-            ),
-          ),
-        if (isPinned && unread == 0)
-          Icon(
-            Icons.push_pin,
-            size: _glyphSize,
-            color: scheme.onSurfaceVariant,
-            semanticLabel: l10n.chatPinnedLabel,
-          ),
-        if (unread > 0)
-          UnreadBadge(count: unread, isMuted: isMuted || isBlocked),
+        for (final (index, mark) in marks.indexed) ...[
+          if (index > 0) const SizedBox(width: AppSpacing.x1),
+          mark,
+        ],
       ],
+    );
+  }
+}
+
+/// The `@` beside the count: one of the unread messages mentions the reader.
+///
+/// Drawn in the primary fill even in a silenced chat — a mention is the one
+/// thing silencing a group is not meant to hide.
+class MentionBadge extends StatelessWidget {
+  const MentionBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: ChatsListLayout.badgeHeight,
+      height: ChatsListLayout.badgeHeight,
+      decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.alternate_email,
+        size: ChatsListLayout.markerGlyph,
+        color: scheme.onPrimary,
+        semanticLabel: AppLocalizations.of(context).chatUnreadMentionLabel,
+      ),
     );
   }
 }
@@ -866,8 +897,10 @@ class UnreadBadge extends StatelessWidget {
     return Semantics(
       label: AppLocalizations.of(context).unreadMessagesCount(count),
       child: Container(
-        constraints: const BoxConstraints(minWidth: 20),
-        height: 20,
+        constraints: const BoxConstraints(
+          minWidth: ChatsListLayout.badgeHeight,
+        ),
+        height: ChatsListLayout.badgeHeight,
         padding: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: background,

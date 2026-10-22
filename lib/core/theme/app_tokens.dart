@@ -721,6 +721,56 @@ abstract final class ContactsLayout {
   static const double noteIcon = 20;
 }
 
+/// A search box that is really a button (`AppSearchPill`): it looks like the
+/// field you type into and opens the screen where you do.
+abstract final class SearchPillSizes {
+  /// As tall as the contacts tab's own field, so the two tabs line up.
+  static const double height = ContactsLayout.searchHeight;
+
+  /// The slot the magnifier sits in — an input decoration's prefix slot, so
+  /// the hint starts where typed text starts in a real field.
+  static const double iconSlot = 48;
+}
+
+/// The chats list: its header, the marks on its rows, room for the FAB.
+abstract final class ChatsListLayout {
+  /// The title row — the large "Chats", or the connection state in its place.
+  static const double titleBarHeight = 56;
+
+  /// Around the search pill: a little above it, a little more below.
+  static const double searchPaddingTop = AppSpacing.x1;
+  static const double searchPaddingBottom = AppSpacing.x2;
+
+  /// The part of the header that scrolls away and floats back.
+  static const double searchBlockHeight =
+      searchPaddingTop + SearchPillSizes.height + searchPaddingBottom;
+
+  /// How far type in the header may grow. Chrome of a fixed height cannot
+  /// honour an unbounded scale — the rows below it scale freely, and the
+  /// folder strip stops at the same point.
+  static const double maxTextScale = 1.3;
+
+  /// The spinner beside "Connecting…", the glyph beside "Waiting for
+  /// network…".
+  static const double statusGlyph = 16;
+  static const double statusStroke = 2;
+  static const double statusGap = AppSpacing.x3;
+
+  /// The unread count and the `@` beside it: one height, so they read as a
+  /// pair.
+  static const double badgeHeight = 20;
+
+  /// The pin, the crossed-out bell, the block mark.
+  static const double markerGlyph = 15;
+
+  /// Under the last row on a phone: clear of the round FAB, which would
+  /// otherwise sit on that row's badge.
+  static const double fabClearance = 88;
+
+  /// Under the last row where there is no FAB.
+  static const double endPadding = AppSpacing.x2;
+}
+
 abstract final class MentionListSizes {
   /// One person: a face, the name and the handle on a line.
   static const double rowHeight = 48;

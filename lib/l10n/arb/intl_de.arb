@@ -1392,5 +1392,12 @@
   "menuCopy": "Kopieren",
   "menuPaste": "Einsetzen",
   "menuSelectAll": "Alles auswählen",
-  "menuWindow": "Fenster"
+  "menuWindow": "Fenster",
+  "chatsStatusWaitingForNetwork": "Warten auf Netzwerk…",
+  "chatsStatusConnecting": "Verbinden…",
+  "chatsStatusUpdating": "Aktualisieren…",
+  "chatsSearchHint": "Suchen",
+  "chatUnreadMentionLabel": "Du wurdest erwähnt",
+  "notificationsAndSounds": "Benachrichtigungen und Töne",
+  "notificationsFeedHint": "Konto- und Chat-Hinweise in einer Liste"
 }

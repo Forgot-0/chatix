@@ -388,18 +388,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
 
-          // ── Notifications ──────────────────────────────────────────────
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: NotificationsRoute.path,
-                name: RouteNames.notifications,
-                pageBuilder: (context, state) =>
-                    _root(state, const NotificationsScreen()),
-              ),
-            ],
-          ),
-
           // ── Settings ───────────────────────────────────────────────────
           //
           // The account lives here now that the profile tab is gone: /profile
@@ -476,6 +464,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+
+      // ── Notifications ──────────────────────────────────────────────────
+      //
+      // Not a tab: a page over whatever asked for it — the bell on the chats
+      // list, the row in settings, a tapped push — and back to it on pop.
+      // Outside the shell, so opening it never switches the tab underneath.
+      GoRoute(
+        path: NotificationsRoute.path,
+        name: RouteNames.notifications,
+        pageBuilder: (context, state) =>
+            _push(state, const NotificationsScreen()),
       ),
 
       // The design-system showcase: a developer surface for checking tokens

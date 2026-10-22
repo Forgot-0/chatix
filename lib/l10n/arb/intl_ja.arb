@@ -1392,5 +1392,12 @@
   "menuCopy": "コピー",
   "menuPaste": "ペースト",
   "menuSelectAll": "すべてを選択",
-  "menuWindow": "ウインドウ"
+  "menuWindow": "ウインドウ",
+  "chatsStatusWaitingForNetwork": "ネットワーク待機中…",
+  "chatsStatusConnecting": "接続中…",
+  "chatsStatusUpdating": "更新中…",
+  "chatsSearchHint": "検索",
+  "chatUnreadMentionLabel": "メンションされました",
+  "notificationsAndSounds": "通知とサウンド",
+  "notificationsFeedHint": "アカウントとチャットのお知らせ"
 }

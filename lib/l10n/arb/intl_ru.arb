@@ -1102,5 +1102,12 @@
   "menuCopy": "Копировать",
   "menuPaste": "Вставить",
   "menuSelectAll": "Выбрать все",
-  "menuWindow": "Окно"
+  "menuWindow": "Окно",
+  "chatsStatusWaitingForNetwork": "Ожидание сети…",
+  "chatsStatusConnecting": "Соединение…",
+  "chatsStatusUpdating": "Обновление…",
+  "chatsSearchHint": "Поиск",
+  "chatUnreadMentionLabel": "Вас упомянули",
+  "notificationsAndSounds": "Уведомления и звуки",
+  "notificationsFeedHint": "Оповещения аккаунта и чатов"
 }

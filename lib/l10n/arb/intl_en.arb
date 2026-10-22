@@ -4968,5 +4968,33 @@
   "menuWindow": "Window",
   "@menuWindow": {
     "description": "macOS menu bar: the Window menu"
+  },
+  "chatsStatusWaitingForNetwork": "Waiting for network…",
+  "@chatsStatusWaitingForNetwork": {
+    "description": "Chats list title, shown in place of 'Chats' while there is no network to reach the server over"
+  },
+  "chatsStatusConnecting": "Connecting…",
+  "@chatsStatusConnecting": {
+    "description": "Chats list title, shown in place of 'Chats' while the app connects to the server"
+  },
+  "chatsStatusUpdating": "Updating…",
+  "@chatsStatusUpdating": {
+    "description": "Chats list title, shown in place of 'Chats' while the list fetches what changed when the app was offline"
+  },
+  "chatsSearchHint": "Search",
+  "@chatsSearchHint": {
+    "description": "Hint in the search box under the chats list title; tapping it opens search"
+  },
+  "chatUnreadMentionLabel": "You were mentioned",
+  "@chatUnreadMentionLabel": {
+    "description": "Screen reader label for the @ mark on a chat row: one of the unread messages mentions the reader by @username"
+  },
+  "notificationsAndSounds": "Notifications and sounds",
+  "@notificationsAndSounds": {
+    "description": "Settings row that opens notification preferences: sound, quiet hours, per-chat exceptions"
+  },
+  "notificationsFeedHint": "Account and chat alerts in one list",
+  "@notificationsFeedHint": {
+    "description": "Subtitle of the Settings row that opens the list of received notifications"
   }
 }

@@ -12,6 +12,8 @@ import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/widgets/app_content_width.dart';
 import 'package:chatix/core/websocket/socket_protocol_log.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_socket_provider.dart';
+import 'package:chatix/features/notification/presentation/providers/notification_badge_provider.dart';
+import 'package:chatix/features/notification/presentation/widgets/notification_bell.dart';
 import 'package:chatix/features/settings/presentation/widgets/settings_section_header.dart';
 import 'package:chatix/features/settings/presentation/widgets/sign_out_tile.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -36,6 +38,8 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => context.push(ProfileRoute.location),
             ),
 
+            const _NotificationsTile(),
+
             ListTile(
               leading: const Icon(Icons.language),
               title: Text(l10n.language),
@@ -51,8 +55,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
 
             ListTile(
-              leading: const Icon(Icons.notifications_none),
-              title: Text(l10n.notificationSettingsTitle),
+              leading: const Icon(Icons.notifications_active_outlined),
+              title: Text(l10n.notificationsAndSounds),
               subtitle: Text(l10n.notification_settings),
               onTap: () => context.push(NotificationSettingsRoute.location),
             ),
@@ -88,6 +92,32 @@ class SettingsScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The alerts list, with how many are unread — one of its two ways in now
+/// that it is not a tab; the other is the bell on the chats list.
+class _NotificationsTile extends ConsumerWidget {
+  const _NotificationsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final unread = ref.watch(notificationBadgeProvider);
+
+    return ListTile(
+      leading: const Icon(Icons.notifications_outlined),
+      title: Text(l10n.notifications),
+      subtitle: Text(l10n.notificationsFeedHint),
+      trailing: unread > 0
+          ? Semantics(
+              label: l10n.unreadNotificationsCount(unread),
+              excludeSemantics: true,
+              child: Badge(label: Text(NotificationBell.badgeLabel(unread))),
+            )
+          : null,
+      onTap: () => context.push(NotificationsRoute.location),
     );
   }
 }
