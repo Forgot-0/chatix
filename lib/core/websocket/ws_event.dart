@@ -281,6 +281,14 @@ final class ChatUpdated extends WSDomainEvent {
 
   final List<String>? allowedReactions;
 
+  /// The chat's picture as it now stands — every delta carries the whole
+  /// snapshot (api-docs §6.4), so `{}` here means "no picture any more"
+  /// and null means the frame did not say.
+  final Map<String, Map<String, String>>? avatars;
+
+  /// Goes with [avatars]: null beside a non-null [avatars] is a removal.
+  final String? avatarS3Key;
+
   const ChatUpdated({
     required super.chatId,
     this.updatedBy,
@@ -292,6 +300,8 @@ final class ChatUpdated extends WSDomainEvent {
     this.permissions,
     this.reactionsMode,
     this.allowedReactions,
+    this.avatars,
+    this.avatarS3Key,
     super.eventName,
     super.eventId,
     super.ts,
@@ -309,6 +319,8 @@ final class ChatUpdated extends WSDomainEvent {
     permissions,
     reactionsMode,
     allowedReactions,
+    avatars,
+    avatarS3Key,
   ];
 }
 

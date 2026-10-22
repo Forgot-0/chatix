@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:chatix/core/media/avatar_variants.dart';
 import 'package:chatix/features/chat/data/models/chat_member_model.dart';
 import 'package:chatix/features/chat/data/models/chat_profile_model.dart';
 import 'package:chatix/features/chat/data/models/message_model.dart';
@@ -124,6 +125,12 @@ class ChatModel extends Equatable {
   final String? name;
   final String? description;
   final String? avatarS3Key;
+
+  /// The chat's own picture in every size (api-docs §5.10); `{}` for a chat
+  /// without one, and for a direct chat always.
+  @JsonKey(fromJson: avatarVariantsFromJson)
+  final Map<String, Map<String, String>> avatars;
+
   final bool isPublic;
   final bool adminOnly;
   final int slowModeSeconds;
@@ -185,6 +192,7 @@ class ChatModel extends Equatable {
     required this.name,
     required this.description,
     required this.avatarS3Key,
+    this.avatars = const <String, Map<String, String>>{},
     required this.isPublic,
     required this.adminOnly,
     required this.slowModeSeconds,
@@ -246,6 +254,7 @@ class ChatModel extends Equatable {
     name,
     description,
     avatarS3Key,
+    avatars,
     isPublic,
     adminOnly,
     slowModeSeconds,
@@ -288,6 +297,7 @@ extension ChatModelX on ChatModel {
       name: name,
       description: description,
       avatarS3Key: avatarS3Key,
+      avatars: avatars,
       isPublic: isPublic,
       adminOnly: adminOnly,
       slowModeSeconds: slowModeSeconds,

@@ -101,9 +101,21 @@ void main() {
                         GoRoute(
                           path: CreateChatRoute.path,
                           parentNavigatorKey: rootNavigatorKey,
-                          builder: (_, state) => _Probe(
-                            'create:${CreateChatRoute.typeFrom(state) ?? 'any'}',
-                          ),
+                          redirect: (_, state) =>
+                              CreateChatRoute.redirectFor(state),
+                          builder: (_, _) => const _Probe('create:any'),
+                          routes: [
+                            GoRoute(
+                              path: NewGroupRoute.path,
+                              parentNavigatorKey: rootNavigatorKey,
+                              builder: (_, _) => const _Probe('create:group'),
+                            ),
+                            GoRoute(
+                              path: NewChannelRoute.path,
+                              parentNavigatorKey: rootNavigatorKey,
+                              builder: (_, _) => const _Probe('create:channel'),
+                            ),
+                          ],
                         ),
                         GoRoute(
                           path: ChatDetailRoute.path,
@@ -587,7 +599,7 @@ void main() {
       await tester.longPress(find.byIcon(Icons.chat_bubble));
       await tester.pumpAndSettle();
 
-      expect(find.text('New direct chat'), findsOneWidget);
+      expect(find.text('New message'), findsOneWidget);
       expect(find.text('New group'), findsOneWidget);
       expect(find.text('New channel'), findsOneWidget);
     });

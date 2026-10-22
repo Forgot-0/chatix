@@ -20,6 +20,10 @@ abstract final class RouteNames {
   static const String chats = 'chats';
   static const String chatSearch = 'chatSearch';
   static const String createChat = 'createChat';
+  static const String newGroup = 'newGroup';
+  static const String newGroupDetails = 'newGroupDetails';
+  static const String newChannel = 'newChannel';
+  static const String newChannelSubscribers = 'newChannelSubscribers';
   static const String chatDetail = 'chatDetail';
   static const String chatMembers = 'chatMembers';
   static const String chatInvite = 'chatInvite';
@@ -126,12 +130,13 @@ abstract final class ProfileRoute {
   static const String location = '/profile';
 }
 
-/// `/chats/create`, optionally pre-set to a chat type.
+/// `/chats/create` — "New message": a person to write to, or the way into a
+/// new group or channel.
 ///
-/// The type travels as its wire value (`ChatType.wire`) rather than as an enum
-/// so the router stays clear of the chat feature's domain layer; the screen
-/// parses it back with `ChatType.fromWire`, which falls back to a direct chat
-/// for anything it does not recognise.
+/// The type shortcuts (`groupType`, `channelType`) are the wire values of
+/// the chat types, kept so the shell's long-press sheet and links minted
+/// before the flow had pages of its own (`/chats/create?type=group`) still
+/// land on the right step: [redirectFor] sends them there.
 abstract final class CreateChatRoute {
   static const String path = 'create';
   static const String location = '/chats/create';
@@ -142,14 +147,45 @@ abstract final class CreateChatRoute {
   static const String groupType = 'group';
   static const String channelType = 'channel';
 
-  static String locationOf(String type) =>
-      '$location?$typeQueryParam=${Uri.encodeQueryComponent(type)}';
+  /// Where a shortcut for [type] opens: the first step of a new group or
+  /// channel, and "New message" for anything else.
+  static String locationOf(String type) => switch (type) {
+    groupType => NewGroupRoute.location,
+    channelType => NewChannelRoute.location,
+    _ => location,
+  };
 
-  static String? typeFrom(GoRouterState state) {
-    final raw = state.uri.queryParameters[typeQueryParam];
-    if (raw == null || raw.isEmpty) return null;
-    return raw;
+  /// The old `?type=` form, sent on to its own page.
+  static String? redirectFor(GoRouterState state) {
+    final type = state.uri.queryParameters[typeQueryParam];
+    if (type == null || type.isEmpty) return null;
+    return locationOf(type);
   }
+}
+
+/// `/chats/create/group` — the people step of a new group.
+abstract final class NewGroupRoute {
+  static const String path = 'group';
+  static const String location = '/chats/create/group';
+}
+
+/// `/chats/create/group/details` — its name, photo and description.
+abstract final class NewGroupDetailsRoute {
+  static const String path = 'details';
+  static const String location = '/chats/create/group/details';
+}
+
+/// `/chats/create/channel` — a new channel's name, photo, description and
+/// whether anyone can find it.
+abstract final class NewChannelRoute {
+  static const String path = 'channel';
+  static const String location = '/chats/create/channel';
+}
+
+/// `/chats/create/channel/subscribers` — the optional people step.
+abstract final class NewChannelSubscribersRoute {
+  static const String path = 'subscribers';
+  static const String location = '/chats/create/channel/subscribers';
 }
 
 abstract final class ChatSearchRoute {

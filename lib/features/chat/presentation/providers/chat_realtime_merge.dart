@@ -81,6 +81,8 @@ abstract final class ChatRealtimeMerge {
     Map<String, bool>? permissions,
     ChatReactionsMode? reactionsMode,
     List<String>? allowedReactions,
+    Map<String, Map<String, String>>? avatars,
+    String? avatarS3Key,
   }) {
     return chat.copyWith(
       name: name,
@@ -91,6 +93,11 @@ abstract final class ChatRealtimeMerge {
       permissions: permissions,
       reactionsMode: reactionsMode,
       allowedReactions: allowedReactions,
+      // The picture travels as a pair: a frame that names the map also says
+      // what the key is now, and an empty map with no key is a removal.
+      avatars: avatars,
+      avatarS3Key: avatars == null ? null : avatarS3Key,
+      clearAvatarS3Key: avatars != null && avatarS3Key == null,
     );
   }
 

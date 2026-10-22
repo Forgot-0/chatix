@@ -414,16 +414,16 @@ abstract class AppLocalizations {
   /// **'Anyone with the link can join'**
   String get chatPublicHint;
 
-  /// admin_only toggle
+  /// Chat settings switch: only admins may send messages
   ///
   /// In en, this message translates to:
-  /// **'Admins only'**
+  /// **'Only admins can send messages'**
   String get chatAdminOnly;
 
-  /// admin_only explanation
+  /// Under the admins-only switch: what everyone else can still do
   ///
   /// In en, this message translates to:
-  /// **'Only admins can post'**
+  /// **'Everyone else can read, but not write'**
   String get chatAdminOnlyHint;
 
   /// slow_mode_seconds field label
@@ -431,18 +431,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Slow mode'**
   String get chatSlowMode;
-
-  /// slow_mode_seconds = 0
-  ///
-  /// In en, this message translates to:
-  /// **'Off'**
-  String get chatSlowModeOff;
-
-  /// slow_mode_seconds value
-  ///
-  /// In en, this message translates to:
-  /// **'{seconds}s between messages'**
-  String chatSlowModeSeconds(Object seconds);
 
   /// reactions_mode field label
   ///
@@ -1187,24 +1175,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Channel'**
   String get chatTypeChannel;
-
-  /// is_public explanation on create
-  ///
-  /// In en, this message translates to:
-  /// **'Anyone can find and join this chat'**
-  String get chatPublicHintCreate;
-
-  /// slow_mode_seconds field
-  ///
-  /// In en, this message translates to:
-  /// **'Slow mode (seconds)'**
-  String get chatSlowModeSecondsField;
-
-  /// Submits the create-chat form
-  ///
-  /// In en, this message translates to:
-  /// **'Create chat'**
-  String get createChat;
 
   /// Member list title
   ///
@@ -2063,12 +2033,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick a conversation from the list to start reading.'**
   String get noChatSelectedHint;
-
-  /// Quick action: start a one-to-one chat
-  ///
-  /// In en, this message translates to:
-  /// **'New direct chat'**
-  String get newDirectChat;
 
   /// Quick action: create a group
   ///
@@ -5646,53 +5610,11 @@ abstract class AppLocalizations {
   /// **'Enter the code from your email and a new password.'**
   String get resetPasswordConfirmIntro;
 
-  /// New chat, direct type: label of the people search field
-  ///
-  /// In en, this message translates to:
-  /// **'Who do you want to message?'**
-  String get createChatDirectSearchLabel;
-
   /// Label of the field that adds several people to a chat
   ///
   /// In en, this message translates to:
   /// **'Add people by name or @username'**
   String get addPeopleSearchLabel;
-
-  /// New chat, direct type: helper under the people search field
-  ///
-  /// In en, this message translates to:
-  /// **'Pick one person — a direct chat has exactly two members'**
-  String get createChatDirectHelper;
-
-  /// New chat, group types: helper under the people search field
-  ///
-  /// In en, this message translates to:
-  /// **'Up to {max} people now — you can add more later'**
-  String createChatMembersHelper(int max);
-
-  /// New chat, direct type: create tapped with nobody picked
-  ///
-  /// In en, this message translates to:
-  /// **'A direct chat needs exactly one other person — find them by name or @username'**
-  String get createChatDirectNeedsPeer;
-
-  /// New chat, direct type: more than one person picked
-  ///
-  /// In en, this message translates to:
-  /// **'A direct chat has only one other person, but {count} are selected — choose Group instead'**
-  String createChatDirectTooMany(int count);
-
-  /// New chat, group types: create tapped with an empty name
-  ///
-  /// In en, this message translates to:
-  /// **'Give the chat a name'**
-  String get createChatNameRequired;
-
-  /// New chat: more people picked than a chat can be created with
-  ///
-  /// In en, this message translates to:
-  /// **'You can add up to {max} people now — add the rest once the chat is created'**
-  String createChatTooManyMembers(int max);
 
   /// New chat: the server refused and the error code has no sentence of its own
   ///
@@ -6767,6 +6689,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account and chat alerts in one list'**
   String get notificationsFeedHint;
+
+  /// Title of the screen the chats list pencil opens: pick a person to write to, or start a group or channel
+  ///
+  /// In en, this message translates to:
+  /// **'New message'**
+  String get newMessage;
+
+  /// New message screen with an empty address book
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet. Search for people by name or @username above.'**
+  String get newMessageNoContacts;
+
+  /// People picker of a new group or channel with an empty address book
+  ///
+  /// In en, this message translates to:
+  /// **'No contacts yet — search for people by name or @username.'**
+  String get newChatNoContacts;
+
+  /// Screen reader label of a picked person chip; tapping it takes the person out
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}'**
+  String newChatRemoveMember(String name);
+
+  /// Title of the first step of a new group: picking its members
+  ///
+  /// In en, this message translates to:
+  /// **'Add members'**
+  String get newGroupMembersTitle;
+
+  /// Title of the last, optional step of a new channel: picking subscribers
+  ///
+  /// In en, this message translates to:
+  /// **'Add subscribers'**
+  String get newChannelSubscribersTitle;
+
+  /// Under the people picker title: how many are picked out of the most that can be
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {max}'**
+  String newChatMembersCount(int count, int max);
+
+  /// Line under the chips of a new group: how many people can be picked now
+  ///
+  /// In en, this message translates to:
+  /// **'You can pick up to {max} people now and add the rest once the group exists.'**
+  String newChatMembersLimitHint(int max);
+
+  /// Line under the chips of a new channel: picking subscribers is optional
+  ///
+  /// In en, this message translates to:
+  /// **'Optional. Pick up to {max} people now — you can invite more later.'**
+  String newChannelSubscribersHint(int max);
+
+  /// The people picker is full; also the toast when one more is tapped
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s {max} — the most you can pick now. Add the rest once the chat exists.'**
+  String newChatMembersLimitReached(int max);
+
+  /// Button: go on to the next step
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// Button: create the group or channel that was filled in
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// Name field of a new group
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get newGroupNameLabel;
+
+  /// Name field of a new channel
+  ///
+  /// In en, this message translates to:
+  /// **'Channel name'**
+  String get newChannelNameLabel;
+
+  /// Error under the name of a new group left empty
+  ///
+  /// In en, this message translates to:
+  /// **'Give the group a name'**
+  String get newGroupNameRequired;
+
+  /// Error under the name of a new channel left empty
+  ///
+  /// In en, this message translates to:
+  /// **'Give the channel a name'**
+  String get newChannelNameRequired;
+
+  /// Description field of a new group or channel
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get newChatDescriptionLabel;
+
+  /// Helper under the description of a new group
+  ///
+  /// In en, this message translates to:
+  /// **'What the group is about — shown on its profile'**
+  String get newGroupDescriptionHelper;
+
+  /// Helper under the description of a new channel
+  ///
+  /// In en, this message translates to:
+  /// **'What you will post about — shown on the channel\'s profile'**
+  String get newChannelDescriptionHelper;
+
+  /// New group details step when nobody was picked
+  ///
+  /// In en, this message translates to:
+  /// **'You can add people later from the group\'s profile.'**
+  String get newGroupNoMembers;
+
+  /// Section over the public/private choice of a new channel
+  ///
+  /// In en, this message translates to:
+  /// **'Who can find it'**
+  String get newChannelVisibilityTitle;
+
+  /// Choice: a private channel
+  ///
+  /// In en, this message translates to:
+  /// **'Private'**
+  String get newChannelPrivate;
+
+  /// What a private channel means, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'Not in search. People join only when you add or invite them.'**
+  String get newChannelPrivateHint;
+
+  /// Choice: a public channel
+  ///
+  /// In en, this message translates to:
+  /// **'Public'**
+  String get newChannelPublic;
+
+  /// What a public channel means, in plain words
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone can find it in search and subscribe.'**
+  String get newChannelPublicHint;
+
+  /// Toast after creating a chat without the people whose privacy kept them out; names is a comma-separated list
+  ///
+  /// In en, this message translates to:
+  /// **'Not added because of their privacy settings: {names}'**
+  String newChatSomeNotAdded(String names);
+
+  /// Toast: the chat was created but its photo did not upload
+  ///
+  /// In en, this message translates to:
+  /// **'The chat is ready, but its photo didn\'t upload. Try again in its settings.'**
+  String get newChatPhotoFailed;
+
+  /// Screen reader label of the empty photo slot of a new group or channel
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo'**
+  String get chatPhotoAdd;
+
+  /// Sheet item: remove the group's or channel's photo
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get chatPhotoRemove;
+
+  /// Toast: the group's or channel's photo was removed
+  ///
+  /// In en, this message translates to:
+  /// **'Photo removed'**
+  String get chatPhotoRemoved;
+
+  /// Toast: a new chat photo was sent and the server is still processing it
+  ///
+  /// In en, this message translates to:
+  /// **'The new photo will appear in a few seconds'**
+  String get chatPhotoUploaded;
+
+  /// Toast: the group's or channel's photo could not be changed
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update the photo'**
+  String get chatPhotoFailed;
+
+  /// Slow mode chip: no slow mode
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get chatSlowModeOffShort;
+
+  /// Slow mode chip: an interval in seconds
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s'**
+  String chatSlowModeSecondsShort(int seconds);
+
+  /// Slow mode chip: an interval in minutes
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String chatSlowModeMinutes(int minutes);
+
+  /// Slow mode chip: an interval in hours
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String chatSlowModeHours(int hours);
+
+  /// Under the slow mode heading in chat settings
+  ///
+  /// In en, this message translates to:
+  /// **'How long members wait between their messages. Admins aren\'t limited.'**
+  String get chatSlowModeHint;
+
+  /// Chat settings section for rare, big changes
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get chatSettingsAdvanced;
+
+  /// Settings row and dialog title: turn a group into a supergroup
+  ///
+  /// In en, this message translates to:
+  /// **'Convert to supergroup'**
+  String get chatSupergroupTitle;
+
+  /// Under the supergroup row: what a supergroup is
+  ///
+  /// In en, this message translates to:
+  /// **'A big group for up to {max} members'**
+  String chatSupergroupHint(int max);
+
+  /// Body of the dialog that confirms turning a group into a supergroup
+  ///
+  /// In en, this message translates to:
+  /// **'A supergroup is a big group for up to {max} members. Messages, members and settings stay as they are. This can\'t be undone.'**
+  String chatSupergroupConfirm(int max);
+
+  /// Dialog button: convert the group
+  ///
+  /// In en, this message translates to:
+  /// **'Convert'**
+  String get chatSupergroupAction;
+
+  /// Toast: the group became a supergroup
+  ///
+  /// In en, this message translates to:
+  /// **'The group is now a supergroup'**
+  String get chatSupergroupDone;
+
+  /// USER_PRIVACY_RESTRICTED: people who may not be added to groups and channels
+  ///
+  /// In en, this message translates to:
+  /// **'Some of these people don\'t allow being added to groups and channels.'**
+  String get apiErrorUserPrivacyRestricted;
+
+  /// MESSAGES_PRIVACY_RESTRICTED: the person's privacy does not let the reader write to them
+  ///
+  /// In en, this message translates to:
+  /// **'This person only accepts messages from certain people.'**
+  String get apiErrorMessagesPrivacyRestricted;
+
+  /// USER_BLOCKED: one of the two people blocked the other
+  ///
+  /// In en, this message translates to:
+  /// **'You can\'t message this person.'**
+  String get apiErrorUserBlocked;
+
+  /// CHAT_AVATAR_VALIDATION: the picture is of the wrong type or too big
+  ///
+  /// In en, this message translates to:
+  /// **'That picture can\'t be used. Pick a JPEG, PNG or WebP up to 5 MB.'**
+  String get apiErrorChatAvatarValidation;
 }
 
 class _AppLocalizationsDelegate

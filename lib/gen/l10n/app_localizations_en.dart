@@ -193,21 +193,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatPublicHint => 'Anyone with the link can join';
 
   @override
-  String get chatAdminOnly => 'Admins only';
+  String get chatAdminOnly => 'Only admins can send messages';
 
   @override
-  String get chatAdminOnlyHint => 'Only admins can post';
+  String get chatAdminOnlyHint => 'Everyone else can read, but not write';
 
   @override
   String get chatSlowMode => 'Slow mode';
-
-  @override
-  String get chatSlowModeOff => 'Off';
-
-  @override
-  String chatSlowModeSeconds(Object seconds) {
-    return '${seconds}s between messages';
-  }
 
   @override
   String get chatReactionsMode => 'Reactions';
@@ -615,15 +607,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatTypeChannel => 'Channel';
-
-  @override
-  String get chatPublicHintCreate => 'Anyone can find and join this chat';
-
-  @override
-  String get chatSlowModeSecondsField => 'Slow mode (seconds)';
-
-  @override
-  String get createChat => 'Create chat';
 
   @override
   String get membersTitle => 'Members';
@@ -1104,9 +1087,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noChatSelectedHint =>
       'Pick a conversation from the list to start reading.';
-
-  @override
-  String get newDirectChat => 'New direct chat';
 
   @override
   String get newGroup => 'New group';
@@ -3272,36 +3252,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter the code from your email and a new password.';
 
   @override
-  String get createChatDirectSearchLabel => 'Who do you want to message?';
-
-  @override
   String get addPeopleSearchLabel => 'Add people by name or @username';
-
-  @override
-  String get createChatDirectHelper =>
-      'Pick one person — a direct chat has exactly two members';
-
-  @override
-  String createChatMembersHelper(int max) {
-    return 'Up to $max people now — you can add more later';
-  }
-
-  @override
-  String get createChatDirectNeedsPeer =>
-      'A direct chat needs exactly one other person — find them by name or @username';
-
-  @override
-  String createChatDirectTooMany(int count) {
-    return 'A direct chat has only one other person, but $count are selected — choose Group instead';
-  }
-
-  @override
-  String get createChatNameRequired => 'Give the chat a name';
-
-  @override
-  String createChatTooManyMembers(int max) {
-    return 'You can add up to $max people now — add the rest once the chat is created';
-  }
 
   @override
   String get createChatFailed => 'Couldn\'t create the chat';
@@ -3945,4 +3896,189 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsFeedHint => 'Account and chat alerts in one list';
+
+  @override
+  String get newMessage => 'New message';
+
+  @override
+  String get newMessageNoContacts =>
+      'No contacts yet. Search for people by name or @username above.';
+
+  @override
+  String get newChatNoContacts =>
+      'No contacts yet — search for people by name or @username.';
+
+  @override
+  String newChatRemoveMember(String name) {
+    return 'Remove $name';
+  }
+
+  @override
+  String get newGroupMembersTitle => 'Add members';
+
+  @override
+  String get newChannelSubscribersTitle => 'Add subscribers';
+
+  @override
+  String newChatMembersCount(int count, int max) {
+    return '$count of $max';
+  }
+
+  @override
+  String newChatMembersLimitHint(int max) {
+    return 'You can pick up to $max people now and add the rest once the group exists.';
+  }
+
+  @override
+  String newChannelSubscribersHint(int max) {
+    return 'Optional. Pick up to $max people now — you can invite more later.';
+  }
+
+  @override
+  String newChatMembersLimitReached(int max) {
+    return 'That\'s $max — the most you can pick now. Add the rest once the chat exists.';
+  }
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get newGroupNameLabel => 'Group name';
+
+  @override
+  String get newChannelNameLabel => 'Channel name';
+
+  @override
+  String get newGroupNameRequired => 'Give the group a name';
+
+  @override
+  String get newChannelNameRequired => 'Give the channel a name';
+
+  @override
+  String get newChatDescriptionLabel => 'Description (optional)';
+
+  @override
+  String get newGroupDescriptionHelper =>
+      'What the group is about — shown on its profile';
+
+  @override
+  String get newChannelDescriptionHelper =>
+      'What you will post about — shown on the channel\'s profile';
+
+  @override
+  String get newGroupNoMembers =>
+      'You can add people later from the group\'s profile.';
+
+  @override
+  String get newChannelVisibilityTitle => 'Who can find it';
+
+  @override
+  String get newChannelPrivate => 'Private';
+
+  @override
+  String get newChannelPrivateHint =>
+      'Not in search. People join only when you add or invite them.';
+
+  @override
+  String get newChannelPublic => 'Public';
+
+  @override
+  String get newChannelPublicHint =>
+      'Anyone can find it in search and subscribe.';
+
+  @override
+  String newChatSomeNotAdded(String names) {
+    return 'Not added because of their privacy settings: $names';
+  }
+
+  @override
+  String get newChatPhotoFailed =>
+      'The chat is ready, but its photo didn\'t upload. Try again in its settings.';
+
+  @override
+  String get chatPhotoAdd => 'Add a photo';
+
+  @override
+  String get chatPhotoRemove => 'Remove photo';
+
+  @override
+  String get chatPhotoRemoved => 'Photo removed';
+
+  @override
+  String get chatPhotoUploaded => 'The new photo will appear in a few seconds';
+
+  @override
+  String get chatPhotoFailed => 'Couldn\'t update the photo';
+
+  @override
+  String get chatSlowModeOffShort => 'Off';
+
+  @override
+  String chatSlowModeSecondsShort(int seconds) {
+    return '$seconds s';
+  }
+
+  @override
+  String chatSlowModeMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String chatSlowModeHours(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String get chatSlowModeHint =>
+      'How long members wait between their messages. Admins aren\'t limited.';
+
+  @override
+  String get chatSettingsAdvanced => 'Advanced';
+
+  @override
+  String get chatSupergroupTitle => 'Convert to supergroup';
+
+  @override
+  String chatSupergroupHint(int max) {
+    final intl.NumberFormat maxNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String maxString = maxNumberFormat.format(max);
+
+    return 'A big group for up to $maxString members';
+  }
+
+  @override
+  String chatSupergroupConfirm(int max) {
+    final intl.NumberFormat maxNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String maxString = maxNumberFormat.format(max);
+
+    return 'A supergroup is a big group for up to $maxString members. Messages, members and settings stay as they are. This can\'t be undone.';
+  }
+
+  @override
+  String get chatSupergroupAction => 'Convert';
+
+  @override
+  String get chatSupergroupDone => 'The group is now a supergroup';
+
+  @override
+  String get apiErrorUserPrivacyRestricted =>
+      'Some of these people don\'t allow being added to groups and channels.';
+
+  @override
+  String get apiErrorMessagesPrivacyRestricted =>
+      'This person only accepts messages from certain people.';
+
+  @override
+  String get apiErrorUserBlocked => 'You can\'t message this person.';
+
+  @override
+  String get apiErrorChatAvatarValidation =>
+      'That picture can\'t be used. Pick a JPEG, PNG or WebP up to 5 MB.';
 }

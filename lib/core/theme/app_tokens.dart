@@ -721,6 +721,38 @@ abstract final class ContactsLayout {
   static const double noteIcon = 20;
 }
 
+/// "New message", "New group", "New channel": the people picker and the
+/// details step.
+abstract final class NewChatLayout {
+  /// The photo button beside a new chat's name — between a list row's face
+  /// and a profile header's, so it reads as "this chat's picture" without
+  /// pushing the name field off a phone.
+  static const double photoSize = 64;
+  static const double photoIcon = 26;
+
+  /// The pencil badge on a picked photo.
+  static const double photoBadge = 22;
+  static const double photoBadgeIcon = 13;
+
+  /// The round tick at the end of a row in the picker.
+  static const double checkSize = 22;
+  static const double checkIcon = 16;
+  static const double checkBorder = 2;
+
+  /// The box of picked people grows up to this, then scrolls, so the list
+  /// under it never disappears behind a hundred chips.
+  static const double chipsMaxHeight = 136;
+
+  /// A chip: its face, its name's longest run, the cross after it.
+  static const double chipHeight = 32;
+  static const double chipNameMaxWidth = 140;
+  static const double chipCloseIcon = 16;
+
+  /// The search field inside the chip box keeps at least this much of a
+  /// line to itself, so there is always room to type after the chips.
+  static const double inlineFieldMinWidth = 140;
+}
+
 /// A search box that is really a button (`AppSearchPill`): it looks like the
 /// field you type into and opens the screen where you do.
 abstract final class SearchPillSizes {

@@ -1,25 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
+import 'package:chatix/core/theme/app_tokens.dart';
+import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
+import 'package:chatix/core/ui/widgets/app_content_width.dart';
+import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/reaction_catalog.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_detail_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
+import 'package:chatix/features/chat/presentation/providers/supergroup_upgrade_provider.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_permissions.dart';
 import 'package:chatix/features/chat/presentation/utils/chat_settings_draft.dart';
+import 'package:chatix/features/chat/presentation/utils/slow_mode_presets.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_avatar.dart';
+import 'package:chatix/features/chat/presentation/widgets/chat_list_tile.dart';
+import 'package:chatix/features/chat/presentation/widgets/new_chat/chat_photo_picker.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
 
-/// Everything about a chat that `PATCH /chats/{chat_id}/` can change.
+/// Everything about a chat that `PATCH /chats/{chat_id}/` can change, and
+/// its picture (api-docs §5.10).
 ///
 /// Only reachable with `chat:update`; the profile screen hides the way in
 /// otherwise, and this screen says so again rather than showing a form that
 /// cannot be saved.
+///
+/// Who may post and how often live here rather than in the "new group"
+/// flow: they are settings of a chat that exists, not questions to ask
+/// before it does. A channel has neither — only its admins post anyway.
 class ChatSettingsScreen extends ConsumerStatefulWidget {
   const ChatSettingsScreen({super.key, required this.chatId});
 
@@ -32,7 +46,6 @@ class ChatSettingsScreen extends ConsumerStatefulWidget {
 class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _slowModeController = TextEditingController();
 
   /// The chat the form was filled from. Its own field rather than a flag so
   /// a refresh that brings genuinely new values re-seeds, and a rebuild that
@@ -41,6 +54,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
   bool _isPublic = false;
   bool _adminOnly = false;
+  int _slowModeSeconds = 0;
   ChatReactionsMode _reactionsMode = ChatReactionsMode.all;
   Set<String> _allowedReactions = const {};
 
@@ -50,7 +64,6 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _slowModeController.dispose();
     super.dispose();
   }
 
@@ -60,7 +73,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
     _nameController.text = chat.name ?? '';
     _descriptionController.text = chat.description ?? '';
-    _slowModeController.text = '${chat.slowModeSeconds}';
+    _slowModeSeconds = chat.slowModeSeconds;
     _isPublic = chat.isPublic;
     _adminOnly = chat.adminOnly;
     _reactionsMode = chat.reactionsMode;
@@ -97,9 +110,23 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
           _seed(chat);
 
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 32),
-            children: _form(l10n, chat),
+          final upgrade = ref.watch(supergroupUpgradeProvider);
+          final isOwner = hasChatPermission(
+            chat,
+            state.me,
+            ChatPermissions.chatDelete,
+          );
+
+          return AppContentWidth(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: AppSpacing.x8),
+              children: [
+                if (chat.type != ChatType.direct) _ChatPhotoEditor(chat: chat),
+                ..._form(l10n, chat),
+                if (upgrade != null && isOwner && chat.type == ChatType.group)
+                  _SupergroupUpgrade(chat: chat, upgrade: upgrade),
+              ],
+            ),
           );
         },
       ),
@@ -108,31 +135,31 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
 
   List<Widget> _form(AppLocalizations l10n, ChatEntity chat) {
     final theme = Theme.of(context);
+    final isChannel = chat.type == ChatType.channel;
 
     return [
-      const SizedBox(height: 8),
+      const SizedBox(height: AppSpacing.x2),
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
         child: TextField(
           controller: _nameController,
           decoration: InputDecoration(
             labelText: l10n.chatName,
-            border: const OutlineInputBorder(),
             // The field cannot be emptied once it holds something: the API
             // has no way to unset a name (api-docs §5.2).
             helperText: chat.name == null ? null : l10n.chatNameCannotBeCleared,
+            helperMaxLines: 2,
           ),
           maxLength: CreateChatUseCase.maxNameLength,
           textInputAction: TextInputAction.next,
         ),
       ),
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
         child: TextField(
           controller: _descriptionController,
           decoration: InputDecoration(
             labelText: l10n.chatDescription,
-            border: const OutlineInputBorder(),
             alignLabelWithHint: true,
           ),
           maxLines: 3,
@@ -146,53 +173,54 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
         value: _isPublic,
         onChanged: (value) => setState(() => _isPublic = value),
       ),
-      SwitchListTile(
-        title: Text(l10n.chatAdminOnly),
-        subtitle: Text(l10n.chatAdminOnlyHint),
-        value: _adminOnly,
-        onChanged: (value) => setState(() => _adminOnly = value),
-      ),
+      if (!isChannel)
+        SwitchListTile(
+          // Who may post, in the reader's words — never the name of the
+          // right (`message:send_admin_only`) that decides it.
+          title: Text(l10n.chatAdminOnly),
+          subtitle: Text(l10n.chatAdminOnlyHint),
+          value: _adminOnly,
+          onChanged: (value) => setState(() => _adminOnly = value),
+        ),
 
-      const Divider(height: 24),
-
-      _SectionLabel(l10n.chatSlowMode),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: TextField(
-          controller: _slowModeController,
-          decoration: InputDecoration(
-            labelText: l10n.chatSlowModeSecondsField,
-            border: const OutlineInputBorder(),
-            helperText: l10n.chatSlowModeRange(
-              CreateChatUseCase.maxSlowModeSeconds,
+      if (!isChannel) ...[
+        const Divider(height: AppSpacing.x6),
+        _SectionLabel(l10n.chatSlowMode),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.x4,
+            0,
+            AppSpacing.x4,
+            AppSpacing.x2,
+          ),
+          child: Text(
+            l10n.chatSlowModeHint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onChanged: (_) => setState(() {}),
         ),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Wrap(
-          spacing: 8,
-          children: [
-            for (final preset in const [0, 10, 30, 60, 300, 3600])
-              ChoiceChip(
-                label: Text(
-                  preset == 0
-                      ? l10n.chatSlowModeOff
-                      : l10n.chatSlowModeSeconds(preset),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
+          child: Wrap(
+            spacing: AppSpacing.x2,
+            runSpacing: AppSpacing.x2,
+            children: [
+              for (final seconds in SlowModePresets.including(
+                chat.slowModeSeconds,
+              ))
+                ChoiceChip(
+                  label: Text(slowModeLabel(seconds, l10n)),
+                  selected: _slowModeSeconds == seconds,
+                  onSelected: (_) =>
+                      setState(() => _slowModeSeconds = seconds),
                 ),
-                selected: int.tryParse(_slowModeController.text) == preset,
-                onSelected: (_) =>
-                    setState(() => _slowModeController.text = '$preset'),
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
 
-      const Divider(height: 24),
+      const Divider(height: AppSpacing.x6),
 
       _SectionLabel(l10n.chatReactionsMode),
       RadioGroup<ChatReactionsMode>(
@@ -211,7 +239,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
       ),
       if (_reactionsMode == ChatReactionsMode.some) ...[
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
           child: Text(
             l10n.chatReactionsPickHint,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -220,7 +248,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.x4),
           child: Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -245,8 +273,9 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
         ),
       ],
 
+      const SizedBox(height: AppSpacing.x2),
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x4),
         child: FilledButton(
           onPressed: _isSaving ? null : () => _save(chat),
           child: _isSaving
@@ -273,7 +302,7 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
     description: _descriptionController.text,
     isPublic: _isPublic,
     adminOnly: _adminOnly,
-    slowMode: _slowModeController.text,
+    slowMode: '$_slowModeSeconds',
     reactionsMode: _reactionsMode,
     allowedReactions: _allowedReactions,
   );
@@ -318,7 +347,11 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
     result.match(
       (failure) => _toast(
         chatFailureMessage(failure) ??
-            friendlyFailureMessage(failure, l10n: l10n, fallback: l10n.saveChangesFailed),
+            friendlyFailureMessage(
+              failure,
+              l10n: l10n,
+              fallback: l10n.saveChangesFailed,
+            ),
       ),
       (_) {
         _seededFrom = null;
@@ -356,6 +389,223 @@ class _ChatSettingsScreenState extends ConsumerState<ChatSettingsScreen> {
   }
 }
 
+/// The chat's own picture, big, with the words that change it under it.
+///
+/// A new picture goes up straight away — it is not part of the form's
+/// "Save" — and shows once the server has cut it into sizes and said so
+/// with `chat_updated` (api-docs §5.10); until then the reader is told it
+/// is on its way.
+class _ChatPhotoEditor extends ConsumerStatefulWidget {
+  const _ChatPhotoEditor({required this.chat});
+
+  final ChatEntity chat;
+
+  @override
+  ConsumerState<_ChatPhotoEditor> createState() => _ChatPhotoEditorState();
+}
+
+class _ChatPhotoEditorState extends ConsumerState<_ChatPhotoEditor> {
+  bool _busy = false;
+
+  Future<void> _change() async {
+    final chat = widget.chat;
+    final action = await showChatPhotoSheet(
+      context,
+      canRemove: chat.hasAvatar,
+    );
+    if (action == null || !mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+
+    if (action == ChatPhotoAction.remove) {
+      setState(() => _busy = true);
+      final result = await ref
+          .read(removeChatAvatarUseCaseProvider)
+          .execute(chat.id);
+      if (!mounted) return;
+      setState(() => _busy = false);
+      result.match(
+        (failure) => AppSnackbar.failure(
+          context,
+          friendlyFailureMessage(
+            failure,
+            l10n: l10n,
+            fallback: l10n.chatPhotoFailed,
+          ),
+        ),
+        (_) {
+          ref.read(chatDetailProvider(chat.id).notifier).refresh();
+          AppSnackbar.quiet(context, l10n.chatPhotoRemoved);
+        },
+      );
+      return;
+    }
+
+    final photo = await ref.read(chatPhotoPickerProvider)(
+      context,
+      action == ChatPhotoAction.camera
+          ? ImageSource.camera
+          : ImageSource.gallery,
+    );
+    if (photo == null || !mounted) return;
+
+    setState(() => _busy = true);
+    final result = await ref
+        .read(uploadChatAvatarUseCaseProvider)
+        .execute(chat.id, bytes: photo.bytes, mimeType: photo.mimeType);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    result.match(
+      (failure) => AppSnackbar.failure(
+        context,
+        friendlyFailureMessage(
+          failure,
+          l10n: l10n,
+          fallback: l10n.chatPhotoFailed,
+        ),
+      ),
+      (_) => AppSnackbar.quiet(context, l10n.chatPhotoUploaded),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final chat = widget.chat;
+    final myUserId = ref.watch(authProvider.select((user) => user.value?.id));
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.x4),
+      child: Column(
+        children: [
+          SizedBox.square(
+            dimension: ChatAvatarSize.xl.diameter,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ChatRowAvatar(
+                  chat: chat,
+                  myUserId: myUserId,
+                  size: ChatAvatarSize.xl,
+                ),
+                if (_busy)
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppPalette.mediaScrim,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.x1),
+                      child: CircularProgressIndicator(
+                        color: AppPalette.onMediaScrim,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.x1),
+          TextButton(
+            onPressed: _busy ? null : _change,
+            child: Text(chat.hasAvatar ? l10n.changePhoto : l10n.setPhoto),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Convert to supergroup", tucked at the end under "Advanced", with what it
+/// means said before it happens. Shown only when there is a way to do it
+/// ([supergroupUpgradeProvider]) and only to the owner.
+class _SupergroupUpgrade extends ConsumerStatefulWidget {
+  const _SupergroupUpgrade({required this.chat, required this.upgrade});
+
+  final ChatEntity chat;
+  final SupergroupUpgrader upgrade;
+
+  @override
+  ConsumerState<_SupergroupUpgrade> createState() => _SupergroupUpgradeState();
+}
+
+class _SupergroupUpgradeState extends ConsumerState<_SupergroupUpgrade> {
+  bool _busy = false;
+
+  Future<void> _confirmAndUpgrade() async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.chatSupergroupTitle),
+        content: Text(
+          l10n.chatSupergroupConfirm(ChatType.supergroup.maxMembers),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.chatSupergroupAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final result = await widget.upgrade(widget.chat.id);
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    result.match(
+      (failure) => AppSnackbar.failure(
+        context,
+        friendlyFailureMessage(
+          failure,
+          l10n: l10n,
+          fallback: l10n.saveChangesFailed,
+        ),
+      ),
+      (_) {
+        ref.read(chatDetailProvider(widget.chat.id).notifier).refresh();
+        ref.read(chatListProvider.notifier).refresh();
+        AppSnackbar.quiet(context, l10n.chatSupergroupDone);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(height: AppSpacing.x8),
+        _SectionLabel(l10n.chatSettingsAdvanced),
+        ListTile(
+          enabled: !_busy,
+          leading: const Icon(Icons.groups_outlined),
+          title: Text(l10n.chatSupergroupTitle),
+          subtitle: Text(
+            l10n.chatSupergroupHint(ChatType.supergroup.maxMembers),
+          ),
+          trailing: _busy
+              ? const SizedBox.square(
+                  dimension: AppSpacing.x5,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          onTap: _confirmAndUpgrade,
+        ),
+      ],
+    );
+  }
+}
+
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
 
@@ -366,7 +616,12 @@ class _SectionLabel extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.x4,
+        AppSpacing.x2,
+        AppSpacing.x4,
+        AppSpacing.x2,
+      ),
       child: Text(
         text,
         style: theme.textTheme.labelLarge?.copyWith(

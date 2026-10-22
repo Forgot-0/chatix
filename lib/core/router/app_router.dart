@@ -27,7 +27,10 @@ import 'package:chatix/features/chat/presentation/screens/chat_members_screen.da
 import 'package:chatix/features/chat/presentation/screens/chat_search_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/media_preview_screen.dart';
 import 'package:chatix/features/chat/presentation/screens/media_viewer_screen.dart';
-import 'package:chatix/features/chat/presentation/screens/create_chat_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/new_chat_details_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/new_chat_people_screen.dart';
+import 'package:chatix/features/chat/presentation/screens/new_message_screen.dart';
+import 'package:chatix/features/chat/presentation/utils/new_chat_draft.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/chat_folders_screen.dart';
 import 'package:chatix/features/chat_organizer/presentation/screens/folder_editor_screen.dart';
 import 'package:chatix/features/contacts/presentation/screens/blocked_users_screen.dart';
@@ -120,12 +123,60 @@ final routerProvider = Provider<GoRouter>((ref) {
                         path: CreateChatRoute.path,
                         name: RouteNames.createChat,
                         parentNavigatorKey: _rootNavigatorKey,
-                        pageBuilder: (context, state) => _push(
-                          state,
-                          CreateChatScreen(
-                            initialType: CreateChatRoute.typeFrom(state),
+                        redirect: (context, state) =>
+                            CreateChatRoute.redirectFor(state),
+                        pageBuilder: (context, state) =>
+                            _push(state, const NewMessageScreen()),
+                        routes: [
+                          GoRoute(
+                            path: NewGroupRoute.path,
+                            name: RouteNames.newGroup,
+                            parentNavigatorKey: _rootNavigatorKey,
+                            pageBuilder: (context, state) => _push(
+                              state,
+                              const NewChatPeopleScreen(
+                                kind: NewChatKind.group,
+                              ),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: NewGroupDetailsRoute.path,
+                                name: RouteNames.newGroupDetails,
+                                parentNavigatorKey: _rootNavigatorKey,
+                                pageBuilder: (context, state) => _push(
+                                  state,
+                                  const NewChatDetailsScreen(
+                                    kind: NewChatKind.group,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                          GoRoute(
+                            path: NewChannelRoute.path,
+                            name: RouteNames.newChannel,
+                            parentNavigatorKey: _rootNavigatorKey,
+                            pageBuilder: (context, state) => _push(
+                              state,
+                              const NewChatDetailsScreen(
+                                kind: NewChatKind.channel,
+                              ),
+                            ),
+                            routes: [
+                              GoRoute(
+                                path: NewChannelSubscribersRoute.path,
+                                name: RouteNames.newChannelSubscribers,
+                                parentNavigatorKey: _rootNavigatorKey,
+                                pageBuilder: (context, state) => _push(
+                                  state,
+                                  const NewChatPeopleScreen(
+                                    kind: NewChatKind.channel,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       GoRoute(
                         path: ChatSearchRoute.path,

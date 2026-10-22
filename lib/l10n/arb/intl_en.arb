@@ -216,25 +216,17 @@
   "@chatPublicHint": {
     "description": "is_public explanation"
   },
-  "chatAdminOnly": "Admins only",
+  "chatAdminOnly": "Only admins can send messages",
   "@chatAdminOnly": {
-    "description": "admin_only toggle"
+    "description": "Chat settings switch: only admins may send messages"
   },
-  "chatAdminOnlyHint": "Only admins can post",
+  "chatAdminOnlyHint": "Everyone else can read, but not write",
   "@chatAdminOnlyHint": {
-    "description": "admin_only explanation"
+    "description": "Under the admins-only switch: what everyone else can still do"
   },
   "chatSlowMode": "Slow mode",
   "@chatSlowMode": {
     "description": "slow_mode_seconds field label"
-  },
-  "chatSlowModeOff": "Off",
-  "@chatSlowModeOff": {
-    "description": "slow_mode_seconds = 0"
-  },
-  "chatSlowModeSeconds": "{seconds}s between messages",
-  "@chatSlowModeSeconds": {
-    "description": "slow_mode_seconds value"
   },
   "chatReactionsMode": "Reactions",
   "@chatReactionsMode": {
@@ -782,18 +774,6 @@
   "chatTypeChannel": "Channel",
   "@chatTypeChannel": {
     "description": "Chat type option"
-  },
-  "chatPublicHintCreate": "Anyone can find and join this chat",
-  "@chatPublicHintCreate": {
-    "description": "is_public explanation on create"
-  },
-  "chatSlowModeSecondsField": "Slow mode (seconds)",
-  "@chatSlowModeSecondsField": {
-    "description": "slow_mode_seconds field"
-  },
-  "createChat": "Create chat",
-  "@createChat": {
-    "description": "Submits the create-chat form"
   },
   "membersTitle": "Members",
   "@membersTitle": {
@@ -1439,10 +1419,6 @@
   "noChatSelectedHint": "Pick a conversation from the list to start reading.",
   "@noChatSelectedHint": {
     "description": "Body of the placeholder pane shown next to the chat list"
-  },
-  "newDirectChat": "New direct chat",
-  "@newDirectChat": {
-    "description": "Quick action: start a one-to-one chat"
   },
   "newGroup": "New group",
   "@newGroup": {
@@ -4094,52 +4070,9 @@
   "@resetPasswordConfirmIntro": {
     "description": "Explains the reset-password confirm screen"
   },
-  "createChatDirectSearchLabel": "Who do you want to message?",
-  "@createChatDirectSearchLabel": {
-    "description": "New chat, direct type: label of the people search field"
-  },
   "addPeopleSearchLabel": "Add people by name or @username",
   "@addPeopleSearchLabel": {
     "description": "Label of the field that adds several people to a chat"
-  },
-  "createChatDirectHelper": "Pick one person — a direct chat has exactly two members",
-  "@createChatDirectHelper": {
-    "description": "New chat, direct type: helper under the people search field"
-  },
-  "createChatMembersHelper": "Up to {max} people now — you can add more later",
-  "@createChatMembersHelper": {
-    "description": "New chat, group types: helper under the people search field",
-    "placeholders": {
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "createChatDirectNeedsPeer": "A direct chat needs exactly one other person — find them by name or @username",
-  "@createChatDirectNeedsPeer": {
-    "description": "New chat, direct type: create tapped with nobody picked"
-  },
-  "createChatDirectTooMany": "A direct chat has only one other person, but {count} are selected — choose Group instead",
-  "@createChatDirectTooMany": {
-    "description": "New chat, direct type: more than one person picked",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "createChatNameRequired": "Give the chat a name",
-  "@createChatNameRequired": {
-    "description": "New chat, group types: create tapped with an empty name"
-  },
-  "createChatTooManyMembers": "You can add up to {max} people now — add the rest once the chat is created",
-  "@createChatTooManyMembers": {
-    "description": "New chat: more people picked than a chat can be created with",
-    "placeholders": {
-      "max": {
-        "type": "int"
-      }
-    }
   },
   "createChatFailed": "Couldn't create the chat",
   "@createChatFailed": {
@@ -4996,5 +4929,253 @@
   "notificationsFeedHint": "Account and chat alerts in one list",
   "@notificationsFeedHint": {
     "description": "Subtitle of the Settings row that opens the list of received notifications"
+  },
+  "newMessage": "New message",
+  "@newMessage": {
+    "description": "Title of the screen the chats list pencil opens: pick a person to write to, or start a group or channel"
+  },
+  "newMessageNoContacts": "No contacts yet. Search for people by name or @username above.",
+  "@newMessageNoContacts": {
+    "description": "New message screen with an empty address book"
+  },
+  "newChatNoContacts": "No contacts yet — search for people by name or @username.",
+  "@newChatNoContacts": {
+    "description": "People picker of a new group or channel with an empty address book"
+  },
+  "newChatRemoveMember": "Remove {name}",
+  "@newChatRemoveMember": {
+    "description": "Screen reader label of a picked person chip; tapping it takes the person out",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newGroupMembersTitle": "Add members",
+  "@newGroupMembersTitle": {
+    "description": "Title of the first step of a new group: picking its members"
+  },
+  "newChannelSubscribersTitle": "Add subscribers",
+  "@newChannelSubscribersTitle": {
+    "description": "Title of the last, optional step of a new channel: picking subscribers"
+  },
+  "newChatMembersCount": "{count} of {max}",
+  "@newChatMembersCount": {
+    "description": "Under the people picker title: how many are picked out of the most that can be",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "newChatMembersLimitHint": "You can pick up to {max} people now and add the rest once the group exists.",
+  "@newChatMembersLimitHint": {
+    "description": "Line under the chips of a new group: how many people can be picked now",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "newChannelSubscribersHint": "Optional. Pick up to {max} people now — you can invite more later.",
+  "@newChannelSubscribersHint": {
+    "description": "Line under the chips of a new channel: picking subscribers is optional",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "newChatMembersLimitReached": "That's {max} — the most you can pick now. Add the rest once the chat exists.",
+  "@newChatMembersLimitReached": {
+    "description": "The people picker is full; also the toast when one more is tapped",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Button: go on to the next step"
+  },
+  "create": "Create",
+  "@create": {
+    "description": "Button: create the group or channel that was filled in"
+  },
+  "newGroupNameLabel": "Group name",
+  "@newGroupNameLabel": {
+    "description": "Name field of a new group"
+  },
+  "newChannelNameLabel": "Channel name",
+  "@newChannelNameLabel": {
+    "description": "Name field of a new channel"
+  },
+  "newGroupNameRequired": "Give the group a name",
+  "@newGroupNameRequired": {
+    "description": "Error under the name of a new group left empty"
+  },
+  "newChannelNameRequired": "Give the channel a name",
+  "@newChannelNameRequired": {
+    "description": "Error under the name of a new channel left empty"
+  },
+  "newChatDescriptionLabel": "Description (optional)",
+  "@newChatDescriptionLabel": {
+    "description": "Description field of a new group or channel"
+  },
+  "newGroupDescriptionHelper": "What the group is about — shown on its profile",
+  "@newGroupDescriptionHelper": {
+    "description": "Helper under the description of a new group"
+  },
+  "newChannelDescriptionHelper": "What you will post about — shown on the channel's profile",
+  "@newChannelDescriptionHelper": {
+    "description": "Helper under the description of a new channel"
+  },
+  "newGroupNoMembers": "You can add people later from the group's profile.",
+  "@newGroupNoMembers": {
+    "description": "New group details step when nobody was picked"
+  },
+  "newChannelVisibilityTitle": "Who can find it",
+  "@newChannelVisibilityTitle": {
+    "description": "Section over the public/private choice of a new channel"
+  },
+  "newChannelPrivate": "Private",
+  "@newChannelPrivate": {
+    "description": "Choice: a private channel"
+  },
+  "newChannelPrivateHint": "Not in search. People join only when you add or invite them.",
+  "@newChannelPrivateHint": {
+    "description": "What a private channel means, in plain words"
+  },
+  "newChannelPublic": "Public",
+  "@newChannelPublic": {
+    "description": "Choice: a public channel"
+  },
+  "newChannelPublicHint": "Anyone can find it in search and subscribe.",
+  "@newChannelPublicHint": {
+    "description": "What a public channel means, in plain words"
+  },
+  "newChatSomeNotAdded": "Not added because of their privacy settings: {names}",
+  "@newChatSomeNotAdded": {
+    "description": "Toast after creating a chat without the people whose privacy kept them out; names is a comma-separated list",
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "newChatPhotoFailed": "The chat is ready, but its photo didn't upload. Try again in its settings.",
+  "@newChatPhotoFailed": {
+    "description": "Toast: the chat was created but its photo did not upload"
+  },
+  "chatPhotoAdd": "Add a photo",
+  "@chatPhotoAdd": {
+    "description": "Screen reader label of the empty photo slot of a new group or channel"
+  },
+  "chatPhotoRemove": "Remove photo",
+  "@chatPhotoRemove": {
+    "description": "Sheet item: remove the group's or channel's photo"
+  },
+  "chatPhotoRemoved": "Photo removed",
+  "@chatPhotoRemoved": {
+    "description": "Toast: the group's or channel's photo was removed"
+  },
+  "chatPhotoUploaded": "The new photo will appear in a few seconds",
+  "@chatPhotoUploaded": {
+    "description": "Toast: a new chat photo was sent and the server is still processing it"
+  },
+  "chatPhotoFailed": "Couldn't update the photo",
+  "@chatPhotoFailed": {
+    "description": "Toast: the group's or channel's photo could not be changed"
+  },
+  "chatSlowModeOffShort": "Off",
+  "@chatSlowModeOffShort": {
+    "description": "Slow mode chip: no slow mode"
+  },
+  "chatSlowModeSecondsShort": "{seconds} s",
+  "@chatSlowModeSecondsShort": {
+    "description": "Slow mode chip: an interval in seconds",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "chatSlowModeMinutes": "{minutes} min",
+  "@chatSlowModeMinutes": {
+    "description": "Slow mode chip: an interval in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "chatSlowModeHours": "{hours} h",
+  "@chatSlowModeHours": {
+    "description": "Slow mode chip: an interval in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "chatSlowModeHint": "How long members wait between their messages. Admins aren't limited.",
+  "@chatSlowModeHint": {
+    "description": "Under the slow mode heading in chat settings"
+  },
+  "chatSettingsAdvanced": "Advanced",
+  "@chatSettingsAdvanced": {
+    "description": "Chat settings section for rare, big changes"
+  },
+  "chatSupergroupTitle": "Convert to supergroup",
+  "@chatSupergroupTitle": {
+    "description": "Settings row and dialog title: turn a group into a supergroup"
+  },
+  "chatSupergroupHint": "A big group for up to {max} members",
+  "@chatSupergroupHint": {
+    "description": "Under the supergroup row: what a supergroup is",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "chatSupergroupConfirm": "A supergroup is a big group for up to {max} members. Messages, members and settings stay as they are. This can't be undone.",
+  "@chatSupergroupConfirm": {
+    "description": "Body of the dialog that confirms turning a group into a supergroup",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "chatSupergroupAction": "Convert",
+  "@chatSupergroupAction": {
+    "description": "Dialog button: convert the group"
+  },
+  "chatSupergroupDone": "The group is now a supergroup",
+  "@chatSupergroupDone": {
+    "description": "Toast: the group became a supergroup"
+  },
+  "apiErrorUserPrivacyRestricted": "Some of these people don't allow being added to groups and channels.",
+  "@apiErrorUserPrivacyRestricted": {
+    "description": "USER_PRIVACY_RESTRICTED: people who may not be added to groups and channels"
+  },
+  "apiErrorMessagesPrivacyRestricted": "This person only accepts messages from certain people.",
+  "@apiErrorMessagesPrivacyRestricted": {
+    "description": "MESSAGES_PRIVACY_RESTRICTED: the person's privacy does not let the reader write to them"
+  },
+  "apiErrorUserBlocked": "You can't message this person.",
+  "@apiErrorUserBlocked": {
+    "description": "USER_BLOCKED: one of the two people blocked the other"
+  },
+  "apiErrorChatAvatarValidation": "That picture can't be used. Pick a JPEG, PNG or WebP up to 5 MB.",
+  "@apiErrorChatAvatarValidation": {
+    "description": "CHAT_AVATAR_VALIDATION: the picture is of the wrong type or too big"
   }
 }

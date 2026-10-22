@@ -52,3 +52,22 @@ String? pickAvatarUrl(
 
   return null;
 }
+
+/// The `avatars` matrix as JSON hands it over, or `{}` for anything that is
+/// not one — a missing field, `null`, a value of the wrong shape.
+///
+/// Chats and the socket send the same `{"32": {"jpg": url, …}, …}` object
+/// as profiles do (api-docs §5.10), but a chat's is optional and a delta
+/// may carry it or not, so the parse forgives rather than throws.
+Map<String, Map<String, String>> avatarVariantsFromJson(Object? raw) {
+  if (raw is! Map) return const <String, Map<String, String>>{};
+
+  return <String, Map<String, String>>{
+    for (final size in raw.entries)
+      if (size.value is Map)
+        '${size.key}': <String, String>{
+          for (final format in (size.value as Map).entries)
+            if (format.value is String) '${format.key}': format.value as String,
+        },
+  };
+}

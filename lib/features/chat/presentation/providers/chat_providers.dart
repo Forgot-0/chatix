@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chatix/core/storage/cache/attachment_file_cache.dart';
 import 'package:chatix/features/chat/data/datasources/chat_attachment_downloader_impl.dart';
 import 'package:chatix/features/chat/data/datasources/chat_attachment_uploader_impl.dart';
+import 'package:chatix/features/chat/data/repositories/chat_avatar_repository_impl.dart';
 import 'package:chatix/features/chat/data/repositories/chat_local_repository_impl.dart';
 import 'package:chatix/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:chatix/features/chat/domain/usecases/add_member_use_case.dart';
@@ -39,6 +40,7 @@ import 'package:chatix/features/chat/domain/usecases/mute_call_participant_use_c
 import 'package:chatix/features/chat/domain/usecases/send_message_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_state_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/update_chat_use_case.dart';
+import 'package:chatix/features/chat/domain/usecases/upload_chat_avatar_use_case.dart';
 
 final getChatsUseCaseProvider = Provider<GetChatsUseCase>((ref) {
   return GetChatsUseCase(ref.watch(chatRepositoryProvider));
@@ -54,6 +56,18 @@ final createChatUseCaseProvider = Provider<CreateChatUseCase>((ref) {
 
 final updateChatUseCaseProvider = Provider<UpdateChatUseCase>((ref) {
   return UpdateChatUseCase(ref.watch(chatRepositoryProvider));
+});
+
+final uploadChatAvatarUseCaseProvider = Provider<UploadChatAvatarUseCase>((
+  ref,
+) {
+  return UploadChatAvatarUseCase(ref.watch(chatAvatarRepositoryProvider));
+});
+
+final removeChatAvatarUseCaseProvider = Provider<RemoveChatAvatarUseCase>((
+  ref,
+) {
+  return RemoveChatAvatarUseCase(ref.watch(chatAvatarRepositoryProvider));
 });
 
 final updateChatStateUseCaseProvider = Provider<UpdateChatStateUseCase>((ref) {

@@ -211,4 +211,51 @@ void main() {
     expect(chat.lastRead?.lastReadMessageSeq, 11);
     expect(chat.lastRead?.lastReadAt, DateTime.utc(2026, 3, 10, 9));
   });
+
+  group("a group's own picture (api-docs §5.10)", () {
+    test('every size and format comes through', () {
+      final chat = parse({
+        ...chatJson(type: 'group'),
+        'avatars': {
+          '64': {'jpg': 'https://cdn.example.com/c1/64.jpg'},
+          '512': {
+            'jpg': 'https://cdn.example.com/c1/512.jpg',
+            'webp': 'https://cdn.example.com/c1/512.webp',
+          },
+        },
+      });
+
+      expect(chat.hasAvatar, isTrue);
+      expect(
+        chat.avatars['512']?['webp'],
+        'https://cdn.example.com/c1/512.webp',
+      );
+    });
+
+    test('no field, null or the wrong shape is simply no picture', () {
+      expect(parse(chatJson(type: 'group')).avatars, isEmpty);
+      expect(
+        parse({...chatJson(type: 'group'), 'avatars': null}).avatars,
+        isEmpty,
+      );
+      expect(
+        parse({...chatJson(type: 'group'), 'avatars': 'nope'}).avatars,
+        isEmpty,
+      );
+    });
+
+    test('survives the round trip through the device cache', () {
+      final json = {
+        ...chatJson(type: 'channel'),
+        'avatars': {
+          '64': {'jpg': 'https://cdn.example.com/c1/64.jpg'},
+        },
+      };
+
+      final cached = ChatModel.fromJson(json).toJson();
+      expect(parse(cached).avatars, {
+        '64': {'jpg': 'https://cdn.example.com/c1/64.jpg'},
+      });
+    });
+  });
 }

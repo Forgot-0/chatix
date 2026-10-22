@@ -564,16 +564,13 @@ class _MenuEntry {
   final bool isDestructive;
 }
 
-/// The face of a chat: the other person in a direct chat, a mosaic of
-/// members in a group, the chat's initial for a channel and for a group
-/// nobody has told us the members of.
+/// The face of a chat: the other person in a direct chat; a group's or
+/// channel's own picture when it has one; otherwise a mosaic of members in a
+/// group, and the chat's initial for a channel and for a group nobody has
+/// told us the members of.
 ///
 /// Public because the search results, the chat's app bar and its profile
 /// draw the same chat and should not invent a second way of picturing it.
-///
-/// A group's own picture is not drawn: `ChatDTO` and `ChatDetailDTO` carry
-/// only its `avatar_s3_key`, with no URL and no endpoint to sign one
-/// (api-docs §5.2), so there is nothing to load it from yet.
 class ChatRowAvatar extends ConsumerWidget {
   const ChatRowAvatar({
     super.key,
@@ -595,6 +592,17 @@ class ChatRowAvatar extends ConsumerWidget {
     final title = watchChatTitle(ref, chat, l10n, myUserId: myUserId);
 
     if (chat.type != ChatType.direct) {
+      // Its own picture first (api-docs §5.10). Public, versioned URLs, so
+      // no `s3_key` cache key is needed: a new picture is a new URL.
+      if (chat.hasAvatar) {
+        return ChatAvatar(
+          source: AvatarSource.variants(chat.avatars),
+          userId: chat.id.hashCode,
+          name: title,
+          size: size,
+        );
+      }
+
       // A channel's members are its audience, not its face: the detail
       // endpoint hands over the roster all the same, and a mosaic of four
       // random subscribers would say nothing about the channel.

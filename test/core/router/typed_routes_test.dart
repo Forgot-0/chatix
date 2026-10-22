@@ -17,12 +17,45 @@ void main() {
           routes: [
             GoRoute(
               path: CreateChatRoute.path,
-              builder: (_, state) {
-                parsed.add(
-                  'create-chat:${CreateChatRoute.typeFrom(state) ?? 'none'}',
-                );
+              redirect: (_, state) => CreateChatRoute.redirectFor(state),
+              builder: (_, _) {
+                parsed.add('new-message');
                 return const Placeholder();
               },
+              routes: [
+                GoRoute(
+                  path: NewGroupRoute.path,
+                  builder: (_, _) {
+                    parsed.add('new-group');
+                    return const Placeholder();
+                  },
+                  routes: [
+                    GoRoute(
+                      path: NewGroupDetailsRoute.path,
+                      builder: (_, _) {
+                        parsed.add('new-group-details');
+                        return const Placeholder();
+                      },
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: NewChannelRoute.path,
+                  builder: (_, _) {
+                    parsed.add('new-channel');
+                    return const Placeholder();
+                  },
+                  routes: [
+                    GoRoute(
+                      path: NewChannelSubscribersRoute.path,
+                      builder: (_, _) {
+                        parsed.add('new-channel-subscribers');
+                        return const Placeholder();
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
             GoRoute(
               path: ChatSearchRoute.path,
@@ -100,7 +133,7 @@ void main() {
 
     testWidgets('the static "create" child wins over :chatId', (tester) async {
       final parsed = await go(tester, CreateChatRoute.location);
-      expect(parsed, ['create-chat:none']);
+      expect(parsed, ['new-message']);
     });
 
     testWidgets('the static "search" child wins over :chatId', (tester) async {
@@ -167,29 +200,59 @@ void main() {
   });
 
   group('/chats/create', () {
-    test('carries the chat type as its wire value', () {
+    test('a type shortcut opens the first step of that flow', () {
       expect(
         CreateChatRoute.locationOf(CreateChatRoute.groupType),
-        '/chats/create?type=group',
+        '/chats/create/group',
       );
-    });
-
-    testWidgets('parses the type back out', (tester) async {
-      final harness = buildRouter();
-      addTearDown(harness.router.dispose);
-      await tester.pumpWidget(MaterialApp.router(routerConfig: harness.router));
-
-      harness.router.go(
+      expect(
         CreateChatRoute.locationOf(CreateChatRoute.channelType),
+        '/chats/create/channel',
       );
-      await tester.pumpAndSettle();
-
-      expect(harness.parsed, ['create-chat:channel']);
+      expect(
+        CreateChatRoute.locationOf(CreateChatRoute.directType),
+        '/chats/create',
+      );
     });
 
-    testWidgets('a plain /chats/create carries no type', (tester) async {
+    testWidgets('a plain /chats/create is "New message"', (tester) async {
       final parsed = await go(tester, CreateChatRoute.location);
-      expect(parsed, ['create-chat:none']);
+      expect(parsed, ['new-message']);
+    });
+
+    testWidgets('an old ?type=group link lands on the new group', (
+      tester,
+    ) async {
+      final parsed = await go(tester, '/chats/create?type=group');
+      expect(parsed, contains('new-group'));
+    });
+
+    testWidgets('an old ?type=channel link lands on the new channel', (
+      tester,
+    ) async {
+      final parsed = await go(tester, '/chats/create?type=channel');
+      expect(parsed, contains('new-channel'));
+    });
+
+    testWidgets('?type=direct is just "New message"', (tester) async {
+      final parsed = await go(tester, '/chats/create?type=direct');
+      expect(parsed, ['new-message']);
+    });
+
+    testWidgets('each step has its own address', (tester) async {
+      expect(
+        await go(tester, NewGroupDetailsRoute.location),
+        containsAll(<String>['new-message', 'new-group', 'new-group-details']),
+      );
+    });
+
+    testWidgets('the channel subscribers step has its own address', (
+      tester,
+    ) async {
+      expect(
+        await go(tester, NewChannelSubscribersRoute.location),
+        containsAll(<String>['new-channel', 'new-channel-subscribers']),
+      );
     });
   });
 

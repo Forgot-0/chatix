@@ -153,6 +153,14 @@ class ChatEntity extends Equatable {
   final String? name;
   final String? description;
   final String? avatarS3Key;
+
+  /// The group's or channel's own picture, `{"32"|"64"|"256"|"512":
+  /// {"jpg"|"webp": url}}`, or `{}` when it has none (api-docs §5.10).
+  ///
+  /// Unlike a person's, these are public, versioned URLs: a new upload is a
+  /// new URL, so the URL itself is a fine cache key.
+  final Map<String, Map<String, String>> avatars;
+
   final bool isPublic;
 
   final bool adminOnly;
@@ -200,6 +208,7 @@ class ChatEntity extends Equatable {
     required this.name,
     required this.description,
     required this.avatarS3Key,
+    this.avatars = const <String, Map<String, String>>{},
     required this.isPublic,
     required this.adminOnly,
     required this.slowModeSeconds,
@@ -217,6 +226,8 @@ class ChatEntity extends Equatable {
     this.membersPreview = const [],
     this.state,
   });
+
+  bool get hasAvatar => avatars.isNotEmpty;
 
   bool get isPinned => state?.isPinned ?? false;
 
@@ -317,6 +328,7 @@ class ChatEntity extends Equatable {
     String? name,
     String? description,
     String? avatarS3Key,
+    Map<String, Map<String, String>>? avatars,
     bool? isPublic,
     bool? adminOnly,
     int? slowModeSeconds,
@@ -340,6 +352,7 @@ class ChatEntity extends Equatable {
     bool clearMembers = false,
     bool clearPeer = false,
     bool clearState = false,
+    bool clearAvatarS3Key = false,
   }) {
     return ChatEntity(
       id: id ?? this.id,
@@ -348,7 +361,8 @@ class ChatEntity extends Equatable {
       type: type ?? this.type,
       name: name ?? this.name,
       description: description ?? this.description,
-      avatarS3Key: avatarS3Key ?? this.avatarS3Key,
+      avatarS3Key: clearAvatarS3Key ? null : (avatarS3Key ?? this.avatarS3Key),
+      avatars: avatars ?? this.avatars,
       isPublic: isPublic ?? this.isPublic,
       adminOnly: adminOnly ?? this.adminOnly,
       slowModeSeconds: slowModeSeconds ?? this.slowModeSeconds,
@@ -377,6 +391,7 @@ class ChatEntity extends Equatable {
     name,
     description,
     avatarS3Key,
+    avatars,
     isPublic,
     adminOnly,
     slowModeSeconds,

@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:chatix/core/error/failure_messages.dart';
-import 'package:chatix/core/router/app_routes.dart';
+import 'package:chatix/core/error/failures.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
 import 'package:chatix/core/ui/states/app_async_states.dart';
-import 'package:chatix/features/auth/presentation/providers/auth_provider.dart';
 import 'package:chatix/features/chat/domain/entities/chat_entity.dart';
 import 'package:chatix/features/chat/domain/entities/chat_search.dart';
 import 'package:chatix/features/chat/domain/entities/message_search.dart';
 import 'package:chatix/features/chat/domain/usecases/create_chat_use_case.dart';
 import 'package:chatix/features/chat/domain/usecases/search_messages_use_case.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_list_provider.dart';
-import 'package:chatix/features/chat/presentation/providers/chat_providers.dart';
 import 'package:chatix/features/chat/presentation/providers/chat_search_provider.dart';
+import 'package:chatix/features/chat/presentation/providers/direct_chat_opener.dart';
 import 'package:chatix/features/chat/presentation/providers/search_history_provider.dart';
-import 'package:chatix/features/chat/presentation/utils/direct_chat_lookup.dart';
 import 'package:chatix/features/chat/presentation/utils/open_chat.dart';
 import 'package:chatix/features/chat/presentation/widgets/local_search_notice.dart';
 import 'package:chatix/features/chat/presentation/widgets/search_result_tiles.dart';
@@ -135,54 +132,32 @@ class _ChatSearchScreenState extends ConsumerState<ChatSearchScreen> {
 
     _remember();
 
-    // Dedup before creating: the backend never raises DIRECT_CHAT_EXISTS, so a
-    // second create would silently make a duplicate 1:1 chat (api-docs §5.2).
-    final existing = findDirectChatWith(
-      ref.read(chatListProvider).value?.items ?? const [],
-      profile.id,
-      myUserId: ref.read(authProvider).value?.id,
-    );
-    if (existing != null) {
-      openChat(context, ref, existing.id);
-      return;
-    }
-
+    // The backend never raises DIRECT_CHAT_EXISTS, so a create without a
+    // thorough look first would make a second 1:1 chat (api-docs §5.2). The
+    // opener looks — loaded pages, the archive, the server — and creates
+    // only when there is nothing.
     setState(() => _isStartingChat = true);
 
-    final result = await ref
-        .read(createChatUseCaseProvider)
-        .execute(chatType: ChatType.direct, memberIds: [profile.id]);
+    final result = await resolveDirectChatWith(ref, profile.id);
 
     if (!mounted) return;
     setState(() => _isStartingChat = false);
 
-    result.match(
-      (failure) {
-        final existingChatId = existingDirectChatId(failure);
-        if (existingChatId != null) {
-          ref.read(chatListProvider.notifier).refresh();
-          context.pushReplacement(ChatDetailRoute(existingChatId).location);
-          return;
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              chatFailureMessage(failure) ??
-                  friendlyFailureMessage(
-                    failure,
-                    l10n: AppLocalizations.of(context),
-                    fallback: AppLocalizations.of(context).startChatFailed,
-                  ),
-            ),
+    result.match((failure) {
+      if (failure is CancelledFailure) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            chatFailureMessage(failure) ??
+                friendlyFailureMessage(
+                  failure,
+                  l10n: AppLocalizations.of(context),
+                  fallback: AppLocalizations.of(context).startChatFailed,
+                ),
           ),
-        );
-      },
-      (chat) {
-        ref.read(chatListProvider.notifier).refresh();
-        context.pushReplacement(ChatDetailRoute(chat.id).location);
-      },
-    );
+        ),
+      );
+    }, (chatId) => openChat(context, ref, chatId));
   }
 }
 

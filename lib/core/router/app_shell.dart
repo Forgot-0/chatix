@@ -316,8 +316,8 @@ class _ChatQuickActionsSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ListTile(
-            leading: const Icon(Icons.person_add_alt),
-            title: Text(l10n.newDirectChat),
+            leading: const Icon(Icons.edit_outlined),
+            title: Text(l10n.newMessage),
             onTap: () => Navigator.of(context).pop(CreateChatRoute.directType),
           ),
           ListTile(

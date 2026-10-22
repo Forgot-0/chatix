@@ -167,4 +167,52 @@ void main() {
       expect(updated.lastActivityAt, ts);
     });
   });
+
+  group('chat_updated and the picture', () {
+    const avatars = {
+      '64': {'jpg': 'https://cdn.example.com/c/v2/64.jpg'},
+    };
+
+    test('a new picture replaces the old one, key and all', () {
+      final updated = ChatRealtimeMerge.applyChatUpdated(
+        row(),
+        avatars: avatars,
+        avatarS3Key: 'https://cdn.example.com/c/v2/64.jpg',
+      );
+
+      expect(updated.avatars, avatars);
+      expect(updated.avatarS3Key, 'https://cdn.example.com/c/v2/64.jpg');
+    });
+
+    test('an empty map is a removal', () {
+      final withPicture = row().copyWith(
+        avatars: avatars,
+        avatarS3Key: 'https://cdn.example.com/c/v2/64.jpg',
+      );
+
+      final updated = ChatRealtimeMerge.applyChatUpdated(
+        withPicture,
+        avatars: const {},
+      );
+
+      expect(updated.hasAvatar, isFalse);
+      expect(updated.avatarS3Key, isNull);
+    });
+
+    test('a frame that does not mention it leaves it alone', () {
+      final withPicture = row().copyWith(
+        avatars: avatars,
+        avatarS3Key: 'https://cdn.example.com/c/v2/64.jpg',
+      );
+
+      final updated = ChatRealtimeMerge.applyChatUpdated(
+        withPicture,
+        name: 'Renamed',
+      );
+
+      expect(updated.avatars, avatars);
+      expect(updated.avatarS3Key, 'https://cdn.example.com/c/v2/64.jpg');
+      expect(updated.name, 'Renamed');
+    });
+  });
 }

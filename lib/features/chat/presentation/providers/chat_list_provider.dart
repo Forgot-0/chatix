@@ -264,6 +264,8 @@ class ChatListController extends AsyncNotifier<ChatListState> {
                 ? null
                 : ChatReactionsMode.fromWire(event.reactionsMode),
             allowedReactions: event.allowedReactions,
+            avatars: event.avatars,
+            avatarS3Key: event.avatarS3Key,
           ),
         );
 

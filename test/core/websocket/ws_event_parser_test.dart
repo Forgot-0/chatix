@@ -431,6 +431,54 @@ void main() {
       },
     );
 
+    test('chat_updated carries the picture as a whole snapshot', () {
+      final event = parseWsEvent(
+        envelope(
+          'chat_updated',
+          event: const {
+            'name': 'Team',
+            'avatar_s3_key': 'https://cdn.example.com/chats/c1/v2/64.jpg',
+            'avatars': {
+              '64': {'jpg': 'https://cdn.example.com/chats/c1/v2/64.jpg'},
+              '256': {
+                'jpg': 'https://cdn.example.com/chats/c1/v2/256.jpg',
+                'webp': 'https://cdn.example.com/chats/c1/v2/256.webp',
+              },
+            },
+          },
+        ),
+      );
+
+      final updated = event as ChatUpdated;
+      expect(updated.avatars?.keys, unorderedEquals(['64', '256']));
+      expect(
+        updated.avatars?['256']?['webp'],
+        'https://cdn.example.com/chats/c1/v2/256.webp',
+      );
+      expect(updated.avatarS3Key, 'https://cdn.example.com/chats/c1/v2/64.jpg');
+    });
+
+    test('chat_updated with an empty picture map says it was removed', () {
+      final event = parseWsEvent(
+        envelope(
+          'chat_updated',
+          event: const {'avatars': <String, dynamic>{}, 'avatar_s3_key': null},
+        ),
+      );
+
+      final updated = event as ChatUpdated;
+      expect(updated.avatars, isEmpty);
+      expect(updated.avatarS3Key, isNull);
+    });
+
+    test('chat_updated without a picture leaves it unsaid', () {
+      final event = parseWsEvent(
+        envelope('chat_updated', event: const {'name': 'Renamed'}),
+      );
+
+      expect((event as ChatUpdated).avatars, isNull);
+    });
+
     test('chat_deleted carries who deleted it', () {
       final event = parseWsEvent(
         envelope('chat_deleted', event: const {'deleted_by': 1}),

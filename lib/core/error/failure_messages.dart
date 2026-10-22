@@ -117,5 +117,12 @@ String? _exactMessage(String code, AppLocalizations l10n) => switch (code) {
 
   'MAX_LIMIT_CURSOR' => l10n.apiErrorMaxLimitCursor,
 
+  // Privacy and blocks (api-docs §4.13, §4.14).
+  'USER_PRIVACY_RESTRICTED' => l10n.apiErrorUserPrivacyRestricted,
+  'MESSAGES_PRIVACY_RESTRICTED' => l10n.apiErrorMessagesPrivacyRestricted,
+  'USER_BLOCKED' => l10n.apiErrorUserBlocked,
+
+  'CHAT_AVATAR_VALIDATION' => l10n.apiErrorChatAvatarValidation,
+
   _ => null,
 };

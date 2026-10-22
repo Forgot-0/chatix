@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:chatix/core/theme/app_theme_extension.dart';
 import 'package:chatix/core/theme/app_tokens.dart';
 import 'package:chatix/core/ui/feedback/app_snackbar.dart';
 import 'package:chatix/core/ui/illustrations/app_illustrations.dart';
@@ -16,6 +15,7 @@ import 'package:chatix/features/contacts/presentation/providers/contacts_lifecyc
 import 'package:chatix/features/contacts/presentation/providers/contacts_providers.dart';
 import 'package:chatix/features/contacts/presentation/utils/contact_labels.dart';
 import 'package:chatix/features/contacts/presentation/widgets/contact_actions.dart';
+import 'package:chatix/features/contacts/presentation/widgets/contact_list_parts.dart';
 import 'package:chatix/features/contacts/presentation/widgets/contact_tile.dart';
 import 'package:chatix/features/profile/domain/usecases/get_profiles_use_case.dart';
 import 'package:chatix/gen/l10n/app_localizations.dart';
@@ -263,7 +263,9 @@ class _ContactList extends ConsumerWidget {
                 _HeadingItem(:final title) => ContactSectionHeader(
                   title: title,
                 ),
-                _LetterItem(:final letter) => _LetterHeading(letter: letter),
+                _LetterItem(:final letter) => ContactLetterHeading(
+                  letter: letter,
+                ),
                 _ContactItem(:final contact, :final inFavorites) => ContactTile(
                   key: inFavorites
                       ? ValueKey<String>('favorite-${contact.userId}')
@@ -314,84 +316,25 @@ class _EntryRows extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _EntryRow(
+        ContactEntryRow(
           icon: Icons.person_add_alt_1_outlined,
           label: l10n.contactsAddAction,
           onTap: () => ContactActions.addByUsername(context),
         ),
         Builder(
           // Its own context, so the share sheet anchors on this row.
-          builder: (rowContext) => _EntryRow(
+          builder: (rowContext) => ContactEntryRow(
             icon: Icons.ios_share,
             label: l10n.contactsInviteAction,
             onTap: () => ContactActions.invite(rowContext, ref),
           ),
         ),
-        _EntryRow(
+        ContactEntryRow(
           icon: Icons.alternate_email,
           label: l10n.contactsImportAction,
           onTap: () => ContactActions.import(context),
         ),
       ],
-    );
-  }
-}
-
-class _EntryRow extends StatelessWidget {
-  const _EntryRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final chatix = ChatixTheme.of(context);
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        // The same height as a person's row, so the list reads as one.
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.x4,
-          vertical: AppSpacing.x1 + chatix.density.listRowPadding,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: ContactsLayout.actionBadge,
-              height: ContactsLayout.actionBadge,
-              decoration: BoxDecoration(
-                color: scheme.primaryContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: ContactsLayout.actionIcon,
-                color: scheme.onPrimaryContainer,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.x3),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -443,36 +386,6 @@ class _SyncFailedBanner extends StatelessWidget {
               ),
               TextButton(onPressed: onRetry, child: Text(l10n.retry)),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LetterHeading extends StatelessWidget {
-  const _LetterHeading({required this.letter});
-
-  final String letter;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Semantics(
-      header: true,
-      child: Container(
-        height: ContactsLayout.letterHeight,
-        alignment: AlignmentDirectional.bottomStart,
-        padding: const EdgeInsetsDirectional.only(
-          start: AppSpacing.x4,
-          bottom: AppSpacing.x1,
-        ),
-        child: Text(
-          letter,
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w700,
           ),
         ),
       ),

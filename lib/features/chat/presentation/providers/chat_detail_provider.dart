@@ -635,6 +635,8 @@ class ChatDetailController extends AsyncNotifier<ChatDetailState> {
                   ? null
                   : ChatReactionsMode.fromWire(event.reactionsMode),
               allowedReactions: event.allowedReactions,
+              avatars: event.avatars,
+              avatarS3Key: event.avatarS3Key,
             ),
             nextCursor: s.nextCursor,
           );

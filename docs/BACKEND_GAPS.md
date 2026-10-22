@@ -169,34 +169,26 @@ close it.
 
 ---
 
-## 6. A chat has no avatar anyone can set 🔴
+## 6. A chat's picture: closed, one hole left (П-13) 🟡
 
-`ChatDTO.avatar_s3_key` and `ChatDetailDTO.avatar_s3_key` are readable and
-nothing else. There is no chat equivalent of the profile avatar flow from
-api-docs §4.5:
+Closed by api-docs §5.10: `POST /chats/{id}/avatar/upload-requests/` →
+presigned PUT → `…/confirm/` (`202`), `DELETE /chats/{id}/avatar/`, and an
+`avatars` matrix on `ChatDTO` / `ChatDetailDTO` / `chat_updated` — public,
+versioned URLs, so the URL is its own cache key.
 
-| What exists for a profile | What exists for a chat |
-|---|---|
-| `POST /profiles/{id}/avatar/presign/` → presigned PUT | — |
-| `avatar_s3_key` written by the confirm step | `avatar_s3_key` is read-only |
-| `avatars` matrix of sizes/formats on the DTO | not present |
-| `avatar_url`, presigned, 300 s TTL | not present |
+**What the client does.** The "new group" / "new channel" details step
+picks, crops (the profile photo's cropper) and re-encodes a picture, and
+sends it once the chat exists (`UploadChatAvatarUseCase`); the chat's
+settings change or remove it. `ChatRowAvatar` draws `avatars` for groups and
+channels before falling back to the members mosaic, and `chat_updated`
+replaces it in the list and in an open chat.
 
-`UpdateChatRequest` (api-docs §5.2) takes `name`, `description`, `is_public`,
-`admin_only`, `slow_mode_seconds` and `permissions` — no avatar field — so
-even a key uploaded some other way could not be attached to the chat.
-
-**What the client does.** Nothing: the chat profile screen has no way to
-change a picture, because there is no button that could work. A group draws
-the mosaic of its members' faces (`members_preview`, or the roster when the
-screen has one) and falls back to its initial on its own colour;
-`avatar_s3_key` is carried through the model and never resolved, since there
-is no endpoint that turns a key into a URL either.
-
-**What it needs.** The §4.5 pair, scoped to a chat and gated on
-`chat:update`: a presign endpoint, a confirm that writes `avatar_s3_key`, and
-a presigned `avatar_url` on `ChatDTO` / `ChatDetailDTO` with the same 300 s
-TTL as every other avatar — cached by `s3_key`, never by the URL.
+**The hole.** Like a profile photo (§12), the real check runs in the
+background after `202`, and a refused file produces no event at all: the
+picture simply never changes. The client cannot tell "still processing"
+from "refused"; it says "the new photo will appear in a few seconds" and
+leaves it there. A `chat_avatar_failed` event (or a status endpoint) would
+let it say what happened.
 
 ---
 
@@ -518,3 +510,50 @@ are only as good as the API allows.
 **What the backend would need.** A presence read by user id with a
 `last_seen_at` (rounded, with a privacy setting, if wanted) — the same ask as
 §15 — and the shared-media index from §7, ideally filterable by peer.
+
+---
+
+## 18. A group cannot become a supergroup (П-13) 🟠
+
+A chat's type is decided once, by `chat_type` on `POST /chats/`.
+`UpdateChatRequest` has no `chat_type`, and no endpoint converts a chat
+(api-docs §5.2). A `group` is capped at 500 members (§5.1), so a group that
+grows has nowhere to go: Telegram turns it into a supergroup in place.
+
+**What the client does.** The "new group" flow always creates a `group` —
+the user is never asked to choose "supergroup" up front. The group's
+settings have a "Convert to supergroup — a big group for up to 1 000 000
+members" row with a confirmation, built and tested but hidden behind
+`supergroupUpgradeProvider` (`features/chat/presentation/providers/
+supergroup_upgrade_provider.dart`), which is `null` until there is a call
+to make.
+
+**What the backend would need.** `POST /chats/{id}/upgrade/` (owner only)
+that turns a `group` into a `supergroup` in place — same id, members,
+history and settings — and announces it with `chat_updated` carrying the
+new `type`.
+
+**Client swap cost.** One repository call, and `supergroupUpgradeProvider`
+returns it; the row and its dialog appear by themselves.
+
+---
+
+## 19. Two quieter rules the "new chat" flow works around (П-13) 🟡
+
+- **Duplicates of a 1:1 chat.** `409 DIRECT_CHAT_EXISTS` is documented but
+  never raised (api-docs §5.2): a second `POST /chats/` with the same person
+  makes a second chat. `DirectChatOpener` therefore looks before it creates —
+  the chats on screen, both cached lists, chats it made this session, then
+  the server: the rest of the main list from its cursor and the whole
+  archive (an archived chat is not in the main list). Two taps share one
+  lookup, and when the lists cannot be read nothing is created. It costs one
+  or two `GET /chats/` on the first message to somebody new. A server-side
+  unique `(user, user)` for direct chats — or a `GET /chats/direct/{user_id}/`
+  — would make all of that one request.
+- **One refused person sinks the whole group.** `POST /chats/` with a
+  `member_ids` entry whose `group_invites` privacy (or block) refuses the
+  caller answers `403 USER_PRIVACY_RESTRICTED` and creates nothing. The
+  client retries once without those `user_ids` and names them in a toast —
+  what Telegram does in one step. Creating the chat and returning the
+  skipped ids would save the second request (rate limit: 4 creates per
+  5 minutes).

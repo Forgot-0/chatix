@@ -193,21 +193,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get chatPublicHint => 'লিঙ্ক থাকলে যে কেউ যোগ দিতে পারে';
 
   @override
-  String get chatAdminOnly => 'শুধু অ্যাডমিন';
+  String get chatAdminOnly => 'শুধু অ্যাডমিনরা বার্তা পাঠাতে পারবেন';
 
   @override
-  String get chatAdminOnlyHint => 'শুধু অ্যাডমিনরা পোস্ট করতে পারে';
+  String get chatAdminOnlyHint => 'বাকিরা শুধু পড়তে পারবেন';
 
   @override
   String get chatSlowMode => 'স্লো মোড';
-
-  @override
-  String get chatSlowModeOff => 'বন্ধ';
-
-  @override
-  String chatSlowModeSeconds(Object seconds) {
-    return 'বার্তার মধ্যে $seconds সেকেন্ড';
-  }
 
   @override
   String get chatReactionsMode => 'প্রতিক্রিয়া';
@@ -613,15 +605,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get chatTypeChannel => 'চ্যানেল';
-
-  @override
-  String get chatPublicHintCreate => 'যে কেউ এই চ্যাট খুঁজে যোগ দিতে পারে';
-
-  @override
-  String get chatSlowModeSecondsField => 'স্লো মোড (সেকেন্ড)';
-
-  @override
-  String get createChat => 'চ্যাট তৈরি করুন';
 
   @override
   String get membersTitle => 'সদস্যরা';
@@ -1100,9 +1083,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get noChatSelectedHint =>
       'পড়া শুরু করতে তালিকা থেকে একটি কথোপকথন বেছে নিন।';
-
-  @override
-  String get newDirectChat => 'নতুন সরাসরি চ্যাট';
 
   @override
   String get newGroup => 'নতুন গ্রুপ';
@@ -3263,36 +3243,7 @@ class AppLocalizationsBn extends AppLocalizations {
       'ইমেলে পাওয়া কোড এবং নতুন পাসওয়ার্ড লিখুন।';
 
   @override
-  String get createChatDirectSearchLabel => 'কাকে বার্তা পাঠাতে চান?';
-
-  @override
   String get addPeopleSearchLabel => 'নাম বা @username দিয়ে লোক যোগ করুন';
-
-  @override
-  String get createChatDirectHelper =>
-      'একজনকে বেছে নিন — সরাসরি চ্যাটে ঠিক দুজন সদস্য থাকে';
-
-  @override
-  String createChatMembersHelper(int max) {
-    return 'এখন সর্বোচ্চ $max জন — পরে আরও যোগ করতে পারবেন';
-  }
-
-  @override
-  String get createChatDirectNeedsPeer =>
-      'সরাসরি চ্যাটে ঠিক একজন অন্য ব্যক্তি লাগবে — নাম বা @username দিয়ে খুঁজুন';
-
-  @override
-  String createChatDirectTooMany(int count) {
-    return 'সরাসরি চ্যাটে শুধু একজন অন্য ব্যক্তি থাকে, কিন্তু $count জন বাছাই করা হয়েছে — বরং গ্রুপ বেছে নিন';
-  }
-
-  @override
-  String get createChatNameRequired => 'চ্যাটের একটি নাম দিন';
-
-  @override
-  String createChatTooManyMembers(int max) {
-    return 'এখন সর্বোচ্চ $max জনকে যোগ করা যাবে — বাকিদের চ্যাট তৈরির পরে যোগ করুন';
-  }
 
   @override
   String get createChatFailed => 'চ্যাট তৈরি করা যায়নি';
@@ -3932,4 +3883,189 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get notificationsFeedHint => 'অ্যাকাউন্ট ও চ্যাটের সতর্কতা';
+
+  @override
+  String get newMessage => 'নতুন বার্তা';
+
+  @override
+  String get newMessageNoContacts =>
+      'এখনও কোনো পরিচিতি নেই। উপরের অনুসন্ধানে নাম বা @username দিয়ে খুঁজুন।';
+
+  @override
+  String get newChatNoContacts =>
+      'এখনও কোনো পরিচিতি নেই — নাম বা @username দিয়ে খুঁজুন।';
+
+  @override
+  String newChatRemoveMember(String name) {
+    return '$name-কে সরান';
+  }
+
+  @override
+  String get newGroupMembersTitle => 'সদস্য যোগ করুন';
+
+  @override
+  String get newChannelSubscribersTitle => 'সাবস্ক্রাইবার যোগ করুন';
+
+  @override
+  String newChatMembersCount(int count, int max) {
+    return '$max-এর মধ্যে $count';
+  }
+
+  @override
+  String newChatMembersLimitHint(int max) {
+    return 'এখন সর্বোচ্চ $max জন বাছাই করা যাবে, বাকিদের গ্রুপ তৈরির পরে যোগ করুন।';
+  }
+
+  @override
+  String newChannelSubscribersHint(int max) {
+    return 'ঐচ্ছিক। এখন সর্বোচ্চ $max জন — পরে আরও আমন্ত্রণ জানাতে পারবেন।';
+  }
+
+  @override
+  String newChatMembersLimitReached(int max) {
+    return 'এটাই $max — এখন এর বেশি বাছাই করা যাবে না। বাকিদের তৈরির পরে যোগ করুন।';
+  }
+
+  @override
+  String get next => 'পরবর্তী';
+
+  @override
+  String get create => 'তৈরি করুন';
+
+  @override
+  String get newGroupNameLabel => 'গ্রুপের নাম';
+
+  @override
+  String get newChannelNameLabel => 'চ্যানেলের নাম';
+
+  @override
+  String get newGroupNameRequired => 'গ্রুপের একটি নাম দিন';
+
+  @override
+  String get newChannelNameRequired => 'চ্যানেলের একটি নাম দিন';
+
+  @override
+  String get newChatDescriptionLabel => 'বিবরণ (ঐচ্ছিক)';
+
+  @override
+  String get newGroupDescriptionHelper =>
+      'গ্রুপটি কী নিয়ে — এর প্রোফাইলে দেখাবে';
+
+  @override
+  String get newChannelDescriptionHelper =>
+      'আপনি কী নিয়ে পোস্ট করবেন — চ্যানেলের প্রোফাইলে দেখাবে';
+
+  @override
+  String get newGroupNoMembers =>
+      'পরে গ্রুপের প্রোফাইল থেকে লোক যোগ করতে পারবেন।';
+
+  @override
+  String get newChannelVisibilityTitle => 'কে খুঁজে পাবে';
+
+  @override
+  String get newChannelPrivate => 'ব্যক্তিগত';
+
+  @override
+  String get newChannelPrivateHint =>
+      'অনুসন্ধানে দেখাবে না। আপনি যোগ বা আমন্ত্রণ করলে তবেই কেউ যোগ দিতে পারবে।';
+
+  @override
+  String get newChannelPublic => 'সর্বজনীন';
+
+  @override
+  String get newChannelPublicHint =>
+      'যে কেউ অনুসন্ধানে খুঁজে সাবস্ক্রাইব করতে পারবে।';
+
+  @override
+  String newChatSomeNotAdded(String names) {
+    return 'গোপনীয়তা সেটিংসের কারণে যোগ করা যায়নি: $names';
+  }
+
+  @override
+  String get newChatPhotoFailed =>
+      'চ্যাট তৈরি হয়েছে, কিন্তু ছবি আপলোড হয়নি। সেটিংস থেকে আবার চেষ্টা করুন।';
+
+  @override
+  String get chatPhotoAdd => 'ছবি যোগ করুন';
+
+  @override
+  String get chatPhotoRemove => 'ছবি সরান';
+
+  @override
+  String get chatPhotoRemoved => 'ছবি সরানো হয়েছে';
+
+  @override
+  String get chatPhotoUploaded => 'নতুন ছবি কয়েক সেকেন্ডের মধ্যে দেখাবে';
+
+  @override
+  String get chatPhotoFailed => 'ছবি আপডেট করা যায়নি';
+
+  @override
+  String get chatSlowModeOffShort => 'বন্ধ';
+
+  @override
+  String chatSlowModeSecondsShort(int seconds) {
+    return '$seconds সে';
+  }
+
+  @override
+  String chatSlowModeMinutes(int minutes) {
+    return '$minutes মি';
+  }
+
+  @override
+  String chatSlowModeHours(int hours) {
+    return '$hours ঘ';
+  }
+
+  @override
+  String get chatSlowModeHint =>
+      'সদস্যদের একটি বার্তার পর পরেরটি পাঠাতে কতক্ষণ অপেক্ষা করতে হবে। অ্যাডমিনদের জন্য প্রযোজ্য নয়।';
+
+  @override
+  String get chatSettingsAdvanced => 'উন্নত';
+
+  @override
+  String get chatSupergroupTitle => 'সুপারগ্রুপে রূপান্তর করুন';
+
+  @override
+  String chatSupergroupHint(int max) {
+    final intl.NumberFormat maxNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String maxString = maxNumberFormat.format(max);
+
+    return 'সর্বোচ্চ $maxString সদস্যের বড় গ্রুপ';
+  }
+
+  @override
+  String chatSupergroupConfirm(int max) {
+    final intl.NumberFormat maxNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String maxString = maxNumberFormat.format(max);
+
+    return 'সুপারগ্রুপ হলো সর্বোচ্চ $maxString সদস্যের বড় গ্রুপ। বার্তা, সদস্য ও সেটিংস একই থাকবে। এটি ফিরিয়ে আনা যাবে না।';
+  }
+
+  @override
+  String get chatSupergroupAction => 'রূপান্তর';
+
+  @override
+  String get chatSupergroupDone => 'গ্রুপটি এখন সুপারগ্রুপ';
+
+  @override
+  String get apiErrorUserPrivacyRestricted =>
+      'এদের কেউ কেউ গ্রুপ ও চ্যানেলে যুক্ত হওয়ার অনুমতি দেন না।';
+
+  @override
+  String get apiErrorMessagesPrivacyRestricted =>
+      'এই ব্যক্তি কেবল নির্দিষ্ট মানুষের কাছ থেকে বার্তা গ্রহণ করেন।';
+
+  @override
+  String get apiErrorUserBlocked => 'এই ব্যক্তিকে বার্তা পাঠানো যাবে না।';
+
+  @override
+  String get apiErrorChatAvatarValidation =>
+      'এই ছবি ব্যবহার করা যাবে না। ৫ MB পর্যন্ত JPEG, PNG বা WebP বেছে নিন।';
 }

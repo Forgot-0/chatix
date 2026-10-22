@@ -189,21 +189,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatPublicHint => 'リンクを知っている人は誰でも参加できます';
 
   @override
-  String get chatAdminOnly => '管理者のみ';
+  String get chatAdminOnly => '管理者のみメッセージを送信できる';
 
   @override
-  String get chatAdminOnlyHint => '管理者のみ投稿できます';
+  String get chatAdminOnlyHint => 'ほかのメンバーは閲覧のみできます';
 
   @override
   String get chatSlowMode => '低速モード';
-
-  @override
-  String get chatSlowModeOff => 'オフ';
-
-  @override
-  String chatSlowModeSeconds(Object seconds) {
-    return 'メッセージ間隔 $seconds 秒';
-  }
 
   @override
   String get chatReactionsMode => 'リアクション';
@@ -605,15 +597,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get chatTypeChannel => 'チャンネル';
-
-  @override
-  String get chatPublicHintCreate => '誰でもこのチャットを見つけて参加できます';
-
-  @override
-  String get chatSlowModeSecondsField => '低速モード（秒）';
-
-  @override
-  String get createChat => 'チャットを作成';
 
   @override
   String get membersTitle => 'メンバー';
@@ -1086,9 +1069,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noChatSelectedHint => '一覧から会話を選んでください。';
-
-  @override
-  String get newDirectChat => '新しい個人チャット';
 
   @override
   String get newGroup => '新しいグループ';
@@ -3147,35 +3127,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get resetPasswordConfirmIntro => 'メールに届いたコードと新しいパスワードを入力してください。';
 
   @override
-  String get createChatDirectSearchLabel => '誰にメッセージを送りますか？';
-
-  @override
   String get addPeopleSearchLabel => '名前または @ユーザー名 で追加';
-
-  @override
-  String get createChatDirectHelper => '1人を選んでください。個人チャットのメンバーはちょうど2人です';
-
-  @override
-  String createChatMembersHelper(int max) {
-    return '今は最大 $max 人まで。あとから追加できます';
-  }
-
-  @override
-  String get createChatDirectNeedsPeer =>
-      '個人チャットには相手がちょうど1人必要です。名前または @ユーザー名 で探してください';
-
-  @override
-  String createChatDirectTooMany(int count) {
-    return '個人チャットの相手は1人だけですが、$count 人が選ばれています。グループを選んでください';
-  }
-
-  @override
-  String get createChatNameRequired => 'チャット名を入力してください';
-
-  @override
-  String createChatTooManyMembers(int max) {
-    return '今追加できるのは最大 $max 人です。残りはチャット作成後に追加してください';
-  }
 
   @override
   String get createChatFailed => 'チャットを作成できませんでした';
@@ -3802,4 +3754,180 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notificationsFeedHint => 'アカウントとチャットのお知らせ';
+
+  @override
+  String get newMessage => '新規メッセージ';
+
+  @override
+  String get newMessageNoContacts => '連絡先はまだありません。上の検索で名前または@ユーザー名から探せます。';
+
+  @override
+  String get newChatNoContacts => '連絡先はまだありません。名前または@ユーザー名で検索してください。';
+
+  @override
+  String newChatRemoveMember(String name) {
+    return '$nameを外す';
+  }
+
+  @override
+  String get newGroupMembersTitle => 'メンバーを追加';
+
+  @override
+  String get newChannelSubscribersTitle => '登録者を追加';
+
+  @override
+  String newChatMembersCount(int count, int max) {
+    return '$count/$max';
+  }
+
+  @override
+  String newChatMembersLimitHint(int max) {
+    return '今は最大$max人まで選べます。残りはグループ作成後に追加できます。';
+  }
+
+  @override
+  String newChannelSubscribersHint(int max) {
+    return '任意です。今は最大$max人まで。あとから招待することもできます。';
+  }
+
+  @override
+  String newChatMembersLimitReached(int max) {
+    return '$max人が今選べる上限です。残りは作成後に追加してください。';
+  }
+
+  @override
+  String get next => '次へ';
+
+  @override
+  String get create => '作成';
+
+  @override
+  String get newGroupNameLabel => 'グループ名';
+
+  @override
+  String get newChannelNameLabel => 'チャンネル名';
+
+  @override
+  String get newGroupNameRequired => 'グループ名を入力してください';
+
+  @override
+  String get newChannelNameRequired => 'チャンネル名を入力してください';
+
+  @override
+  String get newChatDescriptionLabel => '説明（任意）';
+
+  @override
+  String get newGroupDescriptionHelper => 'グループの内容。プロフィールに表示されます';
+
+  @override
+  String get newChannelDescriptionHelper => '投稿する内容。チャンネルのプロフィールに表示されます';
+
+  @override
+  String get newGroupNoMembers => 'あとからグループのプロフィールでメンバーを追加できます。';
+
+  @override
+  String get newChannelVisibilityTitle => '見つけられる人';
+
+  @override
+  String get newChannelPrivate => '非公開';
+
+  @override
+  String get newChannelPrivateHint => '検索には表示されません。あなたが追加・招待した人だけが参加できます。';
+
+  @override
+  String get newChannelPublic => '公開';
+
+  @override
+  String get newChannelPublicHint => '誰でも検索で見つけて登録できます。';
+
+  @override
+  String newChatSomeNotAdded(String names) {
+    return 'プライバシー設定のため追加できませんでした: $names';
+  }
+
+  @override
+  String get newChatPhotoFailed =>
+      'チャットは作成されましたが、写真をアップロードできませんでした。設定から再度お試しください。';
+
+  @override
+  String get chatPhotoAdd => '写真を追加';
+
+  @override
+  String get chatPhotoRemove => '写真を削除';
+
+  @override
+  String get chatPhotoRemoved => '写真を削除しました';
+
+  @override
+  String get chatPhotoUploaded => '新しい写真は数秒後に表示されます';
+
+  @override
+  String get chatPhotoFailed => '写真を更新できませんでした';
+
+  @override
+  String get chatSlowModeOffShort => 'オフ';
+
+  @override
+  String chatSlowModeSecondsShort(int seconds) {
+    return '$seconds秒';
+  }
+
+  @override
+  String chatSlowModeMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String chatSlowModeHours(int hours) {
+    return '$hours時間';
+  }
+
+  @override
+  String get chatSlowModeHint => 'メンバーが次のメッセージを送るまでの待ち時間。管理者には適用されません。';
+
+  @override
+  String get chatSettingsAdvanced => '詳細設定';
+
+  @override
+  String get chatSupergroupTitle => 'スーパーグループに変換';
+
+  @override
+  String chatSupergroupHint(int max) {
+    final intl.NumberFormat maxNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String maxString = maxNumberFormat.format(max);
+
+    return '最大$maxString人の大規模グループ';
+  }
+
+  @override
+  String chatSupergroupConfirm(int max) {
+    final intl.NumberFormat maxNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String maxString = maxNumberFormat.format(max);
+
+    return 'スーパーグループは最大$maxString人の大規模グループです。メッセージ、メンバー、設定はそのまま残ります。元に戻すことはできません。';
+  }
+
+  @override
+  String get chatSupergroupAction => '変換';
+
+  @override
+  String get chatSupergroupDone => 'スーパーグループに変換しました';
+
+  @override
+  String get apiErrorUserPrivacyRestricted =>
+      'このうち一部の人は、グループやチャンネルへの追加を許可していません。';
+
+  @override
+  String get apiErrorMessagesPrivacyRestricted => 'この人は特定の人からのメッセージのみ受け付けています。';
+
+  @override
+  String get apiErrorUserBlocked => 'この人にはメッセージを送れません。';
+
+  @override
+  String get apiErrorChatAvatarValidation =>
+      'この画像は使用できません。5 MB以下のJPEG、PNG、WebPを選んでください。';
 }

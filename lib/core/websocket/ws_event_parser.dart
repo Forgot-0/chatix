@@ -2,6 +2,7 @@ library;
 
 import 'dart:convert';
 
+import 'package:chatix/core/media/avatar_variants.dart';
 import 'package:chatix/core/utils/logger.dart';
 import 'package:chatix/core/websocket/ws_event.dart';
 
@@ -471,6 +472,10 @@ WSEvent _parseChatUpdated(Map<String, dynamic> raw) {
               if (_asString(emoji) case final String value) value,
           ]
         : null,
+    avatars: delta.containsKey('avatars')
+        ? avatarVariantsFromJson(delta['avatars'])
+        : null,
+    avatarS3Key: _asString(delta['avatar_s3_key']),
     eventName: envelope.eventName,
     eventId: envelope.eventId,
     ts: envelope.ts,
